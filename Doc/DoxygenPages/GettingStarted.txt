@@ -8,7 +8,7 @@
  * - FUSE1: 0x00
  * - FUSE2: 0xBE
  * - FUSE4: 0xFF
- * - FUSE5: 0xE8
+ * - FUSE5: 0xE9
  * 
  * Next, program the appropriate bootloader from the Firmware/Bootloader directory into the chip.
  * The ATxmega chip now automatically enumerates with its DFU bootloader. 
