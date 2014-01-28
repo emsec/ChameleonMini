@@ -1,10 +1,10 @@
 Chameleon-Mini
 =============
 
-This is the main repository of the Chameleon-Mini project, a versatile smartcard emulator.
+This is the main repository of the ChameleonMini project, a versatile emulator for contactless smartcards.
 
-Further information can be found in the [project wiki](https://github.com/skuep/ChameleonMini/wiki) 
-and the [doxygen documentation](http://htmlpreview.github.io/?https://github.com/skuep/ChameleonMini/blob/master/Doc/Doxygen/html/index.html)
+Further information can be found in the [project wiki](https://github.com/emsec/ChameleonMini/wiki) 
+and the [doxygen documentation](http://htmlpreview.github.io/?https://github.com/emsec/ChameleonMini/blob/master/Doc/Doxygen/html/index.html)
 
 The code repository contains
 * Doc: A doxygen documentation 
