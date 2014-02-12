@@ -9786,7 +9786,7 @@ We've spent an enormous amount of time creating and checking these footprints an
 <part name="D5" library="NXP-BZX384" deviceset="BZX384" device="" value="BZX384-C2V7"/>
 <part name="R16" library="rcl" deviceset="R-EU_" device="R0603" value="100k"/>
 <part name="GND19" library="supply1" deviceset="GND" device=""/>
-<part name="IC10" library="SparkFun" deviceset="AT45DB041B" device="" value="AT45DB081D-SSU"/>
+<part name="IC10" library="SparkFun" deviceset="AT45DB041B" device="" value="AT45DB081E-SSHN-B"/>
 <part name="P+6" library="supply1" deviceset="VCC" device=""/>
 <part name="GND31" library="supply1" deviceset="GND" device=""/>
 <part name="LED2" library="led" deviceset="LED" device="CHIPLED_0805" value="RED"/>
