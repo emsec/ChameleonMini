@@ -1,0 +1,43 @@
+Stückliste exportiert aus /home/neo/Downloads/ChameleonMini-master/ChameleonMini-masterneo/EAGLE/Chameleon-Mini-RevE-3.sch am 12.02.14 13:28
+
+Qty Value                   Device                  Package              Parts                                       Description                                 
+1                           PINHD-2X3-2.54-EDGE     PINHD-2X3-2.54-EDGE  X2                                                                                      
+2   100k                    R-EU_R0603              R0603                R10, R16                                    RESISTOR, European symbol                   
+9   100n                    C-EUC0603K              C0603K               C10, C11, C12, C13, C14, C15, C17, C18, C19 CAPACITOR, European symbol                  
+1   100n                    C-EUC1206K              C1206K               C5                                          CAPACITOR, European symbol                  
+1   10R                     R-EU_R0603              R0603                R3                                          RESISTOR, European symbol                   
+4   10k                     R-EU_R0603              R0603                R1, R6, R12, R27                            RESISTOR, European symbol                   
+2   10n                     C-EUC1206K              C1206K               C1, C16                                     CAPACITOR, European symbol                  
+1   10u/6.3V/X5R            C-EUC1206K              C1206K               C3                                          CAPACITOR, European symbol                  
+1   120k                    R-EU_R0603              R0603                R15                                         RESISTOR, European symbol                   
+1   12MHz                   TXC7B                   5MMX3.2MM            Q4                                                                                      
+1   1Meg                    R-EU_R1206              R1206                R14                                         RESISTOR, European symbol                   
+2   1k                      R-EU_R0603              R0603                R2, R9                                      RESISTOR, European symbol                   
+1   1k                      R-EU_R1206              R1206                R7                                          RESISTOR, European symbol                   
+1   200k                    R-EU_R0603              R0603                R13                                         RESISTOR, European symbol                   
+5   220R                    R-EU_R0603              R0603                R4, R17, R18, R28, R29                      RESISTOR, European symbol                   
+1   220p                    C-EUC0603K              C0603K               C9                                          CAPACITOR, European symbol                  
+1   22R                     R-EU_R1206              R1206                R19                                         RESISTOR, European symbol                   
+2   22p                     C-EUC0603K              C0603K               C7, C8                                      CAPACITOR, European symbol                  
+1   22p/NP0                 C-EUC0603K              C0603K               C6                                          CAPACITOR, European symbol                  
+1   33R@100MHz              L-EUL2012C              L2012C               L1                                          INDUCTOR, European symbol                   
+1   470R                    R-EU_R1206              R1206                R5                                          RESISTOR, European symbol                   
+1   47k                     R-EU_R0603              R0603                R11                                         RESISTOR, European symbol                   
+1   4k7                     R-EU_R0603              R0603                R8                                          RESISTOR, European symbol                   
+1   AT45DB081E-SSHN-B       AT45DB041B              SO08                 IC10                                                                                    
+1   ATxmega32A4U-AU         ATXMEGA_A4-A            TQFP44               IC2                                                                                     
+6   BAS70-07S               BAS70-07S               SOT363_PHILIPS       D1, D2, D3, D4, D6, D8                      Silicon Schottky Diodes                     
+1   BC846B                  BC846BSMD               SOT23                Q3                                          NPN Transistor                              
+1   BSS138BK                BSS123                  SOT23                Q1                                          N-CHANNEL MOS FET                           
+1   BZX384-C2V7             BZX384                  SOD323               D5                                                                                      
+1   GREEN                   LEDCHIPLED_0805         CHIPLED_0805         LED4                                        LED                                         
+1   N.M.                    C-EUC1206               C1206                C4                                          CAPACITOR, European symbol                  
+1   RED                     LEDCHIPLED_0805         CHIPLED_0805         LED2                                        LED                                         
+1   SN74LVC1G08DCK          74LVC1G08DCK            SC70-5               IC1                                         2-input AND gate                            
+1   SN74LVC1G74DCU          74LVC1G74DC             VSSOP8               IC3                                                                                     
+1   SN74LVC1G86DCK          74AHC1G86DCK            SC70-5               IC4                                         2-input EXCLUSIV-OR gate                    
+1   SWITCH-MOMENTARY-2SMD-3 SWITCH-MOMENTARY-2SMD-3 TACTILE_SWITCH_SMD-3 S1                                          Various NO switches- pushbuttons, reed, etc 
+1   TLVH431(A)IDBZR         TLVH431-SOT23           SOT23                VR1                                                                                     
+1   TZC3P200A110            TZC3P                   TZC3P                C2                                                                                      
+1   U.FL-R-SMT              U.FL-R-SMT              U.FL-R-SMT           X3                                                                                      
+1   ZX62-B-5PA              ZX62-B-5PA-LONG         ZX62-B-5PA-LONG      X1                                                                                      
