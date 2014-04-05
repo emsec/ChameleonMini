@@ -52,6 +52,12 @@
 # documentation should not be interpreted as representing official
 # policies, either expressed or implied, of the ORIGINAL AUTHORS.
 
+# This makefile uses sh in order to build the project.
+# Note when using AVR-Toolchain, you have to install cygwin and 
+# append cygwin's bin directory to the PATH environment variable 
+# because Atmel does not ship sh.exe anymore with the toolchain. 
+SHELL = /bin/sh
+
 #Supported configurations
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
