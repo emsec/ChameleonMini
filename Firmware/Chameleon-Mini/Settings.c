@@ -94,12 +94,18 @@ void SettingsCycle(void) {
 
 void SettingsSetActiveById(uint8_t Setting) {
 	if (Setting < SETTINGS_COUNT) {
+		/* Store current memory contents permanently */
+		MemoryStore();
+		
 		GlobalSettings.ActiveSetting = Setting;
 		GlobalSettings.ActiveSettingPtr =
 				&GlobalSettings.Settings[GlobalSettings.ActiveSetting];
 
 		/* Settings have changed. Progress changes through system */
 		ConfigurationInit();
+		
+		/* Recall new memory contents */
+		MemoryRecall();
 	}
 }
 

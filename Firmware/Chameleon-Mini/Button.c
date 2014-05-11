@@ -57,6 +57,7 @@
 #include "Random.h"
 #include "Common.h"
 #include "Settings.h"
+#include "Memory.h"
 
 static const char PROGMEM ButtonActionTable[][32] =
 {
@@ -66,7 +67,9 @@ static const char PROGMEM ButtonActionTable[][32] =
     [BUTTON_ACTION_UID_RIGHT_INCREMENT] = "UID_RIGHT_INCREMENT",
     [BUTTON_ACTION_UID_LEFT_DECREMENT] = "UID_LEFT_DECREMENT",
     [BUTTON_ACTION_UID_RIGHT_DECREMENT] = "UID_RIGHT_DECREMENT",
-    [BUTTON_ACTION_CYCLE_SETTINGS] = "CYCLE_SETTINGS"
+    [BUTTON_ACTION_CYCLE_SETTINGS] = "CYCLE_SETTINGS",
+    [BUTTON_ACTION_STORE_MEM] = "STORE_MEM",
+    [BUTTON_ACTION_RECALL_MEM] = "RECALL_MEM",
 };
 
 void ButtonInit(void)
@@ -167,6 +170,10 @@ void ButtonTick(void)
             ApplicationSetUid(UidBuffer);
         } else if (ButtonAction == BUTTON_ACTION_CYCLE_SETTINGS) {
         	SettingsCycle();
+        } else if (ButtonAction == BUTTON_ACTION_STORE_MEM) {
+        	MemoryStore();
+        } else if (ButtonAction == BUTTON_ACTION_RECALL_MEM) {
+        	MemoryRecall();
         }
     }
 }
@@ -202,7 +209,14 @@ void ButtonGetActionList(char* ListOut, uint16_t BufferSize)
 
 void ButtonSetActionById(ButtonActionEnum Action)
 {
+#ifndef BUTTON_SETTING_GLOBAL
 	GlobalSettings.ActiveSettingPtr->ButtonAction = Action;
+#else
+	/* Write button action to all settings when using global settings */
+	for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
+		GlobalSettings.Settings[i].ButtonAction = Action;
+	}
+#endif
 }
 
 void ButtonGetActionByName(char* ActionOut, uint16_t BufferSize)
@@ -224,3 +238,4 @@ bool ButtonSetActionByName(const char* Action)
     /* Button action not found */
     return false;
 }
+

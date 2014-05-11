@@ -101,7 +101,6 @@ Discarded input sections
  .text          0x00000000        0x0 Bin/Common.o
  .bss           0x00000000        0x0 Bin/Common.o
  .text          0x00000000        0x0 Bin/Memory.o
- .bss           0x00000000        0x0 Bin/Memory.o
  .text          0x00000000        0x0 Bin/Button.o
  .text          0x00000000        0x0 Bin/Settings.o
  .bss           0x00000000        0x0 Bin/Settings.o
@@ -658,7 +657,7 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000     0x4ef0
+.text           0x00000000     0x5282
  *(.vectors)
  .vectors       0x00000000      0x1fc c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
                 0x00000000                __vectors
@@ -672,45 +671,45 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
                 0x00000238                ConfigurationDescriptor
                 0x00000276                DeviceDescriptor
  .progmem.data  0x00000288       0x6f Bin/Configuration.o
- .progmem.data  0x000002f7       0xe0 Bin/Button.o
- .progmem.data  0x000003d7       0x64 Bin/Commands.o
- .progmem.data  0x0000043b      0x22c Bin/CommandLine.o
-                0x0000043b                CommandTable
-                0x00000668                . = ALIGN (0x2)
- *fill*         0x00000667        0x1 
-                0x00000668                __trampolines_start = .
+ .progmem.data  0x000002f7      0x120 Bin/Button.o
+ .progmem.data  0x00000417       0x64 Bin/Commands.o
+ .progmem.data  0x0000047b      0x22c Bin/CommandLine.o
+                0x0000047b                CommandTable
+                0x000006a8                . = ALIGN (0x2)
+ *fill*         0x000006a7        0x1 
+                0x000006a8                __trampolines_start = .
  *(.trampolines)
- .trampolines   0x00000668        0x0 linker stubs
+ .trampolines   0x000006a8        0x0 linker stubs
  *(.trampolines*)
-                0x00000668                __trampolines_end = .
+                0x000006a8                __trampolines_end = .
  *(.jumptables)
  *(.jumptables*)
  *(.lowtext)
  *(.lowtext*)
-                0x00000668                __ctors_start = .
+                0x000006a8                __ctors_start = .
  *(.ctors)
-                0x00000668                __ctors_end = .
-                0x00000668                __dtors_start = .
+                0x000006a8                __ctors_end = .
+                0x000006a8                __dtors_start = .
  *(.dtors)
-                0x00000668                __dtors_end = .
+                0x000006a8                __dtors_end = .
  SORT(*)(.ctors)
  SORT(*)(.dtors)
  *(.init0)
- .init0         0x00000668        0x0 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
-                0x00000668                __init
+ .init0         0x000006a8        0x0 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
+                0x000006a8                __init
  *(.init0)
  *(.init1)
  *(.init1)
  *(.init2)
- .init2         0x00000668        0xc c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
+ .init2         0x000006a8        0xc c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
  *(.init2)
  *(.init3)
  *(.init3)
  *(.init4)
- .init4         0x00000674       0x16 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_copy_data.o)
-                0x00000674                __do_copy_data
- .init4         0x0000068a       0x10 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_clear_bss.o)
-                0x0000068a                __do_clear_bss
+ .init4         0x000006b4       0x16 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_copy_data.o)
+                0x000006b4                __do_copy_data
+ .init4         0x000006ca       0x10 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_clear_bss.o)
+                0x000006ca                __do_clear_bss
  *(.init4)
  *(.init5)
  *(.init5)
@@ -721,632 +720,638 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
  *(.init8)
  *(.init8)
  *(.init9)
- .init9         0x0000069a        0x6 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
+ .init9         0x000006da        0x6 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
  *(.init9)
  *(.text)
- .text          0x000006a0        0x2 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
-                0x000006a0                __vector_38
-                0x000006a0                __vector_104
-                0x000006a0                __vector_63
-                0x000006a0                __vector_28
-                0x000006a0                __vector_67
-                0x000006a0                __vector_1
-                0x000006a0                __vector_119
-                0x000006a0                __vector_32
-                0x000006a0                __vector_75
-                0x000006a0                __vector_71
-                0x000006a0                __vector_91
-                0x000006a0                __vector_62
-                0x000006a0                __vector_77
-                0x000006a0                __vector_102
-                0x000006a0                __vector_24
-                0x000006a0                __vector_12
-                0x000006a0                __vector_55
-                0x000006a0                __vector_69
-                0x000006a0                __vector_81
-                0x000006a0                __vector_90
-                0x000006a0                __vector_46
-                0x000006a0                __bad_interrupt
-                0x000006a0                __vector_122
-                0x000006a0                __vector_72
-                0x000006a0                __vector_114
-                0x000006a0                __vector_6
-                0x000006a0                __vector_110
-                0x000006a0                __vector_31
-                0x000006a0                __vector_92
-                0x000006a0                __vector_35
-                0x000006a0                __vector_78
-                0x000006a0                __vector_74
-                0x000006a0                __vector_117
-                0x000006a0                __vector_39
-                0x000006a0                __vector_107
-                0x000006a0                __vector_3
-                0x000006a0                __vector_105
-                0x000006a0                __vector_98
-                0x000006a0                __vector_23
-                0x000006a0                __vector_68
-                0x000006a0                __vector_30
-                0x000006a0                __vector_73
-                0x000006a0                __vector_45
-                0x000006a0                __vector_25
-                0x000006a0                __vector_93
-                0x000006a0                __vector_61
-                0x000006a0                __vector_11
-                0x000006a0                __vector_54
-                0x000006a0                __vector_99
-                0x000006a0                __vector_13
-                0x000006a0                __vector_17
-                0x000006a0                __vector_19
-                0x000006a0                __vector_56
-                0x000006a0                __vector_7
-                0x000006a0                __vector_49
-                0x000006a0                __vector_123
-                0x000006a0                __vector_41
-                0x000006a0                __vector_86
-                0x000006a0                __vector_100
-                0x000006a0                __vector_101
-                0x000006a0                __vector_64
-                0x000006a0                __vector_88
-                0x000006a0                __vector_109
-                0x000006a0                __vector_43
-                0x000006a0                __vector_27
-                0x000006a0                __vector_5
-                0x000006a0                __vector_113
-                0x000006a0                __vector_33
-                0x000006a0                __vector_76
-                0x000006a0                __vector_115
-                0x000006a0                __vector_47
-                0x000006a0                __vector_52
-                0x000006a0                __vector_37
-                0x000006a0                __vector_95
-                0x000006a0                __vector_103
-                0x000006a0                __vector_96
-                0x000006a0                __vector_89
-                0x000006a0                __vector_108
-                0x000006a0                __vector_4
-                0x000006a0                __vector_44
-                0x000006a0                __vector_82
-                0x000006a0                __vector_106
-                0x000006a0                __vector_118
-                0x000006a0                __vector_51
-                0x000006a0                __vector_9
-                0x000006a0                __vector_2
-                0x000006a0                __vector_21
-                0x000006a0                __vector_15
-                0x000006a0                __vector_66
-                0x000006a0                __vector_36
-                0x000006a0                __vector_79
-                0x000006a0                __vector_58
-                0x000006a0                __vector_70
-                0x000006a0                __vector_29
-                0x000006a0                __vector_60
-                0x000006a0                __vector_121
-                0x000006a0                __vector_40
-                0x000006a0                __vector_85
-                0x000006a0                __vector_94
-                0x000006a0                __vector_126
-                0x000006a0                __vector_8
-                0x000006a0                __vector_26
-                0x000006a0                __vector_48
-                0x000006a0                __vector_124
-                0x000006a0                __vector_116
-                0x000006a0                __vector_112
-                0x000006a0                __vector_111
-                0x000006a0                __vector_80
-                0x000006a0                __vector_14
-                0x000006a0                __vector_84
-                0x000006a0                __vector_57
-                0x000006a0                __vector_53
-                0x000006a0                __vector_10
-                0x000006a0                __vector_50
-                0x000006a0                __vector_16
-                0x000006a0                __vector_59
-                0x000006a0                __vector_18
-                0x000006a0                __vector_97
-                0x000006a0                __vector_20
-                0x000006a0                __vector_42
-                0x000006a0                __vector_87
-                0x000006a0                __vector_65
-                0x000006a0                __vector_120
-                0x000006a2                . = ALIGN (0x2)
+ .text          0x000006e0        0x2 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
+                0x000006e0                __vector_38
+                0x000006e0                __vector_104
+                0x000006e0                __vector_63
+                0x000006e0                __vector_28
+                0x000006e0                __vector_67
+                0x000006e0                __vector_1
+                0x000006e0                __vector_119
+                0x000006e0                __vector_32
+                0x000006e0                __vector_75
+                0x000006e0                __vector_71
+                0x000006e0                __vector_91
+                0x000006e0                __vector_62
+                0x000006e0                __vector_77
+                0x000006e0                __vector_102
+                0x000006e0                __vector_24
+                0x000006e0                __vector_12
+                0x000006e0                __vector_55
+                0x000006e0                __vector_69
+                0x000006e0                __vector_81
+                0x000006e0                __vector_90
+                0x000006e0                __vector_46
+                0x000006e0                __bad_interrupt
+                0x000006e0                __vector_122
+                0x000006e0                __vector_72
+                0x000006e0                __vector_114
+                0x000006e0                __vector_6
+                0x000006e0                __vector_110
+                0x000006e0                __vector_31
+                0x000006e0                __vector_92
+                0x000006e0                __vector_35
+                0x000006e0                __vector_78
+                0x000006e0                __vector_74
+                0x000006e0                __vector_117
+                0x000006e0                __vector_39
+                0x000006e0                __vector_107
+                0x000006e0                __vector_3
+                0x000006e0                __vector_105
+                0x000006e0                __vector_98
+                0x000006e0                __vector_23
+                0x000006e0                __vector_68
+                0x000006e0                __vector_30
+                0x000006e0                __vector_73
+                0x000006e0                __vector_45
+                0x000006e0                __vector_25
+                0x000006e0                __vector_93
+                0x000006e0                __vector_61
+                0x000006e0                __vector_11
+                0x000006e0                __vector_54
+                0x000006e0                __vector_99
+                0x000006e0                __vector_13
+                0x000006e0                __vector_17
+                0x000006e0                __vector_19
+                0x000006e0                __vector_56
+                0x000006e0                __vector_7
+                0x000006e0                __vector_49
+                0x000006e0                __vector_123
+                0x000006e0                __vector_41
+                0x000006e0                __vector_86
+                0x000006e0                __vector_100
+                0x000006e0                __vector_101
+                0x000006e0                __vector_64
+                0x000006e0                __vector_88
+                0x000006e0                __vector_109
+                0x000006e0                __vector_43
+                0x000006e0                __vector_27
+                0x000006e0                __vector_5
+                0x000006e0                __vector_113
+                0x000006e0                __vector_33
+                0x000006e0                __vector_76
+                0x000006e0                __vector_115
+                0x000006e0                __vector_47
+                0x000006e0                __vector_52
+                0x000006e0                __vector_37
+                0x000006e0                __vector_95
+                0x000006e0                __vector_103
+                0x000006e0                __vector_96
+                0x000006e0                __vector_89
+                0x000006e0                __vector_108
+                0x000006e0                __vector_4
+                0x000006e0                __vector_44
+                0x000006e0                __vector_82
+                0x000006e0                __vector_106
+                0x000006e0                __vector_118
+                0x000006e0                __vector_51
+                0x000006e0                __vector_9
+                0x000006e0                __vector_2
+                0x000006e0                __vector_21
+                0x000006e0                __vector_15
+                0x000006e0                __vector_66
+                0x000006e0                __vector_36
+                0x000006e0                __vector_79
+                0x000006e0                __vector_58
+                0x000006e0                __vector_70
+                0x000006e0                __vector_29
+                0x000006e0                __vector_60
+                0x000006e0                __vector_121
+                0x000006e0                __vector_40
+                0x000006e0                __vector_85
+                0x000006e0                __vector_94
+                0x000006e0                __vector_126
+                0x000006e0                __vector_8
+                0x000006e0                __vector_26
+                0x000006e0                __vector_48
+                0x000006e0                __vector_124
+                0x000006e0                __vector_116
+                0x000006e0                __vector_112
+                0x000006e0                __vector_111
+                0x000006e0                __vector_80
+                0x000006e0                __vector_14
+                0x000006e0                __vector_84
+                0x000006e0                __vector_57
+                0x000006e0                __vector_53
+                0x000006e0                __vector_10
+                0x000006e0                __vector_50
+                0x000006e0                __vector_16
+                0x000006e0                __vector_59
+                0x000006e0                __vector_18
+                0x000006e0                __vector_97
+                0x000006e0                __vector_20
+                0x000006e0                __vector_42
+                0x000006e0                __vector_87
+                0x000006e0                __vector_65
+                0x000006e0                __vector_120
+                0x000006e2                . = ALIGN (0x2)
  *(.text.*)
  .text.startup.main
-                0x000006a2       0x6e Bin/Chameleon-Mini.o
-                0x000006a2                main
+                0x000006e2       0x76 Bin/Chameleon-Mini.o
+                0x000006e2                main
  .text.CALLBACK_USB_GetDescriptor
-                0x00000710       0x82 Bin/LUFADescriptors.o
-                0x00000710                CALLBACK_USB_GetDescriptor
+                0x00000758       0x82 Bin/LUFADescriptors.o
+                0x00000758                CALLBACK_USB_GetDescriptor
  .text.__vector_default
-                0x00000792        0xc Bin/System.o
-                0x00000792                __vector_default
+                0x000007da        0xc Bin/System.o
+                0x000007da                __vector_default
  .text.SystemInit
-                0x0000079e       0x6e Bin/System.o
-                0x0000079e                SystemInit
+                0x000007e6       0x6e Bin/System.o
+                0x000007e6                SystemInit
  .text.SystemReset
-                0x0000080c        0xe Bin/System.o
-                0x0000080c                SystemReset
+                0x00000854        0xe Bin/System.o
+                0x00000854                SystemReset
  .text.SystemEnterBootloader
-                0x0000081a        0xc Bin/System.o
-                0x0000081a                SystemEnterBootloader
+                0x00000862        0xc Bin/System.o
+                0x00000862                SystemEnterBootloader
  .text.SystemStartUSBClock
-                0x00000826       0x32 Bin/System.o
-                0x00000826                SystemStartUSBClock
+                0x0000086e       0x32 Bin/System.o
+                0x0000086e                SystemStartUSBClock
  .text.SystemStopUSBClock
-                0x00000858       0x1c Bin/System.o
-                0x00000858                SystemStopUSBClock
+                0x000008a0       0x1c Bin/System.o
+                0x000008a0                SystemStopUSBClock
  .text.SystemInterruptInit
-                0x00000874        0xc Bin/System.o
-                0x00000874                SystemInterruptInit
+                0x000008bc        0xc Bin/System.o
+                0x000008bc                SystemInterruptInit
  .text.CodecInitDummy
-                0x00000880        0x2 Bin/Configuration.o
+                0x000008c8        0x2 Bin/Configuration.o
  .text.CodecTaskDummy
-                0x00000882        0x2 Bin/Configuration.o
+                0x000008ca        0x2 Bin/Configuration.o
  .text.ApplicationInitDummy
-                0x00000884        0x2 Bin/Configuration.o
+                0x000008cc        0x2 Bin/Configuration.o
  .text.ApplicationResetDummy
-                0x00000886        0x2 Bin/Configuration.o
+                0x000008ce        0x2 Bin/Configuration.o
  .text.ApplicationTaskDummy
-                0x00000888        0x2 Bin/Configuration.o
+                0x000008d0        0x2 Bin/Configuration.o
  .text.ApplicationProcessDummy
-                0x0000088a        0x6 Bin/Configuration.o
+                0x000008d2        0x6 Bin/Configuration.o
  .text.ApplicationGetUidDummy
-                0x00000890        0x2 Bin/Configuration.o
+                0x000008d8        0x2 Bin/Configuration.o
  .text.ApplicationSetUidDummy
-                0x00000892        0x2 Bin/Configuration.o
+                0x000008da        0x2 Bin/Configuration.o
  .text.ConfigurationSetById
-                0x00000894       0x36 Bin/Configuration.o
-                0x00000894                ConfigurationSetById
+                0x000008dc       0x36 Bin/Configuration.o
+                0x000008dc                ConfigurationSetById
  .text.ConfigurationInit
-                0x000008ca        0xc Bin/Configuration.o
-                0x000008ca                ConfigurationInit
+                0x00000912        0xc Bin/Configuration.o
+                0x00000912                ConfigurationInit
  .text.ConfigurationSetByName
-                0x000008d6       0x82 Bin/Configuration.o
-                0x000008d6                ConfigurationSetByName
+                0x0000091e       0x82 Bin/Configuration.o
+                0x0000091e                ConfigurationSetByName
  .text.ConfigurationGetList
-                0x00000958       0x5e Bin/Configuration.o
-                0x00000958                ConfigurationGetList
+                0x000009a0       0x5e Bin/Configuration.o
+                0x000009a0                ConfigurationGetList
  .text.RandomInit
-                0x000009b6        0x2 Bin/Random.o
-                0x000009b6                RandomInit
+                0x000009fe        0x2 Bin/Random.o
+                0x000009fe                RandomInit
  .text.RandomGetByte
-                0x000009b8        0x6 Bin/Random.o
-                0x000009b8                RandomGetByte
+                0x00000a00        0x6 Bin/Random.o
+                0x00000a00                RandomGetByte
  .text.RandomGetBuffer
-                0x000009be       0x1e Bin/Random.o
-                0x000009be                RandomGetBuffer
+                0x00000a06       0x1e Bin/Random.o
+                0x00000a06                RandomGetBuffer
  .text.RandomTick
-                0x000009dc       0x10 Bin/Random.o
-                0x000009dc                RandomTick
+                0x00000a24       0x10 Bin/Random.o
+                0x00000a24                RandomTick
  .text.BufferToHexString
-                0x000009ec       0x84 Bin/Common.o
-                0x000009ec                BufferToHexString
+                0x00000a34       0x84 Bin/Common.o
+                0x00000a34                BufferToHexString
  .text.HexStringToBuffer
-                0x00000a70       0x8c Bin/Common.o
-                0x00000a70                HexStringToBuffer
- .text.MemoryInit
-                0x00000afc       0xfc Bin/Memory.o
-                0x00000afc                MemoryInit
+                0x00000ab8       0x8c Bin/Common.o
+                0x00000ab8                HexStringToBuffer
  .text.MemoryReadBlock
-                0x00000bf8      0x10a Bin/Memory.o
-                0x00000bf8                MemoryReadBlock
+                0x00000b44       0x30 Bin/Memory.o
+                0x00000b44                MemoryReadBlock
  .text.MemoryWriteBlock
-                0x00000d02      0x286 Bin/Memory.o
-                0x00000d02                MemoryWriteBlock
+                0x00000b74       0x32 Bin/Memory.o
+                0x00000b74                MemoryWriteBlock
  .text.MemoryClear
-                0x00000f88       0xb6 Bin/Memory.o
-                0x00000f88                MemoryClear
+                0x00000ba6       0x10 Bin/Memory.o
+                0x00000ba6                MemoryClear
+ .text.MemoryRecall
+                0x00000bb6       0xec Bin/Memory.o
+                0x00000bb6                MemoryRecall
+ .text.MemoryInit
+                0x00000ca2       0xfc Bin/Memory.o
+                0x00000ca2                MemoryInit
+ .text.MemoryStore
+                0x00000d9e      0x282 Bin/Memory.o
+                0x00000d9e                MemoryStore
  .text.MemoryUploadBlock
-                0x0000103e       0x70 Bin/Memory.o
-                0x0000103e                MemoryUploadBlock
+                0x00001020      0x3c2 Bin/Memory.o
+                0x00001020                MemoryUploadBlock
  .text.MemoryDownloadBlock
-                0x000010ae       0x72 Bin/Memory.o
-                0x000010ae                MemoryDownloadBlock
+                0x000013e2       0x7a Bin/Memory.o
+                0x000013e2                MemoryDownloadBlock
  .text.ButtonInit
-                0x00001120        0xe Bin/Button.o
-                0x00001120                ButtonInit
+                0x0000145c        0xe Bin/Button.o
+                0x0000145c                ButtonInit
  .text.ButtonTick
-                0x0000112e      0x1b6 Bin/Button.o
-                0x0000112e                ButtonTick
+                0x0000146a      0x1ca Bin/Button.o
+                0x0000146a                ButtonTick
  .text.ButtonGetActionList
-                0x000012e4       0x64 Bin/Button.o
-                0x000012e4                ButtonGetActionList
+                0x00001634       0x64 Bin/Button.o
+                0x00001634                ButtonGetActionList
  .text.ButtonSetActionById
-                0x00001348        0xc Bin/Button.o
-                0x00001348                ButtonSetActionById
+                0x00001698        0xc Bin/Button.o
+                0x00001698                ButtonSetActionById
  .text.ButtonGetActionByName
-                0x00001354       0x1c Bin/Button.o
-                0x00001354                ButtonGetActionByName
+                0x000016a4       0x1c Bin/Button.o
+                0x000016a4                ButtonGetActionByName
  .text.ButtonSetActionByName
-                0x00001370       0x92 Bin/Button.o
-                0x00001370                ButtonSetActionByName
+                0x000016c0       0xb6 Bin/Button.o
+                0x000016c0                ButtonSetActionByName
  .text.SettingsLoad
-                0x00001402       0x10 Bin/Settings.o
-                0x00001402                SettingsLoad
+                0x00001776       0x10 Bin/Settings.o
+                0x00001776                SettingsLoad
  .text.SettingsSave
-                0x00001412       0x10 Bin/Settings.o
-                0x00001412                SettingsSave
+                0x00001786       0x10 Bin/Settings.o
+                0x00001786                SettingsSave
  .text.SettingsSetActiveById
-                0x00001422       0x1e Bin/Settings.o
-                0x00001422                SettingsSetActiveById
+                0x00001796       0x2c Bin/Settings.o
+                0x00001796                SettingsSetActiveById
  .text.SettingsCycle
-                0x00001440       0xda Bin/Settings.o
-                0x00001440                SettingsCycle
+                0x000017c2       0xda Bin/Settings.o
+                0x000017c2                SettingsCycle
  .text.SettingsGetActiveById
-                0x0000151a        0x6 Bin/Settings.o
-                0x0000151a                SettingsGetActiveById
+                0x0000189c        0x6 Bin/Settings.o
+                0x0000189c                SettingsGetActiveById
  .text.SettingsGetActiveByName
-                0x00001520       0x14 Bin/Settings.o
-                0x00001520                SettingsGetActiveByName
+                0x000018a2       0x14 Bin/Settings.o
+                0x000018a2                SettingsGetActiveByName
  .text.SettingsSetActiveByName
-                0x00001534       0x1a Bin/Settings.o
-                0x00001534                SettingsSetActiveByName
+                0x000018b6       0x1a Bin/Settings.o
+                0x000018b6                SettingsSetActiveByName
  .text.TerminalSendString
-                0x0000154e        0xa Bin/Terminal.o
-                0x0000154e                TerminalSendString
+                0x000018d0        0xa Bin/Terminal.o
+                0x000018d0                TerminalSendString
  .text.TerminalSendStringP
-                0x00001558       0x28 Bin/Terminal.o
-                0x00001558                TerminalSendStringP
+                0x000018da       0x28 Bin/Terminal.o
+                0x000018da                TerminalSendStringP
  .text.TerminalSendBlock
-                0x00001580        0xc Bin/Terminal.o
-                0x00001580                TerminalSendBlock
+                0x00001902        0xc Bin/Terminal.o
+                0x00001902                TerminalSendBlock
  .text.TerminalInit
-                0x0000158c        0xa Bin/Terminal.o
-                0x0000158c                TerminalInit
+                0x0000190e        0xa Bin/Terminal.o
+                0x0000190e                TerminalInit
  .text.TerminalTask
-                0x00001596       0x3e Bin/Terminal.o
-                0x00001596                TerminalTask
+                0x00001918       0x3e Bin/Terminal.o
+                0x00001918                TerminalTask
  .text.TerminalTick
-                0x000015d4       0x7c Bin/Terminal.o
-                0x000015d4                TerminalTick
+                0x00001956       0x80 Bin/Terminal.o
+                0x00001956                TerminalTick
  .text.EVENT_USB_Device_Connect
-                0x00001650        0xa Bin/Terminal.o
-                0x00001650                EVENT_USB_Device_Connect
+                0x000019d6        0xa Bin/Terminal.o
+                0x000019d6                EVENT_USB_Device_Connect
  .text.EVENT_USB_Device_Disconnect
-                0x0000165a        0xa Bin/Terminal.o
-                0x0000165a                EVENT_USB_Device_Disconnect
+                0x000019e0        0xa Bin/Terminal.o
+                0x000019e0                EVENT_USB_Device_Disconnect
  .text.EVENT_USB_Device_ConfigurationChanged
-                0x00001664        0x8 Bin/Terminal.o
-                0x00001664                EVENT_USB_Device_ConfigurationChanged
+                0x000019ea        0x8 Bin/Terminal.o
+                0x000019ea                EVENT_USB_Device_ConfigurationChanged
  .text.EVENT_USB_Device_ControlRequest
-                0x0000166c        0x8 Bin/Terminal.o
-                0x0000166c                EVENT_USB_Device_ControlRequest
+                0x000019f2        0x8 Bin/Terminal.o
+                0x000019f2                EVENT_USB_Device_ControlRequest
  .text.CommandGetVersion
-                0x00001674       0x3c Bin/Commands.o
-                0x00001674                CommandGetVersion
+                0x000019fa       0x3c Bin/Commands.o
+                0x000019fa                CommandGetVersion
  .text.CommandGetConfig
-                0x000016b0       0x2c Bin/Commands.o
-                0x000016b0                CommandGetConfig
+                0x00001a36       0x2c Bin/Commands.o
+                0x00001a36                CommandGetConfig
  .text.CommandSetConfig
-                0x000016dc       0x10 Bin/Commands.o
-                0x000016dc                CommandSetConfig
+                0x00001a62       0x12 Bin/Commands.o
+                0x00001a62                CommandSetConfig
  .text.CommandExecConfig
-                0x000016ec        0xa Bin/Commands.o
-                0x000016ec                CommandExecConfig
+                0x00001a74        0xc Bin/Commands.o
+                0x00001a74                CommandExecConfig
  .text.CommandGetUid
-                0x000016f6       0x4c Bin/Commands.o
-                0x000016f6                CommandGetUid
+                0x00001a80       0x4e Bin/Commands.o
+                0x00001a80                CommandGetUid
  .text.CommandSetUid
-                0x00001742       0xae Bin/Commands.o
-                0x00001742                CommandSetUid
+                0x00001ace       0xb2 Bin/Commands.o
+                0x00001ace                CommandSetUid
  .text.CommandGetReadOnly
-                0x000017f0       0x24 Bin/Commands.o
-                0x000017f0                CommandGetReadOnly
+                0x00001b80       0x24 Bin/Commands.o
+                0x00001b80                CommandGetReadOnly
  .text.CommandSetReadOnly
-                0x00001814       0x28 Bin/Commands.o
-                0x00001814                CommandSetReadOnly
+                0x00001ba4       0x28 Bin/Commands.o
+                0x00001ba4                CommandSetReadOnly
  .text.CommandExecUpload
-                0x0000183c        0xa Bin/Commands.o
-                0x0000183c                CommandExecUpload
+                0x00001bcc        0xa Bin/Commands.o
+                0x00001bcc                CommandExecUpload
  .text.CommandExecDownload
-                0x00001846        0xa Bin/Commands.o
-                0x00001846                CommandExecDownload
+                0x00001bd6        0xa Bin/Commands.o
+                0x00001bd6                CommandExecDownload
  .text.CommandExecReset
-                0x00001850       0x16 Bin/Commands.o
-                0x00001850                CommandExecReset
+                0x00001be0       0x16 Bin/Commands.o
+                0x00001be0                CommandExecReset
  .text.CommandExecUpgrade
-                0x00001866       0x16 Bin/Commands.o
-                0x00001866                CommandExecUpgrade
+                0x00001bf6       0x16 Bin/Commands.o
+                0x00001bf6                CommandExecUpgrade
  .text.CommandGetMemSize
-                0x0000187c       0x30 Bin/Commands.o
-                0x0000187c                CommandGetMemSize
+                0x00001c0c       0x30 Bin/Commands.o
+                0x00001c0c                CommandGetMemSize
  .text.CommandGetUidSize
-                0x000018ac       0x2c Bin/Commands.o
-                0x000018ac                CommandGetUidSize
+                0x00001c3c       0x2c Bin/Commands.o
+                0x00001c3c                CommandGetUidSize
  .text.CommandExecButton
-                0x000018d8        0xa Bin/Commands.o
-                0x000018d8                CommandExecButton
+                0x00001c68        0xa Bin/Commands.o
+                0x00001c68                CommandExecButton
  .text.CommandGetButton
-                0x000018e2        0xa Bin/Commands.o
-                0x000018e2                CommandGetButton
+                0x00001c72        0xa Bin/Commands.o
+                0x00001c72                CommandGetButton
  .text.CommandSetButton
-                0x000018ec       0x10 Bin/Commands.o
-                0x000018ec                CommandSetButton
+                0x00001c7c       0x10 Bin/Commands.o
+                0x00001c7c                CommandSetButton
  .text.CommandGetSetting
-                0x000018fc        0xa Bin/Commands.o
-                0x000018fc                CommandGetSetting
+                0x00001c8c        0xa Bin/Commands.o
+                0x00001c8c                CommandGetSetting
  .text.CommandSetSetting
-                0x00001906       0x10 Bin/Commands.o
-                0x00001906                CommandSetSetting
+                0x00001c96       0x10 Bin/Commands.o
+                0x00001c96                CommandSetSetting
  .text.CommandExecClear
-                0x00001916        0x6 Bin/Commands.o
-                0x00001916                CommandExecClear
+                0x00001ca6        0x8 Bin/Commands.o
+                0x00001ca6                CommandExecClear
  .text.CommandExecHelp
-                0x0000191c       0x98 Bin/Commands.o
-                0x0000191c                CommandExecHelp
+                0x00001cae       0x98 Bin/Commands.o
+                0x00001cae                CommandExecHelp
  .text.CommandGetRssi
-                0x000019b4       0x68 Bin/Commands.o
-                0x000019b4                CommandGetRssi
+                0x00001d46       0x68 Bin/Commands.o
+                0x00001d46                CommandGetRssi
  .text.CalcChecksum.constprop.0
-                0x00001a1c       0x14 Bin/XModem.o
+                0x00001dae       0x14 Bin/XModem.o
  .text.XModemReceive
-                0x00001a30       0x30 Bin/XModem.o
-                0x00001a30                XModemReceive
+                0x00001dc2       0x30 Bin/XModem.o
+                0x00001dc2                XModemReceive
  .text.XModemSend
-                0x00001a60       0x26 Bin/XModem.o
-                0x00001a60                XModemSend
+                0x00001df2       0x26 Bin/XModem.o
+                0x00001df2                XModemSend
  .text.XModemProcessByte
-                0x00001a86      0x284 Bin/XModem.o
-                0x00001a86                XModemProcessByte
+                0x00001e18      0x284 Bin/XModem.o
+                0x00001e18                XModemProcessByte
  .text.XModemTick
-                0x00001d0a       0x5c Bin/XModem.o
-                0x00001d0a                XModemTick
+                0x0000209c       0x5c Bin/XModem.o
+                0x0000209c                XModemTick
  .text.CommandLineProcessByte
-                0x00001d66      0x342 Bin/CommandLine.o
-                0x00001d66                CommandLineProcessByte
+                0x000020f8      0x342 Bin/CommandLine.o
+                0x000020f8                CommandLineProcessByte
  .text.CommandLineTick
-                0x000020a8        0x2 Bin/CommandLine.o
-                0x000020a8                CommandLineTick
+                0x0000243a        0x2 Bin/CommandLine.o
+                0x0000243a                CommandLineTick
  .text.StartDemod
-                0x000020aa       0x3c Bin/ISO14443-2A.o
+                0x0000243c       0x3c Bin/ISO14443-2A.o
  .text.__vector_34
-                0x000020e6       0x88 Bin/ISO14443-2A.o
-                0x000020e6                __vector_34
+                0x00002478       0x88 Bin/ISO14443-2A.o
+                0x00002478                __vector_34
  .text.__vector_22
-                0x0000216e      0x148 Bin/ISO14443-2A.o
-                0x0000216e                __vector_22
+                0x00002500      0x148 Bin/ISO14443-2A.o
+                0x00002500                __vector_22
  .text.__vector_83
-                0x000022b6      0x1e2 Bin/ISO14443-2A.o
-                0x000022b6                __vector_83
+                0x00002648      0x1e2 Bin/ISO14443-2A.o
+                0x00002648                __vector_83
  .text.ISO14443ACodecInit
-                0x00002498       0x6e Bin/ISO14443-2A.o
-                0x00002498                ISO14443ACodecInit
+                0x0000282a       0x6e Bin/ISO14443-2A.o
+                0x0000282a                ISO14443ACodecInit
  .text.ISO14443ACodecTask
-                0x00002506       0xfc Bin/ISO14443-2A.o
-                0x00002506                ISO14443ACodecTask
+                0x00002898       0xfc Bin/ISO14443-2A.o
+                0x00002898                ISO14443ACodecTask
  .text.MifareClassicAppInit1K
-                0x00002602       0x1a Bin/MifareClassic.o
-                0x00002602                MifareClassicAppInit1K
+                0x00002994       0x1a Bin/MifareClassic.o
+                0x00002994                MifareClassicAppInit1K
  .text.MifareClassicAppInit4K
-                0x0000261c       0x1a Bin/MifareClassic.o
-                0x0000261c                MifareClassicAppInit4K
+                0x000029ae       0x1a Bin/MifareClassic.o
+                0x000029ae                MifareClassicAppInit4K
  .text.MifareClassicAppReset
-                0x00002636        0x8 Bin/MifareClassic.o
-                0x00002636                MifareClassicAppReset
+                0x000029c8        0x8 Bin/MifareClassic.o
+                0x000029c8                MifareClassicAppReset
  .text.MifareClassicAppTask
-                0x0000263e        0x2 Bin/MifareClassic.o
-                0x0000263e                MifareClassicAppTask
+                0x000029d0        0x2 Bin/MifareClassic.o
+                0x000029d0                MifareClassicAppTask
  .text.MifareClassicAppProcess
-                0x00002640      0x8fa Bin/MifareClassic.o
-                0x00002640                MifareClassicAppProcess
+                0x000029d2      0x8fa Bin/MifareClassic.o
+                0x000029d2                MifareClassicAppProcess
  .text.MifareClassicGetUid
-                0x00002f3a        0xc Bin/MifareClassic.o
-                0x00002f3a                MifareClassicGetUid
+                0x000032cc        0xc Bin/MifareClassic.o
+                0x000032cc                MifareClassicGetUid
  .text.MifareClassicSetUid
-                0x00002f46       0x40 Bin/MifareClassic.o
-                0x00002f46                MifareClassicSetUid
+                0x000032d8       0x40 Bin/MifareClassic.o
+                0x000032d8                MifareClassicSetUid
  .text.ISO14443AAppendCRCA
-                0x00002f86       0x5e Bin/ISO14443-3A.o
-                0x00002f86                ISO14443AAppendCRCA
+                0x00003318       0x5e Bin/ISO14443-3A.o
+                0x00003318                ISO14443AAppendCRCA
  .text.ISO14443ACheckCRCA
-                0x00002fe4       0x7e Bin/ISO14443-3A.o
-                0x00002fe4                ISO14443ACheckCRCA
+                0x00003376       0x7e Bin/ISO14443-3A.o
+                0x00003376                ISO14443ACheckCRCA
  .text.Crypto1LFSR
-                0x00003062       0x8c Bin/Crypto1.o
+                0x000033f4       0x8c Bin/Crypto1.o
  .text.Crypto1FilterOutput
-                0x000030ee       0x68 Bin/Crypto1.o
-                0x000030ee                Crypto1FilterOutput
+                0x00003480       0x68 Bin/Crypto1.o
+                0x00003480                Crypto1FilterOutput
  .text.Crypto1Setup
-                0x00003156      0x340 Bin/Crypto1.o
-                0x00003156                Crypto1Setup
+                0x000034e8      0x340 Bin/Crypto1.o
+                0x000034e8                Crypto1Setup
  .text.Crypto1Auth
-                0x00003496       0x52 Bin/Crypto1.o
-                0x00003496                Crypto1Auth
+                0x00003828       0x52 Bin/Crypto1.o
+                0x00003828                Crypto1Auth
  .text.Crypto1Byte
-                0x000034e8       0x82 Bin/Crypto1.o
-                0x000034e8                Crypto1Byte
+                0x0000387a       0x82 Bin/Crypto1.o
+                0x0000387a                Crypto1Byte
  .text.Crypto1Nibble
-                0x0000356a       0x48 Bin/Crypto1.o
-                0x0000356a                Crypto1Nibble
+                0x000038fc       0x48 Bin/Crypto1.o
+                0x000038fc                Crypto1Nibble
  .text.Crypto1PRNG
-                0x000035b2       0xb6 Bin/Crypto1.o
-                0x000035b2                Crypto1PRNG
+                0x00003944       0xb6 Bin/Crypto1.o
+                0x00003944                Crypto1PRNG
  .text.USB_Device_ProcessControlRequest
-                0x00003668      0x296 Bin/DeviceStandardReq.o
-                0x00003668                USB_Device_ProcessControlRequest
+                0x000039fa      0x296 Bin/DeviceStandardReq.o
+                0x000039fa                USB_Device_ProcessControlRequest
  .text.USB_Event_Stub
-                0x000038fe        0x2 Bin/Events.o
-                0x000038fe                USB_Event_Stub
-                0x000038fe                EVENT_USB_Device_Suspend
-                0x000038fe                EVENT_USB_Device_StartOfFrame
-                0x000038fe                EVENT_USB_Device_Reset
-                0x000038fe                EVENT_USB_Device_WakeUp
+                0x00003c90        0x2 Bin/Events.o
+                0x00003c90                USB_Event_Stub
+                0x00003c90                EVENT_USB_Device_Suspend
+                0x00003c90                EVENT_USB_Device_StartOfFrame
+                0x00003c90                EVENT_USB_Device_Reset
+                0x00003c90                EVENT_USB_Device_WakeUp
  .text.USB_USBTask
-                0x00003900       0x2a Bin/USBTask.o
-                0x00003900                USB_USBTask
+                0x00003c92       0x2a Bin/USBTask.o
+                0x00003c92                USB_USBTask
  .text.Endpoint_Write_Stream_LE
-                0x0000392a       0xd8 Bin/EndpointStream_XMEGA.o
-                0x0000392a                Endpoint_Write_Stream_LE
+                0x00003cbc       0xd8 Bin/EndpointStream_XMEGA.o
+                0x00003cbc                Endpoint_Write_Stream_LE
  .text.Endpoint_Write_Control_Stream_LE
-                0x00003a02      0x142 Bin/EndpointStream_XMEGA.o
-                0x00003a02                Endpoint_Write_Control_Stream_LE
+                0x00003d94      0x142 Bin/EndpointStream_XMEGA.o
+                0x00003d94                Endpoint_Write_Control_Stream_LE
  .text.Endpoint_Write_Control_PStream_LE
-                0x00003b44      0x13e Bin/EndpointStream_XMEGA.o
-                0x00003b44                Endpoint_Write_Control_PStream_LE
+                0x00003ed6      0x13e Bin/EndpointStream_XMEGA.o
+                0x00003ed6                Endpoint_Write_Control_PStream_LE
  .text.Endpoint_ClearIN
-                0x00003c82       0x32 Bin/Endpoint_XMEGA.o
-                0x00003c82                Endpoint_ClearIN
+                0x00004014       0x32 Bin/Endpoint_XMEGA.o
+                0x00004014                Endpoint_ClearIN
  .text.Endpoint_ClearOUT
-                0x00003cb4       0x1e Bin/Endpoint_XMEGA.o
-                0x00003cb4                Endpoint_ClearOUT
+                0x00004046       0x1e Bin/Endpoint_XMEGA.o
+                0x00004046                Endpoint_ClearOUT
  .text.Endpoint_Read_8
-                0x00003cd2       0x1e Bin/Endpoint_XMEGA.o
-                0x00003cd2                Endpoint_Read_8
+                0x00004064       0x1e Bin/Endpoint_XMEGA.o
+                0x00004064                Endpoint_Read_8
  .text.Endpoint_Write_8
-                0x00003cf0       0x1e Bin/Endpoint_XMEGA.o
-                0x00003cf0                Endpoint_Write_8
+                0x00004082       0x1e Bin/Endpoint_XMEGA.o
+                0x00004082                Endpoint_Write_8
  .text.Endpoint_SelectEndpoint
-                0x00003d0e       0x72 Bin/Endpoint_XMEGA.o
-                0x00003d0e                Endpoint_SelectEndpoint
+                0x000040a0       0x72 Bin/Endpoint_XMEGA.o
+                0x000040a0                Endpoint_SelectEndpoint
  .text.Endpoint_StallTransaction
-                0x00003d80       0x38 Bin/Endpoint_XMEGA.o
-                0x00003d80                Endpoint_StallTransaction
+                0x00004112       0x38 Bin/Endpoint_XMEGA.o
+                0x00004112                Endpoint_StallTransaction
  .text.Endpoint_ClearSETUP
-                0x00003db8       0x58 Bin/Endpoint_XMEGA.o
-                0x00003db8                Endpoint_ClearSETUP
+                0x0000414a       0x58 Bin/Endpoint_XMEGA.o
+                0x0000414a                Endpoint_ClearSETUP
  .text.Endpoint_IsSETUPReceived
-                0x00003e10       0x32 Bin/Endpoint_XMEGA.o
-                0x00003e10                Endpoint_IsSETUPReceived
+                0x000041a2       0x32 Bin/Endpoint_XMEGA.o
+                0x000041a2                Endpoint_IsSETUPReceived
  .text.Endpoint_IsOUTReceived
-                0x00003e42       0x32 Bin/Endpoint_XMEGA.o
-                0x00003e42                Endpoint_IsOUTReceived
+                0x000041d4       0x32 Bin/Endpoint_XMEGA.o
+                0x000041d4                Endpoint_IsOUTReceived
  .text.Endpoint_IsINReady
-                0x00003e74       0x18 Bin/Endpoint_XMEGA.o
-                0x00003e74                Endpoint_IsINReady
+                0x00004206       0x18 Bin/Endpoint_XMEGA.o
+                0x00004206                Endpoint_IsINReady
  .text.Endpoint_ConfigureEndpoint_PRV
-                0x00003e8c       0x9a Bin/Endpoint_XMEGA.o
-                0x00003e8c                Endpoint_ConfigureEndpoint_PRV
+                0x0000421e       0x9a Bin/Endpoint_XMEGA.o
+                0x0000421e                Endpoint_ConfigureEndpoint_PRV
  .text.Endpoint_ConfigureEndpointTable
-                0x00003f26       0xec Bin/Endpoint_XMEGA.o
-                0x00003f26                Endpoint_ConfigureEndpointTable
+                0x000042b8       0xec Bin/Endpoint_XMEGA.o
+                0x000042b8                Endpoint_ConfigureEndpointTable
  .text.Endpoint_ClearEndpoints
-                0x00004012       0x70 Bin/Endpoint_XMEGA.o
-                0x00004012                Endpoint_ClearEndpoints
+                0x000043a4       0x70 Bin/Endpoint_XMEGA.o
+                0x000043a4                Endpoint_ClearEndpoints
  .text.Endpoint_ClearStatusStage
-                0x00004082       0x2c Bin/Endpoint_XMEGA.o
-                0x00004082                Endpoint_ClearStatusStage
+                0x00004414       0x2c Bin/Endpoint_XMEGA.o
+                0x00004414                Endpoint_ClearStatusStage
  .text.Endpoint_WaitUntilReady
-                0x000040ae       0xa6 Bin/Endpoint_XMEGA.o
-                0x000040ae                Endpoint_WaitUntilReady
+                0x00004440       0xa6 Bin/Endpoint_XMEGA.o
+                0x00004440                Endpoint_WaitUntilReady
  .text.USB_Disable
-                0x00004154       0x1a Bin/USBController_XMEGA.o
-                0x00004154                USB_Disable
+                0x000044e6       0x1a Bin/USBController_XMEGA.o
+                0x000044e6                USB_Disable
  .text.USB_ResetInterface
-                0x0000416e       0x5c Bin/USBController_XMEGA.o
-                0x0000416e                USB_ResetInterface
+                0x00004500       0x5c Bin/USBController_XMEGA.o
+                0x00004500                USB_ResetInterface
  .text.USB_Init
-                0x000041ca       0x52 Bin/USBController_XMEGA.o
-                0x000041ca                USB_Init
+                0x0000455c       0x52 Bin/USBController_XMEGA.o
+                0x0000455c                USB_Init
  .text.USB_INT_DisableAllInterrupts
-                0x0000421c        0xe Bin/USBInterrupt_XMEGA.o
-                0x0000421c                USB_INT_DisableAllInterrupts
+                0x000045ae        0xe Bin/USBInterrupt_XMEGA.o
+                0x000045ae                USB_INT_DisableAllInterrupts
  .text.USB_INT_ClearAllInterrupts
-                0x0000422a        0xc Bin/USBInterrupt_XMEGA.o
-                0x0000422a                USB_INT_ClearAllInterrupts
+                0x000045bc        0xc Bin/USBInterrupt_XMEGA.o
+                0x000045bc                USB_INT_ClearAllInterrupts
  .text.__vector_125
-                0x00004236       0xda Bin/USBInterrupt_XMEGA.o
-                0x00004236                __vector_125
+                0x000045c8       0xda Bin/USBInterrupt_XMEGA.o
+                0x000045c8                __vector_125
  .text.CDC_Device_ConfigureEndpoints
-                0x00004310       0x4a Bin/CDCClassDevice.o
-                0x00004310                CDC_Device_ConfigureEndpoints
+                0x000046a2       0x4a Bin/CDCClassDevice.o
+                0x000046a2                CDC_Device_ConfigureEndpoints
  .text.CDC_Device_SendString
-                0x0000435a       0x52 Bin/CDCClassDevice.o
-                0x0000435a                CDC_Device_SendString
+                0x000046ec       0x52 Bin/CDCClassDevice.o
+                0x000046ec                CDC_Device_SendString
  .text.CDC_Device_SendData
-                0x000043ac       0x54 Bin/CDCClassDevice.o
-                0x000043ac                CDC_Device_SendData
+                0x0000473e       0x54 Bin/CDCClassDevice.o
+                0x0000473e                CDC_Device_SendData
  .text.CDC_Device_SendByte
-                0x00004400       0x6e Bin/CDCClassDevice.o
-                0x00004400                CDC_Device_SendByte
+                0x00004792       0x6e Bin/CDCClassDevice.o
+                0x00004792                CDC_Device_SendByte
  .text.CDC_Device_Flush
-                0x0000446e       0x90 Bin/CDCClassDevice.o
-                0x0000446e                CDC_Device_Flush
+                0x00004800       0x90 Bin/CDCClassDevice.o
+                0x00004800                CDC_Device_Flush
  .text.CDC_Device_USBTask
-                0x000044fe       0x36 Bin/CDCClassDevice.o
-                0x000044fe                CDC_Device_USBTask
+                0x00004890       0x36 Bin/CDCClassDevice.o
+                0x00004890                CDC_Device_USBTask
  .text.CDC_Device_ReceiveByte
-                0x00004534       0xbe Bin/CDCClassDevice.o
-                0x00004534                CDC_Device_ReceiveByte
+                0x000048c6       0xbe Bin/CDCClassDevice.o
+                0x000048c6                CDC_Device_ReceiveByte
  .text.CDC_Device_Event_Stub
-                0x000045f2        0x2 Bin/CDCClassDevice.o
-                0x000045f2                EVENT_CDC_Device_ControLineStateChanged
-                0x000045f2                EVENT_CDC_Device_BreakSent
-                0x000045f2                CDC_Device_Event_Stub
-                0x000045f2                EVENT_CDC_Device_LineEncodingChanged
+                0x00004984        0x2 Bin/CDCClassDevice.o
+                0x00004984                EVENT_CDC_Device_ControLineStateChanged
+                0x00004984                EVENT_CDC_Device_BreakSent
+                0x00004984                CDC_Device_Event_Stub
+                0x00004984                EVENT_CDC_Device_LineEncodingChanged
  .text.CDC_Device_ProcessControlRequest
-                0x000045f4      0x13a Bin/CDCClassDevice.o
-                0x000045f4                CDC_Device_ProcessControlRequest
+                0x00004986      0x13a Bin/CDCClassDevice.o
+                0x00004986                CDC_Device_ProcessControlRequest
  .text.libgcc.mul
-                0x0000472e        0xc c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_mulshisi3.o)
-                0x0000472e                __mulshisi3
-                0x00004732                __mulohisi3
+                0x00004ac0        0xc c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_mulshisi3.o)
+                0x00004ac0                __mulshisi3
+                0x00004ac4                __mulohisi3
  .text.libgcc.mul
-                0x0000473a       0x14 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_muluhisi3.o)
-                0x0000473a                __muluhisi3
+                0x00004acc       0x14 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_muluhisi3.o)
+                0x00004acc                __muluhisi3
  .text.libgcc.mul
-                0x0000474e       0x18 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_umulhisi3.o)
-                0x0000474e                __umulhisi3
+                0x00004ae0       0x18 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_umulhisi3.o)
+                0x00004ae0                __umulhisi3
  .text.avr-libc
-                0x00004766       0xb4 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
-                0x000047fc                rand_r
-                0x000047fe                rand
-                0x00004804                srand
+                0x00004af8       0xb4 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
+                0x00004b8e                rand_r
+                0x00004b90                rand
+                0x00004b96                srand
  .text.avr-libc
-                0x0000481a       0x12 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(memcpy_P.o)
-                0x0000481a                memcpy_P
+                0x00004bac       0x12 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(memcpy_P.o)
+                0x00004bac                memcpy_P
  .text.avr-libc
-                0x0000482c       0x12 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(strcmp_P.o)
-                0x0000482c                strcmp_P
+                0x00004bbe       0x12 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(strcmp_P.o)
+                0x00004bbe                strcmp_P
  .text.avr-libc
-                0x0000483e       0x1e c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(strncpy_P.o)
-                0x0000483e                strncpy_P
+                0x00004bd0       0x1e c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(strncpy_P.o)
+                0x00004bd0                strncpy_P
  .text.avr-libc
-                0x0000485c       0x12 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(memcpy.o)
-                0x0000485c                memcpy
+                0x00004bee       0x12 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(memcpy.o)
+                0x00004bee                memcpy
  .text.avr-libc
-                0x0000486e       0x5a c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
-                0x0000486e                snprintf_P
+                0x00004c00       0x5a c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
+                0x00004c00                snprintf_P
  .text.avr-libc
-                0x000048c8      0x39a c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
-                0x000048c8                vfprintf
+                0x00004c5a      0x39a c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
+                0x00004c5a                vfprintf
  .text.avr-libc
-                0x00004c62       0x16 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(eerd_block_atxmega32a4u.o)
-                0x00004c62                __eerd_block_x32a4u
+                0x00004ff4       0x16 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(eerd_block_atxmega32a4u.o)
+                0x00004ff4                __eerd_block_x32a4u
  .text.avr-libc
-                0x00004c78       0x12 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(eewr_block_atxmega32a4u.o)
-                0x00004c78                __eewr_block_x32a4u
+                0x0000500a       0x12 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(eewr_block_atxmega32a4u.o)
+                0x0000500a                __eewr_block_x32a4u
  .text.avr-libc
-                0x00004c8a       0x46 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(eewr_byte_atxmega32a4u.o)
-                0x00004c8a                __eewr_byte_x32a4u
-                0x00004c8c                __eewr_r18_x32a4u
+                0x0000501c       0x46 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(eewr_byte_atxmega32a4u.o)
+                0x0000501c                __eewr_byte_x32a4u
+                0x0000501e                __eewr_r18_x32a4u
  .text.avr-libc
-                0x00004cd0       0x16 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(strnlen_P.o)
-                0x00004cd0                strnlen_P
+                0x00005062       0x16 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(strnlen_P.o)
+                0x00005062                strnlen_P
  .text.avr-libc
-                0x00004ce6       0x16 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(strnlen.o)
-                0x00004ce6                strnlen
+                0x00005078       0x16 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(strnlen.o)
+                0x00005078                strnlen
  .text.avr-libc
-                0x00004cfc       0x58 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
-                0x00004cfc                fputc
+                0x0000508e       0x58 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
+                0x0000508e                fputc
  .text.avr-libc
-                0x00004d54       0xbc c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(ultoa_invert.o)
-                0x00004d54                __ultoa_invert
+                0x000050e6       0xbc c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(ultoa_invert.o)
+                0x000050e6                __ultoa_invert
  .text.libgcc.div
-                0x00004e10       0x36 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_divmodsi4.o)
-                0x00004e10                __divmodsi4
+                0x000051a2       0x36 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_divmodsi4.o)
+                0x000051a2                __divmodsi4
  .text.libgcc.prologue
-                0x00004e46       0x32 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_prologue.o)
-                0x00004e46                __prologue_saves__
+                0x000051d8       0x32 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_prologue.o)
+                0x000051d8                __prologue_saves__
  .text.libgcc.prologue
-                0x00004e78       0x30 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_epilogue.o)
-                0x00004e78                __epilogue_restores__
+                0x0000520a       0x30 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_epilogue.o)
+                0x0000520a                __epilogue_restores__
  .text.libgcc.div
-                0x00004ea8       0x44 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_udivmodsi4.o)
-                0x00004ea8                __udivmodsi4
-                0x00004eec                . = ALIGN (0x2)
+                0x0000523a       0x44 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_udivmodsi4.o)
+                0x0000523a                __udivmodsi4
+                0x0000527e                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x00004eec        0x0 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_exit.o)
-                0x00004eec                _exit
-                0x00004eec                exit
+ .fini9         0x0000527e        0x0 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_exit.o)
+                0x0000527e                _exit
+                0x0000527e                exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -1365,11 +1370,11 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x00004eec        0x4 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_exit.o)
+ .fini0         0x0000527e        0x4 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_exit.o)
  *(.fini0)
-                0x00004ef0                _etext = .
+                0x00005282                _etext = .
 
-.data           0x00802000       0x92 load address 0x00004ef0
+.data           0x00802000       0x92 load address 0x00005282
                 0x00802000                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00802000        0x0 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2/crtx32a4u.o
@@ -1464,54 +1469,55 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
                 0x00802092                _edata = .
                 0x00802092                PROVIDE (__data_end, .)
 
-.bss            0x00802092      0x60b
+.bss            0x00802092      0xa0b
                 0x00802092                PROVIDE (__bss_start, .)
  *(.bss)
- .bss           0x00802092        0x1 Bin/Button.o
- .bss           0x00802093        0x1 Bin/LED.o
-                0x00802093                LEDPulseMask
- .bss           0x00802094        0x1 Bin/Terminal.o
-                0x00802094                TerminalState
- .bss           0x00802095        0xe Bin/XModem.o
- .bss           0x008020a3        0x2 Bin/CommandLine.o
- .bss           0x008020a5       0x10 Bin/ISO14443-2A.o
- .bss           0x008020b5       0x1d Bin/MifareClassic.o
- .bss           0x008020d2        0x6 Bin/Crypto1.o
+ .bss           0x00802092      0x400 Bin/Memory.o
+ .bss           0x00802492        0x1 Bin/Button.o
+ .bss           0x00802493        0x1 Bin/LED.o
+                0x00802493                LEDPulseMask
+ .bss           0x00802494        0x1 Bin/Terminal.o
+                0x00802494                TerminalState
+ .bss           0x00802495        0xe Bin/XModem.o
+ .bss           0x008024a3        0x2 Bin/CommandLine.o
+ .bss           0x008024a5       0x10 Bin/ISO14443-2A.o
+ .bss           0x008024b5       0x1d Bin/MifareClassic.o
+ .bss           0x008024d2        0x6 Bin/Crypto1.o
  *(.bss*)
  *(COMMON)
- COMMON         0x008020d8       0x25 Bin/Configuration.o
-                0x008020d8                ActiveConfiguration
- COMMON         0x008020fd       0x13 Bin/Settings.o
-                0x008020fd                GlobalSettings
- COMMON         0x00802110      0x100 Bin/Terminal.o
-                0x00802110                TerminalBuffer
- COMMON         0x00802210      0x100 Bin/Codec.o
-                0x00802210                CodecBuffer
- COMMON         0x00802310        0x3 Bin/DeviceStandardReq.o
-                0x00802310                USB_Device_ConfigurationNumber
-                0x00802311                USB_Device_CurrentlySelfPowered
-                0x00802312                USB_Device_RemoteWakeupEnabled
- COMMON         0x00802313        0xa Bin/USBTask.o
-                0x00802313                USB_IsInitialized
-                0x00802314                USB_DeviceState
-                0x00802315                USB_ControlRequest
- COMMON         0x0080231d      0x31d Bin/Endpoint_XMEGA.o
-                0x0080231d                USB_Endpoint_SelectedFIFO
-                0x0080231f                USB_Endpoint_SelectedHandle
-                0x00802321                USB_Endpoint_SelectedEndpoint
-                0x00802322                USB_Endpoint_FIFOs
- COMMON         0x0080263a       0x63 Bin/USBController_XMEGA.o
-                0x0080263a                USB_EndpointTable
-                0x0080269d                PROVIDE (__bss_end, .)
-                0x00004ef0                __data_load_start = LOADADDR (.data)
-                0x00004f82                __data_load_end = (__data_load_start + SIZEOF (.data))
+ COMMON         0x008024d8       0x25 Bin/Configuration.o
+                0x008024d8                ActiveConfiguration
+ COMMON         0x008024fd       0x13 Bin/Settings.o
+                0x008024fd                GlobalSettings
+ COMMON         0x00802510      0x100 Bin/Terminal.o
+                0x00802510                TerminalBuffer
+ COMMON         0x00802610      0x100 Bin/Codec.o
+                0x00802610                CodecBuffer
+ COMMON         0x00802710        0x3 Bin/DeviceStandardReq.o
+                0x00802710                USB_Device_ConfigurationNumber
+                0x00802711                USB_Device_CurrentlySelfPowered
+                0x00802712                USB_Device_RemoteWakeupEnabled
+ COMMON         0x00802713        0xa Bin/USBTask.o
+                0x00802713                USB_IsInitialized
+                0x00802714                USB_DeviceState
+                0x00802715                USB_ControlRequest
+ COMMON         0x0080271d      0x31d Bin/Endpoint_XMEGA.o
+                0x0080271d                USB_Endpoint_SelectedFIFO
+                0x0080271f                USB_Endpoint_SelectedHandle
+                0x00802721                USB_Endpoint_SelectedEndpoint
+                0x00802722                USB_Endpoint_FIFOs
+ COMMON         0x00802a3a       0x63 Bin/USBController_XMEGA.o
+                0x00802a3a                USB_EndpointTable
+                0x00802a9d                PROVIDE (__bss_end, .)
+                0x00005282                __data_load_start = LOADADDR (.data)
+                0x00005314                __data_load_end = (__data_load_start + SIZEOF (.data))
 
-.noinit         0x0080269d        0x0
-                0x0080269d                PROVIDE (__noinit_start, .)
+.noinit         0x00802a9d        0x0
+                0x00802a9d                PROVIDE (__noinit_start, .)
  *(.noinit*)
-                0x0080269d                PROVIDE (__noinit_end, .)
-                0x0080269d                _end = .
-                0x0080269d                PROVIDE (__heap_start, .)
+                0x00802a9d                PROVIDE (__noinit_end, .)
+                0x00802a9d                _end = .
+                0x00802a9d                PROVIDE (__heap_start, .)
 
 .eeprom         0x00810000       0x13
  *(.eeprom*)
@@ -1651,7 +1657,7 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
 .debug_sfnames
  *(.debug_sfnames)
 
-.debug_aranges  0x00000000      0xbe0
+.debug_aranges  0x00000000      0xbf0
  *(.debug_aranges)
  .debug_aranges
                 0x00000000       0x20 Bin/Chameleon-Mini.o
@@ -1666,161 +1672,161 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
  .debug_aranges
                 0x00000140       0x28 Bin/Common.o
  .debug_aranges
-                0x00000168       0x48 Bin/Memory.o
+                0x00000168       0x58 Bin/Memory.o
  .debug_aranges
-                0x000001b0       0x48 Bin/Button.o
+                0x000001c0       0x48 Bin/Button.o
  .debug_aranges
-                0x000001f8       0x50 Bin/Settings.o
+                0x00000208       0x50 Bin/Settings.o
  .debug_aranges
-                0x00000248       0x18 Bin/LED.o
+                0x00000258       0x18 Bin/LED.o
  .debug_aranges
-                0x00000260       0x68 Bin/Terminal.o
+                0x00000270       0x68 Bin/Terminal.o
  .debug_aranges
-                0x000002c8       0xc8 Bin/Commands.o
+                0x000002d8       0xc8 Bin/Commands.o
  .debug_aranges
-                0x00000390       0x40 Bin/XModem.o
+                0x000003a0       0x40 Bin/XModem.o
  .debug_aranges
-                0x000003d0       0x30 Bin/CommandLine.o
+                0x000003e0       0x30 Bin/CommandLine.o
  .debug_aranges
-                0x00000400       0x18 Bin/Codec.o
+                0x00000410       0x18 Bin/Codec.o
  .debug_aranges
-                0x00000418       0x48 Bin/ISO14443-2A.o
+                0x00000428       0x48 Bin/ISO14443-2A.o
  .debug_aranges
-                0x00000460       0x50 Bin/MifareClassic.o
+                0x00000470       0x50 Bin/MifareClassic.o
  .debug_aranges
-                0x000004b0       0x28 Bin/ISO14443-3A.o
+                0x000004c0       0x28 Bin/ISO14443-3A.o
  .debug_aranges
-                0x000004d8       0x50 Bin/Crypto1.o
+                0x000004e8       0x50 Bin/Crypto1.o
  .debug_aranges
-                0x00000528       0x38 Bin/HIDParser.o
+                0x00000538       0x38 Bin/HIDParser.o
  .debug_aranges
-                0x00000560       0x38 Bin/ConfigDescriptors.o
+                0x00000570       0x38 Bin/ConfigDescriptors.o
  .debug_aranges
-                0x00000598       0x20 Bin/DeviceStandardReq.o
+                0x000005a8       0x20 Bin/DeviceStandardReq.o
  .debug_aranges
-                0x000005b8       0x20 Bin/Events.o
+                0x000005c8       0x20 Bin/Events.o
  .debug_aranges
-                0x000005d8       0x18 Bin/HostStandardReq.o
+                0x000005e8       0x18 Bin/HostStandardReq.o
  .debug_aranges
-                0x000005f0       0x20 Bin/USBTask.o
+                0x00000600       0x20 Bin/USBTask.o
  .debug_aranges
-                0x00000610       0x20 Bin/Device_XMEGA.o
+                0x00000620       0x20 Bin/Device_XMEGA.o
  .debug_aranges
-                0x00000630       0xc8 Bin/EndpointStream_XMEGA.o
+                0x00000640       0xc8 Bin/EndpointStream_XMEGA.o
  .debug_aranges
-                0x000006f8       0x90 Bin/Endpoint_XMEGA.o
+                0x00000708       0x90 Bin/Endpoint_XMEGA.o
  .debug_aranges
-                0x00000788       0x18 Bin/Host_XMEGA.o
+                0x00000798       0x18 Bin/Host_XMEGA.o
  .debug_aranges
-                0x000007a0       0x18 Bin/PipeStream_XMEGA.o
+                0x000007b0       0x18 Bin/PipeStream_XMEGA.o
  .debug_aranges
-                0x000007b8       0x18 Bin/Pipe_XMEGA.o
+                0x000007c8       0x18 Bin/Pipe_XMEGA.o
  .debug_aranges
-                0x000007d0       0x30 Bin/USBController_XMEGA.o
+                0x000007e0       0x30 Bin/USBController_XMEGA.o
  .debug_aranges
-                0x00000800       0x30 Bin/USBInterrupt_XMEGA.o
+                0x00000810       0x30 Bin/USBInterrupt_XMEGA.o
  .debug_aranges
-                0x00000830       0x30 Bin/AudioClassDevice.o
+                0x00000840       0x30 Bin/AudioClassDevice.o
  .debug_aranges
-                0x00000860       0x98 Bin/CDCClassDevice.o
+                0x00000870       0x98 Bin/CDCClassDevice.o
  .debug_aranges
-                0x000008f8       0x30 Bin/HIDClassDevice.o
+                0x00000908       0x30 Bin/HIDClassDevice.o
  .debug_aranges
-                0x00000928       0x30 Bin/MassStorageClassDevice.o
+                0x00000938       0x30 Bin/MassStorageClassDevice.o
  .debug_aranges
-                0x00000958       0x40 Bin/MIDIClassDevice.o
+                0x00000968       0x40 Bin/MIDIClassDevice.o
  .debug_aranges
-                0x00000998       0x90 Bin/PrinterClassDevice.o
+                0x000009a8       0x90 Bin/PrinterClassDevice.o
  .debug_aranges
-                0x00000a28       0x48 Bin/RNDISClassDevice.o
+                0x00000a38       0x48 Bin/RNDISClassDevice.o
  .debug_aranges
-                0x00000a70       0x18 Bin/AndroidAccessoryClassHost.o
+                0x00000a80       0x18 Bin/AndroidAccessoryClassHost.o
  .debug_aranges
-                0x00000a88       0x18 Bin/AudioClassHost.o
+                0x00000a98       0x18 Bin/AudioClassHost.o
  .debug_aranges
-                0x00000aa0       0x18 Bin/CDCClassHost.o
+                0x00000ab0       0x18 Bin/CDCClassHost.o
  .debug_aranges
-                0x00000ab8       0x18 Bin/HIDClassHost.o
+                0x00000ac8       0x18 Bin/HIDClassHost.o
  .debug_aranges
-                0x00000ad0       0x18 Bin/MassStorageClassHost.o
+                0x00000ae0       0x18 Bin/MassStorageClassHost.o
  .debug_aranges
-                0x00000ae8       0x18 Bin/MIDIClassHost.o
+                0x00000af8       0x18 Bin/MIDIClassHost.o
  .debug_aranges
-                0x00000b00       0x18 Bin/PrinterClassHost.o
+                0x00000b10       0x18 Bin/PrinterClassHost.o
  .debug_aranges
-                0x00000b18       0x18 Bin/RNDISClassHost.o
+                0x00000b28       0x18 Bin/RNDISClassHost.o
  .debug_aranges
-                0x00000b30       0x18 Bin/StillImageClassHost.o
+                0x00000b40       0x18 Bin/StillImageClassHost.o
  .debug_aranges
-                0x00000b48       0x38 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
+                0x00000b58       0x38 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
  .debug_aranges
-                0x00000b80       0x20 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
+                0x00000b90       0x20 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
  .debug_aranges
-                0x00000ba0       0x20 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
+                0x00000bb0       0x20 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
  .debug_aranges
-                0x00000bc0       0x20 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
+                0x00000bd0       0x20 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
 
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000    0x19186
+.debug_info     0x00000000    0x19536
  *(.debug_info)
  .debug_info    0x00000000     0x1381 Bin/Chameleon-Mini.o
  .debug_info    0x00001381      0x962 Bin/LUFADescriptors.o
  .debug_info    0x00001ce3      0xde5 Bin/System.o
- .debug_info    0x00002ac8      0x64a Bin/Configuration.o
- .debug_info    0x00003112      0x161 Bin/Random.o
- .debug_info    0x00003273      0x1b3 Bin/Common.o
- .debug_info    0x00003426      0xfb2 Bin/Memory.o
- .debug_info    0x000043d8      0xa19 Bin/Button.o
- .debug_info    0x00004df1      0x4e3 Bin/Settings.o
- .debug_info    0x000052d4       0x7a Bin/LED.o
- .debug_info    0x0000534e      0xb73 Bin/Terminal.o
- .debug_info    0x00005ec1     0x17f3 Bin/Commands.o
- .debug_info    0x000076b4      0x9a3 Bin/XModem.o
- .debug_info    0x00008057      0xb66 Bin/CommandLine.o
- .debug_info    0x00008bbd      0x1f1 Bin/Codec.o
- .debug_info    0x00008dae     0x187e Bin/ISO14443-2A.o
- .debug_info    0x0000a62c     0x101c Bin/MifareClassic.o
- .debug_info    0x0000b648      0x179 Bin/ISO14443-3A.o
- .debug_info    0x0000b7c1      0x53a Bin/Crypto1.o
- .debug_info    0x0000bcfb      0x72e Bin/HIDParser.o
- .debug_info    0x0000c429      0x5ed Bin/ConfigDescriptors.o
- .debug_info    0x0000ca16     0x11d6 Bin/DeviceStandardReq.o
- .debug_info    0x0000dbec       0x7f Bin/Events.o
- .debug_info    0x0000dc6b       0x5d Bin/HostStandardReq.o
- .debug_info    0x0000dcc8      0x435 Bin/USBTask.o
- .debug_info    0x0000e0fd      0x670 Bin/Device_XMEGA.o
- .debug_info    0x0000e76d     0x19be Bin/EndpointStream_XMEGA.o
- .debug_info    0x0001012b      0xcff Bin/Endpoint_XMEGA.o
- .debug_info    0x00010e2a       0x5d Bin/Host_XMEGA.o
- .debug_info    0x00010e87       0x5d Bin/PipeStream_XMEGA.o
- .debug_info    0x00010ee4       0x5d Bin/Pipe_XMEGA.o
- .debug_info    0x00010f41      0xd40 Bin/USBController_XMEGA.o
- .debug_info    0x00011c81      0xa7b Bin/USBInterrupt_XMEGA.o
- .debug_info    0x000126fc      0xa9d Bin/AudioClassDevice.o
- .debug_info    0x00013199      0xf93 Bin/CDCClassDevice.o
- .debug_info    0x0001412c      0xf91 Bin/HIDClassDevice.o
- .debug_info    0x000150bd      0xaa0 Bin/MassStorageClassDevice.o
- .debug_info    0x00015b5d      0x7c6 Bin/MIDIClassDevice.o
- .debug_info    0x00016323      0xddd Bin/PrinterClassDevice.o
- .debug_info    0x00017100     0x1311 Bin/RNDISClassDevice.o
- .debug_info    0x00018411       0x5d Bin/AndroidAccessoryClassHost.o
- .debug_info    0x0001846e       0x5d Bin/AudioClassHost.o
- .debug_info    0x000184cb       0x5d Bin/CDCClassHost.o
- .debug_info    0x00018528       0x5d Bin/HIDClassHost.o
- .debug_info    0x00018585       0x5d Bin/MassStorageClassHost.o
- .debug_info    0x000185e2       0x5d Bin/MIDIClassHost.o
- .debug_info    0x0001863f       0x5d Bin/PrinterClassHost.o
- .debug_info    0x0001869c       0x5d Bin/RNDISClassHost.o
- .debug_info    0x000186f9       0x5d Bin/StillImageClassHost.o
- .debug_info    0x00018756      0x157 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
- .debug_info    0x000188ad      0x21c c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
- .debug_info    0x00018ac9      0x549 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
- .debug_info    0x00019012      0x174 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
+ .debug_info    0x00002ac8      0x656 Bin/Configuration.o
+ .debug_info    0x0000311e      0x161 Bin/Random.o
+ .debug_info    0x0000327f      0x1b3 Bin/Common.o
+ .debug_info    0x00003432     0x126a Bin/Memory.o
+ .debug_info    0x0000469c      0xa99 Bin/Button.o
+ .debug_info    0x00005135      0x54f Bin/Settings.o
+ .debug_info    0x00005684       0x7a Bin/LED.o
+ .debug_info    0x000056fe      0xb73 Bin/Terminal.o
+ .debug_info    0x00006271     0x17f3 Bin/Commands.o
+ .debug_info    0x00007a64      0x9a3 Bin/XModem.o
+ .debug_info    0x00008407      0xb66 Bin/CommandLine.o
+ .debug_info    0x00008f6d      0x1f1 Bin/Codec.o
+ .debug_info    0x0000915e     0x187e Bin/ISO14443-2A.o
+ .debug_info    0x0000a9dc     0x101c Bin/MifareClassic.o
+ .debug_info    0x0000b9f8      0x179 Bin/ISO14443-3A.o
+ .debug_info    0x0000bb71      0x53a Bin/Crypto1.o
+ .debug_info    0x0000c0ab      0x72e Bin/HIDParser.o
+ .debug_info    0x0000c7d9      0x5ed Bin/ConfigDescriptors.o
+ .debug_info    0x0000cdc6     0x11d6 Bin/DeviceStandardReq.o
+ .debug_info    0x0000df9c       0x7f Bin/Events.o
+ .debug_info    0x0000e01b       0x5d Bin/HostStandardReq.o
+ .debug_info    0x0000e078      0x435 Bin/USBTask.o
+ .debug_info    0x0000e4ad      0x670 Bin/Device_XMEGA.o
+ .debug_info    0x0000eb1d     0x19be Bin/EndpointStream_XMEGA.o
+ .debug_info    0x000104db      0xcff Bin/Endpoint_XMEGA.o
+ .debug_info    0x000111da       0x5d Bin/Host_XMEGA.o
+ .debug_info    0x00011237       0x5d Bin/PipeStream_XMEGA.o
+ .debug_info    0x00011294       0x5d Bin/Pipe_XMEGA.o
+ .debug_info    0x000112f1      0xd40 Bin/USBController_XMEGA.o
+ .debug_info    0x00012031      0xa7b Bin/USBInterrupt_XMEGA.o
+ .debug_info    0x00012aac      0xa9d Bin/AudioClassDevice.o
+ .debug_info    0x00013549      0xf93 Bin/CDCClassDevice.o
+ .debug_info    0x000144dc      0xf91 Bin/HIDClassDevice.o
+ .debug_info    0x0001546d      0xaa0 Bin/MassStorageClassDevice.o
+ .debug_info    0x00015f0d      0x7c6 Bin/MIDIClassDevice.o
+ .debug_info    0x000166d3      0xddd Bin/PrinterClassDevice.o
+ .debug_info    0x000174b0     0x1311 Bin/RNDISClassDevice.o
+ .debug_info    0x000187c1       0x5d Bin/AndroidAccessoryClassHost.o
+ .debug_info    0x0001881e       0x5d Bin/AudioClassHost.o
+ .debug_info    0x0001887b       0x5d Bin/CDCClassHost.o
+ .debug_info    0x000188d8       0x5d Bin/HIDClassHost.o
+ .debug_info    0x00018935       0x5d Bin/MassStorageClassHost.o
+ .debug_info    0x00018992       0x5d Bin/MIDIClassHost.o
+ .debug_info    0x000189ef       0x5d Bin/PrinterClassHost.o
+ .debug_info    0x00018a4c       0x5d Bin/RNDISClassHost.o
+ .debug_info    0x00018aa9       0x5d Bin/StillImageClassHost.o
+ .debug_info    0x00018b06      0x157 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
+ .debug_info    0x00018c5d      0x21c c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
+ .debug_info    0x00018e79      0x549 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
+ .debug_info    0x000193c2      0x174 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
  *(.gnu.linkonce.wi.*)
 
-.debug_abbrev   0x00000000     0x597c
+.debug_abbrev   0x00000000     0x5a36
  *(.debug_abbrev)
  .debug_abbrev  0x00000000      0x1d2 Bin/Chameleon-Mini.o
  .debug_abbrev  0x000001d2      0x1bb Bin/LUFADescriptors.o
@@ -1828,55 +1834,55 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
  .debug_abbrev  0x000004d1      0x25f Bin/Configuration.o
  .debug_abbrev  0x00000730       0xfb Bin/Random.o
  .debug_abbrev  0x0000082b       0xb2 Bin/Common.o
- .debug_abbrev  0x000008dd      0x2bc Bin/Memory.o
- .debug_abbrev  0x00000b99      0x2b7 Bin/Button.o
- .debug_abbrev  0x00000e50      0x1cb Bin/Settings.o
- .debug_abbrev  0x0000101b       0x44 Bin/LED.o
- .debug_abbrev  0x0000105f      0x33a Bin/Terminal.o
- .debug_abbrev  0x00001399      0x38e Bin/Commands.o
- .debug_abbrev  0x00001727      0x2d7 Bin/XModem.o
- .debug_abbrev  0x000019fe      0x2db Bin/CommandLine.o
- .debug_abbrev  0x00001cd9       0xc4 Bin/Codec.o
- .debug_abbrev  0x00001d9d      0x2db Bin/ISO14443-2A.o
- .debug_abbrev  0x00002078      0x321 Bin/MifareClassic.o
- .debug_abbrev  0x00002399       0xa6 Bin/ISO14443-3A.o
- .debug_abbrev  0x0000243f      0x1bd Bin/Crypto1.o
- .debug_abbrev  0x000025fc      0x20a Bin/HIDParser.o
- .debug_abbrev  0x00002806      0x248 Bin/ConfigDescriptors.o
- .debug_abbrev  0x00002a4e      0x37e Bin/DeviceStandardReq.o
- .debug_abbrev  0x00002dcc       0x44 Bin/Events.o
- .debug_abbrev  0x00002e10       0x26 Bin/HostStandardReq.o
- .debug_abbrev  0x00002e36      0x21d Bin/USBTask.o
- .debug_abbrev  0x00003053      0x11e Bin/Device_XMEGA.o
- .debug_abbrev  0x00003171      0x252 Bin/EndpointStream_XMEGA.o
- .debug_abbrev  0x000033c3      0x300 Bin/Endpoint_XMEGA.o
- .debug_abbrev  0x000036c3       0x26 Bin/Host_XMEGA.o
- .debug_abbrev  0x000036e9       0x26 Bin/PipeStream_XMEGA.o
- .debug_abbrev  0x0000370f       0x26 Bin/Pipe_XMEGA.o
- .debug_abbrev  0x00003735      0x306 Bin/USBController_XMEGA.o
- .debug_abbrev  0x00003a3b      0x266 Bin/USBInterrupt_XMEGA.o
- .debug_abbrev  0x00003ca1      0x28b Bin/AudioClassDevice.o
- .debug_abbrev  0x00003f2c      0x439 Bin/CDCClassDevice.o
- .debug_abbrev  0x00004365      0x2de Bin/HIDClassDevice.o
- .debug_abbrev  0x00004643      0x338 Bin/MassStorageClassDevice.o
- .debug_abbrev  0x0000497b      0x287 Bin/MIDIClassDevice.o
- .debug_abbrev  0x00004c02      0x3e1 Bin/PrinterClassDevice.o
- .debug_abbrev  0x00004fe3      0x36d Bin/RNDISClassDevice.o
- .debug_abbrev  0x00005350       0x26 Bin/AndroidAccessoryClassHost.o
- .debug_abbrev  0x00005376       0x26 Bin/AudioClassHost.o
- .debug_abbrev  0x0000539c       0x26 Bin/CDCClassHost.o
- .debug_abbrev  0x000053c2       0x26 Bin/HIDClassHost.o
- .debug_abbrev  0x000053e8       0x26 Bin/MassStorageClassHost.o
- .debug_abbrev  0x0000540e       0x26 Bin/MIDIClassHost.o
- .debug_abbrev  0x00005434       0x26 Bin/PrinterClassHost.o
- .debug_abbrev  0x0000545a       0x26 Bin/RNDISClassHost.o
- .debug_abbrev  0x00005480       0x26 Bin/StillImageClassHost.o
- .debug_abbrev  0x000054a6       0xd6 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
- .debug_abbrev  0x0000557c      0x139 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
- .debug_abbrev  0x000056b5      0x1d6 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
- .debug_abbrev  0x0000588b       0xf1 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
+ .debug_abbrev  0x000008dd      0x346 Bin/Memory.o
+ .debug_abbrev  0x00000c23      0x2b7 Bin/Button.o
+ .debug_abbrev  0x00000eda      0x1fb Bin/Settings.o
+ .debug_abbrev  0x000010d5       0x44 Bin/LED.o
+ .debug_abbrev  0x00001119      0x33a Bin/Terminal.o
+ .debug_abbrev  0x00001453      0x38e Bin/Commands.o
+ .debug_abbrev  0x000017e1      0x2d7 Bin/XModem.o
+ .debug_abbrev  0x00001ab8      0x2db Bin/CommandLine.o
+ .debug_abbrev  0x00001d93       0xc4 Bin/Codec.o
+ .debug_abbrev  0x00001e57      0x2db Bin/ISO14443-2A.o
+ .debug_abbrev  0x00002132      0x321 Bin/MifareClassic.o
+ .debug_abbrev  0x00002453       0xa6 Bin/ISO14443-3A.o
+ .debug_abbrev  0x000024f9      0x1bd Bin/Crypto1.o
+ .debug_abbrev  0x000026b6      0x20a Bin/HIDParser.o
+ .debug_abbrev  0x000028c0      0x248 Bin/ConfigDescriptors.o
+ .debug_abbrev  0x00002b08      0x37e Bin/DeviceStandardReq.o
+ .debug_abbrev  0x00002e86       0x44 Bin/Events.o
+ .debug_abbrev  0x00002eca       0x26 Bin/HostStandardReq.o
+ .debug_abbrev  0x00002ef0      0x21d Bin/USBTask.o
+ .debug_abbrev  0x0000310d      0x11e Bin/Device_XMEGA.o
+ .debug_abbrev  0x0000322b      0x252 Bin/EndpointStream_XMEGA.o
+ .debug_abbrev  0x0000347d      0x300 Bin/Endpoint_XMEGA.o
+ .debug_abbrev  0x0000377d       0x26 Bin/Host_XMEGA.o
+ .debug_abbrev  0x000037a3       0x26 Bin/PipeStream_XMEGA.o
+ .debug_abbrev  0x000037c9       0x26 Bin/Pipe_XMEGA.o
+ .debug_abbrev  0x000037ef      0x306 Bin/USBController_XMEGA.o
+ .debug_abbrev  0x00003af5      0x266 Bin/USBInterrupt_XMEGA.o
+ .debug_abbrev  0x00003d5b      0x28b Bin/AudioClassDevice.o
+ .debug_abbrev  0x00003fe6      0x439 Bin/CDCClassDevice.o
+ .debug_abbrev  0x0000441f      0x2de Bin/HIDClassDevice.o
+ .debug_abbrev  0x000046fd      0x338 Bin/MassStorageClassDevice.o
+ .debug_abbrev  0x00004a35      0x287 Bin/MIDIClassDevice.o
+ .debug_abbrev  0x00004cbc      0x3e1 Bin/PrinterClassDevice.o
+ .debug_abbrev  0x0000509d      0x36d Bin/RNDISClassDevice.o
+ .debug_abbrev  0x0000540a       0x26 Bin/AndroidAccessoryClassHost.o
+ .debug_abbrev  0x00005430       0x26 Bin/AudioClassHost.o
+ .debug_abbrev  0x00005456       0x26 Bin/CDCClassHost.o
+ .debug_abbrev  0x0000547c       0x26 Bin/HIDClassHost.o
+ .debug_abbrev  0x000054a2       0x26 Bin/MassStorageClassHost.o
+ .debug_abbrev  0x000054c8       0x26 Bin/MIDIClassHost.o
+ .debug_abbrev  0x000054ee       0x26 Bin/PrinterClassHost.o
+ .debug_abbrev  0x00005514       0x26 Bin/RNDISClassHost.o
+ .debug_abbrev  0x0000553a       0x26 Bin/StillImageClassHost.o
+ .debug_abbrev  0x00005560       0xd6 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
+ .debug_abbrev  0x00005636      0x139 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
+ .debug_abbrev  0x0000576f      0x1d6 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
+ .debug_abbrev  0x00005945       0xf1 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
 
-.debug_line     0x00000000     0xb338
+.debug_line     0x00000000     0xb5c9
  *(.debug_line)
  .debug_line    0x00000000      0x390 Bin/Chameleon-Mini.o
  .debug_line    0x00000390      0x30a Bin/LUFADescriptors.o
@@ -1884,55 +1890,55 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
  .debug_line    0x000008eb      0x39e Bin/Configuration.o
  .debug_line    0x00000c89      0x119 Bin/Random.o
  .debug_line    0x00000da2      0x219 Bin/Common.o
- .debug_line    0x00000fbb      0x7a5 Bin/Memory.o
- .debug_line    0x00001760      0x430 Bin/Button.o
- .debug_line    0x00001b90      0x2e7 Bin/Settings.o
- .debug_line    0x00001e77       0x8b Bin/LED.o
- .debug_line    0x00001f02      0x457 Bin/Terminal.o
- .debug_line    0x00002359      0x7ea Bin/Commands.o
- .debug_line    0x00002b43      0x50b Bin/XModem.o
- .debug_line    0x0000304e      0x3db Bin/CommandLine.o
- .debug_line    0x00003429       0xaf Bin/Codec.o
- .debug_line    0x000034d8      0x636 Bin/ISO14443-2A.o
- .debug_line    0x00003b0e      0x734 Bin/MifareClassic.o
- .debug_line    0x00004242      0x1a8 Bin/ISO14443-3A.o
- .debug_line    0x000043ea      0x72c Bin/Crypto1.o
- .debug_line    0x00004b16      0x638 Bin/HIDParser.o
- .debug_line    0x0000514e      0x2c5 Bin/ConfigDescriptors.o
- .debug_line    0x00005413      0x4d2 Bin/DeviceStandardReq.o
- .debug_line    0x000058e5       0x4f Bin/Events.o
- .debug_line    0x00005934       0x1a Bin/HostStandardReq.o
- .debug_line    0x0000594e      0x209 Bin/USBTask.o
- .debug_line    0x00005b57      0x185 Bin/Device_XMEGA.o
- .debug_line    0x00005cdc     0x1655 Bin/EndpointStream_XMEGA.o
- .debug_line    0x00007331      0x6fd Bin/Endpoint_XMEGA.o
- .debug_line    0x00007a2e       0x1a Bin/Host_XMEGA.o
- .debug_line    0x00007a48       0x1a Bin/PipeStream_XMEGA.o
- .debug_line    0x00007a62       0x1a Bin/Pipe_XMEGA.o
- .debug_line    0x00007a7c      0x3b1 Bin/USBController_XMEGA.o
- .debug_line    0x00007e2d      0x3b0 Bin/USBInterrupt_XMEGA.o
- .debug_line    0x000081dd      0x453 Bin/AudioClassDevice.o
- .debug_line    0x00008630      0x832 Bin/CDCClassDevice.o
- .debug_line    0x00008e62      0x598 Bin/HIDClassDevice.o
- .debug_line    0x000093fa      0x50f Bin/MassStorageClassDevice.o
- .debug_line    0x00009909      0x402 Bin/MIDIClassDevice.o
- .debug_line    0x00009d0b      0x775 Bin/PrinterClassDevice.o
- .debug_line    0x0000a480      0x72a Bin/RNDISClassDevice.o
- .debug_line    0x0000abaa       0x1a Bin/AndroidAccessoryClassHost.o
- .debug_line    0x0000abc4       0x1a Bin/AudioClassHost.o
- .debug_line    0x0000abde       0x1a Bin/CDCClassHost.o
- .debug_line    0x0000abf8       0x1a Bin/HIDClassHost.o
- .debug_line    0x0000ac12       0x1a Bin/MassStorageClassHost.o
- .debug_line    0x0000ac2c       0x1a Bin/MIDIClassHost.o
- .debug_line    0x0000ac46       0x1a Bin/PrinterClassHost.o
- .debug_line    0x0000ac60       0x1a Bin/RNDISClassHost.o
- .debug_line    0x0000ac7a       0x1a Bin/StillImageClassHost.o
- .debug_line    0x0000ac94       0xa1 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
- .debug_line    0x0000ad35      0x1a6 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
- .debug_line    0x0000aedb      0x359 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
- .debug_line    0x0000b234      0x104 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
+ .debug_line    0x00000fbb      0x9fa Bin/Memory.o
+ .debug_line    0x000019b5      0x454 Bin/Button.o
+ .debug_line    0x00001e09      0x2ff Bin/Settings.o
+ .debug_line    0x00002108       0x8b Bin/LED.o
+ .debug_line    0x00002193      0x457 Bin/Terminal.o
+ .debug_line    0x000025ea      0x7ea Bin/Commands.o
+ .debug_line    0x00002dd4      0x50b Bin/XModem.o
+ .debug_line    0x000032df      0x3db Bin/CommandLine.o
+ .debug_line    0x000036ba       0xaf Bin/Codec.o
+ .debug_line    0x00003769      0x636 Bin/ISO14443-2A.o
+ .debug_line    0x00003d9f      0x734 Bin/MifareClassic.o
+ .debug_line    0x000044d3      0x1a8 Bin/ISO14443-3A.o
+ .debug_line    0x0000467b      0x72c Bin/Crypto1.o
+ .debug_line    0x00004da7      0x638 Bin/HIDParser.o
+ .debug_line    0x000053df      0x2c5 Bin/ConfigDescriptors.o
+ .debug_line    0x000056a4      0x4d2 Bin/DeviceStandardReq.o
+ .debug_line    0x00005b76       0x4f Bin/Events.o
+ .debug_line    0x00005bc5       0x1a Bin/HostStandardReq.o
+ .debug_line    0x00005bdf      0x209 Bin/USBTask.o
+ .debug_line    0x00005de8      0x185 Bin/Device_XMEGA.o
+ .debug_line    0x00005f6d     0x1655 Bin/EndpointStream_XMEGA.o
+ .debug_line    0x000075c2      0x6fd Bin/Endpoint_XMEGA.o
+ .debug_line    0x00007cbf       0x1a Bin/Host_XMEGA.o
+ .debug_line    0x00007cd9       0x1a Bin/PipeStream_XMEGA.o
+ .debug_line    0x00007cf3       0x1a Bin/Pipe_XMEGA.o
+ .debug_line    0x00007d0d      0x3b1 Bin/USBController_XMEGA.o
+ .debug_line    0x000080be      0x3b0 Bin/USBInterrupt_XMEGA.o
+ .debug_line    0x0000846e      0x453 Bin/AudioClassDevice.o
+ .debug_line    0x000088c1      0x832 Bin/CDCClassDevice.o
+ .debug_line    0x000090f3      0x598 Bin/HIDClassDevice.o
+ .debug_line    0x0000968b      0x50f Bin/MassStorageClassDevice.o
+ .debug_line    0x00009b9a      0x402 Bin/MIDIClassDevice.o
+ .debug_line    0x00009f9c      0x775 Bin/PrinterClassDevice.o
+ .debug_line    0x0000a711      0x72a Bin/RNDISClassDevice.o
+ .debug_line    0x0000ae3b       0x1a Bin/AndroidAccessoryClassHost.o
+ .debug_line    0x0000ae55       0x1a Bin/AudioClassHost.o
+ .debug_line    0x0000ae6f       0x1a Bin/CDCClassHost.o
+ .debug_line    0x0000ae89       0x1a Bin/HIDClassHost.o
+ .debug_line    0x0000aea3       0x1a Bin/MassStorageClassHost.o
+ .debug_line    0x0000aebd       0x1a Bin/MIDIClassHost.o
+ .debug_line    0x0000aed7       0x1a Bin/PrinterClassHost.o
+ .debug_line    0x0000aef1       0x1a Bin/RNDISClassHost.o
+ .debug_line    0x0000af0b       0x1a Bin/StillImageClassHost.o
+ .debug_line    0x0000af25       0xa1 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
+ .debug_line    0x0000afc6      0x1a6 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
+ .debug_line    0x0000b16c      0x359 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
+ .debug_line    0x0000b4c5      0x104 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
 
-.debug_frame    0x00000000     0x1e88
+.debug_frame    0x00000000     0x1ed0
  *(.debug_frame)
  .debug_frame   0x00000000       0x24 Bin/Chameleon-Mini.o
  .debug_frame   0x00000024       0x24 Bin/LUFADescriptors.o
@@ -1940,40 +1946,40 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
  .debug_frame   0x000000d8       0xf4 Bin/Configuration.o
  .debug_frame   0x000001cc       0x64 Bin/Random.o
  .debug_frame   0x00000230       0x40 Bin/Common.o
- .debug_frame   0x00000270      0x134 Bin/Memory.o
- .debug_frame   0x000003a4       0xac Bin/Button.o
- .debug_frame   0x00000450       0x90 Bin/Settings.o
- .debug_frame   0x000004e0       0xcc Bin/Terminal.o
- .debug_frame   0x000005ac      0x28c Bin/Commands.o
- .debug_frame   0x00000838       0x6c Bin/XModem.o
- .debug_frame   0x000008a4       0x54 Bin/CommandLine.o
- .debug_frame   0x000008f8       0xf8 Bin/ISO14443-2A.o
- .debug_frame   0x000009f0       0xe0 Bin/MifareClassic.o
- .debug_frame   0x00000ad0       0x34 Bin/ISO14443-3A.o
- .debug_frame   0x00000b04      0x13c Bin/Crypto1.o
- .debug_frame   0x00000c40      0x11c Bin/HIDParser.o
- .debug_frame   0x00000d5c       0xd0 Bin/ConfigDescriptors.o
- .debug_frame   0x00000e2c       0x40 Bin/DeviceStandardReq.o
- .debug_frame   0x00000e6c       0x24 Bin/Events.o
- .debug_frame   0x00000e90       0x2c Bin/USBTask.o
- .debug_frame   0x00000ebc       0x24 Bin/Device_XMEGA.o
- .debug_frame   0x00000ee0      0x4f8 Bin/EndpointStream_XMEGA.o
- .debug_frame   0x000013d8      0x160 Bin/Endpoint_XMEGA.o
- .debug_frame   0x00001538       0x5c Bin/USBController_XMEGA.o
- .debug_frame   0x00001594       0x8c Bin/USBInterrupt_XMEGA.o
- .debug_frame   0x00001620       0xa4 Bin/AudioClassDevice.o
- .debug_frame   0x000016c4      0x1e0 Bin/CDCClassDevice.o
- .debug_frame   0x000018a4       0xf0 Bin/HIDClassDevice.o
- .debug_frame   0x00001994       0x80 Bin/MassStorageClassDevice.o
- .debug_frame   0x00001a14       0xa4 Bin/MIDIClassDevice.o
- .debug_frame   0x00001ab8      0x194 Bin/PrinterClassDevice.o
- .debug_frame   0x00001c4c      0x100 Bin/RNDISClassDevice.o
- .debug_frame   0x00001d4c       0x88 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
- .debug_frame   0x00001dd4       0x30 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
- .debug_frame   0x00001e04       0x4c c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
- .debug_frame   0x00001e50       0x38 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
+ .debug_frame   0x00000270      0x174 Bin/Memory.o
+ .debug_frame   0x000003e4       0xac Bin/Button.o
+ .debug_frame   0x00000490       0x98 Bin/Settings.o
+ .debug_frame   0x00000528       0xcc Bin/Terminal.o
+ .debug_frame   0x000005f4      0x28c Bin/Commands.o
+ .debug_frame   0x00000880       0x6c Bin/XModem.o
+ .debug_frame   0x000008ec       0x54 Bin/CommandLine.o
+ .debug_frame   0x00000940       0xf8 Bin/ISO14443-2A.o
+ .debug_frame   0x00000a38       0xe0 Bin/MifareClassic.o
+ .debug_frame   0x00000b18       0x34 Bin/ISO14443-3A.o
+ .debug_frame   0x00000b4c      0x13c Bin/Crypto1.o
+ .debug_frame   0x00000c88      0x11c Bin/HIDParser.o
+ .debug_frame   0x00000da4       0xd0 Bin/ConfigDescriptors.o
+ .debug_frame   0x00000e74       0x40 Bin/DeviceStandardReq.o
+ .debug_frame   0x00000eb4       0x24 Bin/Events.o
+ .debug_frame   0x00000ed8       0x2c Bin/USBTask.o
+ .debug_frame   0x00000f04       0x24 Bin/Device_XMEGA.o
+ .debug_frame   0x00000f28      0x4f8 Bin/EndpointStream_XMEGA.o
+ .debug_frame   0x00001420      0x160 Bin/Endpoint_XMEGA.o
+ .debug_frame   0x00001580       0x5c Bin/USBController_XMEGA.o
+ .debug_frame   0x000015dc       0x8c Bin/USBInterrupt_XMEGA.o
+ .debug_frame   0x00001668       0xa4 Bin/AudioClassDevice.o
+ .debug_frame   0x0000170c      0x1e0 Bin/CDCClassDevice.o
+ .debug_frame   0x000018ec       0xf0 Bin/HIDClassDevice.o
+ .debug_frame   0x000019dc       0x80 Bin/MassStorageClassDevice.o
+ .debug_frame   0x00001a5c       0xa4 Bin/MIDIClassDevice.o
+ .debug_frame   0x00001b00      0x194 Bin/PrinterClassDevice.o
+ .debug_frame   0x00001c94      0x100 Bin/RNDISClassDevice.o
+ .debug_frame   0x00001d94       0x88 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
+ .debug_frame   0x00001e1c       0x30 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
+ .debug_frame   0x00001e4c       0x4c c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
+ .debug_frame   0x00001e98       0x38 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
 
-.debug_str      0x00000000     0x77fe
+.debug_str      0x00000000     0x7842
  *(.debug_str)
  .debug_str     0x00000000      0xccd Bin/Chameleon-Mini.o
                                 0xd92 (size before relaxing)
@@ -1981,144 +1987,144 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
                                 0xb1d (size before relaxing)
  .debug_str     0x00001599      0x748 Bin/System.o
                                 0xb52 (size before relaxing)
- .debug_str     0x00001ce1      0x2ce Bin/Configuration.o
-                                0x53c (size before relaxing)
- .debug_str     0x00001faf       0x27 Bin/Random.o
+ .debug_str     0x00001ce1      0x2ff Bin/Configuration.o
+                                0x56d (size before relaxing)
+ .debug_str     0x00001fe0       0x27 Bin/Random.o
                                 0x117 (size before relaxing)
- .debug_str     0x00001fd6       0x56 Bin/Common.o
+ .debug_str     0x00002007       0x56 Bin/Common.o
                                 0x13a (size before relaxing)
- .debug_str     0x0000202c      0x21f Bin/Memory.o
-                                0x6dc (size before relaxing)
- .debug_str     0x0000224b      0x1d2 Bin/Button.o
-                                0x682 (size before relaxing)
- .debug_str     0x0000241d       0xc0 Bin/Settings.o
-                                0x48a (size before relaxing)
- .debug_str     0x000024dd        0x6 Bin/LED.o
+ .debug_str     0x0000205d      0x22d Bin/Memory.o
+                                0x722 (size before relaxing)
+ .debug_str     0x0000228a      0x1d2 Bin/Button.o
+                                0x6cc (size before relaxing)
+ .debug_str     0x0000245c       0xc0 Bin/Settings.o
+                                0x4d4 (size before relaxing)
+ .debug_str     0x0000251c        0x6 Bin/LED.o
                                  0xc8 (size before relaxing)
- .debug_str     0x000024e3      0x295 Bin/Terminal.o
+ .debug_str     0x00002522      0x295 Bin/Terminal.o
                                 0x72c (size before relaxing)
- .debug_str     0x00002778      0x3f0 Bin/Commands.o
+ .debug_str     0x000027b7      0x3f0 Bin/Commands.o
                                 0xcd2 (size before relaxing)
- .debug_str     0x00002b68      0x149 Bin/XModem.o
+ .debug_str     0x00002ba7      0x149 Bin/XModem.o
                                 0x533 (size before relaxing)
- .debug_str     0x00002cb1       0xc1 Bin/CommandLine.o
+ .debug_str     0x00002cf0       0xc1 Bin/CommandLine.o
                                 0x510 (size before relaxing)
- .debug_str     0x00002d72       0x1a Bin/Codec.o
+ .debug_str     0x00002db1       0x1a Bin/Codec.o
                                 0x238 (size before relaxing)
- .debug_str     0x00002d8c     0x12b9 Bin/ISO14443-2A.o
+ .debug_str     0x00002dcb     0x12b9 Bin/ISO14443-2A.o
                                0x1a20 (size before relaxing)
- .debug_str     0x00004045      0x2b0 Bin/MifareClassic.o
+ .debug_str     0x00004084      0x2b0 Bin/MifareClassic.o
                                 0x545 (size before relaxing)
- .debug_str     0x000042f5       0x1a Bin/ISO14443-3A.o
+ .debug_str     0x00004334       0x1a Bin/ISO14443-3A.o
                                 0x131 (size before relaxing)
- .debug_str     0x0000430f       0x95 Bin/Crypto1.o
+ .debug_str     0x0000434e       0x95 Bin/Crypto1.o
                                 0x1bf (size before relaxing)
- .debug_str     0x000043a4      0x48d Bin/HIDParser.o
+ .debug_str     0x000043e3      0x492 Bin/HIDParser.o
                                 0x5f3 (size before relaxing)
- .debug_str     0x00004831      0x22e Bin/ConfigDescriptors.o
+ .debug_str     0x00004875      0x22e Bin/ConfigDescriptors.o
                                 0x431 (size before relaxing)
- .debug_str     0x00004a5f      0xa04 Bin/DeviceStandardReq.o
+ .debug_str     0x00004aa3      0xa04 Bin/DeviceStandardReq.o
                                0x112f (size before relaxing)
- .debug_str     0x00005463       0x31 Bin/Events.o
+ .debug_str     0x000054a7       0x31 Bin/Events.o
                                  0xde (size before relaxing)
- .debug_str     0x00005494       0x2b Bin/HostStandardReq.o
+ .debug_str     0x000054d8       0x2b Bin/HostStandardReq.o
                                  0xd8 (size before relaxing)
- .debug_str     0x000054bf       0x6d Bin/USBTask.o
+ .debug_str     0x00005503       0x6d Bin/USBTask.o
                                 0x3aa (size before relaxing)
- .debug_str     0x0000552c       0x4a Bin/Device_XMEGA.o
+ .debug_str     0x00005570       0x4a Bin/Device_XMEGA.o
                                 0x51e (size before relaxing)
- .debug_str     0x00005576      0x4d9 Bin/EndpointStream_XMEGA.o
+ .debug_str     0x000055ba      0x4d9 Bin/EndpointStream_XMEGA.o
                                 0x8c2 (size before relaxing)
- .debug_str     0x00005a4f      0x2aa Bin/Endpoint_XMEGA.o
+ .debug_str     0x00005a93      0x2aa Bin/Endpoint_XMEGA.o
                                 0xa30 (size before relaxing)
- .debug_str     0x00005cf9       0x2c Bin/Host_XMEGA.o
+ .debug_str     0x00005d3d       0x2c Bin/Host_XMEGA.o
                                  0xd9 (size before relaxing)
- .debug_str     0x00005d25       0x32 Bin/PipeStream_XMEGA.o
+ .debug_str     0x00005d69       0x32 Bin/PipeStream_XMEGA.o
                                  0xdf (size before relaxing)
- .debug_str     0x00005d57       0x2c Bin/Pipe_XMEGA.o
+ .debug_str     0x00005d9b       0x2c Bin/Pipe_XMEGA.o
                                  0xd9 (size before relaxing)
- .debug_str     0x00005d83      0x1bb Bin/USBController_XMEGA.o
+ .debug_str     0x00005dc7      0x1bb Bin/USBController_XMEGA.o
                                 0xdc0 (size before relaxing)
- .debug_str     0x00005f3e       0xaa Bin/USBInterrupt_XMEGA.o
+ .debug_str     0x00005f82       0xaa Bin/USBInterrupt_XMEGA.o
                                 0x891 (size before relaxing)
- .debug_str     0x00005fe8      0x280 Bin/AudioClassDevice.o
+ .debug_str     0x0000602c      0x280 Bin/AudioClassDevice.o
                                 0x705 (size before relaxing)
- .debug_str     0x00006268      0x286 Bin/CDCClassDevice.o
+ .debug_str     0x000062ac      0x286 Bin/CDCClassDevice.o
                                 0xa5a (size before relaxing)
- .debug_str     0x000064ee      0x248 Bin/HIDClassDevice.o
+ .debug_str     0x00006532      0x248 Bin/HIDClassDevice.o
                                 0xa75 (size before relaxing)
- .debug_str     0x00006736      0x261 Bin/MassStorageClassDevice.o
+ .debug_str     0x0000677a      0x261 Bin/MassStorageClassDevice.o
                                 0x858 (size before relaxing)
- .debug_str     0x00006997      0x115 Bin/MIDIClassDevice.o
+ .debug_str     0x000069db      0x115 Bin/MIDIClassDevice.o
                                 0x6af (size before relaxing)
- .debug_str     0x00006aac      0x269 Bin/PrinterClassDevice.o
+ .debug_str     0x00006af0      0x269 Bin/PrinterClassDevice.o
                                 0x983 (size before relaxing)
- .debug_str     0x00006d15      0x6e5 Bin/RNDISClassDevice.o
+ .debug_str     0x00006d59      0x6e5 Bin/RNDISClassDevice.o
                                 0xdb8 (size before relaxing)
- .debug_str     0x000073fa       0x3b Bin/AndroidAccessoryClassHost.o
+ .debug_str     0x0000743e       0x3b Bin/AndroidAccessoryClassHost.o
                                  0xe8 (size before relaxing)
- .debug_str     0x00007435       0x30 Bin/AudioClassHost.o
+ .debug_str     0x00007479       0x30 Bin/AudioClassHost.o
                                  0xdd (size before relaxing)
- .debug_str     0x00007465       0x2e Bin/CDCClassHost.o
+ .debug_str     0x000074a9       0x2e Bin/CDCClassHost.o
                                  0xdb (size before relaxing)
- .debug_str     0x00007493       0x2e Bin/HIDClassHost.o
+ .debug_str     0x000074d7       0x2e Bin/HIDClassHost.o
                                  0xdb (size before relaxing)
- .debug_str     0x000074c1       0x36 Bin/MassStorageClassHost.o
+ .debug_str     0x00007505       0x36 Bin/MassStorageClassHost.o
                                  0xe3 (size before relaxing)
- .debug_str     0x000074f7       0x2f Bin/MIDIClassHost.o
+ .debug_str     0x0000753b       0x2f Bin/MIDIClassHost.o
                                  0xdc (size before relaxing)
- .debug_str     0x00007526       0x32 Bin/PrinterClassHost.o
+ .debug_str     0x0000756a       0x32 Bin/PrinterClassHost.o
                                  0xdf (size before relaxing)
- .debug_str     0x00007558       0x30 Bin/RNDISClassHost.o
+ .debug_str     0x0000759c       0x30 Bin/RNDISClassHost.o
                                  0xdd (size before relaxing)
- .debug_str     0x00007588       0x35 Bin/StillImageClassHost.o
+ .debug_str     0x000075cc       0x35 Bin/StillImageClassHost.o
                                  0xe2 (size before relaxing)
- .debug_str     0x000075bd       0x81 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
+ .debug_str     0x00007601       0x81 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
                                  0xba (size before relaxing)
- .debug_str     0x0000763e       0x91 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
+ .debug_str     0x00007682       0x91 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
                                 0x149 (size before relaxing)
- .debug_str     0x000076cf       0xcd c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
+ .debug_str     0x00007713       0xcd c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
                                 0x1ad (size before relaxing)
- .debug_str     0x0000779c       0x62 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
+ .debug_str     0x000077e0       0x62 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
                                 0x10d (size before relaxing)
 
-.debug_loc      0x00000000     0xce27
+.debug_loc      0x00000000     0xd068
  *(.debug_loc)
  .debug_loc     0x00000000      0x277 Bin/LUFADescriptors.o
  .debug_loc     0x00000277       0x2f Bin/System.o
  .debug_loc     0x000002a6      0x3cf Bin/Configuration.o
  .debug_loc     0x00000675       0xaa Bin/Random.o
  .debug_loc     0x0000071f      0x319 Bin/Common.o
- .debug_loc     0x00000a38      0xa25 Bin/Memory.o
- .debug_loc     0x0000145d      0x69c Bin/Button.o
- .debug_loc     0x00001af9      0x1b1 Bin/Settings.o
- .debug_loc     0x00001caa      0x1f9 Bin/Terminal.o
- .debug_loc     0x00001ea3      0x9b7 Bin/Commands.o
- .debug_loc     0x0000285a      0x313 Bin/XModem.o
- .debug_loc     0x00002b6d      0x6be Bin/CommandLine.o
- .debug_loc     0x0000322b      0x4a5 Bin/ISO14443-2A.o
- .debug_loc     0x000036d0      0xb6a Bin/MifareClassic.o
- .debug_loc     0x0000423a      0x231 Bin/ISO14443-3A.o
- .debug_loc     0x0000446b      0xa3a Bin/Crypto1.o
- .debug_loc     0x00004ea5      0xc34 Bin/HIDParser.o
- .debug_loc     0x00005ad9      0x536 Bin/ConfigDescriptors.o
- .debug_loc     0x0000600f      0x2d9 Bin/DeviceStandardReq.o
- .debug_loc     0x000062e8       0x22 Bin/USBTask.o
- .debug_loc     0x0000630a     0x2bf0 Bin/EndpointStream_XMEGA.o
- .debug_loc     0x00008efa      0x581 Bin/Endpoint_XMEGA.o
- .debug_loc     0x0000947b       0xa3 Bin/USBController_XMEGA.o
- .debug_loc     0x0000951e      0x200 Bin/USBInterrupt_XMEGA.o
- .debug_loc     0x0000971e      0x3ad Bin/AudioClassDevice.o
- .debug_loc     0x00009acb      0x9f6 Bin/CDCClassDevice.o
- .debug_loc     0x0000a4c1      0x473 Bin/HIDClassDevice.o
- .debug_loc     0x0000a934      0x303 Bin/MassStorageClassDevice.o
- .debug_loc     0x0000ac37      0x35f Bin/MIDIClassDevice.o
- .debug_loc     0x0000af96      0x8b8 Bin/PrinterClassDevice.o
- .debug_loc     0x0000b84e      0xd6d Bin/RNDISClassDevice.o
- .debug_loc     0x0000c5bb      0x1e8 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
- .debug_loc     0x0000c7a3       0x74 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
- .debug_loc     0x0000c817      0x51d c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
- .debug_loc     0x0000cd34       0xf3 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
+ .debug_loc     0x00000a38      0xba4 Bin/Memory.o
+ .debug_loc     0x000015dc      0x740 Bin/Button.o
+ .debug_loc     0x00001d1c      0x1cf Bin/Settings.o
+ .debug_loc     0x00001eeb      0x1f9 Bin/Terminal.o
+ .debug_loc     0x000020e4      0x9b7 Bin/Commands.o
+ .debug_loc     0x00002a9b      0x313 Bin/XModem.o
+ .debug_loc     0x00002dae      0x6be Bin/CommandLine.o
+ .debug_loc     0x0000346c      0x4a5 Bin/ISO14443-2A.o
+ .debug_loc     0x00003911      0xb6a Bin/MifareClassic.o
+ .debug_loc     0x0000447b      0x231 Bin/ISO14443-3A.o
+ .debug_loc     0x000046ac      0xa3a Bin/Crypto1.o
+ .debug_loc     0x000050e6      0xc34 Bin/HIDParser.o
+ .debug_loc     0x00005d1a      0x536 Bin/ConfigDescriptors.o
+ .debug_loc     0x00006250      0x2d9 Bin/DeviceStandardReq.o
+ .debug_loc     0x00006529       0x22 Bin/USBTask.o
+ .debug_loc     0x0000654b     0x2bf0 Bin/EndpointStream_XMEGA.o
+ .debug_loc     0x0000913b      0x581 Bin/Endpoint_XMEGA.o
+ .debug_loc     0x000096bc       0xa3 Bin/USBController_XMEGA.o
+ .debug_loc     0x0000975f      0x200 Bin/USBInterrupt_XMEGA.o
+ .debug_loc     0x0000995f      0x3ad Bin/AudioClassDevice.o
+ .debug_loc     0x00009d0c      0x9f6 Bin/CDCClassDevice.o
+ .debug_loc     0x0000a702      0x473 Bin/HIDClassDevice.o
+ .debug_loc     0x0000ab75      0x303 Bin/MassStorageClassDevice.o
+ .debug_loc     0x0000ae78      0x35f Bin/MIDIClassDevice.o
+ .debug_loc     0x0000b1d7      0x8b8 Bin/PrinterClassDevice.o
+ .debug_loc     0x0000ba8f      0xd6d Bin/RNDISClassDevice.o
+ .debug_loc     0x0000c7fc      0x1e8 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
+ .debug_loc     0x0000c9e4       0x74 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
+ .debug_loc     0x0000ca58      0x51d c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
+ .debug_loc     0x0000cf75       0xf3 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
 
 .debug_macinfo
  *(.debug_macinfo)
@@ -2126,7 +2132,7 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
 .debug_pubtypes
  *(.debug_pubtypes)
 
-.debug_ranges   0x00000000     0x1a08
+.debug_ranges   0x00000000     0x1ae0
  *(.debug_ranges)
  .debug_ranges  0x00000000       0x28 Bin/Chameleon-Mini.o
  .debug_ranges  0x00000028       0x10 Bin/LUFADescriptors.o
@@ -2134,38 +2140,38 @@ LOAD c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmeg
  .debug_ranges  0x00000078       0xb0 Bin/Configuration.o
  .debug_ranges  0x00000128       0x28 Bin/Random.o
  .debug_ranges  0x00000150       0x48 Bin/Common.o
- .debug_ranges  0x00000198      0x2b8 Bin/Memory.o
- .debug_ranges  0x00000450       0xf8 Bin/Button.o
- .debug_ranges  0x00000548       0x40 Bin/Settings.o
- .debug_ranges  0x00000588       0xd0 Bin/Terminal.o
- .debug_ranges  0x00000658      0x118 Bin/Commands.o
- .debug_ranges  0x00000770       0x48 Bin/XModem.o
- .debug_ranges  0x000007b8      0x100 Bin/CommandLine.o
- .debug_ranges  0x000008b8       0xc0 Bin/ISO14443-2A.o
- .debug_ranges  0x00000978      0x1c8 Bin/MifareClassic.o
- .debug_ranges  0x00000b40       0x18 Bin/ISO14443-3A.o
- .debug_ranges  0x00000b58       0x70 Bin/Crypto1.o
- .debug_ranges  0x00000bc8      0x150 Bin/HIDParser.o
- .debug_ranges  0x00000d18       0x40 Bin/ConfigDescriptors.o
- .debug_ranges  0x00000d58      0x138 Bin/DeviceStandardReq.o
- .debug_ranges  0x00000e90       0x10 Bin/Events.o
- .debug_ranges  0x00000ea0       0x60 Bin/USBTask.o
- .debug_ranges  0x00000f00       0x10 Bin/Device_XMEGA.o
- .debug_ranges  0x00000f10      0x4a8 Bin/EndpointStream_XMEGA.o
- .debug_ranges  0x000013b8      0x188 Bin/Endpoint_XMEGA.o
- .debug_ranges  0x00001540       0x20 Bin/USBController_XMEGA.o
- .debug_ranges  0x00001560       0x20 Bin/USBInterrupt_XMEGA.o
- .debug_ranges  0x00001580       0x38 Bin/AudioClassDevice.o
- .debug_ranges  0x000015b8      0x100 Bin/CDCClassDevice.o
- .debug_ranges  0x000016b8       0x20 Bin/HIDClassDevice.o
- .debug_ranges  0x000016d8       0xa0 Bin/MassStorageClassDevice.o
- .debug_ranges  0x00001778       0x48 Bin/MIDIClassDevice.o
- .debug_ranges  0x000017c0      0x128 Bin/PrinterClassDevice.o
- .debug_ranges  0x000018e8       0xc8 Bin/RNDISClassDevice.o
- .debug_ranges  0x000019b0       0x28 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
- .debug_ranges  0x000019d8       0x10 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
- .debug_ranges  0x000019e8       0x10 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
- .debug_ranges  0x000019f8       0x10 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
+ .debug_ranges  0x00000198      0x378 Bin/Memory.o
+ .debug_ranges  0x00000510       0xf8 Bin/Button.o
+ .debug_ranges  0x00000608       0x58 Bin/Settings.o
+ .debug_ranges  0x00000660       0xd0 Bin/Terminal.o
+ .debug_ranges  0x00000730      0x118 Bin/Commands.o
+ .debug_ranges  0x00000848       0x48 Bin/XModem.o
+ .debug_ranges  0x00000890      0x100 Bin/CommandLine.o
+ .debug_ranges  0x00000990       0xc0 Bin/ISO14443-2A.o
+ .debug_ranges  0x00000a50      0x1c8 Bin/MifareClassic.o
+ .debug_ranges  0x00000c18       0x18 Bin/ISO14443-3A.o
+ .debug_ranges  0x00000c30       0x70 Bin/Crypto1.o
+ .debug_ranges  0x00000ca0      0x150 Bin/HIDParser.o
+ .debug_ranges  0x00000df0       0x40 Bin/ConfigDescriptors.o
+ .debug_ranges  0x00000e30      0x138 Bin/DeviceStandardReq.o
+ .debug_ranges  0x00000f68       0x10 Bin/Events.o
+ .debug_ranges  0x00000f78       0x60 Bin/USBTask.o
+ .debug_ranges  0x00000fd8       0x10 Bin/Device_XMEGA.o
+ .debug_ranges  0x00000fe8      0x4a8 Bin/EndpointStream_XMEGA.o
+ .debug_ranges  0x00001490      0x188 Bin/Endpoint_XMEGA.o
+ .debug_ranges  0x00001618       0x20 Bin/USBController_XMEGA.o
+ .debug_ranges  0x00001638       0x20 Bin/USBInterrupt_XMEGA.o
+ .debug_ranges  0x00001658       0x38 Bin/AudioClassDevice.o
+ .debug_ranges  0x00001690      0x100 Bin/CDCClassDevice.o
+ .debug_ranges  0x00001790       0x20 Bin/HIDClassDevice.o
+ .debug_ranges  0x000017b0       0xa0 Bin/MassStorageClassDevice.o
+ .debug_ranges  0x00001850       0x48 Bin/MIDIClassDevice.o
+ .debug_ranges  0x00001898      0x128 Bin/PrinterClassDevice.o
+ .debug_ranges  0x000019c0       0xc8 Bin/RNDISClassDevice.o
+ .debug_ranges  0x00001a88       0x28 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)
+ .debug_ranges  0x00001ab0       0x10 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(snprintf_p.o)
+ .debug_ranges  0x00001ac0       0x10 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(vfprintf_std.o)
+ .debug_ranges  0x00001ad0       0x10 c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(fputc.o)
 
 .debug_macro
  *(.debug_macro)
@@ -2503,6 +2509,12 @@ MemoryInit                                        Bin/Memory.o
                                                   Bin/Chameleon-Mini.o
 MemoryReadBlock                                   Bin/Memory.o
                                                   Bin/MifareClassic.o
+MemoryRecall                                      Bin/Memory.o
+                                                  Bin/Settings.o
+                                                  Bin/Button.o
+MemoryStore                                       Bin/Memory.o
+                                                  Bin/Settings.o
+                                                  Bin/Button.o
 MemoryUploadBlock                                 Bin/Memory.o
                                                   Bin/Commands.o
 MemoryWriteBlock                                  Bin/Memory.o
@@ -2703,6 +2715,7 @@ __do_clear_bss                                    c:/programme/atmel/avr tools/a
                                                   Bin/LED.o
                                                   Bin/Settings.o
                                                   Bin/Button.o
+                                                  Bin/Memory.o
                                                   Bin/Configuration.o
 __do_copy_data                                    c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/avrxmega2\libgcc.a(_copy_data.o)
                                                   c:/programme/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.7.2/../../../../avr/lib/avrxmega2\libc.a(rand.o)

@@ -53,6 +53,7 @@
  * policies, either expressed or implied, of the ORIGINAL AUTHORS.
  */
 
+
 #include "Memory.h"
 #include "Configuration.h"
 #include "Common.h"
@@ -71,6 +72,10 @@
 #define FLASH_STATUS_REG_COMP_BIT		(1<<6)
 #define FLASH_STATUS_REG_PROTECT_BIT	(1<<1)
 #define FLASH_STATUS_REG_PAGESIZE_BIT	(1<<0)
+
+#define FLASH_PAGE_SIZE					256
+
+static uint8_t Memory[MEMORY_SIZE_PER_SETTING];
 
 INLINE uint8_t SPITransferByte(uint8_t Data)
 {
@@ -188,9 +193,9 @@ INLINE void FlashRead(void* Buffer, uint32_t Address, uint16_t ByteCount)
 INLINE void FlashWrite(const void* Buffer, uint32_t Address, uint16_t ByteCount)
 {
 	while(ByteCount > 0) {
-		uint16_t PageAddress = Address / MEMORY_PAGE_SIZE;
-		uint8_t ByteAddress = Address % MEMORY_PAGE_SIZE;
-		uint16_t PageBytes = MIN(MEMORY_PAGE_SIZE - ByteAddress, ByteCount);
+		uint16_t PageAddress = Address / FLASH_PAGE_SIZE;
+		uint8_t ByteAddress = Address % FLASH_PAGE_SIZE;
+		uint16_t PageBytes = MIN(FLASH_PAGE_SIZE - ByteAddress, ByteCount);
 
 		FlashMemoryToBuffer(PageAddress);
 		FlashWriteBuffer(Buffer, ByteAddress, PageBytes);
@@ -233,30 +238,54 @@ void MemoryInit(void)
 		/* Configure for 256 byte Dataflash if not already done. */
 		FlashConfigurePageSize();
 	}
+    
+	/* Load permanent flash contents to memory at startup */
+	MemoryRecall();
 }
 
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount)
 {
-	uint32_t FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING;
-	FlashRead(Buffer, FlashAddress, ByteCount);
+	uint8_t* SrcPtr = &Memory[Address];
+	uint8_t* DstPtr = (uint8_t*) Buffer;
+
+	/* Prevent Buf Ovfs */
+	ByteCount = MIN(ByteCount, MEMORY_SIZE_PER_SETTING - Address);
+
+	while(ByteCount--) {
+		*DstPtr++ = *SrcPtr++;
+	}
 }
 
 void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
 {
-	uint32_t FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING;
-	FlashWrite(Buffer, FlashAddress, ByteCount);
+	uint8_t* SrcPtr = (uint8_t*) Buffer;
+	uint8_t* DstPtr = &Memory[Address];
+
+	/* Prevent Buf Ovfs */
+	ByteCount = MIN(ByteCount, MEMORY_SIZE_PER_SETTING - Address);
+
+	while(ByteCount--) {
+		*DstPtr++ = *SrcPtr++;
+	}
 }
 
 void MemoryClear(void)
 {
-	uint32_t PageAddress = ((uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING) / MEMORY_PAGE_SIZE;
-	uint16_t PageCount = MEMORY_SIZE_PER_SETTING / MEMORY_PAGE_SIZE;
-
-	while(PageCount > 0) {
-		FlashClearPage(PageAddress);
-		PageCount--;
-		PageAddress++;
+	for (uint16_t i=0; i<MEMORY_SIZE_PER_SETTING; i++) {
+		Memory[i] = 0;
 	}
+}
+
+void MemoryRecall(void)
+{
+	/* Recall memory from permanent flash */
+	FlashRead(Memory, (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+}
+
+void MemoryStore(void)
+{
+	/* Store current memory into permanent flash */
+	FlashWrite(Memory, (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
 }
 
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
@@ -267,10 +296,23 @@ bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
     } else {
     	/* Calculate bytes left in memory and start writing */
     	uint32_t BytesLeft = MEMORY_SIZE_PER_SETTING - BlockAddress;
-		ByteCount = MIN(ByteCount, BytesLeft);
-		MemoryWriteBlock(Buffer, BlockAddress, ByteCount);
+		uint32_t FlashAddress = (uint32_t) BlockAddress + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING;
+    	ByteCount = MIN(ByteCount, BytesLeft);
+
+    	/* Store into flash */
+    	FlashWrite(Buffer, FlashAddress, ByteCount);
+
+		/* Store to local memory */
+    	uint8_t* DstPtr = &Memory[BlockAddress];
+    	uint8_t* SrcPtr = (uint8_t*) Buffer;
+
+    	while(ByteCount--) {
+    		*DstPtr++ = *SrcPtr++;
+    	}
+
 		return true;
     }
+
 }
 
 bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
@@ -281,9 +323,17 @@ bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount
     } else {
     	/* Calculate bytes left in memory and issue reading */
     	uint32_t BytesLeft = MEMORY_SIZE_PER_SETTING - BlockAddress;
-		ByteCount = MIN(ByteCount, BytesLeft);
-    	MemoryReadBlock(Buffer, BlockAddress, ByteCount);
+    	//uint32_t FlashAddress = (uint32_t) BlockAddress + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING;
+    	ByteCount = MIN(ByteCount, BytesLeft);
+
+    	/* Output local memory contents */
+    	uint8_t* DstPtr = (uint8_t*) Buffer;
+    	uint8_t* SrcPtr = &Memory[BlockAddress];
+
+    	while(ByteCount--) {
+    		*DstPtr++ = *SrcPtr++;
+    	}
+
         return true;
     }
 }
-

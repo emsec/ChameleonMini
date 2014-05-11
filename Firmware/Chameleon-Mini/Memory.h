@@ -65,16 +65,20 @@
 #define MEMORY_FLASH_MISO	PIN2_bm
 #define MEMORY_FLASH_SCK	PIN1_bm
 
-#define MEMORY_PAGE_SIZE		256
-#define MEMORY_SIZE_PER_SETTING	((uint32_t) 256 * MEMORY_PAGE_SIZE) /* Multiple of memory page size */
+#define MEMORY_SIZE_PER_SETTING	1024
 
 void MemoryInit(void);
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryClear(void);
 
+
+void MemoryRecall(void);
+void MemoryStore(void);
+
 /* For use with XModem */
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 
 #endif /* MEMORY_H_ */
+
