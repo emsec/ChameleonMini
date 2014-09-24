@@ -56,6 +56,7 @@
 #include "Settings.h"
 #include <avr/eeprom.h>
 #include "Configuration.h"
+#include "Memory.h"
 
 SettingsType GlobalSettings;
 SettingsType EEMEM StoredSettings = {
