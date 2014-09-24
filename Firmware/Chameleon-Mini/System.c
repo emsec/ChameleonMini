@@ -110,7 +110,7 @@ void SystemEnterBootloader(void)
 {
     /* Use Watchdog timer to reset into bootloader. */
     CCP = CCP_IOREG_gc;
-    WDT.CTRL = WDT_PER_500CLK_gc | WDT_ENABLE_bm | WDT_CEN_bm;
+    WDT.CTRL = WDT_PER_512CLK_gc | WDT_ENABLE_bm | WDT_CEN_bm;
 }
 
 
