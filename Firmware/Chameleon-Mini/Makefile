@@ -94,7 +94,7 @@ OPTIMIZATION = 3
 SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Settings.c LED.c
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c
-SRC         += AApplication/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c
+SRC         += Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) $(SETTINGS)
