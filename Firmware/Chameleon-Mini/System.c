@@ -56,6 +56,11 @@
 #include "System.h"
 #include "LED.h"
 
+/* AVR Toolchain changed defines */
+#ifndef WDT_PER_500CLK_gc
+#define WDT_PER_500CLK_gc WDT_PER_512CLK_gc
+#endif
+
 ISR(BADISR_vect)
 {
     while(1);
@@ -110,7 +115,7 @@ void SystemEnterBootloader(void)
 {
     /* Use Watchdog timer to reset into bootloader. */
     CCP = CCP_IOREG_gc;
-    WDT.CTRL = WDT_PER_512CLK_gc | WDT_ENABLE_bm | WDT_CEN_bm;
+    WDT.CTRL = WDT_PER_500CLK_gc | WDT_ENABLE_bm | WDT_CEN_bm;
 }
 
 
