@@ -9,6 +9,12 @@
 #include "LED.h"
 #include <avr/interrupt.h>
 
+/* AVR Toolchain 3.4.5 changed defines */
+#ifndef WDT_PER_500CLK_gc
+#define WDT_PER_500CLK_gc WDT_PER_512CLK_gc
+#endif
+
+
 ISR(BADISR_vect)
 {
     while(1);
