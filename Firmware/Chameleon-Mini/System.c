@@ -1,70 +1,20 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
- * AUTHORS"). All rights reserved.
+/*
+ * System.c
  *
- * DEFINITIONS:
- *
- * "WORK": The material covered by this license includes the schematic
- * diagrams, designs, circuit or circuit board layouts, mechanical
- * drawings, documentation (in electronic or printed form), source code,
- * binary software, data files, assembled devices, and any additional
- * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
- * (https://github.com/skuep/ChameleonMini).
- *
- * LICENSE TERMS:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK are permitted provided that the
- * following conditions are met:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK must include the above copyright
- * notice, this list of conditions, the below disclaimer, and the following
- * attribution:
- *
- * "Based on ChameleonMini an open-source RFID emulator:
- * https://github.com/skuep/ChameleonMini"
- *
- * The attribution must be clearly visible to a user, for example, by being
- * printed on the circuit board and an enclosure, and by being displayed by
- * software (both in binary and source code form).
- *
- * At any time, the majority of the ORIGINAL AUTHORS may decide to give
- * written permission to an entity to use or redistribute the WORK (with or
- * without modification) WITHOUT having to include the above copyright
- * notice, this list of conditions, the below disclaimer, and the above
- * attribution.
- *
- * DISCLAIMER:
- *
- * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the hardware, software, and
- * documentation should not be interpreted as representing official
- * policies, either expressed or implied, of the ORIGINAL AUTHORS.
+ *  Created on: 10.02.2013
+ *      Author: skuser
  */
 
 #include "System.h"
 #include "LED.h"
-
-/* AVR Toolchain changed defines */
-#ifndef WDT_PER_500CLK_gc
-#define WDT_PER_500CLK_gc WDT_PER_512CLK_gc
-#endif
+#include <avr/interrupt.h>
 
 ISR(BADISR_vect)
 {
     while(1);
 }
+
+EMPTY_INTERRUPT(RTC_OVF_vect);
 
 void SystemInit(void)
 {
@@ -96,9 +46,14 @@ void SystemInit(void)
     TCE0.PER = F_CPU / 256 / SYSTEM_TICK_FREQ - 1;
     TCE0.CTRLA = TC_CLKSEL_DIV256_gc;
 
-    /* Enable RTC with roughly 1kHz clock */
+    /* Enable RTC with roughly 1kHz clock for system tick
+     * and to wake up while sleeping. */
     CLK.RTCCTRL = CLK_RTCSRC_ULP_gc | CLK_RTCEN_bm;
+    RTC.PER = 1000 / SYSTEM_TICK_FREQ - 1;
+    RTC.COMP = 1000 / SYSTEM_TICK_FREQ - 1;
     RTC.CTRL = RTC_PRESCALER_DIV1_gc;
+    RTC.INTCTRL = RTC_OVFINTLVL_LO_gc;
+
 
     /* Enable EEPROM data memory mapping */
     NVM.CTRLB |= NVM_EEMAPEN_bm;
@@ -121,6 +76,8 @@ void SystemEnterBootloader(void)
 
 void SystemStartUSBClock(void)
 {
+	SystemSleepDisable();
+
     /* 48MHz USB Clock using 12MHz XTAL */
     OSC.XOSCCTRL = OSC_FRQRANGE_12TO16_gc | OSC_XOSCSEL_XTAL_16KCLK_gc;
     OSC.CTRL |= OSC_XOSCEN_bm;
@@ -136,6 +93,8 @@ void SystemStartUSBClock(void)
 
 void SystemStopUSBClock(void)
 {
+	SystemSleepEnable();
+
     /* Disable USB Clock to minimize power consumption */
     CLK.USBCTRL &= ~CLK_USBSEN_bm;
     OSC.CTRL &= ~OSC_PLLEN_bm;
@@ -148,3 +107,4 @@ void SystemInterruptInit(void)
     PMIC.CTRL = PMIC_LOLVLEN_bm | PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm;
     sei();
 }
+

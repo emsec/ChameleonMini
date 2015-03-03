@@ -1,63 +1,15 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
- * AUTHORS"). All rights reserved.
+/*
+ * Flash.c
  *
- * DEFINITIONS:
- *
- * "WORK": The material covered by this license includes the schematic
- * diagrams, designs, circuit or circuit board layouts, mechanical
- * drawings, documentation (in electronic or printed form), source code,
- * binary software, data files, assembled devices, and any additional
- * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
- * (https://github.com/skuep/ChameleonMini).
- *
- * LICENSE TERMS:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK are permitted provided that the
- * following conditions are met:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK must include the above copyright
- * notice, this list of conditions, the below disclaimer, and the following
- * attribution:
- *
- * "Based on ChameleonMini an open-source RFID emulator:
- * https://github.com/skuep/ChameleonMini"
- *
- * The attribution must be clearly visible to a user, for example, by being
- * printed on the circuit board and an enclosure, and by being displayed by
- * software (both in binary and source code form).
- *
- * At any time, the majority of the ORIGINAL AUTHORS may decide to give
- * written permission to an entity to use or redistribute the WORK (with or
- * without modification) WITHOUT having to include the above copyright
- * notice, this list of conditions, the below disclaimer, and the above
- * attribution.
- *
- * DISCLAIMER:
- *
- * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the hardware, software, and
- * documentation should not be interpreted as representing official
- * policies, either expressed or implied, of the ORIGINAL AUTHORS.
+ *  Created on: 20.03.2013
+ *      Author: skuser
  */
-
 
 #include "Memory.h"
 #include "Configuration.h"
 #include "Common.h"
 #include "Settings.h"
+#include "LED.h"
 
 #define FLASH_CMD_STATUS_REG_READ		0xD7
 #define FLASH_CMD_MEM_TO_BUF1			0x53
@@ -203,6 +155,7 @@ INLINE void FlashWrite(const void* Buffer, uint32_t Address, uint16_t ByteCount)
 
 		ByteCount -= PageBytes;
 		Address += PageBytes;
+		Buffer += PageBytes;
 	}
 }
 
@@ -228,9 +181,9 @@ void MemoryInit(void)
 	
 	MEMORY_FLASH_PORT.DIRSET = MEMORY_FLASH_SCK | MEMORY_FLASH_MOSI | MEMORY_FLASH_CS;
 
-    MEMORY_FLASH_USART.BAUDCTRLA = 0;
+    MEMORY_FLASH_USART.BAUDCTRLA = 15;//0;
     MEMORY_FLASH_USART.BAUDCTRLB = 0;
-	MEMORY_FLASH_USART.CTRLC = USART_CMODE_MSPI_gc;
+	MEMORY_FLASH_USART.CTRLC = USART_CMODE_MSPI_gc; //  | USART_CHSIZE_8BIT_gc;
 	MEMORY_FLASH_USART.CTRLB = USART_RXEN_bm | USART_TXEN_bm;
 
 
@@ -267,6 +220,8 @@ void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
 	while(ByteCount--) {
 		*DstPtr++ = *SrcPtr++;
 	}
+
+	LEDTrigger(LED_MEMORY_CHANGED, LED_ON);
 }
 
 void MemoryClear(void)
@@ -279,13 +234,16 @@ void MemoryClear(void)
 void MemoryRecall(void)
 {
 	/* Recall memory from permanent flash */
-	FlashRead(Memory, (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+	FlashRead(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
 }
 
 void MemoryStore(void)
 {
 	/* Store current memory into permanent flash */
-	FlashWrite(Memory, (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+	FlashWrite(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+
+	LEDTrigger(LED_MEMORY_CHANGED, LED_OFF);
+	LEDTrigger(LED_MEMORY_STORED, LED_PULSE);
 }
 
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
@@ -296,7 +254,7 @@ bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
     } else {
     	/* Calculate bytes left in memory and start writing */
     	uint32_t BytesLeft = MEMORY_SIZE_PER_SETTING - BlockAddress;
-		uint32_t FlashAddress = (uint32_t) BlockAddress + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING;
+		uint32_t FlashAddress = (uint32_t) BlockAddress + (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING;
     	ByteCount = MIN(ByteCount, BytesLeft);
 
     	/* Store into flash */
@@ -337,3 +295,4 @@ bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount
         return true;
     }
 }
+

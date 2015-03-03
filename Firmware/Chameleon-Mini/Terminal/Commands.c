@@ -1,57 +1,3 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
- * AUTHORS"). All rights reserved.
- *
- * DEFINITIONS:
- *
- * "WORK": The material covered by this license includes the schematic
- * diagrams, designs, circuit or circuit board layouts, mechanical
- * drawings, documentation (in electronic or printed form), source code,
- * binary software, data files, assembled devices, and any additional
- * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
- * (https://github.com/skuep/ChameleonMini).
- *
- * LICENSE TERMS:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK are permitted provided that the
- * following conditions are met:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK must include the above copyright
- * notice, this list of conditions, the below disclaimer, and the following
- * attribution:
- *
- * "Based on ChameleonMini an open-source RFID emulator:
- * https://github.com/skuep/ChameleonMini"
- *
- * The attribution must be clearly visible to a user, for example, by being
- * printed on the circuit board and an enclosure, and by being displayed by
- * software (both in binary and source code form).
- *
- * At any time, the majority of the ORIGINAL AUTHORS may decide to give
- * written permission to an entity to use or redistribute the WORK (with or
- * without modification) WITHOUT having to include the above copyright
- * notice, this list of conditions, the below disclaimer, and the above
- * attribution.
- *
- * DISCLAIMER:
- *
- * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the hardware, software, and
- * documentation should not be interpreted as representing official
- * policies, either expressed or implied, of the ORIGINAL AUTHORS.
- */
 
 #include "Commands.h"
 #include <stdio.h>
@@ -226,15 +172,143 @@ CommandStatusIdType CommandExecButton(char* OutMessage)
 
 CommandStatusIdType CommandGetButton(char* OutParam)
 {
-    ButtonGetActionByName(OutParam, TERMINAL_BUFFER_SIZE);
+    ButtonGetActionByName(BUTTON_PRESS_SHORT, OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 CommandStatusIdType CommandSetButton(const char* InParam)
 {
-    if (ButtonSetActionByName(InParam)) {
+    if (ButtonSetActionByName(BUTTON_PRESS_SHORT, InParam)) {
         SettingsSave();
+        return COMMAND_INFO_OK_ID;
+    } else {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+}
+
+CommandStatusIdType CommandExecButtonLong(char* OutMessage)
+{
+    ButtonGetActionList(OutMessage, TERMINAL_BUFFER_SIZE);
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandGetButtonLong(char* OutParam)
+{
+    ButtonGetActionByName(BUTTON_PRESS_LONG, OutParam, TERMINAL_BUFFER_SIZE);
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetButtonLong(const char* InParam)
+{
+    if (ButtonSetActionByName(BUTTON_PRESS_LONG, InParam)) {
+        SettingsSave();
+        return COMMAND_INFO_OK_ID;
+    } else {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+}
+
+CommandStatusIdType CommandExecLedGreen(char* OutMessage)
+{
+	LEDGetFuncList(OutMessage, TERMINAL_BUFFER_SIZE);
+
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandGetLedGreen(char* OutParam)
+{
+	LEDGetFuncByName(LED_GREEN, OutParam, TERMINAL_BUFFER_SIZE);
+
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetLedGreen(const char* InParam)
+{
+	if (LEDSetFuncByName(LED_GREEN, InParam)) {
+		SettingsSave();
+		return COMMAND_INFO_OK_ID;
+	} else {
+		return COMMAND_ERR_INVALID_PARAM_ID;
+	}
+}
+
+CommandStatusIdType CommandExecLedRed(char* OutMessage)
+{
+	LEDGetFuncList(OutMessage, TERMINAL_BUFFER_SIZE);
+
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandGetLedRed(char* OutParam)
+{
+	LEDGetFuncByName(LED_RED, OutParam, TERMINAL_BUFFER_SIZE);
+
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetLedRed(const char* InParam)
+{
+	if (LEDSetFuncByName(LED_RED, InParam)) {
+		SettingsSave();
+		return COMMAND_INFO_OK_ID;
+	} else {
+		return COMMAND_ERR_INVALID_PARAM_ID;
+	}
+}
+
+CommandStatusIdType CommandExecLogMode(char* OutMessage)
+{
+    /* Get list of log modes */
+    LogGetModeList(OutMessage, TERMINAL_BUFFER_SIZE);
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandGetLogMode(char* OutParam)
+{
+    /* Get Logmode */
+    LogGetModeByName(OutParam, TERMINAL_BUFFER_SIZE);
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetLogMode(const char* InParam)
+{
+    if (LogSetModeByName(InParam)) {
+        SettingsSave();
+        return COMMAND_INFO_OK_ID;
+    } else {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+}
+
+CommandStatusIdType CommandExecLogMem(char* OutMessage)
+{
+    snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE,
+        PSTR("%S,%S"), PSTR(COMMAND_LOGMEM_LOADBIN), PSTR(COMMAND_LOGMEM_CLEAR) );
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandGetLogMem(char* OutParam)
+{
+    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
+        PSTR("%u"), LogMemFree());
+
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetLogMem(const char* InParam)
+{
+    if (strcmp_P(InParam, PSTR(COMMAND_LOGMEM_LOADBIN)) == 0) {
+        XModemSend(LogMemLoadBlock);
+        return COMMAND_INFO_XMODEM_WAIT_ID;
+    } else if (strcmp_P(InParam, PSTR(COMMAND_LOGMEM_CLEAR)) == 0) {
+        LogMemClear();
         return COMMAND_INFO_OK_ID;
     } else {
         return COMMAND_ERR_INVALID_PARAM_ID;

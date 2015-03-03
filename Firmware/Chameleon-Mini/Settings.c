@@ -1,71 +1,25 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
- * AUTHORS"). All rights reserved.
- *
- * DEFINITIONS:
- *
- * "WORK": The material covered by this license includes the schematic
- * diagrams, designs, circuit or circuit board layouts, mechanical
- * drawings, documentation (in electronic or printed form), source code,
- * binary software, data files, assembled devices, and any additional
- * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
- * (https://github.com/skuep/ChameleonMini).
- *
- * LICENSE TERMS:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK are permitted provided that the
- * following conditions are met:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK must include the above copyright
- * notice, this list of conditions, the below disclaimer, and the following
- * attribution:
- *
- * "Based on ChameleonMini an open-source RFID emulator:
- * https://github.com/skuep/ChameleonMini"
- *
- * The attribution must be clearly visible to a user, for example, by being
- * printed on the circuit board and an enclosure, and by being displayed by
- * software (both in binary and source code form).
- *
- * At any time, the majority of the ORIGINAL AUTHORS may decide to give
- * written permission to an entity to use or redistribute the WORK (with or
- * without modification) WITHOUT having to include the above copyright
- * notice, this list of conditions, the below disclaimer, and the above
- * attribution.
- *
- * DISCLAIMER:
- *
- * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the hardware, software, and
- * documentation should not be interpreted as representing official
- * policies, either expressed or implied, of the ORIGINAL AUTHORS.
- */
-
 #include "Settings.h"
 #include <avr/eeprom.h>
 #include "Configuration.h"
+#include "Log.h"
 #include "Memory.h"
+#include "LED.h"
+
+#define SETTING_TO_INDEX(S) (S - SETTINGS_FIRST)
+#define INDEX_TO_SETTING(I) (I + SETTINGS_FIRST)
 
 SettingsType GlobalSettings;
 SettingsType EEMEM StoredSettings = {
-	.ActiveSetting = DEFAULT_SETTING,
-	.ActiveSettingPtr = &GlobalSettings.Settings[DEFAULT_SETTING],
+	.ActiveSettingIdx = SETTING_TO_INDEX(DEFAULT_SETTING),
+	.ActiveSettingPtr = &GlobalSettings.Settings[SETTING_TO_INDEX(DEFAULT_SETTING)],
 
 	.Settings = { [0 ... (SETTINGS_COUNT-1)] =	{
 		.Configuration = DEFAULT_CONFIGURATION,
 		.ButtonAction =	DEFAULT_BUTTON_ACTION,
+		.ButtonLongAction = DEFAULT_BUTTON_LONG_ACTION,
+		.LogMode = DEFAULT_LOG_MODE,
+		.LEDRedFunction = DEFAULT_RED_LED_ACTION,
+		.LEDGreenFunction = DEFAULT_GREEN_LED_ACTION
 	} }
 };
 
@@ -81,37 +35,48 @@ void SettingsSave(void) {
 
 void SettingsCycle(void) {
 	uint8_t i = SETTINGS_COUNT;
-	uint8_t Setting = GlobalSettings.ActiveSetting;
+	uint8_t SettingIdx = GlobalSettings.ActiveSettingIdx;
 
 	while (i-- > 0) {
-		Setting = (Setting + 1) % SETTINGS_COUNT;
+		/* Try to set one of the SETTINGS_COUNT following settings.
+		 * But only set if it is not CONFIG_NONE. */
+		SettingIdx = (SettingIdx + 1) % SETTINGS_COUNT;
 
-		if (GlobalSettings.Settings[Setting].Configuration != CONFIG_NONE) {
-			SettingsSetActiveById(Setting);
+		if (GlobalSettings.Settings[SettingIdx].Configuration != CONFIG_NONE) {
+			SettingsSetActiveById(INDEX_TO_SETTING(SettingIdx));
 			break;
 		}
 	}
 }
 
-void SettingsSetActiveById(uint8_t Setting) {
-	if (Setting < SETTINGS_COUNT) {
+bool SettingsSetActiveById(uint8_t Setting) {
+	if ( (Setting >= SETTINGS_FIRST) && (Setting <= SETTINGS_LAST) ) {
+		uint8_t SettingIdx = SETTING_TO_INDEX(Setting);
 		/* Store current memory contents permanently */
 		MemoryStore();
-		
-		GlobalSettings.ActiveSetting = Setting;
+
+		GlobalSettings.ActiveSettingIdx = SettingIdx;
 		GlobalSettings.ActiveSettingPtr =
-				&GlobalSettings.Settings[GlobalSettings.ActiveSetting];
+				&GlobalSettings.Settings[SettingIdx];
 
 		/* Settings have changed. Progress changes through system */
 		ConfigurationInit();
-		
+		LogInit();
+
 		/* Recall new memory contents */
 		MemoryRecall();
+
+		/* Notify LED. blink according to current setting */
+		LEDTrigger(LED_SETTING_CHANGE, LED_BLINK + SettingIdx);
+
+		return true;
+	} else {
+		return false;
 	}
 }
 
 uint8_t SettingsGetActiveById(void) {
-	return GlobalSettings.ActiveSetting;
+	return INDEX_TO_SETTING(GlobalSettings.ActiveSettingIdx);
 }
 
 void SettingsGetActiveByName(char* SettingOut, uint16_t BufferSize) {
@@ -122,9 +87,8 @@ void SettingsGetActiveByName(char* SettingOut, uint16_t BufferSize) {
 bool SettingsSetActiveByName(const char* Setting) {
 	uint8_t SettingNr = Setting[0] - '0';
 
-	if ((Setting[1] == '\0') && (SettingNr < SETTINGS_COUNT)) {
-		SettingsSetActiveById(SettingNr);
-		return true;
+	if (Setting[1] == '\0') {
+		return SettingsSetActiveById(SettingNr);
 	} else {
 		return false;
 	}

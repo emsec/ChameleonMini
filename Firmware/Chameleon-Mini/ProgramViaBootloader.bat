@@ -1,6 +1,11 @@
 @ECHO OFF
+
+REM This script programs the Chameleon using batchisp (Atmel Flip) and DFU (device firmware upgrade via USB)
+REM You need to install Flip, otherwise it does not work
+REM Make sure to adjust the COMPORT variable to the actual com port the CDC Device enumerates as
+REM This is necessary to send the upgrade command and thus set the chameleon into DFU mode
+
 SET COMPORT=COM5
-SET BATCHISP=C:\Programme\Atmel\Flip 3.4.7\bin
 SET TIMEOUT=5
 SET COMMAND=UPGRADE
 
@@ -13,5 +18,4 @@ ECHO Waiting for DFU Bootloader
 ping 127.0.0.1 -n %TIMEOUT% -w 1000 > nul
 
 ECHO Start Programming
-SET PATH=%BATCHISP%;%PATH%
 make dfu-flip

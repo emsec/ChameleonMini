@@ -1,57 +1,3 @@
-# Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
-# AUTHORS"). All rights reserved.
-# 
-# DEFINITIONS:
-# 
-# "WORK": The material covered by this license includes the schematic
-# diagrams, designs, circuit or circuit board layouts, mechanical
-# drawings, documentation (in electronic or printed form), source code,
-# binary software, data files, assembled devices, and any additional
-# material provided by the ORIGINAL AUTHORS in the ChameleonMini project
-# (https://github.com/skuep/ChameleonMini).
-# 
-# LICENSE TERMS:
-# 
-# Redistributions and use of this WORK, with or without modification, or
-# of substantial portions of this WORK are permitted provided that the
-# following conditions are met:
-# 
-# Redistributions and use of this WORK, with or without modification, or
-# of substantial portions of this WORK must include the above copyright
-# notice, this list of conditions, the below disclaimer, and the following
-# attribution:
-# 
-# "Based on ChameleonMini an open-source RFID emulator:
-# https://github.com/skuep/ChameleonMini"
-# 
-# The attribution must be clearly visible to a user, for example, by being
-# printed on the circuit board and an enclosure, and by being displayed by
-# software (both in binary and source code form).
-# 
-# At any time, the majority of the ORIGINAL AUTHORS may decide to give
-# written permission to an entity to use or redistribute the WORK (with or
-# without modification) WITHOUT having to include the above copyright
-# notice, this list of conditions, the below disclaimer, and the above
-# attribution.
-# 
-# DISCLAIMER:
-# 
-# THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
-# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
-# THE POSSIBILITY OF SUCH DAMAGE.
-# 
-# The views and conclusions contained in the hardware, software, and
-# documentation should not be interpreted as representing official
-# policies, either expressed or implied, of the ORIGINAL AUTHORS.
-
 # This makefile uses sh in order to build the project.
 # Note when using AVR-Toolchain, you have to install cygwin and 
 # append cygwin's bin directory to the PATH environment variable 
@@ -60,41 +6,83 @@ SHELL = /bin/sh
 
 #Supported configurations
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
+SETTINGS    += -DCONFIG_MF_Plus1k_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
+SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
+SETTINGS	+= -DCONFIG_ISO14443A_SNIFF_SUPPORT
+
+#Support magic mode on mifare classic configuration
+SETTINGS	+= -DSUPPORT_MF_CLASSIC_MAGIC_MODE
 
 #Support activating firmware upgrade mode through command-line
 SETTINGS	+= -DSUPPORT_FIRMWARE_UPGRADE
 
 #Default configuration
+#SETTINGS += -DDEFAULT_CONFIGURATION=CONFIG_MF_Plus1k_7B
+#SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K
+#SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
+#SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
 SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_NONE
 
-#Default button action
+#Default button actions
 #SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_RANDOM
 #SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_LEFT_INCREMENT
 #SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_RIGHT_INCREMENT
 #SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_LEFT_DECREMENT
 #SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_RIGHT_DECREMENT
 SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
+#SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_STORE_MEM
+SETTINGS	+= -DDEFAULT_BUTTON_LONG_ACTION=BUTTON_ACTION_RECALL_MEM
+
+#Define if button action setting should be independent of active setting 
+SETTINGS	+= -DBUTTON_SETTING_GLOBAL
+
+#Default LED functions
+	
+#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_TERMINAL_CONN 
+#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_TERMINAL_RXTX
+SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_SETTING_CHANGE
+#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_MEMORY_STORED
+#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_MEMORY_CHANGED
+#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_CODEC_RX
+#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_CODEC_TX	
+
+SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_TERMINAL_CONN 
+#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_TERMINAL_RXTX
+#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_SETTING_CHANGE
+#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_MEMORY_STORED
+#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_MEMORY_CHANGED
+#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_CODEC_RX
+#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_CODEC_TX	
+
+
+#Define if LED function setting should be independent of active setting
+SETTINGS	+= -DLED_SETTING_GLOBAL
+
+#Default logging mode
+SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_OFF
+#SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_MEMORY
+#SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_TERMINAL
 
 #Default setting
-SETTINGS	+= -DDEFAULT_SETTING=0
+SETTINGS	+= -DDEFAULT_SETTING=SETTINGS_FIRST
 
 #Use EEPROM to store settings
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Build configuration
 BUILD_DATE	 = $(shell date +'\"%y%m%d\"')
-MCU          = atxmega32a4u
+MCU          = atxmega32a4u #atxmega128a4u
 ARCH         = XMEGA
 BOARD        = NONE
 F_CPU        = 32000000
 F_USB        = 48000000
 TARGET       = Chameleon-Mini
 OPTIMIZATION = 3
-SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Settings.c LED.c
+SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Log.c Settings.c LED.c
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c
-SRC         += Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c
+SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) $(SETTINGS)

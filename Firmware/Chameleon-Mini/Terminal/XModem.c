@@ -1,58 +1,3 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
- * AUTHORS"). All rights reserved.
- *
- * DEFINITIONS:
- *
- * "WORK": The material covered by this license includes the schematic
- * diagrams, designs, circuit or circuit board layouts, mechanical
- * drawings, documentation (in electronic or printed form), source code,
- * binary software, data files, assembled devices, and any additional
- * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
- * (https://github.com/skuep/ChameleonMini).
- *
- * LICENSE TERMS:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK are permitted provided that the
- * following conditions are met:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK must include the above copyright
- * notice, this list of conditions, the below disclaimer, and the following
- * attribution:
- *
- * "Based on ChameleonMini an open-source RFID emulator:
- * https://github.com/skuep/ChameleonMini"
- *
- * The attribution must be clearly visible to a user, for example, by being
- * printed on the circuit board and an enclosure, and by being displayed by
- * software (both in binary and source code form).
- *
- * At any time, the majority of the ORIGINAL AUTHORS may decide to give
- * written permission to an entity to use or redistribute the WORK (with or
- * without modification) WITHOUT having to include the above copyright
- * notice, this list of conditions, the below disclaimer, and the above
- * attribution.
- *
- * DISCLAIMER:
- *
- * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the hardware, software, and
- * documentation should not be interpreted as representing official
- * policies, either expressed or implied, of the ORIGINAL AUTHORS.
- */
-
 #include "XModem.h"
 #include "Terminal.h"
 
@@ -62,12 +7,13 @@
 #define BYTE_CAN        0x18
 #define BYTE_EOF        0x1A
 #define BYTE_EOT        0x04
+#define BYTE_ESC		0x1B
 
 #define XMODEM_BLOCK_SIZE   128
 
-#define RECV_INIT_TIMEOUT   5  /* x 100ms */
-#define RECV_INIT_COUNT     20 /* 10 secs */
-#define SEND_INIT_TIMEOUT   100 /* x 100ms */
+#define RECV_INIT_TIMEOUT   5  /* #Ticks between sending of NAKs to the sender */
+#define RECV_INIT_COUNT     60 /* #Timeouts until receive failure */
+#define SEND_INIT_TIMEOUT   300 /* #Ticks waiting for NAKs from the receiver before failure */
 
 #define FIRST_FRAME_NUMBER  1
 #define CHECKSUM_INIT_VALUE 0
@@ -89,7 +35,7 @@ static uint8_t CurrentFrameNumber;
 static uint8_t ReceivedFrameNumber;
 static uint8_t Checksum;
 static uint8_t RetryCount;
-static uint8_t RetryTimeout;
+static uint16_t RetryTimeout;
 static uint16_t BufferIdx;
 static uint32_t BlockAddress;
 
@@ -140,7 +86,7 @@ bool XModemProcessByte(uint8_t Byte)
             /* Transmission finished */
             TerminalSendByte(BYTE_ACK);
             State = STATE_OFF;
-        } else if (Byte == BYTE_CAN) {
+        } else if ( (Byte == BYTE_CAN) || (Byte == BYTE_ESC) ) {
             /* Cancel transmission */
             State = STATE_OFF;
         } else {
@@ -218,6 +164,8 @@ bool XModemProcessByte(uint8_t Byte)
         if (Byte == BYTE_NAK) {
             CurrentFrameNumber = FIRST_FRAME_NUMBER - 1;
             Byte = BYTE_ACK;
+        } else if (Byte == BYTE_ESC) {
+        	State = STATE_OFF;
         }
 
         /* Fallthrough */

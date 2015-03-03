@@ -1,58 +1,201 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
- * AUTHORS"). All rights reserved.
- *
- * DEFINITIONS:
- *
- * "WORK": The material covered by this license includes the schematic
- * diagrams, designs, circuit or circuit board layouts, mechanical
- * drawings, documentation (in electronic or printed form), source code,
- * binary software, data files, assembled devices, and any additional
- * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
- * (https://github.com/skuep/ChameleonMini).
- *
- * LICENSE TERMS:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK are permitted provided that the
- * following conditions are met:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK must include the above copyright
- * notice, this list of conditions, the below disclaimer, and the following
- * attribution:
- *
- * "Based on ChameleonMini an open-source RFID emulator:
- * https://github.com/skuep/ChameleonMini"
- *
- * The attribution must be clearly visible to a user, for example, by being
- * printed on the circuit board and an enclosure, and by being displayed by
- * software (both in binary and source code form).
- *
- * At any time, the majority of the ORIGINAL AUTHORS may decide to give
- * written permission to an entity to use or redistribute the WORK (with or
- * without modification) WITHOUT having to include the above copyright
- * notice, this list of conditions, the below disclaimer, and the above
- * attribution.
- *
- * DISCLAIMER:
- *
- * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the hardware, software, and
- * documentation should not be interpreted as representing official
- * policies, either expressed or implied, of the ORIGINAL AUTHORS.
- */
-
 #include "LED.h"
+#include "Settings.h"
 
-uint8_t LEDPulseMask = 0;
+#define BLINK_PRESCALER	1 /* x LEDTick(); */
+
+LEDActionEnum LEDGreenAction = LED_NO_ACTION;
+LEDActionEnum LEDRedAction = LED_NO_ACTION;
+
+static const char PROGMEM LEDFuncTable[][32] =
+{
+    [LED_NO_FUNC] = "NONE",
+    [LED_TERMINAL_CONN] = "TERMINAL_CONN",
+    [LED_TERMINAL_RXTX] = "TERMINAL_RXTX",
+    [LED_SETTING_CHANGE] = "SETTING_CHANGE",
+    [LED_MEMORY_STORED] = "MEMORY_STORED",
+    [LED_MEMORY_CHANGED] = "MEMORY_CHANGED",
+    //TODO: [LED_FIELD_DETECTED] = "FIELD_DETECTED",
+    [LED_CODEC_RX] = "CODEC_RX",
+    [LED_CODEC_TX] = "CODEC_TX",
+    //TODO: [LED_APP_SELECTED] = "APP_SELECTED",
+
+};
+
+INLINE void Tick(uint8_t Mask, LEDActionEnum* Action)
+{
+	static uint8_t BlinkPrescaler = 0;
+
+	switch (*Action)
+	{
+		case LED_NO_ACTION:
+			/* Do nothing */
+			break;
+
+		case LED_OFF:
+			LED_PORT.OUTCLR = Mask;
+			*Action = LED_NO_ACTION;
+			break;
+
+		case LED_ON:
+			LED_PORT.OUTSET = Mask;
+			*Action = LED_NO_ACTION;
+			break;
+
+		case LED_TOGGLE:
+			LED_PORT.OUTTGL = Mask;
+			*Action = LED_NO_ACTION;
+			break;
+
+		case LED_PULSE:
+			if (!(LED_PORT.OUT & Mask)) {
+				LED_PORT.OUTSET = Mask;
+			} else {
+				LED_PORT.OUTCLR = Mask;
+				*Action = LED_NO_ACTION;
+			}
+			break;
+
+		case LED_BLINK_1X ... LED_BLINK_8X:
+			if (++BlinkPrescaler == BLINK_PRESCALER) {
+				BlinkPrescaler = 0;
+				/* Blink functionality occurs at slower speed than Tick-frequency */
+
+				if (!(LED_PORT.OUT & Mask)) {
+					/* LED is off, turn it on */
+					LED_PORT.OUTSET = Mask;
+				} else {
+					/* LED is on, turn it off and change state */
+					LED_PORT.OUTCLR = Mask;
+
+					if (*Action == LED_BLINK_1X) {
+						*Action = LED_NO_ACTION;
+					} else {
+						/* Still some blinks to do. Use the fact that LED_BLINK_XY are ordered sequentially */
+						*Action = *Action - 1;
+					}
+				}
+			}
+			break;
+
+		default:
+			/* Should not happen (TM) */
+			*Action = LED_NO_ACTION;
+			break;
+
+	}
+}
+
+void LEDInit(void)
+{
+	LED_PORT.DIRSET = LED_MASK;
+}
+
+
+void LEDTick(void)
+{
+	Tick(LED_RED, &LEDRedAction);
+	Tick(LED_GREEN, &LEDGreenAction);
+}
+
+/* TODO: This would be nicer as INLINE */
+void LEDTrigger(LEDFunctionEnum Func, LEDActionEnum Action) {
+	if (GlobalSettings.ActiveSettingPtr->LEDGreenFunction == Func) {
+		LEDGreenAction = Action;
+	}
+
+	if (GlobalSettings.ActiveSettingPtr->LEDRedFunction == Func) {
+		LEDRedAction = Action;
+	}
+}
+
+void LEDGetFuncList(char* ListOut, uint16_t BufferSize)
+{
+    uint8_t i;
+
+    /* Account for '\0' */
+    BufferSize--;
+
+    for (i=0; i<LED_FUNC_COUNT; i++) {
+        const char* FuncName = LEDFuncTable[i];
+        char c;
+
+        while( (c = pgm_read_byte(FuncName)) != '\0' && BufferSize > sizeof(LEDFuncTable[i]) ) {
+            /* While not end-of-string and enough buffer to
+            * put a complete configuration name */
+            *ListOut++ = c;
+            FuncName++;
+            BufferSize--;
+        }
+
+        if ( i < (LED_FUNC_COUNT - 1) ) {
+            /* No comma on last configuration */
+            *ListOut++ = ',';
+            BufferSize--;
+        }
+    }
+
+    *ListOut = '\0';
+}
+
+void LEDSetFuncById(uint8_t Mask, LEDFunctionEnum Func)
+{
+#ifndef LED_SETTING_GLOBAL
+	if (Mask & LED_GREEN) {
+		GlobalSettings.ActiveSettingPtr->LEDGreenFunction = Func;
+	}
+
+	if (Mask & LED_RED) {
+		GlobalSettings.ActiveSettingPtr->LEDRedFunction = Func;
+	}
+#else
+	/* Write LED func to all settings when using global settings */
+	for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
+		if (Mask & LED_GREEN) {
+			GlobalSettings.Settings[i].LEDGreenFunction = Func;
+		}
+
+		if (Mask & LED_RED) {
+			GlobalSettings.Settings[i].LEDRedFunction = Func;
+		}
+	}
+#endif
+
+	/* Clear modified LED and remove any pending actions */
+	if (Mask & LED_GREEN) {
+		LED_PORT.OUTCLR = LED_GREEN;
+		LEDGreenAction = LED_NO_ACTION;
+	}
+
+	if (Mask & LED_RED) {
+		LED_PORT.OUTCLR = LED_RED;
+		LEDRedAction = LED_NO_ACTION;
+	}
+
+}
+
+void LEDGetFuncByName(uint8_t Mask, char* FuncOut, uint16_t BufferSize)
+{
+	if (Mask == LED_GREEN) {
+		strncpy_P(FuncOut, LEDFuncTable[GlobalSettings.ActiveSettingPtr->LEDGreenFunction], BufferSize);
+	} else if (Mask == LED_RED) {
+		strncpy_P(FuncOut, LEDFuncTable[GlobalSettings.ActiveSettingPtr->LEDRedFunction], BufferSize);
+	} else {
+		*FuncOut = '\0';
+	}
+}
+
+bool LEDSetFuncByName(uint8_t Mask, const char* FuncName)
+{
+    uint8_t i;
+
+    for (i=0; i<LED_FUNC_COUNT; i++) {
+        if (strcmp_P(FuncName, LEDFuncTable[i]) == 0) {
+            LEDSetFuncById(Mask, i);
+            return true;
+        }
+    }
+
+    /* LED Func not found */
+    return false;
+}
+

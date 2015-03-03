@@ -1,56 +1,8 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
- * AUTHORS"). All rights reserved.
+/*
+ * Standards.c
  *
- * DEFINITIONS:
- *
- * "WORK": The material covered by this license includes the schematic
- * diagrams, designs, circuit or circuit board layouts, mechanical
- * drawings, documentation (in electronic or printed form), source code,
- * binary software, data files, assembled devices, and any additional
- * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
- * (https://github.com/skuep/ChameleonMini).
- *
- * LICENSE TERMS:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK are permitted provided that the
- * following conditions are met:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK must include the above copyright
- * notice, this list of conditions, the below disclaimer, and the following
- * attribution:
- *
- * "Based on ChameleonMini an open-source RFID emulator:
- * https://github.com/skuep/ChameleonMini"
- *
- * The attribution must be clearly visible to a user, for example, by being
- * printed on the circuit board and an enclosure, and by being displayed by
- * software (both in binary and source code form).
- *
- * At any time, the majority of the ORIGINAL AUTHORS may decide to give
- * written permission to an entity to use or redistribute the WORK (with or
- * without modification) WITHOUT having to include the above copyright
- * notice, this list of conditions, the below disclaimer, and the above
- * attribution.
- *
- * DISCLAIMER:
- *
- * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the hardware, software, and
- * documentation should not be interpreted as representing official
- * policies, either expressed or implied, of the ORIGINAL AUTHORS.
+ *  Created on: 15.02.2013
+ *      Author: skuser
  */
 
 #include "Configuration.h"
@@ -86,6 +38,23 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .MemorySize = 0,
         .ReadOnly = true
     },
+#ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
+    [CONFIG_MF_ULTRALIGHT] = {
+        .ConfigurationID = CONFIG_MF_ULTRALIGHT,
+        .ConfigurationName = "MF_ULTRALIGHT",
+        .CodecInitFunc = ISO14443ACodecInit,
+        .CodecTaskFunc = ISO14443ACodecTask,
+        .ApplicationInitFunc = MifareUltralightAppInit,
+        .ApplicationResetFunc = MifareUltralightAppReset,
+        .ApplicationTaskFunc = MifareUltralightAppTask,
+        .ApplicationProcessFunc = MifareUltralightAppProcess,
+        .ApplicationGetUidFunc = MifareUltralightGetUid,
+        .ApplicationSetUidFunc = MifareUltralightSetUid,
+        .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
+        .MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
+        .ReadOnly = false
+    },
+#endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
     [CONFIG_MF_CLASSIC_1K] = {
         .ConfigurationID = CONFIG_MF_CLASSIC_1K,
@@ -102,6 +71,23 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
         .ReadOnly = false
     },
+#endif
+#ifdef CONFIG_MF_Plus1k_7B_SUPPORT
+[CONFIG_MF_Plus1k_7B] = {
+	.ConfigurationID = CONFIG_MF_Plus1k_7B,
+	.ConfigurationName = "MF_PLUS1K_7B",
+	.CodecInitFunc = ISO14443ACodecInit,
+	.CodecTaskFunc = ISO14443ACodecTask,
+	.ApplicationInitFunc = MifarePlus1kAppInit_7B,
+	.ApplicationResetFunc = MifareClassicAppReset,
+	.ApplicationTaskFunc = MifareClassicAppTask,
+	.ApplicationProcessFunc = MifareClassicAppProcess,
+	.ApplicationGetUidFunc = MifareClassicGetUid,
+	.ApplicationSetUidFunc = MifareClassicSetUid,
+	.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+	.MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+	.ReadOnly = false
+},
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
     [CONFIG_MF_CLASSIC_4K] = {
@@ -120,6 +106,24 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ReadOnly = false
     },
 #endif
+#ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
+    [CONFIG_ISO14443A_SNIFF] = {
+    	.ConfigurationID = CONFIG_ISO14443A_SNIFF,
+    	.ConfigurationName = "ISO14443A_SNIFF",
+    	.CodecInitFunc = ISO14443ACodecInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = ApplicationInitDummy,
+		.ApplicationResetFunc = ApplicationResetDummy,
+		.ApplicationTaskFunc = ApplicationTaskDummy,
+		.ApplicationProcessFunc = ApplicationProcessDummy,
+		.ApplicationGetUidFunc = ApplicationGetUidDummy,
+		.ApplicationSetUidFunc = ApplicationSetUidDummy,
+		.UidSize = 0,
+		.MemorySize = 0,
+		.ReadOnly = true
+    },
+#endif
+
 };
 
 ConfigurationType ActiveConfiguration;

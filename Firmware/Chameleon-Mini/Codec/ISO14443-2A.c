@@ -1,62 +1,16 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
- * AUTHORS"). All rights reserved.
+/*
+ * ISO14443A.c
  *
- * DEFINITIONS:
- *
- * "WORK": The material covered by this license includes the schematic
- * diagrams, designs, circuit or circuit board layouts, mechanical
- * drawings, documentation (in electronic or printed form), source code,
- * binary software, data files, assembled devices, and any additional
- * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
- * (https://github.com/skuep/ChameleonMini).
- *
- * LICENSE TERMS:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK are permitted provided that the
- * following conditions are met:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK must include the above copyright
- * notice, this list of conditions, the below disclaimer, and the following
- * attribution:
- *
- * "Based on ChameleonMini an open-source RFID emulator:
- * https://github.com/skuep/ChameleonMini"
- *
- * The attribution must be clearly visible to a user, for example, by being
- * printed on the circuit board and an enclosure, and by being displayed by
- * software (both in binary and source code form).
- *
- * At any time, the majority of the ORIGINAL AUTHORS may decide to give
- * written permission to an entity to use or redistribute the WORK (with or
- * without modification) WITHOUT having to include the above copyright
- * notice, this list of conditions, the below disclaimer, and the above
- * attribution.
- *
- * DISCLAIMER:
- *
- * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the hardware, software, and
- * documentation should not be interpreted as representing official
- * policies, either expressed or implied, of the ORIGINAL AUTHORS.
+ *  Created on: 18.02.2013
+ *      Author: skuser
  */
 
 #include "ISO14443-2A.h"
 #include "../System.h"
 #include "../Application/Application.h"
+#include "../LED.h"
 #include "Codec.h"
+#include "Log.h"
 
 /* Timing definitions for ISO14443A */
 #define ISO14443A_SUBCARRIER_DIVIDER    16
@@ -133,6 +87,14 @@ static void StartDemod(void) {
     /* Activate Power for demodulator */
     CodecSetDemodPower(true);
 
+    CodecBufferPtr = CodecBuffer;
+    ParityBufferPtr = &CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET];
+    DataRegister = 0;
+    SampleRegister = 0;
+    SamplePosition = 0;
+    BitCount = 0;
+    IsParityBit = false;
+
     /* Configure sampling-timer free running and sync to first modulation-pause. */
     CODEC_TIMER_SAMPLING.CNT = 0;
     CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;
@@ -143,19 +105,14 @@ static void StartDemod(void) {
 
     /* Start looking out for modulation pause via interrupt. */
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
+    SystemSleepSetMode(SYSTEM_SMODE_PSAVE);
 }
 
 ISR(CODEC_DEMOD_IN_INT0_VECT) {
     /* This is the first edge of the first modulation-pause after StartDemod.
-     * Now we have time to prepare our timers and variables to start
+     * Now we have time to start
      * demodulating beginning from one bit-width after this edge. */
-    CodecBufferPtr = CodecBuffer;
-    ParityBufferPtr = &CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET];
-    DataRegister = 0;
-    SampleRegister = 0;
-    SamplePosition = 0;
-    BitCount = 0;
-    IsParityBit = false;
+     SystemSleepSetMode(SYSTEM_SMODE_IDLE);
 
     /* Sampling timer has been preset to sample-rate and has automatically synced
      * to THIS first modulation pause. Thus after exactly one bit-width from here,
@@ -441,6 +398,9 @@ void ISO14443ACodecTask(void) {
         uint16_t AnswerBitCount = ISO14443A_APP_NO_RESPONSE;
 
         if (DemodBitCount > 0) {
+            LogEntry(LOG_INFO_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
+            LEDTrigger(LED_CODEC_RX, LED_PULSE);
+
             /* Call application if we received data */
             AnswerBitCount = ApplicationProcess(CodecBuffer, DemodBitCount);
 
@@ -461,6 +421,9 @@ void ISO14443ACodecTask(void) {
         }
 
         if (AnswerBitCount != ISO14443A_APP_NO_RESPONSE) {
+            LogEntry(LOG_INFO_TX_DATA, CodecBuffer, (AnswerBitCount + 7) / 8);
+            LEDTrigger(LED_CODEC_TX, LED_PULSE);
+
             BitCount = AnswerBitCount;
             BitSent = 0;
             CodecBufferPtr = CodecBuffer;
@@ -481,5 +444,7 @@ void ISO14443ACodecTask(void) {
          * for incoming data again. */
         StartDemod();
     }
+
+    //SystemSleep();
 }
 
