@@ -1,6 +1,5 @@
-
-Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
-AUTHORS"). All rights reserved.
+Copyright 2013, 2014, 2015 Timo Kasper, Simon Küppers, David Oswald
+("ORIGINAL AUTHORS"). All rights reserved.
 
 DEFINITIONS:
 
@@ -9,7 +8,7 @@ diagrams, designs, circuit or circuit board layouts, mechanical
 drawings, documentation (in electronic or printed form), source code,
 binary software, data files, assembled devices, and any additional
 material provided by the ORIGINAL AUTHORS in the ChameleonMini project
-(https://github.com/skuep/ChameleonMini).
+(https://github.com/emsec/ChameleonMini).
 
 LICENSE TERMS:
 
@@ -22,8 +21,8 @@ of substantial portions of this WORK must include the above copyright
 notice, this list of conditions, the below disclaimer, and the following
 attribution:
 
-"Based on ChameleonMini an open-source RFID emulator:
-https://github.com/skuep/ChameleonMini"
+"Based on the open-source RFID emulator ChameleonMini:
+https://github.com/emsec/ChameleonMini"
 
 The attribution must be clearly visible to a user, for example, by being
 printed on the circuit board and an enclosure, and by being displayed by
