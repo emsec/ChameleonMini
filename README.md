@@ -1,3 +1,9 @@
+Warning
+=======
+This is **not** the firmware for the current kickstarter project (https://www.kickstarter.com/projects/1980078555/chameleonmini-a-versatile-nfc-card-emulator-and-mo). Please do **not** use this firmware for the currently shipped RevG Chameleons.
+
+Please wait until the firmware for revision G is uploaded here in the coming days.
+
 Chameleon-Mini
 =============
 
