@@ -1,0 +1,22 @@
+/** \file */
+/**
+ * \page Page_Settings Settings
+ * 
+ * The ChameleonMini can act in different ways, the behavior is defined by \ref Page_Configurations "configurations". But also, the ChameleonMini has slots, which are a layer above the configurations. With the slots, it is possible to switch between different configurations and respective content, e.g., a card dump together with the configuration as Mifare Classic 1k card.
+ * 
+ * Properties
+ * ==========
+ * A slot is defined by settings: \ref SettingsEntryType.
+ * 
+ * Slot Changing Procedure
+ * =======================
+ * When the current slot is changed, the following procedure is applied:
+ * -# Break potentially pending timeout commands.
+ * -# Store the memory of the setting to the Flash.
+ * -# Set the slot number of the currently active slot to the number of the new slot.
+ * -# Set the slot pointer of the currently active slot to the pointer of the new slot.
+ * -# Since the slot also contains the configuration, apply the \ref Anchor_ConfigurationChange "configuration changing procedure" with the new configuration for the new slot.
+ * -# Log the slot change.
+ * -# Recall the new content of the slot from the permanent Flash.
+ * -# Signalize the slot change with an \ref Page_LED "LED", if an LED is configured to `SETTING_CHANGE`.
+ */

@@ -1,0 +1,35 @@
+/** @file */
+/** @page Page_Log Log functionality
+ * 
+ * The ChameleonMini provides a configurable log functionality. This page describes how to use it.
+ * 
+ * Log Entry Format
+ * ================
+ * The log entries use a TLV (Type Length Value)-like format:
+ * Name             | Size      | Description
+ * ----             | ----      | -----------
+ * Entry type       | 1 byte    | See \ref LogEntryEnum
+ * Data length      | 1 byte    | This is the length of the appended data.
+ * Timestamp        | 2 bytes   | This is the current systick value.
+ * Data             |<I>Data length</I> bytes | It is also possible that no data is appended, then the `Data length` field is zero.
+ * 
+ * Entry Types
+ * ===========
+ * See \ref LogEntryEnum.
+ * 
+ * Log Modes
+ * =========
+ * Currently there exist three log modes:
+ * - `OFF`, which means that nothing is logged.
+ * - `LIVE`, which means that log events are written directly to the terminal (untested).
+ * - `MEMORY`, where the log events are written to SRAM.
+ * 
+ * \note If there is not enough log memory, the log mode is automatically set to `OFF`.
+ * 
+ * \warning Since the `MEMORY` log mode writes to SRAM, the log memory is cleared by power off or restarting the Chameleon.
+ *
+ * Related Commands, Button event and LED functions
+ * ================================================
+ * There are various commands to configure the log functionality. See \ref Anchor_LogFunctions "Page Command Line". Equivalently to the `LOGSTORE` command, the buttons are configurable to `STORE_LOG`, which does the same. Also, there exists a `LOGMEM_FULL` function for the LEDs, which lights up the LED if the SRAM log memory is full. See also the Pages \ref Page_Buttons and \ref Page_LED.
+ * The 'chamlog' Python script in the project (Software folder) automatizes the process of downloading the binary log data, e.g., sending the following command under Windows with a ChameleonMini connected on port COM6 results in downloading the binary log file, clearing the log memory, and setting the log mode to `MEMORY`: `chamlog -p COM6 -c -m MEMORY -v`. Repeatedly executing this command always outputs the recently logged commands in user-readable form. Make sure that no other program, e.g., terminal software, is blocking the serial port. 
+ */

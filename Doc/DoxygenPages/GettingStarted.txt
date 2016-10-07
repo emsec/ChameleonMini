@@ -1,0 +1,41 @@
+/** @file */
+
+/** @page Page_GettingStarted Getting Started
+ * 
+ * Finally, you hold your brand-new ChameleonMini RevG in your hands! What to do now?!
+ * In the factory, a test firmware including a USB bootloader has been programmed into the microcontroller of the Chameleon. This page describes the next steps in order to upload the current firmware, as developed in this project, via the USB bootloader. 
+ * 
+ * Step 1: Trigger the USB Bootloader
+ * =================================
+ * The bootloader can be executed in two different ways:
+ * -# Make sure the Chameleon is switched off (power switch on the side is in the position `OFF`). Now, hold down the right button (RBUTTON) and keep it pressed while connecting the Chameleon to a PC via a USB cable. 
+ * -# OR: Plug your Chameleon via USB to a PC and use your favorite terminal application to connect with the test firmware of the ChameleonMini. Type `upgrade` and hit Enter. 
+ * 
+ * 
+ * In either way, the ChameleonMini now jumps to the bootloader and waits patiently for a firmware upgrade.
+ * 
+ * 
+ * Step 2: Upgrade the Firmware
+ * ===========================
+ * Once the ChameleonMini is in the bootloader, you can flash a new firmware, i.e., the files [Chameleon-Mini.hex](https://raw.githubusercontent.com/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/Chameleon-Mini.hex) and the [Chameleon-Mini.hex](https://raw.githubusercontent.com/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/Chameleon-Mini.eep), into the microcontroller. The source code directory contains these files precompiled but you can of course also compile the code yourself. Create a new folder and copy the two files into it. The following depends on your operating system:
+ * 
+ * ## Upgrade Procedure for Linux Users ##
+ * In order to upgrade the firmware under Linux you first have to install `avrdude`, e.g. under Ubuntu with the command `sudo apt-get install avra avrdude`. Then change to the directory where you have saved the hex and eep files and run `sudo avrdude -c flip2 -p ATXMega128A4U -B 60 -P usb -U application:w:Chameleon-Mini.hex:i -U eeprom:w:Chameleon-Mini.eep:i`.
+ * 
+ * You also can use `sudo make program` in the source code directory, which basically does the same.
+ * 
+ * After running this command you need to restart your Chameleon, e.g. by reattaching the Chameleon to the PC.
+ * 
+ * ## Upgrade Procedure for Windows Users ##
+ * For upgrading the firmware under Windows please
+ * -# download https://sourceforge.net/projects/dfu-programmer/files/dfu-programmer/0.7.2/dfu-programmer-win-0.7.2.zip/download and extract to an arbitrary directory. Make sure to use the DFU programmer Version 0.7.2!
+ * -# Go to the extraction directory and then open the folder `dfu-prog-usb-1.2.2`. Install the `atmel_usb_dfu.inf` driver (right click -> install).
+ * -# Copy `dfu-programmer.exe` from the extraction directory to the directory where you have saved the hex and eep files.
+ * -# Save the [ChameleonFirmwareUpgrade.bat](https://raw.githubusercontent.com/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/ChameleonFirmwareUpgrade.bat) in the same directory as the hex and eep files.
+ * -# Run the `ChameleonFirmwareUpgrade.bat` as Administrator (right click -> run as Administrator) and wait for the firmware upgrade to terminate. Upon success, the green LED of the ChameleonMini should light up.
+ *
+ * Finally, install the driver for Chameleon: 
+ * Download both [ChameleonDriver.inf](https://raw.githubusercontent.com/emsec/ChameleonMini/master/Driver/ChameleonDriver.inf) and [ChameleonDriver.cat](https://raw.githubusercontent.com/emsec/ChameleonMini/master/Driver/ChameleonDriver.cat) from the Drivers directory and install the INF file (right click -> install).
+ * 
+ * Now, Chameleon should appear in the Windows device manager and you should be able to open a terminal program such as TeraTerm and connect to the Chameleon-Mini via the COM port shown in the device manager. Further information about how to "talk" to the Chameleon can be found here: \ref Page_CommandLine.
+ */

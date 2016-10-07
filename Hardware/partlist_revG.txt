@@ -1,0 +1,110 @@
+Partlist
+
+Exported from ChameleonMini-RevG.sch at 07.10.2016 23:09:59
+
+EAGLE Version 6.6.0 Copyright (c) 1988-2014 CadSoft
+
+Assembly variant: 
+
+Part     Value            Device                  Package             Library                    Sheet
+
+B+       TPTP18SQ         TPTP18SQ                TP18SQ              testpad                    1
+B-       TPTP18SQ         TPTP18SQ                TP18SQ              testpad                    1
+BAT1     3002             3002                    BATTCON_20MM        Keystone-3002              1
+C1       10n              C-EUC1206K              C1206K              rcl                        1
+C2       10n              C-EUC1206K              C1206K              rcl                        1
+C3       4u7              C-EUC0603K              C0603K              rcl                        1
+C4       4u7/10V/X5R      C-EUC0603K              C0603K              rcl                        1
+C5       10n              C-EUC0603K              C0603K              rcl                        1
+C6       22p              C-EUC0603K              C0603K              rcl                        1
+C7       22p              C-EUC0603K              C0603K              rcl                        1
+C8       4u7              C-EUC0603K              C0603K              rcl                        1
+C9       4u7              C-EUC0603K              C0603K              rcl                        1
+C10      100n             C-EUC0603K              C0603K              rcl                        1
+C11      150p             C-EUC0603K              C0603K              rcl                        2
+C12      100n             C-EUC0603K              C0603K              rcl                        2
+C13      100n             C-EUC0603K              C0603K              rcl                        1
+C14      100n             C-EUC0603K              C0603K              rcl                        1
+C15      100n             C-EUC0603K              C0603K              rcl                        1
+C16      100p             C-EUC0603K              C0603K              rcl                        2
+C17      100p             C-EUC0603K              C0603K              rcl                        2
+C18      100n             C-EUC0603K              C0603K              rcl                        1
+C19      100n             C-EUC0603K              C0603K              rcl                        1
+C20      150p/NP0         C-EUC0603K              C0603K              rcl                        2
+C22      100n             C-EUC0603K              C0603K              rcl                        2
+C23      1n               C-EUC0603K              C0603K              rcl                        2
+C24      22p              C-EUC0603K              C0603K              rcl                        2
+C25      22p              C-EUC0603K              C0603K              rcl                        2
+C26      22p              C-EUC0603K              C0603K              rcl                        2
+C27      22p              C-EUC0603K              C0603K              rcl                        2
+C28      150p             C-EUC0603K              C0603K              rcl                        2
+C29      N.M.             C-EUC0603K              C0603K              rcl                        2
+C30      N.M.             C-EUC0603K              C0603K              rcl                        2
+C31      100n             C-EUC0603K              C0603K              rcl                        2
+C32      100n             C-EUC0603K              C0603K              rcl                        2
+C33      100n             C-EUC0603K              C0603K              rcl                        1
+D1       N.M.             SMAJ                    DO214AC             Suppressor                 2
+D2       BAS70-05W        BAS70-05W               SOT323              NXP-Diode                  2
+D3       BAS70-05W        BAS70-05W               SOT323              NXP-Diode                  2
+D4       BAS70-05W        BAS70-05W               SOT323              NXP-Diode                  2
+D5       Schottky         1PS76SB70               SOD323(F)           nxp_60                     2
+D8       BAS70-05W        BAS70-05W               SOT323              NXP-Diode                  2
+IC1      ATxmega128A4U-AU ATXMEGA_A4-A            TQFP44              _ATxmega                   1
+IC2      MCP1700          MCP1702                 SOT23               Microchip-MCP1702          1
+IC3      7408             74LVC1G08DCK            SC70-5              74xx-little-de             1
+IC4      7486             74AHC1G86DCK            SC70-5              74xx-little-de             1
+IC5      MB85RS256        MB85RS                  SO-08               Fujitsu-FRAM               1
+IC6      7474             74LVC1G74DC             VSSOP8              74LVC1G74                  2
+IC7      7432             74AHC1G32DCK            SC70-5              74xx-little-de             2
+IC9      7432             74AHC1G32DCK            SC70-5              74xx-little-de             2
+J1       Micro USB        USB-MICROB-2            USB-MICROB-10118194 we-con                     1
+L1       33R@100MHz       L-EUL2012C              L2012C              rcl                        1
+L2       270n             L-EUL2012C              L2012C              rcl                        2
+L3       270n             L-EUL2012C              L2012C              rcl                        2
+LBUTTON                   SWITCH_SPST_4_PINSQUARE TACTILE-SWITCH-SMD  SparkFun-Electromechanical 1
+LEDGREEN HSMG-C190        LED-0603                CHIPLED-0603        led                        1
+LEDRED   HSMS-C190        LED-0603                CHIPLED-0603        led                        1
+PE0      PAD              WIREPADSMD1,27-254      SMD1,27-2,54        wirepad                    1
+Q1       Si1967DH         BSS84AKS                SOT363              NXP-MOS                    1
+Q2       13.56 MHz        TXC7B                   5MMX3.2MM           TXC-Crystal                1
+Q3       BSS138           BSS138BKW               SOT323              NXP-MOS                    2
+Q4       BC846W           BC84XW                  SOT323              NXP-BJT                    2
+Q5       BSS84            BSS84AKW                SOT323              NXP-MOS                    2
+Q6       BSS84            BSS84AKW                SOT323              NXP-MOS                    2
+Q7       BSS138           BSS138BKW               SOT323              NXP-MOS                    2
+Q8       BSS138           BSS138BKW               SOT323              NXP-MOS                    2
+R1       10k              R-EU_R0603              R0603               rcl                        1
+R2       4k7              R-EU_R0603              R0603               rcl                        1
+R3       10k              R-EU_R0603              R0603               rcl                        1
+R4       47k              R-EU_R0603              R0603               rcl                        1
+R5       1Meg             R-EU_R0603              R0603               rcl                        1
+R6       3R3              R-EU_R0603              R0603               rcl                        2
+R7       3R3              R-EU_R0603              R0603               rcl                        2
+R8       100k             R-EU_R0603              R0603               rcl                        2
+R9       47k              R-EU_R0603              R0603               rcl                        2
+R10      1k               R-EU_R0603              R0603               rcl                        2
+R11      10k              R-EU_R0603              R0603               rcl                        2
+R12      100k             R-EU_R0603              R0603               rcl                        1
+R13      220R             R-EU_R0603              R0603               rcl                        1
+R14      220R             R-EU_R0603              R0603               rcl                        1
+R15      0R               R-EU_R0603              R0603               rcl                        2
+R16      100k             R-EU_R0603              R0603               rcl                        2
+R17      0R               R-EU_R0603              R0603               rcl                        2
+R18      0R               R-EU_R0603              R0603               rcl                        2
+R19      220R             R-EU_R0603              R0603               rcl                        2
+R20      100k             R-EU_R0603              R0603               rcl                        2
+R21      6k8              R-EU_R0603              R0603               rcl                        2
+R22      220R             R-EU_R0603              R0603               rcl                        2
+R23      10k              R-EU_R0603              R0603               rcl                        2
+R24      47k              R-EU_R0603              R0603               rcl                        1
+R25      47k              R-EU_R0603              R0603               rcl                        2
+R26      680R             R-EU_R0603              R0603               rcl                        2
+R27      100k             R-EU_R0603              R0603               rcl                        2
+R29      0R               R-EU_R0603              R0603               rcl                        2
+R30      100k             R-EU_R0603              R0603               rcl                        2
+R31      10k              R-EU_R0603              R0603               rcl                        2
+RBTN                      SWITCH_SPST_4_PINSQUARE TACTILE-SWITCH-SMD  SparkFun-Electromechanical 1
+SW1      AYZ0102AGRLC     AYZ0102AGRLC            AYZ0102AGRLC        C&K-Switch                 1
+U1       MCP73832T        MCP73831                SOT23-5             SparkFun                   1
+X1       N.M.             PINHD-2X3-2.54-EDGE     PINHD-2X3-2.54-EDGE PINHD                      1
+X3       U.FL-R-SMT       U.FL-R-SMT              U.FL-R-SMT          Hirose-UFL                 2

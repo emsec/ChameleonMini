@@ -1,0 +1,19 @@
+/** @file */
+/** @page Page_LEDs LED functionality
+ * For giving user feedback, ChameleonMini provides two LEDs that can be configured to indicate various conditions, events, or internal state changes of ChameleonMini: a red LED and a green LED. Their individual configuration is controlled with the commands `LEDRED` and `LEDGREEN`, which can be called in the getting ("?"), setting ("=") and suggesting ("=?") variants.
+ * 
+ * The following table shows the currently supported LED functions.
+ * Condition/Event  | Description
+ * -------------    | -----------
+ * `NONE`           | Nothing happens, the LED remains dark.
+ * `POWERED`        | The LED lights up, if the ChameleonMini is powered by USB or by battery.
+ * `TERMINAL_CONN`  | The LED is turned on when the ChameleonMini is connected via USB and is turned off when no USB connection is established.
+ * `TERMINAL_RXTX`  | The LED blinks shortly when sending or receiving data via the USB interface.
+ * `SETTING_CHANGE` | The LED blinks one time if the new setting is setting 1, two times for setting 2, ..., eight times for setting 8.
+ * `MEMORY_STORED`  | The LED flashes everytime when a setting is stored to the permanent flash. This is currently the case when calling the command `STORE`, the button event `STORE_MEM` occurs or the setting is changed.
+ * `MEMORY_CHANGED` | The LED turns on when the content of the FRAM has been modified and is turned off when the currently active setting is written to the permanent Flash memory. Thus, this function indicates when the current content has been changed.
+ * `CODEC_RX`       | The LED flashes when the currently active codec (e.g. ISO14443A emulation) receives data via the RFID interface. Note that this is implemented on the codec layer and the flashing is triggered before the received data is interpreted by the application.
+ * `CODEC_TX`       | The LED flashes when the currently active codec sends data via the RFID interface. This function is also implemented on the codec layer.
+ * `FIELD_DETECTED` | The LED is turned on, if a reader field is detected via the RSSI module (when the RSSI value hits a hardcoded threshold, it is assumed that there is a reader field). It is irrelevant whether the field comes from another reader or from the ChameleonMini itself.
+ * `LOGMEM_FULL`    | Lights up the LED, if the SRAM log memory is full.
+ */
