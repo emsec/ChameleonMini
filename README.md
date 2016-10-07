@@ -5,7 +5,7 @@ This is the official repository of ChameleonMini, a freely programmable, portabl
 
 First Steps
 -----------
-To upgrade the firmware of your ChameleonMini, please visit the [Getting Started page](http://htmlpreview.github.io/?https://github.com/emsec/ChameleonMini/blob/master/Doc/Doxygen/html/Page_GettingStarted.html) from the [doxygen documentation](http://htmlpreview.github.io/?https://github.com/emsec/ChameleonMini/blob/master/Doc/Doxygen/html/index.html).
+To upgrade the firmware of your ChameleonMini, please visit the [Getting Started page](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/Page_GettingStarted.html) from the [doxygen documentation](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
 
 
 Questions
