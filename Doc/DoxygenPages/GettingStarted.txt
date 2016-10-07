@@ -17,7 +17,7 @@
  * 
  * Step 2: Upgrade the Firmware
  * ===========================
- * Once the ChameleonMini is in the bootloader, you can flash a new firmware, i.e., the files [Chameleon-Mini.hex](https://raw.githubusercontent.com/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/Chameleon-Mini.hex) and the [Chameleon-Mini.hex](https://raw.githubusercontent.com/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/Chameleon-Mini.eep), into the microcontroller. The source code directory contains these files precompiled but you can of course also compile the code yourself. Create a new folder and copy the two files into it. The following depends on your operating system:
+ * Once the ChameleonMini is in the bootloader, you can flash a new firmware, i.e., the files [Chameleon-Mini.hex](https://raw.githubusercontent.com/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/Chameleon-Mini.hex) and the [Chameleon-Mini.eep](https://raw.githubusercontent.com/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/Chameleon-Mini.eep), into the microcontroller. The source code directory contains these files precompiled but you can of course also compile the code yourself. Create a new folder and copy the two files into it. The following depends on your operating system:
  * 
  * ## Upgrade Procedure for Linux Users ##
  * In order to upgrade the firmware under Linux you first have to install `avrdude`, e.g. under Ubuntu with the command `sudo apt-get install avra avrdude`. Then change to the directory where you have saved the hex and eep files and run `sudo avrdude -c flip2 -p ATXMega128A4U -B 60 -P usb -U application:w:Chameleon-Mini.hex:i -U eeprom:w:Chameleon-Mini.eep:i`.
