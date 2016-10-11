@@ -22,7 +22,7 @@ extern const PROGMEM CommandEntryType CommandTable[];
 CommandStatusIdType CommandGetVersion(char* OutParam)
 {
   snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR(
-    "ChameleonMini RevG %S using LUFA %S compiled with AVR-GCC %S\r\nBased on the open-source NFC tool ChameleonMini\r\nhttps://github.com/emsec/ChameleonMini\r\ncommit %S"
+    "ChameleonMini RevG %S using LUFA %S compiled with AVR-GCC %S. Based on the open-source NFC tool ChameleonMini. https://github.com/emsec/ChameleonMini commit %S"
     ), PSTR(CHAMELEON_MINI_VERSION_STRING), PSTR(LUFA_VERSION_STRING), PSTR(__VERSION__), PSTR(COMMIT_ID)
   );
 
