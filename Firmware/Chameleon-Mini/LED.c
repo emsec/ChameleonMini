@@ -111,11 +111,11 @@ void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
 {
 #ifndef LED_SETTING_GLOBAL
 	if (Mask & LED_GREEN) {
-		GlobalSettings.ActiveSettingPtr->LEDGreenFunction = Func;
+		GlobalSettings.ActiveSettingPtr->LEDGreenFunction = Function;
 	}
 
 	if (Mask & LED_RED) {
-		GlobalSettings.ActiveSettingPtr->LEDRedFunction = Func;
+		GlobalSettings.ActiveSettingPtr->LEDRedFunction = Function;
 	}
 #else
 	/* Write LED func to all settings when using global settings */
