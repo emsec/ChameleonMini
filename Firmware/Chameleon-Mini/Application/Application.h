@@ -15,6 +15,7 @@
 /* Applications */
 #include "MifareUltralight.h"
 #include "MifareClassic.h"
+#include "MifareDesfire.h"
 #include "Reader14443A.h"
 
 /* Function wrappers */
