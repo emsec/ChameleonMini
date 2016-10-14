@@ -14,6 +14,7 @@
 /* Map IDs to text */
 static const MapEntryType PROGMEM ConfigurationMap[] = {
 	{ .Id = CONFIG_NONE, 			.Text = "NONE" },
+
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
 	{ .Id = CONFIG_MF_ULTRALIGHT, 	.Text = "MF_ULTRALIGHT" },
 #endif
@@ -29,6 +30,10 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
 	{ .Id = CONFIG_MF_CLASSIC_4K_7B, 	.Text = "MF_CLASSIC_4K_7B" },
 #endif
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+    { .Id = CONFIG_MF_DESFIRE,    .Text = "MF_DESFIRE" },
+#endif
+
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
 	{ .Id = CONFIG_ISO14443A_SNIFF,	.Text = "ISO14443A_SNIFF" },
 #endif
@@ -149,6 +154,23 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationProcessFunc = MifareClassicAppProcess,
         .ApplicationGetUidFunc = MifareClassicGetUid,
         .ApplicationSetUidFunc = MifareClassicSetUid,
+        .UidSize = ISO14443A_UID_SIZE_DOUBLE,
+        .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+        .ReadOnly = false
+    },
+#endif
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+    [CONFIG_MF_DESFIRE] = {
+        .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
+        .CodecTaskFunc = ISO14443ACodecTask,
+        .ApplicationInitFunc = MifareDesfireAppInit,
+        .ApplicationResetFunc = MifareDesfireAppReset,
+        .ApplicationTaskFunc = MifareDesfireAppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
+        .ApplicationProcessFunc = MifareDesfireAppProcess,
+        .ApplicationGetUidFunc = MifareDesfireGetUid,
+        .ApplicationSetUidFunc = MifareDesfireSetUid,
         .UidSize = ISO14443A_UID_SIZE_DOUBLE,
         .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
         .ReadOnly = false
