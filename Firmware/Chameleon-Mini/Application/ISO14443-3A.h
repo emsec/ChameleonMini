@@ -21,6 +21,7 @@
 #define ISO14443A_CMD_SELECT_CL2    0x95
 #define ISO14443A_CMD_SELECT_CL3    0x97
 #define ISO14443A_CMD_HLTA          0x50
+#define ISO14443A_CMD_RATS          0xE0
 
 #define ISO14443A_NVB_AC_START      0x20
 #define ISO14443A_NVB_AC_END        0x70
@@ -36,6 +37,7 @@
 
 #define ISO14443A_ATQA_FRAME_SIZE   (2 * 8) /* Bit */
 #define ISO14443A_SAK_FRAME_SIZE    (3 * 8) /* Bit */
+#define ISO14443A_RATS_FRAME_SIZE   (4 * 8) /* Bit */
 
 #define ISO14443A_UID0_RANDOM       0x08
 #define ISO14443A_UID0_CT           0x88
