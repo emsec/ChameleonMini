@@ -13,15 +13,14 @@
 
 #define MIFARE_DESFIRE_UID_SIZE     ISO14443A_UID_SIZE_DOUBLE
 
-void MifareClassicAppInit1K(void);
-void MifareClassicAppInit4K(void);
-void MifareClassicAppReset(void);
-void MifareClassicAppTask(void);
+void MifareDesfireAppInit(void);
+void MifareDesfireAppReset(void);
+void MifareDesfireAppTask(void);
 
-uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount);
+uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount);
 
-void MifareClassicGetUid(ConfigurationUidType Uid);
-void MifareClassicSetUid(ConfigurationUidType Uid);
+void MifareDesfireGetUid(ConfigurationUidType Uid);
+void MifareDesfireSetUid(ConfigurationUidType Uid);
 
 
 #endif /* MIFAREDESFIRE_H_ */
