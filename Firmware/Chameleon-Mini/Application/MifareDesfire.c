@@ -18,15 +18,15 @@
 #define SAK_CL2_VALUE           (ISO14443A_SAK_COMPLETE_COMPLIANT)
 
 /* UID location in the card memory; sizes are in bytes */
-#define UID_CL1_ADDRESS         0x00
-#define UID_CL1_SIZE            3
-#define UID_BCC1_ADDRESS        0x03
-#define UID_CL2_ADDRESS         0x04
-#define UID_CL2_SIZE            4
-#define UID_BCC2_ADDRESS        0x08
+#define MEM_UID_CL1_ADDRESS         0x00
+#define MEM_UID_CL1_SIZE            3
+#define MEM_UID_BCC1_ADDRESS        0x03
+#define MEM_UID_CL2_ADDRESS         0x04
+#define MEM_UID_CL2_SIZE            4
+#define MEM_UID_BCC2_ADDRESS        0x08
 
-#define STATUS_FRAME_SIZE       (1 * 8) /* Bits */
-#define ATS_FRAME_SIZE          6 /* Bytes */
+#define STATUS_FRAME_SIZE           (1 * 8) /* Bits */
+#define ATS_FRAME_SIZE              6 /* Bytes */
 
 /* Based on section 3.4 */
 typedef enum {
@@ -107,7 +107,7 @@ typedef enum {
     /* Entered when the card is selected and it's the first APDU to be handled */
     STATE_ACTIVE,
     /* Entered when the card is selected and is handling subsequent APDUs */
-    STATE_ACTIVE_NATIVE,
+    STATE_ACTIVE_ISO14443,
     STATE_ACTIVE_ISO7816,
 } StateType;
 
@@ -132,7 +132,7 @@ void MifareDesfireAppTask(void)
     /* Empty */
 }
 
-static uint16_t MifareDesfireProcessNativeApdu(uint8_t* Buffer, uint16_t BitCountIn)
+static uint16_t MifareDesfireProcessNativeApdu(uint8_t* Buffer, uint16_t BitCountIn, bool LastBlock)
 {
     switch (Buffer[0]) {
 
@@ -164,8 +164,58 @@ length_fail:
 
 checksum_fail:
     LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, BitCountIn);
-    Buffer[0] = INTEGRITY_ERROR;
+    Buffer[0] = STATUS_INTEGRITY_ERROR;
     return STATUS_FRAME_SIZE;
+}
+
+static uint16_t MifareDesfireProcessIso14443Apdu(uint8_t* Buffer, uint16_t BitCountIn)
+{
+    /* ISO/IEC 14443-4; 7.1 Block format */
+    uint8_t PCB = Buffer[0];
+
+    /* Verify the block's length */
+    if (BitCountIn < 3 * 8) {
+        /* Huh? Broken frame? */
+        /* TODO: LOG ME */
+        return ISO14443A_APP_NO_RESPONSE;
+    }
+    BitCountIn -= 16;
+
+    /* Verify the checksum; fail if doesn't match */
+    if (!ISO14443ACheckCRCA(Buffer, BitCountIn / 8)) {
+        LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, BitCountIn);
+        /* ISO/IEC 14443-4, clause 7.5.5. The PICC does not attempt any error recovery. */
+        return ISO14443A_APP_NO_RESPONSE;
+    }
+
+    switch (PCB & ISO14443_PCB_BLOCK_TYPE_MASK) {
+    case ISO14443_PCB_I_BLOCK:
+        if (PCB & (ISO14443_PCB_HAS_NAD_MASK | ISO14443_PCB_HAS_CID_MASK)) {
+            /* Currently not supported => the frame is ignored */
+            /* TODO: LOG ME */
+            break;
+        }
+        if (PCB & ISO14443_PCB_I_BLOCK_CHAINING_MASK) {
+            /* TODO: Verify block number */
+            /* NOTE: Return value is ignored; the app doesn't reply to incomplete TX. */
+            MifareDesfireProcessNativeApdu(Buffer + 1, BitCountIn - 8, false);
+            Buffer[0] = ISO14443_PCB_R_BLOCK_STATIC | (PCB & ISO14443_PCB_BLOCK_NUMBER_MASK);
+            ISO14443AAppendCRCA(Buffer, 1);
+            return 3 * 8;
+        }
+        else {
+            /* Handle the last block in the chain; return the app's response if any */
+            return MifareDesfireProcessNativeApdu(Buffer + 1, BitCountIn - 8, true);
+        }
+
+    case ISO14443_PCB_R_BLOCK:
+        break;
+        
+    case ISO14443_PCB_S_BLOCK:
+        break;
+    }
+
+    return ISO14443A_APP_NO_RESPONSE;
 }
 
 static uint16_t MifareDesfireProcessIso7816Apdu(uint8_t* Buffer, uint16_t BitCountIn)
@@ -195,7 +245,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount)
             uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
 
             UidCL1[0] = ISO14443A_UID0_CT;
-            MemoryReadBlock(&UidCL1[1], UID_CL1_ADDRESS, UID_CL1_SIZE);
+            MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
             if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE)) {
                 /* CL1 stage has ended successfully */
                 State = STATE_READY2;
@@ -210,11 +260,11 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount)
             State = STATE_READY1;
             return BitCount;
         }
-        if (Cmd == ISO14443A_CMD_SELECT_CL2) {
+        if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
             /* Load UID CL2 and perform anticollision */
             uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
 
-            MemoryReadBlock(UidCL2, UID_CL2_ADDRESS, UID_CL2_SIZE);
+            MemoryReadBlock(UidCL2, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
             if (ISO14443ASelect(Buffer, &BitCount, UidCL2, SAK_CL2_VALUE)) {
                 /* CL2 stage has ended successfully. This means
                  * our complete UID has been sent to the reader. */
@@ -232,19 +282,19 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount)
         }
         /* Check if this is an ISO 7816-4 APDU */
         if (Buffer[0] == 0x90 && Buffer[2] == 0x00 && Buffer[3] == 0x00) {
-            /* ISO 7816-4 framing */
+            /* ISO 7816-4 format */
             State = STATE_ACTIVE_ISO7816;
             return MifareDesfireProcessIso7816Apdu(Buffer, BitCount);
         }
         else {
-            /* Native ISO14443 / DESFire commands */
-            State = STATE_ACTIVE_NATIVE;
-            return MifareDesfireProcessNativeApdu(Buffer, BitCount);
+            /* ISO 14443-4 format */
+            State = STATE_ACTIVE_ISO14443;
+            return MifareDesfireProcessIso14443Apdu(Buffer, BitCount);
         }
         break;
 
-    case STATE_ACTIVE_NATIVE:
-        return MifareDesfireProcessNativeApdu(Buffer, BitCount);
+    case STATE_ACTIVE_ISO14443:
+        return MifareDesfireProcessIso14443Apdu(Buffer, BitCount);
 
     case STATE_ACTIVE_ISO7816:
         return MifareDesfireProcessIso7816Apdu(Buffer, BitCount);
