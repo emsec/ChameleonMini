@@ -72,7 +72,11 @@ SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
 
 #Build configuration
-BUILD_DATE	 = $(shell date +'\"%y%m%d\"')
+ifeq ($(OS),Windows_NT)
+BUILD_DATE	 = $(shell date /t)
+else
+BUILD_DATE	 = $(shell date +'%y%m%d')
+endif
 COMMIT_ID	 = $(shell git rev-parse --short HEAD)
 MCU          = atxmega128a4u
 ARCH         = XMEGA
@@ -87,7 +91,7 @@ SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c
 SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Reader14443A.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
-CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) 
+CC_FLAGS     = -Wall -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE="\"$(BUILD_DATE)\"" -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) 
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES = 
