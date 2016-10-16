@@ -203,7 +203,7 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
                 return ISO14443A_APP_NO_RESPONSE;
             }
             /* 7.5.3.2, rule D: toggle on each I-block */
-            Iso144434BlockNumber = !MyBlockNumber;
+            Iso144434BlockNumber = MyBlockNumber = !MyBlockNumber;
 
             ByteCount -= 1;
             if (PCB & ISO14443_PCB_I_BLOCK_CHAINING_MASK) {
@@ -241,7 +241,7 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
                 else {
                     /* Handle ACK */
                     /* 7.5.3.2, rule E: toggle on R(ACK) */
-                    Iso144434BlockNumber = !MyBlockNumber;
+                    Iso144434BlockNumber = MyBlockNumber = !MyBlockNumber;
                     /* 7.5.4.3, rule 13: send the next block */
                     PCB = ISO14443_PCB_I_BLOCK_STATIC | MyBlockNumber;
                     if (MifareDesfireSendBlock(Buffer + 1, &ByteCount, false)) {
