@@ -5,6 +5,8 @@
  *      Author: dev_zzo
  */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+
 #include "MifareDesfire.h"
 
 #include "ISO14443-3A.h"
@@ -34,6 +36,18 @@
 #define ATS_TA_BYTE 0x00 /* TA: Only the lowest bit rate is supported */
 #define ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
 #define ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
+
+/* Defines for GetVersion */
+#define VENDOR_ID_PHILIPS_NXP           0x04
+#define DESFIRE_TYPE_MF3ICD40           0x01
+#define DESFIRE_SUBTYPE_MF3ICD40        0x01
+#define DESFIRE_HW_MAJOR_VERSION_NO     0x01
+#define DESFIRE_HW_MINOR_VERSION_NO     0x01
+#define DESFIRE_HW_PROTOCOL_TYPE        0x05
+#define DESFIRE_SW_MAJOR_VERSION_NO     0x01
+#define DESFIRE_SW_MINOR_VERSION_NO     0x01
+#define DESFIRE_SW_PROTOCOL_TYPE        0x05
+#define DESFIRE_STORAGE_SIZE            0x18 /* = 4k */
 
 /* Based on section 3.4 */
 typedef enum {
@@ -101,19 +115,29 @@ typedef enum {
     CMD_CLEAR_RECORD_FILE = 0xEB,
     CMD_COMMIT_TRANSACTION = 0xC7,
     CMD_ABORT_TRANSACTION = 0xA7,
-} DESFireCommandType;
+} DesfireCommandType;
 
 /*
- * Application code
+ * DESFire application code
  */
 
 void ISO144434Init(void);
 void ISO144433AInit(void);
 
+typedef enum {
+    DESFIRE_IDLE,
+    /* Handling GetVersion's multiple frames */
+    DESFIRE_GET_VERSION2,
+    DESFIRE_GET_VERSION3,
+} DesfireStateType;
+
+static DesfireStateType DesfireState;
+
 void MifareDesfireAppInit(void)
 {
     ISO144433AInit();
     ISO144434Init();
+    DesfireState = DESFIRE_IDLE;
 }
 
 void MifareDesfireAppReset(void)
@@ -128,13 +152,67 @@ void MifareDesfireAppTask(void)
 
 static bool MifareDesfireReceiveBlock(uint8_t* Buffer, uint16_t* ByteCount, bool LastBlock)
 {
-    return ISO14443A_APP_NO_RESPONSE;
+    switch (DESFireState) {
+    case DESFIRE_IDLE:
+        /* This is the first command frame. */
+        switch (Buffer[0]) {
+        case CMD_AUTHENTICATE:
+            break;
+
+        case CMD_GET_VERSION:
+            Buffer[0] = STATUS_ADDITIONAL_FRAME;
+            Buffer[1] = VENDOR_ID_PHILIPS_NXP;
+            Buffer[2] = DESFIRE_TYPE_MF3ICD40;
+            Buffer[3] = DESFIRE_SUBTYPE_MF3ICD40;
+            Buffer[4] = DESFIRE_HW_MAJOR_VERSION_NO;
+            Buffer[5] = DESFIRE_HW_MINOR_VERSION_NO;
+            Buffer[6] = DESFIRE_STORAGE_SIZE;
+            Buffer[7] = DESFIRE_HW_PROTOCOL_TYPE;
+            *ByteCount = 8;
+            DesfireState = DESFIRE_GET_VERSION2;
+            break;
+        }
+        break;
+
+    case DESFIRE_GET_VERSION2:
+        Buffer[0] = STATUS_ADDITIONAL_FRAME;
+        Buffer[1] = VENDOR_ID_PHILIPS_NXP;
+        Buffer[2] = DESFIRE_TYPE_MF3ICD40;
+        Buffer[3] = DESFIRE_SUBTYPE_MF3ICD40;
+        Buffer[4] = DESFIRE_SW_MAJOR_VERSION_NO;
+        Buffer[5] = DESFIRE_SW_MINOR_VERSION_NO;
+        Buffer[6] = DESFIRE_STORAGE_SIZE;
+        Buffer[7] = DESFIRE_SW_PROTOCOL_TYPE;
+        *ByteCount = 8;
+        DesfireState = DESFIRE_GET_VERSION3;
+        break;
+
+    case DESFIRE_GET_VERSION3:
+        Buffer[0] = STATUS_OPERATION_OK;
+        /* UID */
+        /* Batch number */
+        Buffer[8] = 0;
+        Buffer[9] = 0;
+        Buffer[10] = 0;
+        Buffer[11] = 0;
+        Buffer[12] = 0;
+        /* Calendar week and year */
+        Buffer[13] = 52;
+        Buffer[14] = 16;
+        break;
+    }
+
+    return false;
 }
 
 static bool MifareDesfireSendBlock(uint8_t* Buffer, uint16_t* ByteCount, bool Retransmit)
 {
-    return ISO14443A_APP_NO_RESPONSE;
+    return false;
 }
+
+/*
+ * ISO/IEC 14443-4 implementation
+ */
 
 void ISO144433AHalt(void);
 
@@ -326,11 +404,16 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
     case ISO14443_3A_STATE_READY1:
         if (Cmd == ISO14443A_CMD_SELECT_CL1) {
             /* Load UID CL1 and perform anticollision. */
-            uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
+            ConfigurationUidType Uid;
 
-            UidCL1[0] = ISO14443A_UID0_CT;
-            MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
-            if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE)) {
+            ApplicationGetUid(Uid);
+            if (ActiveConfiguration.UidSize >= ISO14443A_UID_SIZE_DOUBLE) {
+                Uid[3] = Uid[2];
+                Uid[2] = Uid[1];
+                Uid[1] = Uid[0];
+                Uid[0] = ISO14443A_UID0_CT;
+            }
+            if (ISO14443ASelect(Buffer, &BitCount, Uid, SAK_CL1_VALUE)) {
                 /* CL1 stage has ended successfully */
                 Iso144433AState = ISO14443_3A_STATE_READY2;
             }
@@ -342,10 +425,10 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
     case ISO14443_3A_STATE_READY2:
         if (Cmd == ISO14443A_CMD_SELECT_CL2 && ActiveConfiguration.UidSize >= ISO14443A_UID_SIZE_DOUBLE) {
             /* Load UID CL2 and perform anticollision */
-            uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
+            ConfigurationUidType Uid;
 
-            MemoryReadBlock(UidCL2, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
-            if (ISO14443ASelect(Buffer, &BitCount, UidCL2, SAK_CL2_VALUE)) {
+            ApplicationGetUid(Uid);
+            if (ISO14443ASelect(Buffer, &BitCount, &Uid[3], SAK_CL2_VALUE)) {
                 /* CL2 stage has ended successfully. This means
                  * our complete UID has been sent to the reader. */
                 Iso144433AState = ISO14443_3A_STATE_ACTIVE;
@@ -358,6 +441,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
     case ISO14443_3A_STATE_ACTIVE:
         /* Recognise the HLTA command */
         if (ISO144433AIsHalt(Buffer, BitCount)) {
+            LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
             Iso144433AState = ISO14443_3A_STATE_HALT;
             return ISO14443A_APP_NO_RESPONSE;
         }
@@ -385,3 +469,5 @@ void MifareDesfireSetUid(ConfigurationUidType Uid)
 {
     MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
 }
+
+#endif /* CONFIG_MF_DESFIRE_SUPPORT */
