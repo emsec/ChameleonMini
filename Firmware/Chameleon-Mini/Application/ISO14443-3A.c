@@ -52,9 +52,9 @@ void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount)
 #endif
 
 #ifdef USE_HW_CRC
-bool ISO14443ACheckCRCA(void* Buffer, uint16_t ByteCount)
+bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount)
 {
-    uint8_t* DataPtr = (uint8_t*) Buffer;
+    const uint8_t* DataPtr = (uint8_t*) Buffer;
 
     CRC.CTRL = CRC_RESET0_bm;
     CRC.CHECKSUM1 = (CRC_INIT_R >> 8) & 0xFF;
@@ -76,10 +76,10 @@ bool ISO14443ACheckCRCA(void* Buffer, uint16_t ByteCount)
 }
 #else
 #include <util/crc16.h>
-bool ISO14443ACheckCRCA(void* Buffer, uint16_t ByteCount)
+bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount)
 {
     uint16_t Checksum = CRC_INIT;
-    uint8_t* DataPtr = (uint8_t*) Buffer;
+    const uint8_t* DataPtr = (uint8_t*) Buffer;
 
     while(ByteCount--) {
         uint8_t Byte = *DataPtr++;

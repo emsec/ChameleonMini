@@ -8,6 +8,7 @@
 #include "MifareDesfire.h"
 
 #include "ISO14443-3A.h"
+#include "ISO14443-4.h"
 #include "../Codec/ISO14443-2A.h"
 #include "../Memory.h"
 #include "../Random.h"
@@ -27,6 +28,12 @@
 
 #define STATUS_FRAME_SIZE           (1 * 8) /* Bits */
 #define ATS_FRAME_SIZE              6 /* Bytes */
+
+#define ATS_TL_BYTE 0x06 /* TL: ATS length, 6 bytes */
+#define ATS_T0_BYTE 0x75 /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
+#define ATS_TA_BYTE 0x00 /* TA: Only the lowest bit rate is supported */
+#define ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
+#define ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
 
 /* Based on section 3.4 */
 typedef enum {
@@ -96,35 +103,22 @@ typedef enum {
     CMD_ABORT_TRANSACTION = 0xA7,
 } DESFireCommandType;
 
-typedef enum {
-    /* Something went wrong or we've received a halt command */
-    STATE_HALT,
-    /* The card is powered up but not selected */
-    STATE_IDLE,
-    /* Entered on REQA or WUPA; anticollision is being performed */
-    STATE_READY1,
-    STATE_READY2,
-    /* Entered when the card is selected and it's the first APDU to be handled */
-    STATE_ACTIVE,
-    /* Entered when the card is selected and is handling subsequent APDUs */
-    STATE_ACTIVE_ISO14443,
-    STATE_ACTIVE_ISO7816,
-} StateType;
-
-static StateType State;
-
 /*
  * Application code
  */
 
+void ISO144434Init(void);
+void ISO144433AInit(void);
+
 void MifareDesfireAppInit(void)
 {
-    State = STATE_IDLE;
+    ISO144433AInit();
+    ISO144434Init();
 }
 
 void MifareDesfireAppReset(void)
 {
-    State = STATE_IDLE;
+    MifareDesfireAppInit();
 }
 
 void MifareDesfireAppTask(void)
@@ -132,115 +126,205 @@ void MifareDesfireAppTask(void)
     /* Empty */
 }
 
-static uint16_t MifareDesfireProcessNativeApdu(uint8_t* Buffer, uint16_t BitCountIn, bool LastBlock)
+static bool MifareDesfireReceiveBlock(uint8_t* Buffer, uint16_t* ByteCount, bool LastBlock)
 {
-    switch (Buffer[0]) {
-
-    /* ISO 14443-4 Commands (only one) */
-    case ISO14443A_CMD_RATS:
-        if (ISO14443ACheckCRCA(Buffer, ISO14443A_RATS_FRAME_SIZE)) {
-            /* NOTE: ATS bytes are tailored to Chameleon implementation and differ from DESFire spec */
-            /* NOTE: Some PCD implementations do a memcmp() over ATS bytes, which is completely wrong */
-            Buffer[0] = 0x06; /* TL: 6 bytes */
-            Buffer[1] = 0x75; /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
-            Buffer[2] = 0x00; /* TA: Only the lowest bit rate is supported */
-            Buffer[3] = 0x81; /* TB: taken from the DESFire spec */
-            Buffer[4] = 0x02; /* TC: taken from the DESFire spec */
-            Buffer[5] = 0xEE; /* T1: dummy value for historical bytes */
-            ISO14443AAppendCRCA(Buffer, ATS_FRAME_SIZE);
-            return ATS_FRAME_SIZE;
-        }
-        goto checksum_fail;
-
-    /* DESFire Commands */
-    }
-
     return ISO14443A_APP_NO_RESPONSE;
-
-length_fail:
-    LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, BitCountIn);
-    Buffer[0] = STATUS_LENGTH_ERROR;
-    return STATUS_FRAME_SIZE;
-
-checksum_fail:
-    LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, BitCountIn);
-    Buffer[0] = STATUS_INTEGRITY_ERROR;
-    return STATUS_FRAME_SIZE;
 }
 
-static uint16_t MifareDesfireProcessIso14443Apdu(uint8_t* Buffer, uint16_t BitCountIn)
+static bool MifareDesfireSendBlock(uint8_t* Buffer, uint16_t* ByteCount, bool Retransmit)
 {
-    /* ISO/IEC 14443-4; 7.1 Block format */
+    return ISO14443A_APP_NO_RESPONSE;
+}
+
+void ISO144433AHalt(void);
+
+typedef enum {
+    ISO14443_4_STATE_EXPECT_RATS,
+    ISO14443_4_STATE_ACTIVE,
+} Iso144434StateType;
+
+static Iso144434StateType Iso144434State;
+static uint8_t Iso144434BlockNumber;
+
+void ISO144434Init(void)
+{
+    Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
+    Iso144434BlockNumber = 1;
+}
+
+uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
+{
     uint8_t PCB = Buffer[0];
+    uint8_t MyBlockNumber = Iso144434BlockNumber;
 
     /* Verify the block's length */
-    if (BitCountIn < 3 * 8) {
+    if (ByteCount < 3) {
         /* Huh? Broken frame? */
         /* TODO: LOG ME */
         return ISO14443A_APP_NO_RESPONSE;
     }
-    BitCountIn -= 16;
+    ByteCount -= 2;
 
     /* Verify the checksum; fail if doesn't match */
-    if (!ISO14443ACheckCRCA(Buffer, BitCountIn / 8)) {
-        LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, BitCountIn);
+    if (!ISO14443ACheckCRCA(Buffer, ByteCount)) {
+        LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, ByteCount);
         /* ISO/IEC 14443-4, clause 7.5.5. The PICC does not attempt any error recovery. */
         return ISO14443A_APP_NO_RESPONSE;
     }
 
-    switch (PCB & ISO14443_PCB_BLOCK_TYPE_MASK) {
-    case ISO14443_PCB_I_BLOCK:
-        if (PCB & (ISO14443_PCB_HAS_NAD_MASK | ISO14443_PCB_HAS_CID_MASK)) {
-            /* Currently not supported => the frame is ignored */
-            /* TODO: LOG ME */
-            break;
+    switch (Iso144434State) {
+    case ISO14443_4_STATE_EXPECT_RATS:
+        /* See: ISO/IEC 14443-4, clause 5.6.1.2 */
+        if (Buffer[0] != ISO14443A_CMD_RATS) {
+            /* Ignore blocks other than RATS and HLTA */
+            return ISO14443A_APP_NO_RESPONSE;
         }
-        if (PCB & ISO14443_PCB_I_BLOCK_CHAINING_MASK) {
-            /* TODO: Verify block number */
-            /* NOTE: Return value is ignored; the app doesn't reply to incomplete TX. */
-            MifareDesfireProcessNativeApdu(Buffer + 1, BitCountIn - 8, false);
-            Buffer[0] = ISO14443_PCB_R_BLOCK_STATIC | (PCB & ISO14443_PCB_BLOCK_NUMBER_MASK);
-            ISO14443AAppendCRCA(Buffer, 1);
-            return 3 * 8;
-        }
-        else {
-            /* Handle the last block in the chain; return the app's response if any */
-            return MifareDesfireProcessNativeApdu(Buffer + 1, BitCountIn - 8, true);
-        }
-
-    case ISO14443_PCB_R_BLOCK:
+        /* Process RATS.
+         * NOTE: ATS bytes are tailored to Chameleon implementation and differ from DESFire spec.
+         * NOTE: Some PCD implementations do a memcmp() over ATS bytes, which is completely wrong.
+         */
+        Buffer[0] = ATS_TL_BYTE;
+        Buffer[1] = ATS_T0_BYTE;
+        Buffer[2] = ATS_TA_BYTE;
+        Buffer[3] = ATS_TB_BYTE;
+        Buffer[4] = ATS_TC_BYTE;
+        Buffer[5] = 0x00; /* T1: dummy value for historical bytes */
+        Iso144434State = ISO14443_4_STATE_ACTIVE;
+        ByteCount = ATS_FRAME_SIZE;
         break;
-        
-    case ISO14443_PCB_S_BLOCK:
+
+    case ISO14443_4_STATE_ACTIVE:
+        /* See: ISO/IEC 14443-4; 7.1 Block format */
+        switch (PCB & ISO14443_PCB_BLOCK_TYPE_MASK) {
+        case ISO14443_PCB_I_BLOCK:
+            if (PCB & (ISO14443_PCB_HAS_NAD_MASK | ISO14443_PCB_HAS_CID_MASK)) {
+                /* Currently not supported => the frame is ignored */
+                /* TODO: LOG ME */
+                return ISO14443A_APP_NO_RESPONSE;
+            }
+            /* 7.5.3.2, rule D: toggle on each I-block */
+            Iso144434BlockNumber = !MyBlockNumber;
+
+            ByteCount -= 1;
+            if (PCB & ISO14443_PCB_I_BLOCK_CHAINING_MASK) {
+                /* NOTE: Return value is ignored; the app doesn't reply to incomplete TX. */
+                MifareDesfireReceiveBlock(Buffer + 1, &ByteCount, false);
+                PCB = ISO14443_PCB_R_BLOCK_STATIC | (PCB & ISO14443_PCB_BLOCK_NUMBER_MASK);
+                ByteCount = ISO14443_R_BLOCK_SIZE;
+            }
+            else {
+                /* 7.5.4.3, rule 10: last block is acknowledged by an I-block */
+                PCB = ISO14443_PCB_I_BLOCK_STATIC | MyBlockNumber;
+                if (MifareDesfireReceiveBlock(Buffer + 1, &ByteCount, true)) {
+                    PCB |= ISO14443_PCB_I_BLOCK_CHAINING_MASK;
+                }
+                /* ByteCount is set by the application */
+            }
+            Buffer[0] = PCB;
+            break;
+
+        case ISO14443_PCB_R_BLOCK:
+            if ((PCB & ISO14443_PCB_BLOCK_NUMBER_MASK) == MyBlockNumber) {
+                /* 7.5.4.3, rule 11: Unconditional retransmission */
+                PCB = ISO14443_PCB_I_BLOCK_STATIC | MyBlockNumber;
+                if (MifareDesfireSendBlock(Buffer + 1, &ByteCount, true)) {
+                    PCB |= ISO14443_PCB_I_BLOCK_CHAINING_MASK;
+                }
+            }
+            else {
+                if (PCB & ISO14443_PCB_R_BLOCK_ACKNAK_MASK) {
+                    /* Handle NAK */
+                    /* 7.5.4.3, rule 12: send ACK */
+                    PCB = ISO14443_PCB_R_BLOCK_STATIC | MyBlockNumber;
+                    ByteCount = ISO14443_R_BLOCK_SIZE;
+                }
+                else {
+                    /* Handle ACK */
+                    /* 7.5.3.2, rule E: toggle on R(ACK) */
+                    Iso144434BlockNumber = !MyBlockNumber;
+                    /* 7.5.4.3, rule 13: send the next block */
+                    PCB = ISO14443_PCB_I_BLOCK_STATIC | MyBlockNumber;
+                    if (MifareDesfireSendBlock(Buffer + 1, &ByteCount, false)) {
+                        PCB |= ISO14443_PCB_I_BLOCK_CHAINING_MASK;
+                    }
+                }
+            }
+            Buffer[0] = PCB;
+            break;
+
+        case ISO14443_PCB_S_BLOCK:
+            if (PCB == ISO14443_PCB_S_DESELECT) {
+                ISO144433AHalt();
+            }
+            return ISO14443A_APP_NO_RESPONSE;
+        }
         break;
     }
 
-    return ISO14443A_APP_NO_RESPONSE;
+    ISO14443AAppendCRCA(Buffer, ByteCount);
+    return ByteCount + ISO14443A_CRCA_SIZE;
 }
 
-static uint16_t MifareDesfireProcessIso7816Apdu(uint8_t* Buffer, uint16_t BitCountIn)
+/*
+ * ISO/IEC 14443-3A implementation
+ */
+
+typedef enum {
+    /* Something went wrong or we've received a halt command */
+    ISO14443_3A_STATE_HALT,
+    /* The card is powered up but not selected */
+    ISO14443_3A_STATE_IDLE,
+    /* Entered on REQA or WUPA; anticollision is being performed */
+    ISO14443_3A_STATE_READY1,
+    ISO14443_3A_STATE_READY2,
+    /* Entered when the card has been selected */
+    ISO14443_3A_STATE_ACTIVE,
+} Iso144433AStateType;
+
+static Iso144433AStateType Iso144433AState;
+static Iso144433AStateType Iso144433AIdleState;
+
+void ISO144433AInit(void)
 {
-    return ISO14443A_APP_NO_RESPONSE;
+    Iso144433AState = ISO14443_3A_STATE_IDLE;
 }
 
-uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount)
+void ISO144433AHalt(void)
 {
-    switch (State) {
-    case STATE_IDLE:
-    case STATE_HALT:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
-            /* We received a REQA or WUPA command, so wake up. */
-            State = STATE_READY1;
-            return BitCount;
-        }
-        break;
+    Iso144433AState = ISO14443_3A_STATE_HALT;
+}
 
-    case STATE_READY1:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
-            State = STATE_READY1;
-            return BitCount;
-        }
-        if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
+static bool ISO144433AIsHalt(const uint8_t* Buffer, uint16_t BitCount)
+{
+    return BitCount == ISO14443A_HLTA_FRAME_SIZE + ISO14443A_CRCA_SIZE * 8
+        && Buffer[0] == ISO14443A_CMD_HLTA
+        && Buffer[1] == 0x00
+        && ISO14443ACheckCRCA(Buffer, ISO14443A_HLTA_FRAME_SIZE / 8);
+}
+
+uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
+{
+    uint8_t Cmd = Buffer[0];
+
+    /* This implements ISO 14443-3A state machine */
+    /* See: ISO/IEC 14443-3, clause 6.2 */
+    switch (Iso144433AState) {
+    case ISO14443_3A_STATE_IDLE:
+        if (Cmd != ISO14443A_CMD_REQA)
+            break;
+        /* Fall-through */
+
+    case ISO14443_3A_STATE_HALT:
+        if (Cmd != ISO14443A_CMD_WUPA)
+            break;
+        Iso144433AIdleState = Iso144433AState;
+        Iso144433AState = ISO14443_3A_STATE_READY1;
+        Buffer[0] = (ATQA_VALUE >> 0) & 0x00FF;
+        Buffer[1] = (ATQA_VALUE >> 8) & 0x00FF;
+        return ISO14443A_ATQA_FRAME_SIZE;
+
+    case ISO14443_3A_STATE_READY1:
+        if (Cmd == ISO14443A_CMD_SELECT_CL1) {
             /* Load UID CL1 and perform anticollision. */
             uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
 
@@ -248,19 +332,15 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount)
             MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
             if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE)) {
                 /* CL1 stage has ended successfully */
-                State = STATE_READY2;
+                Iso144433AState = ISO14443_3A_STATE_READY2;
             }
 
             return BitCount;
         }
         break;
 
-    case STATE_READY2:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
-            State = STATE_READY1;
-            return BitCount;
-        }
-        if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
+    case ISO14443_3A_STATE_READY2:
+        if (Cmd == ISO14443A_CMD_SELECT_CL2 && ActiveConfiguration.UidSize >= ISO14443A_UID_SIZE_DOUBLE) {
             /* Load UID CL2 and perform anticollision */
             uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
 
@@ -268,41 +348,31 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount)
             if (ISO14443ASelect(Buffer, &BitCount, UidCL2, SAK_CL2_VALUE)) {
                 /* CL2 stage has ended successfully. This means
                  * our complete UID has been sent to the reader. */
-                State = STATE_ACTIVE;
+                Iso144433AState = ISO14443_3A_STATE_ACTIVE;
             }
 
             return BitCount;
         }
         break;
 
-    case STATE_ACTIVE:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
-            State = STATE_READY1;
-            return BitCount;
+    case ISO14443_3A_STATE_ACTIVE:
+        /* Recognise the HLTA command */
+        if (ISO144433AIsHalt(Buffer, BitCount)) {
+            Iso144433AState = ISO14443_3A_STATE_HALT;
+            return ISO14443A_APP_NO_RESPONSE;
         }
-        /* Check if this is an ISO 7816-4 APDU */
-        if (Buffer[0] == 0x90 && Buffer[2] == 0x00 && Buffer[3] == 0x00) {
-            /* ISO 7816-4 format */
-            State = STATE_ACTIVE_ISO7816;
-            return MifareDesfireProcessIso7816Apdu(Buffer, BitCount);
-        }
-        else {
-            /* ISO 14443-4 format */
-            State = STATE_ACTIVE_ISO14443;
-            return MifareDesfireProcessIso14443Apdu(Buffer, BitCount);
-        }
-        break;
-
-    case STATE_ACTIVE_ISO14443:
-        return MifareDesfireProcessIso14443Apdu(Buffer, BitCount);
-
-    case STATE_ACTIVE_ISO7816:
-        return MifareDesfireProcessIso7816Apdu(Buffer, BitCount);
+        /* Forward to ISO/IEC 14443-4 processing code */
+        return ISO144434ProcessBlock(Buffer, BitCount / 8) * 8;
     }
 
-    /* Unknown command. Enter halt state */
-    State = STATE_HALT;
+    /* Unknown command. Reset back to idle/halt state. */
+    Iso144433AState = Iso144433AIdleState;
     return ISO14443A_APP_NO_RESPONSE;
+}
+
+uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount)
+{
+    return ISO144433APiccProcess(Buffer, BitCount);
 }
 
 void MifareDesfireGetUid(ConfigurationUidType Uid)
@@ -315,4 +385,3 @@ void MifareDesfireSetUid(ConfigurationUidType Uid)
 {
     MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
 }
-

@@ -20,7 +20,6 @@
 #define ISO14443A_CMD_SELECT_CL2    0x95
 #define ISO14443A_CMD_SELECT_CL3    0x97
 #define ISO14443A_CMD_HLTA          0x50
-#define ISO14443A_CMD_RATS          0xE0
 
 #define ISO14443A_NVB_AC_START      0x20
 #define ISO14443A_NVB_AC_END        0x70
@@ -36,7 +35,7 @@
 
 #define ISO14443A_ATQA_FRAME_SIZE   (2 * 8) /* Bit */
 #define ISO14443A_SAK_FRAME_SIZE    (3 * 8) /* Bit */
-#define ISO14443A_RATS_FRAME_SIZE   (4 * 8) /* Bit */
+#define ISO14443A_HLTA_FRAME_SIZE   (2 * 8) /* Bit */
 
 #define ISO14443A_UID0_RANDOM       0x08
 #define ISO14443A_UID0_CT           0x88
@@ -47,7 +46,7 @@
     ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
 
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount);
-bool ISO14443ACheckCRCA(void* Buffer, uint16_t ByteCount);
+bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount);
 
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
 INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue);
