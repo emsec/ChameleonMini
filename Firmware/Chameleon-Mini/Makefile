@@ -72,7 +72,11 @@ SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
 
 #Build configuration
-BUILD_DATE	 = $(shell date +'\"%y%m%d\"')
+ifeq ($(OS),Windows_NT)
+BUILD_DATE   = $(shell date /t)
+else
+BUILD_DATE   = $(shell date +'%y%m%d')
+endif
 COMMIT_ID	 = $(shell git rev-parse --short HEAD)
 MCU          = atxmega128a4u
 ARCH         = XMEGA
