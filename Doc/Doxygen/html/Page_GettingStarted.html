@@ -96,6 +96,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>In order to upgrade the firmware under Linux you first have to install <code>avrdude</code>, e.g. under Ubuntu with the command <code>sudo apt-get install avra avrdude</code>. Then change to the directory where you have saved the hex and eep files and run <code>sudo avrdude -c flip2 -p ATXMega128A4U -B 60 -P usb -U application:w:Chameleon-Mini.hex:i -U eeprom:w:Chameleon-Mini.eep:i</code>.</p>
 <p>You also can use <code>sudo make program</code> in the source code directory, which basically does the same.</p>
 <p>After running this command you need to restart your Chameleon, e.g. by reattaching the Chameleon to the PC.</p>
+<h2>Upgrade Procedure for Mac OS Users</h2>
+<p>When running <a href="https://brew.sh">Homebrew</a> you can install avrdude with <code>brew install avrdude</code>. After this, change to the directory where you have saved the hex and eep files and run <code>sudo avrdude -c flip2 -p ATXMega128A4U -B 60 -P usb -U application:w:Chameleon-Mini.hex:i -U eeprom:w:Chameleon-Mini.eep:i</code>.</p>
 <h2>Upgrade Procedure for Windows Users</h2>
 <p>For upgrading the firmware under Windows please</p><ol type="1">
 <li>download <a href="https://sourceforge.net/projects/dfu-programmer/files/dfu-programmer/0.7.2/dfu-programmer-win-0.7.2.zip/download">https://sourceforge.net/projects/dfu-programmer/files/dfu-programmer/0.7.2/dfu-programmer-win-0.7.2.zip/download</a> and extract to an arbitrary directory. Make sure to use the DFU programmer Version 0.7.2!</li>
@@ -105,11 +107,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>Run the <code>ChameleonFirmwareUpgrade.bat</code> as Administrator (right click -&gt; run as Administrator) and wait for the firmware upgrade to terminate. Upon success, the green LED of the ChameleonMini should light up.</li>
 </ol>
 <p>Finally, install the driver for Chameleon: Download both <a href="https://raw.githubusercontent.com/emsec/ChameleonMini/master/Driver/ChameleonDriver.inf">ChameleonDriver.inf</a> and <a href="https://raw.githubusercontent.com/emsec/ChameleonMini/master/Driver/ChameleonDriver.cat">ChameleonDriver.cat</a> from the Drivers directory and install the INF file (right click -&gt; install).</p>
-<p>Now, Chameleon should appear in the Windows device manager and you should be able to open a terminal program such as TeraTerm and connect to the Chameleon-Mini via the COM port shown in the device manager. Further information about how to "talk" to the Chameleon can be found here: <a class="el" href="Page_CommandLine.html">The Chameleon Command Structure</a>. </p>
+<p>Now, Chameleon should appear in the Windows device manager and you should be able to open a terminal program such as TeraTerm and connect to the Chameleon-Mini via the COM port shown in the device manager. On Mac or Linux you can use screen (<code>screen /dev/tty.usbmodem1421</code>, please replace your device path with the appropriate one) to communicate with your Chameleon. Further information about how to "talk" to the Chameleon can be found here: <a class="el" href="Page_CommandLine.html">The Chameleon Command Structure</a>. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Oct 8 2016 00:01:03 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Oct 17 2016 11:28:07 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>
