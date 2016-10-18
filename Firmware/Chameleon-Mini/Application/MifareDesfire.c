@@ -133,11 +133,16 @@ typedef enum {
 
 static DesfireStateType DesfireState;
 
+static void MifareDesfireReset(void)
+{
+    DesfireState = DESFIRE_IDLE;
+}
+
 void MifareDesfireAppInit(void)
 {
     ISO144433AInit();
     ISO144434Init();
-    DesfireState = DESFIRE_IDLE;
+    MifareDesfireReset();
 }
 
 void MifareDesfireAppReset(void)
@@ -150,30 +155,37 @@ void MifareDesfireAppTask(void)
     /* Empty */
 }
 
-static bool MifareDesfireReceiveBlock(uint8_t* Buffer, uint16_t* ByteCount, bool LastBlock)
+static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
 {
-    switch (DESFireState) {
-    case DESFIRE_IDLE:
-        /* This is the first command frame. */
-        switch (Buffer[0]) {
-        case CMD_AUTHENTICATE:
-            break;
-
-        case CMD_GET_VERSION:
-            Buffer[0] = STATUS_ADDITIONAL_FRAME;
-            Buffer[1] = VENDOR_ID_PHILIPS_NXP;
-            Buffer[2] = DESFIRE_TYPE_MF3ICD40;
-            Buffer[3] = DESFIRE_SUBTYPE_MF3ICD40;
-            Buffer[4] = DESFIRE_HW_MAJOR_VERSION_NO;
-            Buffer[5] = DESFIRE_HW_MINOR_VERSION_NO;
-            Buffer[6] = DESFIRE_STORAGE_SIZE;
-            Buffer[7] = DESFIRE_HW_PROTOCOL_TYPE;
-            *ByteCount = 8;
-            DesfireState = DESFIRE_GET_VERSION2;
-            break;
-        }
+    switch (Buffer[0]) {
+    case CMD_AUTHENTICATE:
         break;
 
+    case CMD_GET_VERSION:
+        Buffer[0] = STATUS_ADDITIONAL_FRAME;
+        Buffer[1] = VENDOR_ID_PHILIPS_NXP;
+        Buffer[2] = DESFIRE_TYPE_MF3ICD40;
+        Buffer[3] = DESFIRE_SUBTYPE_MF3ICD40;
+        Buffer[4] = DESFIRE_HW_MAJOR_VERSION_NO;
+        Buffer[5] = DESFIRE_HW_MINOR_VERSION_NO;
+        Buffer[6] = DESFIRE_STORAGE_SIZE;
+        Buffer[7] = DESFIRE_HW_PROTOCOL_TYPE;
+        DesfireState = DESFIRE_GET_VERSION2;
+        return 8;
+    }
+
+    return ISO14443A_APP_NO_RESPONSE;
+}
+
+static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
+{
+    if (DesfireState == DESFIRE_IDLE)
+        return MifareDesfireProcessIdle(Buffer, ByteCount);
+    /* TODO: Verify this behaviour against a real card */
+    if (Buffer[0] != STATUS_ADDITIONAL_FRAME)
+        return MifareDesfireProcessIdle(Buffer, ByteCount);
+
+    switch (DesfireState) {
     case DESFIRE_GET_VERSION2:
         Buffer[0] = STATUS_ADDITIONAL_FRAME;
         Buffer[1] = VENDOR_ID_PHILIPS_NXP;
@@ -183,9 +195,8 @@ static bool MifareDesfireReceiveBlock(uint8_t* Buffer, uint16_t* ByteCount, bool
         Buffer[5] = DESFIRE_SW_MINOR_VERSION_NO;
         Buffer[6] = DESFIRE_STORAGE_SIZE;
         Buffer[7] = DESFIRE_SW_PROTOCOL_TYPE;
-        *ByteCount = 8;
         DesfireState = DESFIRE_GET_VERSION3;
-        break;
+        return 8;
 
     case DESFIRE_GET_VERSION3:
         Buffer[0] = STATUS_OPERATION_OK;
@@ -199,19 +210,19 @@ static bool MifareDesfireReceiveBlock(uint8_t* Buffer, uint16_t* ByteCount, bool
         /* Calendar week and year */
         Buffer[13] = 52;
         Buffer[14] = 16;
+        MifareDesfireReset();
+        return 15;
+
+    default:
         break;
     }
 
-    return false;
-}
-
-static bool MifareDesfireSendBlock(uint8_t* Buffer, uint16_t* ByteCount, bool Retransmit)
-{
-    return false;
+    return ISO14443A_APP_NO_RESPONSE;
 }
 
 /*
  * ISO/IEC 14443-4 implementation
+ * Currently this only supports wrapping things in 14443-4 I-blocks.
  */
 
 void ISO144433AHalt(void);
@@ -235,8 +246,8 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
     uint8_t PCB = Buffer[0];
     uint8_t MyBlockNumber = Iso144434BlockNumber;
 
-    /* Verify the block's length */
-    if (ByteCount < 3) {
+    /* Verify the block's length: at the very least PCB + CRCA */
+    if (ByteCount < (1 + ISO14443A_CRCA_SIZE)) {
         /* Huh? Broken frame? */
         /* TODO: LOG ME */
         return ISO14443A_APP_NO_RESPONSE;
@@ -282,53 +293,23 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
             }
             /* 7.5.3.2, rule D: toggle on each I-block */
             Iso144434BlockNumber = MyBlockNumber = !MyBlockNumber;
-
-            ByteCount -= 1;
             if (PCB & ISO14443_PCB_I_BLOCK_CHAINING_MASK) {
-                /* NOTE: Return value is ignored; the app doesn't reply to incomplete TX. */
-                MifareDesfireReceiveBlock(Buffer + 1, &ByteCount, false);
-                PCB = ISO14443_PCB_R_BLOCK_STATIC | (PCB & ISO14443_PCB_BLOCK_NUMBER_MASK);
-                ByteCount = ISO14443_R_BLOCK_SIZE;
+                /* Currently not supported => the frame is ignored */
+                /* TODO: LOG ME */
+                return ISO14443A_APP_NO_RESPONSE;
             }
-            else {
-                /* 7.5.4.3, rule 10: last block is acknowledged by an I-block */
-                PCB = ISO14443_PCB_I_BLOCK_STATIC | MyBlockNumber;
-                if (MifareDesfireReceiveBlock(Buffer + 1, &ByteCount, true)) {
-                    PCB |= ISO14443_PCB_I_BLOCK_CHAINING_MASK;
-                }
-                /* ByteCount is set by the application */
+
+            Buffer[0] = ISO14443_PCB_I_BLOCK_STATIC | MyBlockNumber;
+            ByteCount = MifareDesfireProcess(Buffer + 1, ByteCount - 1);
+            if (ByteCount == ISO14443A_APP_NO_RESPONSE) {
+                return ByteCount;
             }
-            Buffer[0] = PCB;
             break;
 
         case ISO14443_PCB_R_BLOCK:
-            if ((PCB & ISO14443_PCB_BLOCK_NUMBER_MASK) == MyBlockNumber) {
-                /* 7.5.4.3, rule 11: Unconditional retransmission */
-                PCB = ISO14443_PCB_I_BLOCK_STATIC | MyBlockNumber;
-                if (MifareDesfireSendBlock(Buffer + 1, &ByteCount, true)) {
-                    PCB |= ISO14443_PCB_I_BLOCK_CHAINING_MASK;
-                }
-            }
-            else {
-                if (PCB & ISO14443_PCB_R_BLOCK_ACKNAK_MASK) {
-                    /* Handle NAK */
-                    /* 7.5.4.3, rule 12: send ACK */
-                    PCB = ISO14443_PCB_R_BLOCK_STATIC | MyBlockNumber;
-                    ByteCount = ISO14443_R_BLOCK_SIZE;
-                }
-                else {
-                    /* Handle ACK */
-                    /* 7.5.3.2, rule E: toggle on R(ACK) */
-                    Iso144434BlockNumber = MyBlockNumber = !MyBlockNumber;
-                    /* 7.5.4.3, rule 13: send the next block */
-                    PCB = ISO14443_PCB_I_BLOCK_STATIC | MyBlockNumber;
-                    if (MifareDesfireSendBlock(Buffer + 1, &ByteCount, false)) {
-                        PCB |= ISO14443_PCB_I_BLOCK_CHAINING_MASK;
-                    }
-                }
-            }
-            Buffer[0] = PCB;
-            break;
+            /* R-block handling is not supported */
+            /* TODO: support at least retransmissions */
+            return ISO14443A_APP_NO_RESPONSE;
 
         case ISO14443_PCB_S_BLOCK:
             if (PCB == ISO14443_PCB_S_DESELECT) {
