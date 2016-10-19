@@ -126,6 +126,45 @@ INLINE void SPIWriteBlock(const void* Buffer, uint16_t ByteCount)
 }
 #endif
 
+#ifdef USE_DMA
+INLINE void SPISetBlock(uint8_t Value, uint16_t ByteCount)
+{
+	ScrapBuffer[0] = Value;
+
+	/* Set up read and write transfers */
+	RECV_DMA.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc;
+	RECV_DMA.DESTADDR0 = ((uintptr_t) ScrapBuffer >> 0) & 0xFF;
+	RECV_DMA.DESTADDR1 = ((uintptr_t) ScrapBuffer >> 8) & 0xFF;
+	RECV_DMA.TRFCNT = ByteCount;
+	SEND_DMA.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc;
+	SEND_DMA.SRCADDR0 = ((uintptr_t) ScrapBuffer >> 0) & 0xFF;
+	SEND_DMA.SRCADDR1 = ((uintptr_t) ScrapBuffer >> 8) & 0xFF;
+	SEND_DMA.TRFCNT = ByteCount;
+
+	/* Enable read and write transfers */
+	RECV_DMA.CTRLA |= DMA_CH_ENABLE_bm;
+	SEND_DMA.CTRLA |= DMA_CH_ENABLE_bm;
+
+	/* Wait for DMA to finish */
+	while( RECV_DMA.CTRLA & DMA_CH_ENABLE_bm )
+		;
+
+	/* Clear Interrupt flag */
+	RECV_DMA.CTRLB = DMA_CH_TRNIF_bm | DMA_CH_ERRIF_bm;
+	SEND_DMA.CTRLB = DMA_CH_TRNIF_bm | DMA_CH_ERRIF_bm;
+}
+#else
+INLINE void SPISetBlock(uint8_t Value, uint16_t ByteCount)
+{
+	while(ByteCount-- > 0) {
+		FRAM_USART.DATA = Value;
+		while (!(FRAM_USART.STATUS & USART_RXCIF_bm));
+
+		FRAM_USART.DATA; /* Flush Buffer */
+	}
+}
+#endif
+
 INLINE void FRAMRead(void* Buffer, uint16_t Address, uint16_t ByteCount)
 {
 	FRAM_PORT.OUTCLR = FRAM_CS;
@@ -155,6 +194,26 @@ INLINE void FRAMWrite(const void* Buffer, uint16_t Address, uint16_t ByteCount)
 	SPITransferByte( (Address >> 0) & 0xFF );
 
 	SPIWriteBlock(Buffer, ByteCount);
+
+	FRAM_PORT.OUTSET = FRAM_CS;
+}
+
+INLINE void FRAMSet(uint8_t Value, uint16_t Address, uint16_t ByteCount)
+{
+	FRAM_PORT.OUTCLR = FRAM_CS;
+	SPITransferByte(0x06); /* Write Enable */
+	FRAM_PORT.OUTSET = FRAM_CS;
+
+	asm volatile ("nop");
+	asm volatile ("nop");
+
+	FRAM_PORT.OUTCLR = FRAM_CS;
+
+	SPITransferByte(0x02); /* Write command */
+	SPITransferByte( (Address >> 8) & 0xFF ); /* Address hi and lo byte */
+	SPITransferByte( (Address >> 0) & 0xFF );
+
+	SPISetBlock(Value, ByteCount);
 
 	FRAM_PORT.OUTSET = FRAM_CS;
 }
@@ -380,6 +439,15 @@ void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
 	if (ByteCount == 0)
 		return;
 	FRAMWrite(Buffer, Address, ByteCount);
+
+	LEDHook(LED_MEMORY_CHANGED, LED_ON);
+}
+
+void MemorySetBlock(uint8_t Value, uint16_t Address, uint16_t ByteCount)
+{
+	if (ByteCount == 0)
+		return;
+	FRAMSet(Value, Address, ByteCount);
 
 	LEDHook(LED_MEMORY_CHANGED, LED_ON);
 }
