@@ -128,14 +128,9 @@ typedef enum {
  * DESFire application code
  */
 
-#define DESFIRE_IMAGE_OFFSET(m) ((uint16_t)&(((MifareDesfireImageType *)0)->m))
-
 /* Authentication status */
 #define DESFIRE_MASTER_KEY_ID 0
 #define DESFIRE_NOT_AUTHENTICATED 0xFF
-
-#define DESFIRE_INVALID_SLOT 0xFF
-#define DESFIRE_PICC_SLOT 31
 
 typedef enum {
     DESFIRE_IDLE,
@@ -146,37 +141,57 @@ typedef enum {
 
 static DesfireStateType DesfireState;
 static uint8_t AuthenticatedWithKey;
-static uint8_t SelectedAppSlot;
 /* Cached data */
-static MifareDesfirePiccType Picc;
+static MifareDesfirePiccInfoType Picc;
 static MifareDesfireAppDirType AppDir;
+static MifareDesfireAppDirEntryType* SelectedAppEntry;
 
 static void MifareDesfireSelectPiccApp(void)
 {
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
-    SelectedAppSlot = DESFIRE_PICC_SLOT;
+    SelectedAppEntry = NULL;
 }
 
 /* Return nonzero if AID 00 00 00 is selected */
 static uint8_t MifareDesfireIsPiccAppSelected(void)
 {
-    return SelectedAppSlot == DESFIRE_PICC_SLOT;
+    return SelectedAppEntry == NULL;
 }
 
-static uint8_t MifareDesfireLookupAppByAid(uint8_t Aid0, uint8_t Aid1, uint8_t Aid2)
+static MifareDesfireAppDirEntryType* MifareDesfireLookupAppByAid(uint8_t Aid0, uint8_t Aid1, uint8_t Aid2)
 {
     uint8_t Slot;
+    MifareDesfireAppDirEntryType* Entry;
 
-    for (Slot = 0; Slot < MIFARE_DESFIRE_MAX_APPS; ++Slot) {
-        if (AppDir[Slot][0] == Aid0 && AppDir[Slot][1] == Aid1 && AppDir[Slot][2] == Aid2)
-            return Slot;
+    for (Slot = 0, Entry = &AppDir.Apps[0]; Slot < MIFARE_DESFIRE_MAX_APPS; ++Slot, ++Entry) {
+        if (Entry->Aid[0] == Aid0 && Entry->Aid[1] == Aid1 && Entry->Aid[2] == Aid2)
+            return Entry;
     }
-    return DESFIRE_INVALID_SLOT;
+    return NULL;
 }
 
 static void MifareDesfireSynchronizeAppDir(void)
 {
-    MemoryWriteBlock(&AppDir, DESFIRE_IMAGE_OFFSET(AppDir), sizeof(MifareDesfireAppDirType));
+    MemoryWriteBlock(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(MifareDesfireAppDirType));
+}
+
+static void MifareDesfireSynchronizePiccInfo(void)
+{
+    MemoryWriteBlock(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Picc));
+}
+
+static uint8_t MifareDesfireEepromAllocate(uint8_t BlockCount)
+{
+    uint8_t Block;
+
+    /* Check if we have space */
+    Block = Picc.FirstFreeBlock;
+    if (Block + BlockCount < Block) {
+        return 0;
+    }
+    Picc.FirstFreeBlock = Block + BlockCount;
+    MifareDesfireSynchronizePiccInfo();
+    return Block;
 }
 
 /*
@@ -231,19 +246,25 @@ static uint16_t MifareDesfireCmdGetVersion3(uint8_t* Buffer, uint16_t ByteCount)
 
 static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
+    const MifareDesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t Slot;
-    MifareDesfireAidType *AidPtr;
+    uint8_t KeyCount;
+    uint8_t AppPointer;
+    uint8_t BlockCount;
+    MifareDesfireAppDirEntryType* Entry;
+    MifareDesfireApplicationType App;
 
     /* Validate command length */
     if (ByteCount != 1 + 3 + 1 + 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
+    KeyCount = Buffer[4];
     /* Validate AID: AID of all zeros is reserved */
-    if ((Buffer[1] | Buffer[2] | Buffer[3]) == 0x00)
+    if ((Aid[0] | Aid[1] | Aid[2]) == 0x00)
         goto invalid_args;
     /* Validate number of keys: less than max */
-    if (Buffer[4] > MIFARE_DESFIRE_MAX_KEYS)
+    if (KeyCount > MIFARE_DESFIRE_MAX_KEYS)
         goto invalid_args;
     /* Require zero AID to be selected */
     if (!MifareDesfireIsPiccAppSelected()) {
@@ -258,14 +279,14 @@ static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t Byte
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Verify this AID has not been allocated yet */
-    if (MifareDesfireLookupAppByAid(Buffer[1], Buffer[2], Buffer[3]) != DESFIRE_INVALID_SLOT) {
+    if (MifareDesfireLookupAppByAid(Aid[0], Aid[1], Aid[2])) {
         Buffer[0] = STATUS_DUPLICATE_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Search for a free app slot */
-    for (Slot = 0, AidPtr = &AppDir[0]; Slot < MIFARE_DESFIRE_MAX_APPS; ++Slot, ++AidPtr) {
-        if (*AidPtr[0] == 0 && *AidPtr[1] == 0 && *AidPtr[2] == 0)
+    for (Slot = 0, Entry = &AppDir.Apps[0]; Slot < MIFARE_DESFIRE_MAX_APPS; ++Slot, ++Entry) {
+        if (Entry->Pointer == 0)
             break;
     }
 
@@ -274,13 +295,26 @@ static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t Byte
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    /* Initialise the application */
-    *AidPtr[0] = Buffer[1];
-    *AidPtr[1] = Buffer[2];
-    *AidPtr[2] = Buffer[3];
-    MifareDesfireSynchronizeAppDir();
+    /* Allocate storage for the application entry */
+    BlockCount = 1 + MIFARE_DESFIRE_FILE_STATE_BLOCKS
+        + (KeyCount * sizeof(MifareDesfireKeyType) + MIFARE_DESFIRE_EEPROM_BLOCK_SIZE - 1) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE;
+    Entry->Pointer = AppPointer = MifareDesfireEepromAllocate(BlockCount);
+    if (!AppPointer) {
+        Buffer[0] = STATUS_OUT_OF_EEPROM_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    MemorySetBlock(0, AppPointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, BlockCount * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
 
-    /* TODO: Write key settings */
+    /* Initialise the application */
+    App.MasterKeySettings = Buffer[5];
+    App.KeyCount = KeyCount;
+    MemoryWriteBlock(&App, AppPointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(App));
+
+    /* Update the directory */
+    Entry->Aid[0] = Aid[0];
+    Entry->Aid[1] = Aid[1];
+    Entry->Aid[2] = Aid[2];
+    MifareDesfireSynchronizeAppDir();
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -293,7 +327,8 @@ invalid_args:
 
 static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
-    uint8_t Slot;
+    MifareDesfireAppDirEntryType* Entry;
+    MifareDesfireApplicationType AppData;
 
     /* Validate command length */
     if (ByteCount != 1 + 3) {
@@ -307,14 +342,15 @@ static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t Byte
     }
 
     /* Search for the app slot */
-    Slot = MifareDesfireLookupAppByAid(Buffer[1], Buffer[2], Buffer[3]);
-    if (Slot == DESFIRE_INVALID_SLOT) {
+    Entry = MifareDesfireLookupAppByAid(Buffer[1], Buffer[2], Buffer[3]);
+    if (!Entry) {
         Buffer[0] = STATUS_APP_NOT_FOUND;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
+    MemoryReadBlock(&AppData, Entry->Pointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(AppData));
 
     /* Validate authentication */
-    if (SlotHeader.MasterKeySettings & MIFARE_DESFIRE_FREE_CREATE_DELETE) {
+    if (AppData.MasterKeySettings & MIFARE_DESFIRE_FREE_CREATE_DELETE) {
         /* Check whether PICC master key authentication is required */
         if (!(Picc.MasterKeySettings & MIFARE_DESFIRE_FREE_CREATE_DELETE) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
             /* PICC master key authentication is required */
@@ -330,14 +366,15 @@ static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t Byte
         }
     }
 
-    if (Slot == SelectedAppSlot) {
+    if (Entry == SelectedAppEntry) {
         MifareDesfireSelectPiccApp();
     }
 
     /* Deactivate the app */
-    AppDir[Slot][0] = 0;
-    AppDir[Slot][1] = 0;
-    AppDir[Slot][2] = 0;
+    Entry->Aid[0] = 0;
+    Entry->Aid[1] = 0;
+    Entry->Aid[2] = 0;
+    Entry->Pointer = 0;
     MifareDesfireSynchronizeAppDir();
 
     /* Done */
@@ -347,7 +384,7 @@ static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t Byte
 
 static uint16_t MifareDesfireCmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
-    uint8_t Slot;
+    MifareDesfireAppDirEntryType* Entry;
 
     /* Validate command length */
     if (ByteCount != 1 + 3) {
@@ -362,14 +399,14 @@ static uint16_t MifareDesfireCmdSelectApplication(uint8_t* Buffer, uint16_t Byte
     }
 
     /* Search for the app slot */
-    Slot = MifareDesfireLookupAppByAid(Buffer[1], Buffer[2], Buffer[3]);
-    if (Slot == DESFIRE_INVALID_SLOT) {
+    Entry = MifareDesfireLookupAppByAid(Buffer[1], Buffer[2], Buffer[3]);
+    if (!Entry) {
         Buffer[0] = STATUS_APP_NOT_FOUND;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
-    SelectedAppSlot = Slot;
+    SelectedAppEntry = Entry;
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -636,8 +673,8 @@ void MifareDesfireAppInit(void)
     ISO144433AInit();
     ISO144434Init();
     /* Init DESFire junk */
-    MemoryReadBlock(&Picc, DESFIRE_IMAGE_OFFSET(Picc), sizeof(MifareDesfirePiccType));
-    MemoryReadBlock(&AppDir, DESFIRE_IMAGE_OFFSET(AppDir), sizeof(MifareDesfireAppDirType));
+    MemoryReadBlock(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Picc));
+    MemoryReadBlock(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(AppDir));
     MifareDesfireSelectPiccApp();
     DesfireState = DESFIRE_IDLE;
 }
