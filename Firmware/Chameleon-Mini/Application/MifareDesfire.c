@@ -138,9 +138,14 @@ typedef enum {
     DESFIRE_GET_VERSION2,
     DESFIRE_GET_VERSION3,
     DESFIRE_GET_APPLICATION_IDS2,
+    DESFIRE_AUTHENTICATE2,
 } DesfireStateType;
 
 typedef union {
+    struct {
+        uint8_t KeyId;
+        uint8_t RndB[CRYPTO_DES_KEY_SIZE];
+    } Authenticate;
     struct {
         MifareDesfireAppDirEntryType *NextEntry;
     } GetApplicationIds;
@@ -149,15 +154,23 @@ typedef union {
 static DesfireStateType DesfireState;
 static DesfireSavedCommandStateType DesfireCommandState;
 static uint8_t AuthenticatedWithKey;
+static MifareDesfireKeyType SessionKey;
 /* Cached data */
 static MifareDesfirePiccInfoType Picc;
 static MifareDesfireAppDirType AppDir;
 static MifareDesfireAppDirEntryType* SelectedAppEntry;
+static uint8_t SelectedAppKeySettings;
+static uint8_t SelectedAppKeyCount;
+static MifareDesfireKeyType* SelectedAppKeyAddress; /* in FRAM */
 
 static void MifareDesfireSelectPiccApp(void)
 {
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     SelectedAppEntry = NULL;
+    SelectedAppKeySettings = Picc.MasterKeySettings & 0x0F;
+    SelectedAppKeyCount = 1;
+    SelectedAppKeyAddress = MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE
+        + &((MifareDesfirePiccInfoType*)NULL)->MasterKey;
 }
 
 /* Return nonzero if AID 00 00 00 is selected */
@@ -203,7 +216,7 @@ static uint8_t MifareDesfireEepromAllocate(uint8_t BlockCount)
 }
 
 /*
- * DESFire commands implementation
+ * DESFire general commands
  */
 
 static uint16_t MifareDesfireCmdGetVersion1(uint8_t* Buffer, uint16_t ByteCount)
@@ -286,6 +299,107 @@ static uint16_t MifareDesfireCmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount)
     Buffer[0] = STATUS_OPERATION_OK;
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
+
+/*
+ * DESFire key management commands
+ */
+
+static uint16_t MifareDesfireCmdAuthenticate1(uint8_t* Buffer, uint16_t ByteCount)
+{
+    uint8_t KeyId;
+    MifareDesfireKeyType Key;
+
+    /* Validate command length */
+    if (ByteCount != 1 + 1) {
+        Buffer[0] = STATUS_LENGTH_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    KeyId = Buffer[1];
+    /* Validate number of keys: less than max */
+    if (KeyId >= SelectedAppKeyCount) {
+        Buffer[0] = STATUS_PARAMETER_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+
+    /* Fetch the key */
+    DesfireCommandState.Authenticate.KeyId = KeyId;
+    MemoryReadBlock(&Key, (uint16_t)&SelectedAppKeyAddress[KeyId], sizeof(Key));
+    /* Generate the nonce B */
+    RandomGetBuffer(DesfireCommandState.Authenticate.RndB, sizeof(DesfireCommandState.Authenticate.RndB));
+    /* Encipher the nonce B with the selected key */
+    memcpy(&Buffer[1], DesfireCommandState.Authenticate.RndB, sizeof(DesfireCommandState.Authenticate.RndB));
+    CryptoEncrypt_3DES_KeyOption2_CBC((uint8_t*)&Key, &Buffer[1], sizeof(DesfireCommandState.Authenticate.RndB));
+    /* Scrub the key */
+    memset(&Key, 0, sizeof(Key));
+
+    /* Done */
+    DesfireState = DESFIRE_AUTHENTICATE2;
+    Buffer[0] = STATUS_ADDITIONAL_FRAME;
+    return DESFIRE_STATUS_RESPONSE_SIZE + 8;
+}
+
+static uint16_t MifareDesfireCmdAuthenticate2(uint8_t* Buffer, uint16_t ByteCount)
+{
+    MifareDesfireKeyType Key;
+    uint8_t tmp;
+
+    /* Validate command length */
+    if (ByteCount != 1 + 16) {
+        Buffer[0] = STATUS_LENGTH_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+
+    /* Fetch the key */
+    MemoryReadBlock(&Key, (uint16_t)&SelectedAppKeyAddress[DesfireCommandState.Authenticate.KeyId], sizeof(Key));
+    /* Encipher to obtain plain text */
+    CryptoEncrypt_3DES_KeyOption2_CBC((uint8_t*)&Key, &Buffer[1], 2 * sizeof(DesfireCommandState.Authenticate.RndB));
+    /* Now, RndA is at Buffer[1], RndB' is at Buffer[9] */
+    if ((Buffer[9] != DesfireCommandState.Authenticate.RndB[1]) || (Buffer[10] != DesfireCommandState.Authenticate.RndB[2])
+        || (Buffer[11] != DesfireCommandState.Authenticate.RndB[3]) || (Buffer[12] != DesfireCommandState.Authenticate.RndB[4])
+        || (Buffer[13] != DesfireCommandState.Authenticate.RndB[5]) || (Buffer[14] != DesfireCommandState.Authenticate.RndB[6])
+        || (Buffer[15] != DesfireCommandState.Authenticate.RndB[7]) || (Buffer[16] != DesfireCommandState.Authenticate.RndB[0])) {
+        Buffer[0] = STATUS_AUTHENTICATION_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    /* Compose the session key */
+    SessionKey.Key1[0] = Buffer[1];
+    SessionKey.Key1[1] = Buffer[2];
+    SessionKey.Key1[2] = Buffer[3];
+    SessionKey.Key1[3] = Buffer[4];
+    SessionKey.Key1[4] = DesfireCommandState.Authenticate.RndB[0];
+    SessionKey.Key1[5] = DesfireCommandState.Authenticate.RndB[1];
+    SessionKey.Key1[6] = DesfireCommandState.Authenticate.RndB[2];
+    SessionKey.Key1[7] = DesfireCommandState.Authenticate.RndB[3];
+    SessionKey.Key2[0] = Buffer[5];
+    SessionKey.Key2[1] = Buffer[6];
+    SessionKey.Key2[2] = Buffer[7];
+    SessionKey.Key2[3] = Buffer[8];
+    SessionKey.Key2[4] = DesfireCommandState.Authenticate.RndB[4];
+    SessionKey.Key2[5] = DesfireCommandState.Authenticate.RndB[5];
+    SessionKey.Key2[6] = DesfireCommandState.Authenticate.RndB[6];
+    SessionKey.Key2[7] = DesfireCommandState.Authenticate.RndB[7];
+    /* Rotate the nonce A left by 8 bits */
+    tmp = Buffer[1];
+    Buffer[1] = Buffer[2];
+    Buffer[2] = Buffer[3];
+    Buffer[3] = Buffer[4];
+    Buffer[4] = Buffer[5];
+    Buffer[5] = Buffer[6];
+    Buffer[6] = Buffer[7];
+    Buffer[7] = Buffer[8];
+    Buffer[8] = tmp;
+    /* Encipher the nonce A */
+    CryptoEncrypt_3DES_KeyOption2_CBC((uint8_t*)&Key, &Buffer[1], sizeof(DesfireCommandState.Authenticate.RndB));
+    /* Scrub the key */
+    memset(&Key, 0, sizeof(Key));
+
+    Buffer[0] = STATUS_OPERATION_OK;
+    return DESFIRE_STATUS_RESPONSE_SIZE + 8;
+}
+
+/*
+ * DESFire application management commands
+ */
 
 static uint16_t MifareDesfireCmdGetApplicationIds2(uint8_t* Buffer, uint16_t ByteCount)
 {
@@ -479,6 +593,7 @@ static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t Byte
 static uint16_t MifareDesfireCmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
     MifareDesfireAppDirEntryType* Entry;
+    MifareDesfireApplicationType App;
 
     /* Validate command length */
     if (ByteCount != 1 + 3) {
@@ -501,6 +616,10 @@ static uint16_t MifareDesfireCmdSelectApplication(uint8_t* Buffer, uint16_t Byte
 
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     SelectedAppEntry = Entry;
+    MemoryReadBlock(&App, SelectedAppEntry->Pointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(App));
+    SelectedAppKeySettings = App.MasterKeySettings;
+    SelectedAppKeyCount = App.KeyCount;
+    SelectedAppKeyAddress = (MifareDesfireKeyType*)((SelectedAppEntry->Pointer + 1 + MIFARE_DESFIRE_FILE_STATE_BLOCKS) * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -515,23 +634,15 @@ static uint16_t MifareDesfireCmdGetKeySettings(uint8_t* Buffer, uint16_t ByteCou
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    if (MifareDesfireIsPiccAppSelected()) {
-        Buffer[1] = Picc.MasterKeySettings;
-        Buffer[2] = 1;
-    }
-    else {
-        MifareDesfireApplicationType App;
-
-        /* TODO: Cache me */
-        MemoryReadBlock(&App, SelectedAppEntry->Pointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(App));
-        Buffer[1] = App.MasterKeySettings;
-        Buffer[2] = App.KeyCount;
-    }
+    Buffer[1] = SelectedAppKeySettings;
+    Buffer[2] = SelectedAppKeyCount;
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
     return DESFIRE_STATUS_RESPONSE_SIZE + 2;
 }
+
+/* Dispatching routines */
 
 static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
 {
@@ -540,6 +651,8 @@ static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
         return MifareDesfireCmdGetVersion1(Buffer, ByteCount);
     case CMD_FORMAT_PICC:
         return MifareDesfireCmdFormatPicc(Buffer, ByteCount);
+    case CMD_AUTHENTICATE:
+        return MifareDesfireCmdAuthenticate1(Buffer, ByteCount);
     case CMD_GET_APPLICATION_IDS:
         return MifareDesfireCmdGetApplicationIds1(Buffer, ByteCount);
     case CMD_CREATE_APPLICATION:
@@ -575,6 +688,8 @@ static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
         return MifareDesfireCmdGetVersion3(Buffer, ByteCount);
     case DESFIRE_GET_APPLICATION_IDS2:
         return MifareDesfireCmdGetApplicationIds2(Buffer, ByteCount);
+    case DESFIRE_AUTHENTICATE2:
+        return MifareDesfireCmdAuthenticate2(Buffer, ByteCount);
     default:
         return ISO14443A_APP_NO_RESPONSE;
     }
