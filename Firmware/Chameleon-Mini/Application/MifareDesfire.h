@@ -62,8 +62,6 @@ typedef struct {
     uint16_t FileSize;
     uint8_t DataPointer[2];
 } MifareDesfireFileType;
-/* This resolves to 4 */
-#define MIFARE_DESFIRE_FILE_STATE_BLOCKS (MIFARE_DESFIRE_MAX_FILES * sizeof(MifareDesfireFileType) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE)
 
 typedef struct {
     uint8_t Key1[CRYPTO_DES_KEY_SIZE];
@@ -103,6 +101,11 @@ typedef struct {
 /* The actual layout */
 #define MIFARE_DESFIRE_PICC_INFO_BLOCK_ID 0
 #define MIFARE_DESFIRE_APP_DIR_BLOCK_ID 1
+
+/* This resolves to 4 */
+#define MIFARE_DESFIRE_APP_DIR_BLOCKS (sizeof(MifareDesfireAppDirType) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE)
+/* This resolves to 4 */
+#define MIFARE_DESFIRE_FILE_STATE_BLOCKS (MIFARE_DESFIRE_MAX_FILES * sizeof(MifareDesfireFileType) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE)
 
 void MifareDesfireAppInit(void);
 void MifareDesfireAppReset(void);
