@@ -18,15 +18,17 @@
 typedef uint8_t MifareDesfireAidType[MIFARE_DESFIRE_AID_SIZE];
 
 #define MIFARE_DESFIRE_MAX_APPS 28
-#define MIFARE_DESFIRE_MAX_APPS_INTERNAL 32
 #define MIFARE_DESFIRE_MAX_FILES 16
 #define MIFARE_DESFIRE_MAX_KEYS 14
 
-#define MIFARE_DESFIRE_STANDARD_DATA_FILE      0
-#define MIFARE_DESFIRE_BACKUP_DATA_FILE        1
-#define MIFARE_DESFIRE_VALUE_DATA_FILE         2
-#define MIFARE_DESFIRE_LINEAR_RECORDS_FILE     3
-#define MIFARE_DESFIRE_CIRCULAR_RECORDS_FILE   4
+#define MIFARE_DESFIRE_FILE_STANDARD_DATA      0
+#define MIFARE_DESFIRE_FILE_BACKUP_DATA        1
+#define MIFARE_DESFIRE_FILE_VALUE_DATA         2
+#define MIFARE_DESFIRE_FILE_LINEAR_RECORDS     3
+#define MIFARE_DESFIRE_FILE_CIRCULAR_RECORDS   4
+#define MIFARE_DESFIRE_FILE_COPY_MASK   (1 << 0)
+#define MIFARE_DESFIRE_FILE_DIRTY_MASK  (1 << 1)
+#define MIFARE_DESFIRE_FILE_ALLOCATED   (1 << 7)
 
 /* Special values for access key IDs */
 #define MIFARE_DESFIRE_ACCESS_FREE 0xE
@@ -55,38 +57,52 @@ typedef uint8_t MifareDesfireAidType[MIFARE_DESFIRE_AID_SIZE];
 
 typedef struct {
     uint8_t Type;
-    uint8_t BlockIndex;
+    uint8_t Flags;
     uint16_t AccessRights;
     uint16_t FileSize;
+    uint8_t DataPointer[2];
 } MifareDesfireFileType;
+/* This resolves to 4 */
+#define MIFARE_DESFIRE_FILE_STATE_BLOCKS (MIFARE_DESFIRE_MAX_FILES * sizeof(MifareDesfireFileType) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE)
 
 typedef struct {
     uint8_t Key1[CRYPTO_DES_KEY_SIZE];
     uint8_t Key2[CRYPTO_DES_KEY_SIZE];
 } MifareDesfireKeyType;
 
+/** Defines application data structure. */
 typedef struct {
+    uint8_t MasterKeySettings;
     uint8_t KeyCount;
-    MifareDesfireKeyType Keys[MIFARE_DESFIRE_MAX_KEYS];
-    MifareDesfireFileType Files[MIFARE_DESFIRE_MAX_FILES];
+    uint8_t Spare[30];
+    /* Next: File control blocks */
+    /* Next: Key blocks */
 } MifareDesfireApplicationType;
 
+/** Defines the global PICC configuration. */
 typedef struct {
     uint8_t Uid[MIFARE_DESFIRE_UID_SIZE];
     uint8_t FirstFreeBlock;
+    uint8_t MasterKeySettings;
+    uint8_t Spare[6];
     MifareDesfireKeyType MasterKey;
-} MifareDesfirePiccType;
+} MifareDesfirePiccInfoType;
 
-/* 3 blocks */
-typedef MifareDesfireAidType MifareDesfireAppDirType[MIFARE_DESFIRE_MAX_APPS_INTERNAL];
-
-/* Defines the card image format */
+/** Defines an entry in the application directory. */
 typedef struct {
-    MifareDesfirePiccType Picc;
-    MifareDesfireAppDirType AppDir;
-    uint8_t MasterKeySettings[MIFARE_DESFIRE_MAX_APPS_INTERNAL];
-    MifareDesfireApplicationType Applications[MIFARE_DESFIRE_MAX_APPS];
-} MifareDesfireImageType;
+    MifareDesfireAidType Aid;
+    uint8_t Pointer;
+} MifareDesfireAppDirEntryType;
+
+/** Defines the application directory contents. */
+typedef struct {
+    MifareDesfireAppDirEntryType Apps[MIFARE_DESFIRE_MAX_APPS];
+    uint8_t Spare[16];
+} MifareDesfireAppDirType;
+
+/* The actual layout */
+#define MIFARE_DESFIRE_PICC_INFO_BLOCK_ID 0
+#define MIFARE_DESFIRE_APP_DIR_BLOCK_ID 1
 
 void MifareDesfireAppInit(void);
 void MifareDesfireAppReset(void);
