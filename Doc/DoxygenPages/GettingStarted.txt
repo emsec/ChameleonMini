@@ -26,6 +26,8 @@
  * 
  * After running this command you need to restart your Chameleon, e.g. by reattaching the Chameleon to the PC.
  * 
+ * \note If you are using Ubuntu 14.04, avrdude may not support flip2. In this case, you can run `add-apt-repository ppa:pmjdebruijn/avrdude-release`, then `apt-get update` and finally `apt-get install avrdude` to upgrade to a version of avrdude that supports flip2.
+ * 
  * ## Upgrade Procedure for Mac OS Users ##
  * When running [Homebrew](https://brew.sh) you can install avrdude with `brew install avrdude`. After this, change to the directory where you have saved the hex and eep files and run `sudo avrdude -c flip2 -p ATXMega128A4U -B 60 -P usb -U application:w:Chameleon-Mini.hex:i -U eeprom:w:Chameleon-Mini.eep:i`.
  *
