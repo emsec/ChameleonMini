@@ -128,6 +128,7 @@ typedef enum {
  * DESFire application code
  */
 
+#define DESFIRE_NONCE_SIZE 8 /* Bytes */
 /* Authentication status */
 #define DESFIRE_MASTER_KEY_ID 0
 #define DESFIRE_NOT_AUTHENTICATED 0xFF
@@ -321,20 +322,22 @@ static uint16_t MifareDesfireCmdAuthenticate1(uint8_t* Buffer, uint16_t ByteCoun
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
+    /* Reset authentication state right away */
+    AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     /* Fetch the key */
     DesfireCommandState.Authenticate.KeyId = KeyId;
     MemoryReadBlock(&Key, (uint16_t)&SelectedAppKeyAddress[KeyId], sizeof(Key));
     /* Generate the nonce B */
-    RandomGetBuffer(DesfireCommandState.Authenticate.RndB, sizeof(DesfireCommandState.Authenticate.RndB));
+    RandomGetBuffer(DesfireCommandState.Authenticate.RndB, DESFIRE_NONCE_SIZE);
     /* Encipher the nonce B with the selected key */
-    CryptoEncrypt_3DES_KeyOption2_CBC(sizeof(DesfireCommandState.Authenticate.RndB), DesfireCommandState.Authenticate.RndB, &Buffer[1], (uint8_t*)&Key);
+    CryptoEncrypt_3DES_KeyOption2_CBC(DESFIRE_NONCE_SIZE, DesfireCommandState.Authenticate.RndB, &Buffer[1], (uint8_t*)&Key);
     /* Scrub the key */
     memset(&Key, 0, sizeof(Key));
 
     /* Done */
     DesfireState = DESFIRE_AUTHENTICATE2;
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
-    return DESFIRE_STATUS_RESPONSE_SIZE + 8;
+    return DESFIRE_STATUS_RESPONSE_SIZE + DESFIRE_NONCE_SIZE;
 }
 
 static uint16_t MifareDesfireCmdAuthenticate2(uint8_t* Buffer, uint16_t ByteCount)
@@ -350,9 +353,11 @@ static uint16_t MifareDesfireCmdAuthenticate2(uint8_t* Buffer, uint16_t ByteCoun
     /* Fetch the key */
     MemoryReadBlock(&Key, (uint16_t)&SelectedAppKeyAddress[DesfireCommandState.Authenticate.KeyId], sizeof(Key));
     /* Encipher to obtain plain text */
-    CryptoEncrypt_3DES_KeyOption2_CBC(2 * sizeof(DesfireCommandState.Authenticate.RndB), &Buffer[1], &Buffer[1], (uint8_t*)&Key);
+    CryptoEncrypt_3DES_KeyOption2_CBC(2 * DESFIRE_NONCE_SIZE, &Buffer[1], &Buffer[1], (uint8_t*)&Key);
     /* Now, RndA is at Buffer[1], RndB' is at Buffer[9] */
-    if (memcmp(&Buffer[9], &DesfireCommandState.Authenticate.RndB[1], 7) || (Buffer[16] != DesfireCommandState.Authenticate.RndB[0])) {
+    if (memcmp(&Buffer[9], &DesfireCommandState.Authenticate.RndB[1], DESFIRE_NONCE_SIZE - 1) || (Buffer[16] != DesfireCommandState.Authenticate.RndB[0])) {
+        /* Scrub the key */
+        memset(&Key, 0, sizeof(Key));
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -374,15 +379,16 @@ static uint16_t MifareDesfireCmdAuthenticate2(uint8_t* Buffer, uint16_t ByteCoun
     SessionKey.Key2[5] = DesfireCommandState.Authenticate.RndB[5];
     SessionKey.Key2[6] = DesfireCommandState.Authenticate.RndB[6];
     SessionKey.Key2[7] = DesfireCommandState.Authenticate.RndB[7];
+    AuthenticatedWithKey = DesfireCommandState.Authenticate.KeyId;
     /* Rotate the nonce A left by 8 bits */
     Buffer[9] = Buffer[1];
     /* Encipher the nonce A */
-    CryptoEncrypt_3DES_KeyOption2_CBC(sizeof(DesfireCommandState.Authenticate.RndB), &Buffer[2], &Buffer[1], (uint8_t*)&Key);
+    CryptoEncrypt_3DES_KeyOption2_CBC(DESFIRE_NONCE_SIZE, &Buffer[2], &Buffer[1], (uint8_t*)&Key);
     /* Scrub the key */
     memset(&Key, 0, sizeof(Key));
 
     Buffer[0] = STATUS_OPERATION_OK;
-    return DESFIRE_STATUS_RESPONSE_SIZE + 8;
+    return DESFIRE_STATUS_RESPONSE_SIZE + DESFIRE_NONCE_SIZE;
 }
 
 /*
