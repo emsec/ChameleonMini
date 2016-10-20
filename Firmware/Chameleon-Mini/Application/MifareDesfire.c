@@ -327,8 +327,7 @@ static uint16_t MifareDesfireCmdAuthenticate1(uint8_t* Buffer, uint16_t ByteCoun
     /* Generate the nonce B */
     RandomGetBuffer(DesfireCommandState.Authenticate.RndB, sizeof(DesfireCommandState.Authenticate.RndB));
     /* Encipher the nonce B with the selected key */
-    memcpy(&Buffer[1], DesfireCommandState.Authenticate.RndB, sizeof(DesfireCommandState.Authenticate.RndB));
-    CryptoEncrypt_3DES_KeyOption2_CBC((uint8_t*)&Key, &Buffer[1], sizeof(DesfireCommandState.Authenticate.RndB));
+    CryptoEncrypt_3DES_KeyOption2_CBC(sizeof(DesfireCommandState.Authenticate.RndB), DesfireCommandState.Authenticate.RndB, &Buffer[1], (uint8_t*)&Key);
     /* Scrub the key */
     memset(&Key, 0, sizeof(Key));
 
@@ -341,7 +340,6 @@ static uint16_t MifareDesfireCmdAuthenticate1(uint8_t* Buffer, uint16_t ByteCoun
 static uint16_t MifareDesfireCmdAuthenticate2(uint8_t* Buffer, uint16_t ByteCount)
 {
     MifareDesfireKeyType Key;
-    uint8_t tmp;
 
     /* Validate command length */
     if (ByteCount != 1 + 16) {
@@ -352,16 +350,14 @@ static uint16_t MifareDesfireCmdAuthenticate2(uint8_t* Buffer, uint16_t ByteCoun
     /* Fetch the key */
     MemoryReadBlock(&Key, (uint16_t)&SelectedAppKeyAddress[DesfireCommandState.Authenticate.KeyId], sizeof(Key));
     /* Encipher to obtain plain text */
-    CryptoEncrypt_3DES_KeyOption2_CBC((uint8_t*)&Key, &Buffer[1], 2 * sizeof(DesfireCommandState.Authenticate.RndB));
+    CryptoEncrypt_3DES_KeyOption2_CBC(2 * sizeof(DesfireCommandState.Authenticate.RndB), &Buffer[1], &Buffer[1], (uint8_t*)&Key);
     /* Now, RndA is at Buffer[1], RndB' is at Buffer[9] */
-    if ((Buffer[9] != DesfireCommandState.Authenticate.RndB[1]) || (Buffer[10] != DesfireCommandState.Authenticate.RndB[2])
-        || (Buffer[11] != DesfireCommandState.Authenticate.RndB[3]) || (Buffer[12] != DesfireCommandState.Authenticate.RndB[4])
-        || (Buffer[13] != DesfireCommandState.Authenticate.RndB[5]) || (Buffer[14] != DesfireCommandState.Authenticate.RndB[6])
-        || (Buffer[15] != DesfireCommandState.Authenticate.RndB[7]) || (Buffer[16] != DesfireCommandState.Authenticate.RndB[0])) {
+    if (memcmp(&Buffer[9], &DesfireCommandState.Authenticate.RndB[1], 7) || (Buffer[16] != DesfireCommandState.Authenticate.RndB[0])) {
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Compose the session key */
+    /* NOTE: gcc does a very bad job optimising this. */
     SessionKey.Key1[0] = Buffer[1];
     SessionKey.Key1[1] = Buffer[2];
     SessionKey.Key1[2] = Buffer[3];
@@ -379,17 +375,9 @@ static uint16_t MifareDesfireCmdAuthenticate2(uint8_t* Buffer, uint16_t ByteCoun
     SessionKey.Key2[6] = DesfireCommandState.Authenticate.RndB[6];
     SessionKey.Key2[7] = DesfireCommandState.Authenticate.RndB[7];
     /* Rotate the nonce A left by 8 bits */
-    tmp = Buffer[1];
-    Buffer[1] = Buffer[2];
-    Buffer[2] = Buffer[3];
-    Buffer[3] = Buffer[4];
-    Buffer[4] = Buffer[5];
-    Buffer[5] = Buffer[6];
-    Buffer[6] = Buffer[7];
-    Buffer[7] = Buffer[8];
-    Buffer[8] = tmp;
+    Buffer[9] = Buffer[1];
     /* Encipher the nonce A */
-    CryptoEncrypt_3DES_KeyOption2_CBC((uint8_t*)&Key, &Buffer[1], sizeof(DesfireCommandState.Authenticate.RndB));
+    CryptoEncrypt_3DES_KeyOption2_CBC(sizeof(DesfireCommandState.Authenticate.RndB), &Buffer[2], &Buffer[1], (uint8_t*)&Key);
     /* Scrub the key */
     memset(&Key, 0, sizeof(Key));
 

@@ -90,7 +90,7 @@ SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c C
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c
 SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/MifareDesfire.c
-SRC         += Application/ISO14443-3A.c Application/Crypto1.c Application/CryptoDES.c Application/Reader14443A.c
+SRC         += Application/ISO14443-3A.c Application/Crypto1.c Application/CryptoDES.c Application/CryptoDESAsm.S Application/Reader14443A.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -Wall -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE="\"$(BUILD_DATE)\"" -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) 
