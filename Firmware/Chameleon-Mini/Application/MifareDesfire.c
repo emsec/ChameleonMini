@@ -253,17 +253,30 @@ static uint8_t MifareDesfireEepromAllocate(uint8_t BlockCount)
     }
     Picc.FirstFreeBlock = Block + BlockCount;
     MifareDesfireSynchronizePiccInfo();
+    MemorySetBlock(0, Block * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, BlockCount * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
     return Block;
 }
 
-static void MifareDesfireFormatPicc(void)
+static void FormatPicc(void)
 {
     /* Wipe application directory */
     memset(&AppDir, 0, sizeof(AppDir));
     /* Reset the free block pointer */
     Picc.FirstFreeBlock = MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID;
+
     MifareDesfireSynchronizePiccInfo();
     MifareDesfireSynchronizeAppDir();
+
+}
+
+static void FactoryFormatPicc(void)
+{
+    /* Wipe PICC data */
+    memset(&Picc, 0, sizeof(Picc));
+    FormatPicc();
+    SetAppKeySettings(DESFIRE_PICC_APP_INDEX, 0x0F);
+    SetAppKeyCount(DESFIRE_PICC_APP_INDEX, 1);
+    SetAppStorageBlockId(DESFIRE_PICC_APP_INDEX, MifareDesfireEepromAllocate(1));
 }
 
 /*
@@ -336,7 +349,7 @@ static uint16_t MifareDesfireCmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount)
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    MifareDesfireFormatPicc();
+    FormatPicc();
     Buffer[0] = STATUS_OPERATION_OK;
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
@@ -697,7 +710,6 @@ static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t Byte
         Buffer[0] = STATUS_OUT_OF_EEPROM_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    MemorySetBlock(0, AppPointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, BlockCount * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
 
     /* Initialise the application */
     SetAppKeySettings(Slot + 1, Buffer[5]);
@@ -1095,7 +1107,8 @@ void MifareDesfireAppInit(void)
     /* Init DESFire junk */
     MemoryReadBlock(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Picc));
     if (Picc.FirstFreeBlock == 0) {
-        MifareDesfireFormatPicc();
+        FactoryFormatPicc();
+        MemoryReadBlock(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Picc));
     }
     else {
         MemoryReadBlock(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(AppDir));
