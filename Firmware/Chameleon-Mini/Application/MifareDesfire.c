@@ -860,7 +860,7 @@ static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
     }
 }
 
-static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount)
 {
     if (DesfireState == DESFIRE_IDLE)
         return MifareDesfireProcessIdle(Buffer, ByteCount);
@@ -883,9 +883,33 @@ static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
     case DESFIRE_AUTHENTICATE2:
         return MifareDesfireCmdAuthenticate2(Buffer, ByteCount);
     default:
-        /* SHould not happen. */
+        /* Should not happen. */
         Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+}
+
+static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
+{
+    if (Buffer[0] == 0x90 && Buffer[2] == 0x00 && Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
+        /* Unwrap the PDU from ISO 7816-4 */
+        ByteCount = Buffer[4];
+        Buffer[0] = Buffer[1];
+        memmove(&Buffer[2], &Buffer[5], ByteCount);
+        /* Process the command */
+        ByteCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
+        if (ByteCount) {
+            /* Re-wrap into ISO 7816-4 */
+            Buffer[ByteCount] = Buffer[0];
+            memmove(&Buffer[0], &Buffer[1], ByteCount - 1);
+            Buffer[ByteCount - 1] = 0x91;
+            ByteCount++;
+        }
+        return ByteCount;
+    }
+    else {
+        /* ISO/IEC 14443-4 PDUs, no extra work */
+        return MifareDesfireProcessCommand(Buffer, ByteCount);
     }
 }
 
