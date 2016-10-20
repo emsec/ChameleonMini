@@ -30,7 +30,7 @@ uint16_t ISO14443AComputeCRCA(const void* Buffer, uint16_t ByteCount)
         CRC.DATAIN = Byte;
     }
 
-    Checksum = BitReverseByte(CRC.CHECKSUM1) || (BitReverseByte(CRC.CHECKSUM0) << 8);
+    Checksum = BitReverseByte(CRC.CHECKSUM1) | (BitReverseByte(CRC.CHECKSUM0) << 8);
     CRC.CTRL = CRC_SOURCE_DISABLE_gc;
     return Checksum;
 }
