@@ -128,6 +128,8 @@ typedef enum {
  * DESFire application code
  */
 
+#define DESFIRE_PICC_APP_INDEX 0
+
 #define DESFIRE_NONCE_SIZE 8 /* Bytes */
 /* Authentication status */
 #define DESFIRE_MASTER_KEY_ID 0
@@ -148,7 +150,7 @@ typedef union {
         uint8_t RndB[CRYPTO_DES_KEY_SIZE];
     } Authenticate;
     struct {
-        MifareDesfireAppDirEntryType *NextEntry;
+        uint8_t NextIndex;
     } GetApplicationIds;
 } DesfireSavedCommandStateType;
 
@@ -156,40 +158,78 @@ static DesfireStateType DesfireState;
 static DesfireSavedCommandStateType DesfireCommandState;
 static uint8_t AuthenticatedWithKey;
 static MifareDesfireKeyType SessionKey;
-/* Cached data */
+
+/* Cached data: flush to FRAM if changed */
 static MifareDesfirePiccInfoType Picc;
 static MifareDesfireAppDirType AppDir;
-static MifareDesfireAppDirEntryType* SelectedAppEntry;
+
+static uint8_t SelectedAppSlot;
 static uint8_t SelectedAppKeySettings;
 static uint8_t SelectedAppKeyCount;
+static MifareDesfireFileType* SelectedAppFilesAddress; /* in FRAM */
 static MifareDesfireKeyType* SelectedAppKeyAddress; /* in FRAM */
 
-static void MifareDesfireSelectPiccApp(void)
+
+static uint8_t GetAppProperty(uint8_t BlockId, uint8_t AppSlot)
 {
+    MifareDesfireApplicationDataType Data;
+
+    MemoryReadBlock(&Data, BlockId * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Data));
+    return Data.AppData[AppSlot];
+}
+
+static void SetAppProperty(uint8_t BlockId, uint8_t AppSlot, uint8_t Value)
+{
+    MifareDesfireApplicationDataType Data;
+
+    MemoryReadBlock(&Data, BlockId * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Data));
+    Data.AppData[AppSlot] = Value;
+    MemoryWriteBlock(&Data, BlockId * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Data));
+}
+
+static uint8_t GetAppKeySettings(uint8_t AppSlot)
+{
+    return GetAppProperty(MIFARE_DESFIRE_APP_KEY_SETTINGS_BLOCK_ID, AppSlot);
+}
+
+static void SetAppKeySettings(uint8_t AppSlot, uint8_t Value)
+{
+    SetAppProperty(MIFARE_DESFIRE_APP_KEY_SETTINGS_BLOCK_ID, AppSlot, Value);
+}
+
+static void SetAppKeyCount(uint8_t AppSlot, uint8_t Value)
+{
+    SetAppProperty(MIFARE_DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot, Value);
+}
+
+static void SetAppStorageBlockId(uint8_t AppSlot, uint8_t Value)
+{
+    SetAppProperty(MIFARE_DESFIRE_APP_STORAGE_PTR_BLOCK_ID, AppSlot, Value);
+}
+
+
+static void SelectApp(uint8_t AppSlot)
+{
+    uint8_t StorageBlockId;
+
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
-    SelectedAppEntry = NULL;
-    SelectedAppKeySettings = Picc.MasterKeySettings & 0x0F;
-    SelectedAppKeyCount = 1;
-    SelectedAppKeyAddress = MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE
-        + &((MifareDesfirePiccInfoType*)NULL)->MasterKey;
+    SelectedAppSlot = AppSlot;
+
+    SelectedAppKeySettings = GetAppProperty(MIFARE_DESFIRE_APP_KEY_SETTINGS_BLOCK_ID, AppSlot);
+    SelectedAppKeyCount = GetAppProperty(MIFARE_DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot);
+    StorageBlockId = GetAppProperty(MIFARE_DESFIRE_APP_STORAGE_PTR_BLOCK_ID, AppSlot);
+    SelectedAppFilesAddress = (MifareDesfireFileType*)(StorageBlockId * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
+    SelectedAppKeyAddress = (MifareDesfireKeyType*)((StorageBlockId + MIFARE_DESFIRE_FILE_STATE_BLOCKS) * MIFARE_DESFIRE_MAX_FILES);
 }
 
-/* Return nonzero if AID 00 00 00 is selected */
-static uint8_t MifareDesfireIsPiccAppSelected(void)
+static void SelectPiccApp(void)
 {
-    return SelectedAppEntry == NULL;
+    SelectApp(DESFIRE_PICC_APP_INDEX);
 }
 
-static MifareDesfireAppDirEntryType* MifareDesfireLookupAppByAid(uint8_t Aid0, uint8_t Aid1, uint8_t Aid2)
+static uint8_t IsPiccAppSelected(void)
 {
-    uint8_t Slot;
-    MifareDesfireAppDirEntryType* Entry;
-
-    for (Slot = 0, Entry = &AppDir.Apps[0]; Slot < MIFARE_DESFIRE_MAX_APPS; ++Slot, ++Entry) {
-        if (Entry->Aid[0] == Aid0 && Entry->Aid[1] == Aid1 && Entry->Aid[2] == Aid2)
-            return Entry;
-    }
-    return NULL;
+    return SelectedAppSlot == DESFIRE_PICC_APP_INDEX;
 }
 
 static void MifareDesfireSynchronizeAppDir(void)
@@ -214,6 +254,16 @@ static uint8_t MifareDesfireEepromAllocate(uint8_t BlockCount)
     Picc.FirstFreeBlock = Block + BlockCount;
     MifareDesfireSynchronizePiccInfo();
     return Block;
+}
+
+static void MifareDesfireFormatPicc(void)
+{
+    /* Wipe application directory */
+    memset(&AppDir, 0, sizeof(AppDir));
+    /* Reset the free block pointer */
+    Picc.FirstFreeBlock = MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID;
+    MifareDesfireSynchronizePiccInfo();
+    MifareDesfireSynchronizeAppDir();
 }
 
 /*
@@ -266,16 +316,6 @@ static uint16_t MifareDesfireCmdGetVersion3(uint8_t* Buffer, uint16_t ByteCount)
     return 15;
 }
 
-static void MifareDesfireFormatPicc(void)
-{
-    /* Wipe application directory */
-    memset(&AppDir, 0, sizeof(AppDir));
-    /* Reset the free block pointer */
-    Picc.FirstFreeBlock = MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID;
-    MifareDesfireSynchronizePiccInfo();
-    MifareDesfireSynchronizeAppDir();
-}
-
 static uint16_t MifareDesfireCmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount)
 {
     /* Validate command length */
@@ -284,7 +324,7 @@ static uint16_t MifareDesfireCmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount)
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Require zero AID to be selected */
-    if (!MifareDesfireIsPiccAppSelected()) {
+    if (!IsPiccAppSelected()) {
         /* TODO: Verify this is the proper error code */
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -532,13 +572,10 @@ static uint16_t MifareDesfireCmdChangeKeySettings(uint8_t* Buffer, uint16_t Byte
     }
 
     NewSettings = Buffer[1];
-    /* TODO: Update the actual settings */
-    if (MifareDesfireIsPiccAppSelected()) {
+    if (IsPiccAppSelected()) {
         NewSettings &= 0x0F;
     }
-    else {
-
-    }
+    SetAppKeySettings(SelectedAppSlot, NewSettings);
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -551,22 +588,22 @@ static uint16_t MifareDesfireCmdChangeKeySettings(uint8_t* Buffer, uint16_t Byte
 
 static uint16_t MifareDesfireCmdGetApplicationIds2(uint8_t* Buffer, uint16_t ByteCount)
 {
-    MifareDesfireAppDirEntryType* Entry;
+    uint8_t EntryIndex;
     uint8_t WriteIndex;
 
     WriteIndex = 1;
-    for (Entry = DesfireCommandState.GetApplicationIds.NextEntry; Entry < &AppDir.Apps[MIFARE_DESFIRE_MAX_APPS]; ++Entry) {
-        if (!Entry->Pointer)
+    for (EntryIndex = DesfireCommandState.GetApplicationIds.NextIndex; EntryIndex <MIFARE_DESFIRE_MAX_APPS; ++EntryIndex) {
+        if ((AppDir.AppIds[EntryIndex][0] | AppDir.AppIds[EntryIndex][1] | AppDir.AppIds[EntryIndex][2]) == 0)
             continue;
         if (WriteIndex >= 1 + MIFARE_DESFIRE_AID_SIZE * 19) {
             DesfireState = DESFIRE_GET_APPLICATION_IDS2;
-            DesfireCommandState.GetApplicationIds.NextEntry = Entry;
+            DesfireCommandState.GetApplicationIds.NextIndex = EntryIndex;
             Buffer[0] = STATUS_ADDITIONAL_FRAME;
             return WriteIndex;
         }
-        Buffer[WriteIndex++] = Entry->Aid[0];
-        Buffer[WriteIndex++] = Entry->Aid[1];
-        Buffer[WriteIndex++] = Entry->Aid[2];
+        Buffer[WriteIndex++] = AppDir.AppIds[EntryIndex][0];
+        Buffer[WriteIndex++] = AppDir.AppIds[EntryIndex][1];
+        Buffer[WriteIndex++] = AppDir.AppIds[EntryIndex][2];
     }
 
     /* Done */
@@ -583,20 +620,20 @@ static uint16_t MifareDesfireCmdGetApplicationIds1(uint8_t* Buffer, uint16_t Byt
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Require zero AID to be selected */
-    if (!MifareDesfireIsPiccAppSelected()) {
+    if (!IsPiccAppSelected()) {
         /* TODO: Verify this is the proper error code */
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Verify authentication settings */
-    if (!(Picc.MasterKeySettings & MIFARE_DESFIRE_FREE_DIRECTORY_LIST) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
+    if (!(SelectedAppKeySettings & MIFARE_DESFIRE_FREE_DIRECTORY_LIST) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         /* PICC master key authentication is required */
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Setup the job and jump to the worker routine */
-    DesfireCommandState.GetApplicationIds.NextEntry = &AppDir.Apps[0];
+    DesfireCommandState.GetApplicationIds.NextIndex = 0;
     return MifareDesfireCmdGetApplicationIds2(Buffer, ByteCount);
 }
 
@@ -604,11 +641,10 @@ static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t Byte
 {
     const MifareDesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t Slot;
+    uint8_t FreeSlot;
     uint8_t KeyCount;
     uint8_t AppPointer;
     uint8_t BlockCount;
-    MifareDesfireAppDirEntryType* Entry;
-    MifareDesfireApplicationType App;
 
     /* Validate command length */
     if (ByteCount != 1 + 3 + 1 + 1) {
@@ -623,38 +659,40 @@ static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t Byte
     if (KeyCount > MIFARE_DESFIRE_MAX_KEYS)
         goto invalid_args;
     /* Require zero AID to be selected */
-    if (!MifareDesfireIsPiccAppSelected()) {
+    if (!IsPiccAppSelected()) {
         /* TODO: Verify this is the proper error code */
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Verify authentication settings */
-    if (!(Picc.MasterKeySettings & MIFARE_DESFIRE_FREE_CREATE_DELETE) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
+    if (!(SelectedAppKeySettings & MIFARE_DESFIRE_FREE_CREATE_DELETE) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         /* PICC master key authentication is required */
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Verify this AID has not been allocated yet */
-    if (MifareDesfireLookupAppByAid(Aid[0], Aid[1], Aid[2])) {
-        Buffer[0] = STATUS_DUPLICATE_ERROR;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
+    for (Slot = 0; Slot < MIFARE_DESFIRE_MAX_APPS; ++Slot) {
+        if (AppDir.AppIds[Slot][0] == Aid[0] && AppDir.AppIds[Slot][1] == Aid[1] && AppDir.AppIds[Slot][2] == Aid[2]) {
+            Buffer[0] = STATUS_DUPLICATE_ERROR;
+            return DESFIRE_STATUS_RESPONSE_SIZE;
+        }
     }
-
-    /* Search for a free app slot */
-    for (Slot = 0, Entry = &AppDir.Apps[0]; Slot < MIFARE_DESFIRE_MAX_APPS; ++Slot, ++Entry) {
-        if (Entry->Pointer == 0)
-            break;
-    }
-
+    /* Verify there is space */
+    Slot = AppDir.FirstFreeSlot;
     if (Slot == MIFARE_DESFIRE_MAX_APPS) {
         Buffer[0] = STATUS_APP_COUNT_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
+    /* Update the next free slot */
+    for (FreeSlot = Slot + 1; FreeSlot < MIFARE_DESFIRE_MAX_APPS; ++FreeSlot) {
+        if ((AppDir.AppIds[FreeSlot][0] | AppDir.AppIds[FreeSlot][1] | AppDir.AppIds[FreeSlot][2]) == 0)
+            break;
+    }
 
-    /* Allocate storage for the application entry */
-    BlockCount = 1 + MIFARE_DESFIRE_FILE_STATE_BLOCKS
+    /* Allocate storage for the application */
+    BlockCount = MIFARE_DESFIRE_FILE_STATE_BLOCKS
         + (KeyCount * sizeof(MifareDesfireKeyType) + MIFARE_DESFIRE_EEPROM_BLOCK_SIZE - 1) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE;
-    Entry->Pointer = AppPointer = MifareDesfireEepromAllocate(BlockCount);
+    AppPointer = MifareDesfireEepromAllocate(BlockCount);
     if (!AppPointer) {
         Buffer[0] = STATUS_OUT_OF_EEPROM_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -662,14 +700,15 @@ static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t Byte
     MemorySetBlock(0, AppPointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, BlockCount * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
 
     /* Initialise the application */
-    App.MasterKeySettings = Buffer[5];
-    App.KeyCount = KeyCount;
-    MemoryWriteBlock(&App, AppPointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(App));
+    SetAppKeySettings(Slot + 1, Buffer[5]);
+    SetAppKeyCount(Slot + 1, KeyCount);
+    SetAppStorageBlockId(Slot + 1, AppPointer);
 
     /* Update the directory */
-    Entry->Aid[0] = Aid[0];
-    Entry->Aid[1] = Aid[1];
-    Entry->Aid[2] = Aid[2];
+    AppDir.FirstFreeSlot = FreeSlot;
+    AppDir.AppIds[Slot][0] = Aid[0];
+    AppDir.AppIds[Slot][1] = Aid[1];
+    AppDir.AppIds[Slot][2] = Aid[2];
     MifareDesfireSynchronizeAppDir();
 
     /* Done */
@@ -683,8 +722,9 @@ invalid_args:
 
 static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
-    MifareDesfireAppDirEntryType* Entry;
-    MifareDesfireApplicationType App;
+    const MifareDesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
+    uint8_t Slot;
+    uint8_t PiccKeySettings;
 
     /* Validate command length */
     if (ByteCount != 1 + 3) {
@@ -698,40 +738,42 @@ static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t Byte
     }
 
     /* Search for the app slot */
-    Entry = MifareDesfireLookupAppByAid(Buffer[1], Buffer[2], Buffer[3]);
-    if (!Entry) {
+    for (Slot = 0; Slot < MIFARE_DESFIRE_MAX_APPS; ++Slot) {
+        if (AppDir.AppIds[Slot][0] == Aid[0] && AppDir.AppIds[Slot][1] == Aid[1] && AppDir.AppIds[Slot][2] == Aid[2])
+            break;
+    }
+    if (Slot == MIFARE_DESFIRE_MAX_APPS) {
         Buffer[0] = STATUS_APP_NOT_FOUND;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    MemoryReadBlock(&App, Entry->Pointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(App));
 
-    /* Validate authentication */
-    if (App.MasterKeySettings & MIFARE_DESFIRE_FREE_CREATE_DELETE) {
-        /* Check whether PICC master key authentication is required */
-        if (!(Picc.MasterKeySettings & MIFARE_DESFIRE_FREE_CREATE_DELETE) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
-            /* PICC master key authentication is required */
+    /* Validate authentication: a master key always required */
+    if (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
+        Buffer[0] = STATUS_AUTHENTICATION_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    /* Validate authentication: deletion with PICC master key is always OK, but another app is selected... */
+    if (!IsPiccAppSelected()) {
+        PiccKeySettings = GetAppKeySettings(DESFIRE_PICC_APP_INDEX);
+        /* Check the PICC key settings whether it is OK to delete using app master key */
+        if (!(PiccKeySettings & MIFARE_DESFIRE_FREE_CREATE_DELETE)) {
             Buffer[0] = STATUS_AUTHENTICATION_ERROR;
             return DESFIRE_STATUS_RESPONSE_SIZE;
         }
-    }
-    else {
-        /* App settings take precedence, it seems */
-        if (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
-            Buffer[0] = STATUS_AUTHENTICATION_ERROR;
-            return DESFIRE_STATUS_RESPONSE_SIZE;
-        }
-    }
-
-    if (Entry == SelectedAppEntry) {
-        MifareDesfireSelectPiccApp();
     }
 
     /* Deactivate the app */
-    Entry->Aid[0] = 0;
-    Entry->Aid[1] = 0;
-    Entry->Aid[2] = 0;
-    Entry->Pointer = 0;
+    AppDir.AppIds[Slot][0] = 0;
+    AppDir.AppIds[Slot][1] = 0;
+    AppDir.AppIds[Slot][2] = 0;
+    if (Slot < AppDir.FirstFreeSlot) {
+        AppDir.FirstFreeSlot = Slot;
+    }
     MifareDesfireSynchronizeAppDir();
+
+    if (Slot == SelectedAppSlot) {
+        SelectPiccApp();
+    }
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -740,8 +782,8 @@ static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t Byte
 
 static uint16_t MifareDesfireCmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
-    MifareDesfireAppDirEntryType* Entry;
-    MifareDesfireApplicationType App;
+    const MifareDesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
+    uint8_t Slot;
 
     /* Validate command length */
     if (ByteCount != 1 + 3) {
@@ -750,24 +792,23 @@ static uint16_t MifareDesfireCmdSelectApplication(uint8_t* Buffer, uint16_t Byte
     }
     /* AID of all zeros can be selected right away */
     if ((Buffer[1] | Buffer[2] | Buffer[3]) == 0x00) {
-        MifareDesfireSelectPiccApp();
+        SelectPiccApp();
         Buffer[0] = STATUS_OPERATION_OK;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Search for the app slot */
-    Entry = MifareDesfireLookupAppByAid(Buffer[1], Buffer[2], Buffer[3]);
-    if (!Entry) {
+    for (Slot = 0; Slot < MIFARE_DESFIRE_MAX_APPS; ++Slot) {
+        if (AppDir.AppIds[Slot][0] == Aid[0] && AppDir.AppIds[Slot][1] == Aid[1] && AppDir.AppIds[Slot][2] == Aid[2]) {
+            break;
+        }
+    }
+    if (Slot == MIFARE_DESFIRE_MAX_APPS) {
         Buffer[0] = STATUS_APP_NOT_FOUND;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
-    SelectedAppEntry = Entry;
-    MemoryReadBlock(&App, SelectedAppEntry->Pointer * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(App));
-    SelectedAppKeySettings = App.MasterKeySettings;
-    SelectedAppKeyCount = App.KeyCount;
-    SelectedAppKeyAddress = (MifareDesfireKeyType*)((SelectedAppEntry->Pointer + 1 + MIFARE_DESFIRE_FILE_STATE_BLOCKS) * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
+    SelectApp(Slot + 1);
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -1059,7 +1100,7 @@ void MifareDesfireAppInit(void)
     else {
         MemoryReadBlock(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(AppDir));
     }
-    MifareDesfireSelectPiccApp();
+    SelectPiccApp();
     DesfireState = DESFIRE_IDLE;
 }
 

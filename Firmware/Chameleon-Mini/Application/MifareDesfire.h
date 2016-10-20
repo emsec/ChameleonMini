@@ -70,9 +70,8 @@ typedef uint8_t MifareDesfireKeyType[CRYPTO_TDES_KEY_OPTION_2_KEY_SIZE];
 /** Data about applications is kept in these structures */
 typedef struct {
     uint8_t Spare0;
-    uint8_t MainApp;
-    uint8_t UserApps[MIFARE_DESFIRE_MAX_APPS];
-    uint16_t Checksum;
+    uint8_t AppData[MIFARE_DESFIRE_MAX_APPS + 1];
+    uint16_t Checksum; /* Not actually used atm */
 } MifareDesfireApplicationDataType;
 
 /** Defines the global PICC configuration. */
@@ -84,8 +83,9 @@ typedef struct {
 
 /** Defines the application directory contents. */
 typedef struct {
+    uint8_t FirstFreeSlot;
+    uint8_t Spare[11];
     MifareDesfireAidType AppIds[MIFARE_DESFIRE_MAX_APPS]; /* 84 */
-    uint8_t Spare[12];
 } MifareDesfireAppDirType;
 
 /* This resolves to 4 */
@@ -97,10 +97,9 @@ typedef struct {
 enum MifareDesfireCardLayout {
     MIFARE_DESFIRE_PICC_INFO_BLOCK_ID = 0,
     MIFARE_DESFIRE_APP_DIR_BLOCK_ID,
-    MIFARE_DESFIRE_APP_CONFIG_BLOCK_ID = MIFARE_DESFIRE_APP_DIR_BLOCK_ID + MIFARE_DESFIRE_APP_DIR_BLOCKS,
+    MIFARE_DESFIRE_APP_KEY_SETTINGS_BLOCK_ID = MIFARE_DESFIRE_APP_DIR_BLOCK_ID + MIFARE_DESFIRE_APP_DIR_BLOCKS,
     MIFARE_DESFIRE_APP_KEY_COUNT_BLOCK_ID,
-    MIFARE_DESFIRE_APP_KEY_PTR_BLOCK_ID,
-    MIFARE_DESFIRE_APP_FILE_DIR_PTR_BLOCK_ID,
+    MIFARE_DESFIRE_APP_STORAGE_PTR_BLOCK_ID,
     MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID,
 };
 
