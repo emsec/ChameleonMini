@@ -82,6 +82,8 @@ typedef enum {
     STATUS_EEPROM_ERROR = 0xEE,
 
     STATUS_FILE_NOT_FOUND = 0xF0,
+
+    STATUS_PICC_INTEGRITY_ERROR = 0xC1,
 } DesfireStatusCodeType;
 
 typedef enum {
@@ -853,7 +855,8 @@ static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
     case CMD_SELECT_APPLICATION:
         return MifareDesfireCmdSelectApplication(Buffer, ByteCount);
     default:
-        return ISO14443A_APP_NO_RESPONSE;
+        Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 }
 
@@ -880,7 +883,9 @@ static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
     case DESFIRE_AUTHENTICATE2:
         return MifareDesfireCmdAuthenticate2(Buffer, ByteCount);
     default:
-        return ISO14443A_APP_NO_RESPONSE;
+        /* SHould not happen. */
+        Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 }
 
