@@ -45,7 +45,27 @@
 #define ISO14443A_CALC_BCC(ByteBuffer) \
     ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
 
+/** Compute a CRCA checksum according to the ISO 14443 standard.
+ *
+ * \param Buffer Pointer to the start of the buffer.
+ * \param ByteCount Count of bytes to process.
+ * \return The CRCA checksum.
+ */
+uint16_t ISO14443AComputeCRCA(const void* Buffer, uint16_t ByteCount);
+/** Compute and append a CRCA checksum according to the ISO 14443 standard.
+ * The checksum will be appended right after the input data.
+ *
+ * \param Buffer Pointer to the start of the buffer.
+ * \param ByteCount Count of bytes to process, not including the CRCA.
+ */
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount);
+/** Verify the CRCA checksum according to the ISO 14443 standard.
+ * The checksum is expected to be right after the ByteCount bytes in input data.
+ *
+ * \param Buffer Pointer to the start of the buffer.
+ * \param ByteCount Count of bytes to process, not including the CRCA.
+ * \return Whether the checksum matches.
+ */
 bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount);
 
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);

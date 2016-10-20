@@ -65,49 +65,44 @@ typedef struct {
     uint8_t DataPointer[2];
 } MifareDesfireFileType;
 
-typedef struct {
-    uint8_t Key1[CRYPTO_DES_KEY_SIZE];
-    uint8_t Key2[CRYPTO_DES_KEY_SIZE];
-} MifareDesfireKeyType;
+typedef uint8_t MifareDesfireKeyType[CRYPTO_TDES_KEY_OPTION_2_KEY_SIZE];
 
-/** Defines application data structure. */
+/** Data about applications is kept in these structures */
 typedef struct {
-    uint8_t MasterKeySettings;
-    uint8_t KeyCount;
-    uint8_t Spare[30];
-    /* Next: File control blocks */
-    /* Next: Key blocks */
-} MifareDesfireApplicationType;
+    uint8_t Spare0;
+    uint8_t MainApp;
+    uint8_t UserApps[MIFARE_DESFIRE_MAX_APPS];
+    uint16_t Checksum;
+} MifareDesfireApplicationDataType;
 
 /** Defines the global PICC configuration. */
 typedef struct {
     uint8_t Uid[MIFARE_DESFIRE_UID_SIZE];
     uint8_t FirstFreeBlock;
-    uint8_t MasterKeySettings;
-    uint8_t Spare[6];
-    MifareDesfireKeyType MasterKey;
+    uint8_t Spare[32 - MIFARE_DESFIRE_UID_SIZE - 1];
 } MifareDesfirePiccInfoType;
-
-/** Defines an entry in the application directory. */
-typedef struct {
-    MifareDesfireAidType Aid;
-    uint8_t Pointer;
-} MifareDesfireAppDirEntryType;
 
 /** Defines the application directory contents. */
 typedef struct {
-    MifareDesfireAppDirEntryType Apps[MIFARE_DESFIRE_MAX_APPS];
-    uint8_t Spare[16];
+    MifareDesfireAidType AppIds[MIFARE_DESFIRE_MAX_APPS]; /* 84 */
+    uint8_t Spare[12];
 } MifareDesfireAppDirType;
-
-/* The actual layout */
-#define MIFARE_DESFIRE_PICC_INFO_BLOCK_ID 0
-#define MIFARE_DESFIRE_APP_DIR_BLOCK_ID 1
 
 /* This resolves to 4 */
 #define MIFARE_DESFIRE_APP_DIR_BLOCKS (sizeof(MifareDesfireAppDirType) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE)
 /* This resolves to 4 */
 #define MIFARE_DESFIRE_FILE_STATE_BLOCKS (MIFARE_DESFIRE_MAX_FILES * sizeof(MifareDesfireFileType) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE)
+
+/* The actual layout */
+enum MifareDesfireCardLayout {
+    MIFARE_DESFIRE_PICC_INFO_BLOCK_ID = 0,
+    MIFARE_DESFIRE_APP_DIR_BLOCK_ID,
+    MIFARE_DESFIRE_APP_CONFIG_BLOCK_ID = MIFARE_DESFIRE_APP_DIR_BLOCK_ID + MIFARE_DESFIRE_APP_DIR_BLOCKS,
+    MIFARE_DESFIRE_APP_KEY_COUNT_BLOCK_ID,
+    MIFARE_DESFIRE_APP_KEY_PTR_BLOCK_ID,
+    MIFARE_DESFIRE_APP_FILE_DIR_PTR_BLOCK_ID,
+    MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID,
+};
 
 void MifareDesfireAppInit(void);
 void MifareDesfireAppReset(void);
