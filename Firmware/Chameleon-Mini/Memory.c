@@ -129,16 +129,14 @@ INLINE void SPIWriteBlock(const void* Buffer, uint16_t ByteCount)
 #ifdef USE_DMA
 INLINE void SPISetBlock(uint8_t Value, uint16_t ByteCount)
 {
-	ScrapBuffer[0] = Value;
-
 	/* Set up read and write transfers */
 	RECV_DMA.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc;
 	RECV_DMA.DESTADDR0 = ((uintptr_t) ScrapBuffer >> 0) & 0xFF;
 	RECV_DMA.DESTADDR1 = ((uintptr_t) ScrapBuffer >> 8) & 0xFF;
 	RECV_DMA.TRFCNT = ByteCount;
 	SEND_DMA.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc;
-	SEND_DMA.SRCADDR0 = ((uintptr_t) ScrapBuffer >> 0) & 0xFF;
-	SEND_DMA.SRCADDR1 = ((uintptr_t) ScrapBuffer >> 8) & 0xFF;
+	SEND_DMA.SRCADDR0 = ((uintptr_t) &Value >> 0) & 0xFF;
+	SEND_DMA.SRCADDR1 = ((uintptr_t) &Value >> 8) & 0xFF;
 	SEND_DMA.TRFCNT = ByteCount;
 
 	/* Enable read and write transfers */

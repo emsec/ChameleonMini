@@ -204,24 +204,26 @@ static void SetAppKeyCount(uint8_t AppSlot, uint8_t Value)
     SetAppProperty(MIFARE_DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot, Value);
 }
 
-static void SetAppStorageBlockId(uint8_t AppSlot, uint8_t Value)
+static void SetAppKeyStorageBlockId(uint8_t AppSlot, uint8_t Value)
 {
-    SetAppProperty(MIFARE_DESFIRE_APP_STORAGE_PTR_BLOCK_ID, AppSlot, Value);
+    SetAppProperty(MIFARE_DESFIRE_APP_KEYS_PTR_BLOCK_ID, AppSlot, Value);
+}
+
+static void SetAppFileControlBlockId(uint8_t AppSlot, uint8_t Value)
+{
+    SetAppProperty(MIFARE_DESFIRE_APP_FILES_PTR_BLOCK_ID, AppSlot, Value);
 }
 
 
 static void SelectApp(uint8_t AppSlot)
 {
-    uint8_t StorageBlockId;
-
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     SelectedAppSlot = AppSlot;
 
     SelectedAppKeySettings = GetAppProperty(MIFARE_DESFIRE_APP_KEY_SETTINGS_BLOCK_ID, AppSlot);
     SelectedAppKeyCount = GetAppProperty(MIFARE_DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot);
-    StorageBlockId = GetAppProperty(MIFARE_DESFIRE_APP_STORAGE_PTR_BLOCK_ID, AppSlot);
-    SelectedAppFilesAddress = (MifareDesfireFileType*)(StorageBlockId * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
-    SelectedAppKeyAddress = (MifareDesfireKeyType*)((StorageBlockId + MIFARE_DESFIRE_FILE_STATE_BLOCKS) * MIFARE_DESFIRE_MAX_FILES);
+    SelectedAppFilesAddress = (MifareDesfireFileType*)(GetAppProperty(MIFARE_DESFIRE_APP_KEYS_PTR_BLOCK_ID, AppSlot) * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
+    SelectedAppKeyAddress = (MifareDesfireKeyType*)(GetAppProperty(MIFARE_DESFIRE_APP_FILES_PTR_BLOCK_ID, AppSlot) * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
 }
 
 static void SelectPiccApp(void)
@@ -234,17 +236,17 @@ static uint8_t IsPiccAppSelected(void)
     return SelectedAppSlot == DESFIRE_PICC_APP_INDEX;
 }
 
-static void MifareDesfireSynchronizeAppDir(void)
+static void SynchronizeAppDir(void)
 {
     MemoryWriteBlock(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(MifareDesfireAppDirType));
 }
 
-static void MifareDesfireSynchronizePiccInfo(void)
+static void SynchronizePiccInfo(void)
 {
     MemoryWriteBlock(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Picc));
 }
 
-static uint8_t MifareDesfireEepromAllocate(uint8_t BlockCount)
+static uint8_t AllocateBlocks(uint8_t BlockCount)
 {
     uint8_t Block;
 
@@ -254,8 +256,8 @@ static uint8_t MifareDesfireEepromAllocate(uint8_t BlockCount)
         return 0;
     }
     Picc.FirstFreeBlock = Block + BlockCount;
-    MifareDesfireSynchronizePiccInfo();
-    MemorySetBlock(0, Block * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, BlockCount * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
+    SynchronizePiccInfo();
+    MemorySetBlock(0x00, Block * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, BlockCount * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
     return Block;
 }
 
@@ -266,9 +268,8 @@ static void FormatPicc(void)
     /* Reset the free block pointer */
     Picc.FirstFreeBlock = MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID;
 
-    MifareDesfireSynchronizePiccInfo();
-    MifareDesfireSynchronizeAppDir();
-
+    SynchronizePiccInfo();
+    SynchronizeAppDir();
 }
 
 static void FactoryFormatPicc(void)
@@ -278,7 +279,7 @@ static void FactoryFormatPicc(void)
     FormatPicc();
     SetAppKeySettings(DESFIRE_PICC_APP_INDEX, 0x0F);
     SetAppKeyCount(DESFIRE_PICC_APP_INDEX, 1);
-    SetAppStorageBlockId(DESFIRE_PICC_APP_INDEX, MifareDesfireEepromAllocate(1));
+    SetAppKeyStorageBlockId(DESFIRE_PICC_APP_INDEX, AllocateBlocks(1));
 }
 
 /*
@@ -658,8 +659,7 @@ static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t Byte
     uint8_t Slot;
     uint8_t FreeSlot;
     uint8_t KeyCount;
-    uint8_t AppPointer;
-    uint8_t BlockCount;
+    uint8_t KeysBlockId, FilesBlockId;
 
     /* Validate command length */
     if (ByteCount != 1 + 3 + 1 + 1) {
@@ -705,10 +705,13 @@ static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t Byte
     }
 
     /* Allocate storage for the application */
-    BlockCount = MIFARE_DESFIRE_FILE_STATE_BLOCKS
-        + (KeyCount * sizeof(MifareDesfireKeyType) + MIFARE_DESFIRE_EEPROM_BLOCK_SIZE - 1) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE;
-    AppPointer = MifareDesfireEepromAllocate(BlockCount);
-    if (!AppPointer) {
+    KeysBlockId = AllocateBlocks((KeyCount * sizeof(MifareDesfireKeyType) + MIFARE_DESFIRE_EEPROM_BLOCK_SIZE - 1) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
+    if (!KeysBlockId) {
+        Buffer[0] = STATUS_OUT_OF_EEPROM_ERROR;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+    FilesBlockId = AllocateBlocks(MIFARE_DESFIRE_FILE_STATE_BLOCKS);
+    if (!FilesBlockId) {
         Buffer[0] = STATUS_OUT_OF_EEPROM_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -716,14 +719,15 @@ static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t Byte
     /* Initialise the application */
     SetAppKeySettings(Slot + 1, Buffer[5]);
     SetAppKeyCount(Slot + 1, KeyCount);
-    SetAppStorageBlockId(Slot + 1, AppPointer);
+    SetAppKeyStorageBlockId(Slot + 1, KeysBlockId);
+    SetAppFileControlBlockId(Slot + 1, FilesBlockId);
 
     /* Update the directory */
     AppDir.FirstFreeSlot = FreeSlot;
     AppDir.AppIds[Slot][0] = Aid[0];
     AppDir.AppIds[Slot][1] = Aid[1];
     AppDir.AppIds[Slot][2] = Aid[2];
-    MifareDesfireSynchronizeAppDir();
+    SynchronizeAppDir();
 
     /* Done */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -783,7 +787,7 @@ static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t Byte
     if (Slot < AppDir.FirstFreeSlot) {
         AppDir.FirstFreeSlot = Slot;
     }
-    MifareDesfireSynchronizeAppDir();
+    SynchronizeAppDir();
 
     if (Slot == SelectedAppSlot) {
         SelectPiccApp();
@@ -1135,9 +1139,8 @@ void MifareDesfireAppInit(void)
     ISO144434Init();
     /* Init DESFire junk */
     MemoryReadBlock(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Picc));
-    if (Picc.FirstFreeBlock == 0) {
+    if (Picc.Uid[0] == 0xFF && Picc.Uid[1] == 0xFF && Picc.Uid[2] == 0xFF && Picc.Uid[3] == 0xFF) {
         FactoryFormatPicc();
-        MemoryReadBlock(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Picc));
     }
     else {
         MemoryReadBlock(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(AppDir));
@@ -1168,6 +1171,8 @@ void MifareDesfireGetUid(ConfigurationUidType Uid)
 
 void MifareDesfireSetUid(ConfigurationUidType Uid)
 {
+    memcpy(Picc.Uid, Uid, ActiveConfiguration.UidSize);
+    SynchronizePiccInfo();
 }
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */
