@@ -57,6 +57,26 @@ typedef uint8_t MifareDesfireAidType[MIFARE_DESFIRE_AID_SIZE];
 
 #define MIFARE_DESFIRE_EEPROM_BLOCK_SIZE 32 /* Bytes */
 
+/* DESFire EV0 versions */
+#define MIFARE_DESFIRE_HW_MAJOR_EV0     0x00
+#define MIFARE_DESFIRE_HW_MINOR_EV0     0x01
+#define MIFARE_DESFIRE_SW_MAJOR_EV0     0x00
+#define MIFARE_DESFIRE_SW_MINOR_EV0     0x01
+/* DESFire EV1 versions */
+#define MIFARE_DESFIRE_HW_MAJOR_EV1     0x01
+#define MIFARE_DESFIRE_HW_MINOR_EV1     0x01
+#define MIFARE_DESFIRE_SW_MAJOR_EV1     0x01
+#define MIFARE_DESFIRE_SW_MINOR_EV1     0x01
+/* DESFire EV2 versions */
+#define MIFARE_DESFIRE_HW_MAJOR_EV2     0x12
+#define MIFARE_DESFIRE_HW_MINOR_EV2     0x01
+#define MIFARE_DESFIRE_SW_MAJOR_EV2     0x12
+#define MIFARE_DESFIRE_SW_MINOR_EV2     0x01
+
+#define MIFARE_DESFIRE_STORAGE_SIZE_2K  0x16
+#define MIFARE_DESFIRE_STORAGE_SIZE_4K  0x18
+#define MIFARE_DESFIRE_STORAGE_SIZE_8K  0x1A
+
 typedef struct {
     uint8_t Type;
     uint8_t Flags;
@@ -76,9 +96,19 @@ typedef struct {
 
 /** Defines the global PICC configuration. */
 typedef struct {
+    /* Static data: does not change during the PICC's lifetime */
     uint8_t Uid[MIFARE_DESFIRE_UID_SIZE];
+    uint8_t StorageSize;
+    uint8_t HwVersionMajor;
+    uint8_t HwVersionMinor;
+    uint8_t SwVersionMajor;
+    uint8_t SwVersionMinor;
+    uint8_t BatchNumber[5];
+    uint8_t ProductionWeek;
+    uint8_t ProductionYear;
+    /* Dynamic data: changes during the PICC's lifetime */
     uint8_t FirstFreeBlock;
-    uint8_t Spare[32 - MIFARE_DESFIRE_UID_SIZE - 1];
+    uint8_t Spare[10];
 } MifareDesfirePiccInfoType;
 
 /** Defines the application directory contents. */

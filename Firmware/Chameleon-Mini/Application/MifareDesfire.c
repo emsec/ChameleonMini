@@ -73,15 +73,11 @@ static void DebugPrintP(const char *fmt, ...)
 
 /* Defines for GetVersion */
 #define DESFIRE_MANUFACTURER_ID         ID_PHILIPS_NXP
-#define DESFIRE_TYPE_MF3ICD40           0x01
-#define DESFIRE_SUBTYPE_MF3ICD40        0x01
-#define DESFIRE_HW_MAJOR_VERSION_NO     0x01
-#define DESFIRE_HW_MINOR_VERSION_NO     0x01
+/* These do not change */
+#define DESFIRE_TYPE                    0x01
+#define DESFIRE_SUBTYPE                 0x01
 #define DESFIRE_HW_PROTOCOL_TYPE        0x05
-#define DESFIRE_SW_MAJOR_VERSION_NO     0x01
-#define DESFIRE_SW_MINOR_VERSION_NO     0x01
 #define DESFIRE_SW_PROTOCOL_TYPE        0x05
-#define DESFIRE_STORAGE_SIZE            0x18 /* = 4k */
 
 /* Based on section 3.4 */
 typedef enum {
@@ -301,67 +297,73 @@ static void FormatPicc(void)
     SynchronizeAppDir();
 }
 
-static void FactoryFormatPicc(void)
+static void FactoryFormatPiccEV0(void)
 {
     /* Wipe PICC data */
-    memset(&Picc, 0, sizeof(Picc));
-    FormatPicc();
+    memset(&Picc, 0xFF, sizeof(Picc));
+    /* Initialize params to look like EV0 */
+    Picc.StorageSize = MIFARE_DESFIRE_STORAGE_SIZE_4K;
+    Picc.HwVersionMajor = MIFARE_DESFIRE_HW_MAJOR_EV0;
+    Picc.HwVersionMinor = MIFARE_DESFIRE_HW_MINOR_EV0;
+    Picc.SwVersionMajor = MIFARE_DESFIRE_SW_MAJOR_EV0;
+    Picc.SwVersionMinor = MIFARE_DESFIRE_SW_MINOR_EV0;
+    /* Initialize the root app data */
     SetAppKeySettings(DESFIRE_PICC_APP_INDEX, 0x0F);
     SetAppKeyCount(DESFIRE_PICC_APP_INDEX, 1);
     SetAppKeyStorageBlockId(DESFIRE_PICC_APP_INDEX, AllocateBlocks(1));
+    /* Continue with user data initialization */
+    FormatPicc();
 }
 
 /*
  * DESFire general commands
  */
 
-static uint16_t MifareDesfireCmdGetVersion1(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdGetVersion1(uint8_t* Buffer, uint16_t ByteCount)
 {
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
-    Buffer[1] = DESFIRE_MANUFACTURER_ID;
-    Buffer[2] = DESFIRE_TYPE_MF3ICD40;
-    Buffer[3] = DESFIRE_SUBTYPE_MF3ICD40;
-    Buffer[4] = DESFIRE_HW_MAJOR_VERSION_NO;
-    Buffer[5] = DESFIRE_HW_MINOR_VERSION_NO;
-    Buffer[6] = DESFIRE_STORAGE_SIZE;
+    Buffer[1] = Picc.Uid[0];
+    Buffer[2] = DESFIRE_TYPE;
+    Buffer[3] = DESFIRE_SUBTYPE;
+    Buffer[4] = Picc.HwVersionMajor;
+    Buffer[4] = Picc.HwVersionMinor;
+    Buffer[6] = Picc.StorageSize;
     Buffer[7] = DESFIRE_HW_PROTOCOL_TYPE;
     DesfireState = DESFIRE_GET_VERSION2;
     return 8;
 }
 
-static uint16_t MifareDesfireCmdGetVersion2(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdGetVersion2(uint8_t* Buffer, uint16_t ByteCount)
 {
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
-    Buffer[1] = DESFIRE_MANUFACTURER_ID;
-    Buffer[2] = DESFIRE_TYPE_MF3ICD40;
-    Buffer[3] = DESFIRE_SUBTYPE_MF3ICD40;
-    Buffer[4] = DESFIRE_SW_MAJOR_VERSION_NO;
-    Buffer[5] = DESFIRE_SW_MINOR_VERSION_NO;
-    Buffer[6] = DESFIRE_STORAGE_SIZE;
+    Buffer[1] = Picc.Uid[0];
+    Buffer[2] = DESFIRE_TYPE;
+    Buffer[3] = DESFIRE_SUBTYPE;
+    Buffer[4] = Picc.SwVersionMajor;
+    Buffer[4] = Picc.SwVersionMinor;
+    Buffer[6] = Picc.StorageSize;
     Buffer[7] = DESFIRE_SW_PROTOCOL_TYPE;
     DesfireState = DESFIRE_GET_VERSION3;
     return 8;
 }
 
-static uint16_t MifareDesfireCmdGetVersion3(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdGetVersion3(uint8_t* Buffer, uint16_t ByteCount)
 {
     Buffer[0] = STATUS_OPERATION_OK;
-    /* UID */
-    ApplicationGetUid(&Buffer[1]);
-    /* Batch number */
-    Buffer[8] = 0;
-    Buffer[9] = 0;
-    Buffer[10] = 0;
-    Buffer[11] = 0;
-    Buffer[12] = 0;
-    /* Calendar week and year */
-    Buffer[13] = 52;
-    Buffer[14] = 16;
+    /* UID/Serial number; does not depend on card mode */
+    memcpy(&Buffer[1], &Picc.Uid[0], MIFARE_DESFIRE_UID_SIZE);
+    Buffer[8] = Picc.BatchNumber[0];
+    Buffer[9] = Picc.BatchNumber[1];
+    Buffer[10] = Picc.BatchNumber[2];
+    Buffer[11] = Picc.BatchNumber[3];
+    Buffer[12] = Picc.BatchNumber[4];
+    Buffer[13] = Picc.ProductionWeek;
+    Buffer[14] = Picc.ProductionYear;
     DesfireState = DESFIRE_IDLE;
     return 15;
 }
 
-static uint16_t MifareDesfireCmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdFormatPicc(uint8_t* Buffer, uint16_t ByteCount)
 {
     /* Validate command length */
     if (ByteCount != 1) {
@@ -400,7 +402,7 @@ static void MifareDesfireWriteAppKey(uint8_t KeyId, const uint8_t* Key)
     MemoryWriteBlock(Key, (uint16_t)&SelectedAppKeyAddress[KeyId], sizeof(MifareDesfireKeyType));
 }
 
-static uint16_t MifareDesfireCmdAuthenticate1(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount)
 {
     uint8_t KeyId;
     MifareDesfireKeyType Key;
@@ -435,7 +437,7 @@ static uint16_t MifareDesfireCmdAuthenticate1(uint8_t* Buffer, uint16_t ByteCoun
     return DESFIRE_STATUS_RESPONSE_SIZE + DESFIRE_NONCE_SIZE;
 }
 
-static uint16_t MifareDesfireCmdAuthenticate2(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount)
 {
     MifareDesfireKeyType Key;
 
@@ -487,7 +489,7 @@ static uint16_t MifareDesfireCmdAuthenticate2(uint8_t* Buffer, uint16_t ByteCoun
     return DESFIRE_STATUS_RESPONSE_SIZE + DESFIRE_NONCE_SIZE;
 }
 
-static uint16_t MifareDesfireCmdChangeKey(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdChangeKey(uint8_t* Buffer, uint16_t ByteCount)
 {
     uint8_t KeyId;
     uint8_t ChangeKeyId;
@@ -572,7 +574,7 @@ static uint16_t MifareDesfireCmdChangeKey(uint8_t* Buffer, uint16_t ByteCount)
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
-static uint16_t MifareDesfireCmdGetKeySettings(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdGetKeySettings(uint8_t* Buffer, uint16_t ByteCount)
 {
     /* Validate command length */
     if (ByteCount != 1) {
@@ -588,7 +590,7 @@ static uint16_t MifareDesfireCmdGetKeySettings(uint8_t* Buffer, uint16_t ByteCou
     return DESFIRE_STATUS_RESPONSE_SIZE + 2;
 }
 
-static uint16_t MifareDesfireCmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount)
 {
     uint8_t NewSettings;
 
@@ -631,7 +633,7 @@ static uint16_t MifareDesfireCmdChangeKeySettings(uint8_t* Buffer, uint16_t Byte
  * DESFire application management commands
  */
 
-static uint16_t MifareDesfireCmdGetApplicationIds2(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdGetApplicationIds2(uint8_t* Buffer, uint16_t ByteCount)
 {
     uint8_t EntryIndex;
     uint8_t WriteIndex;
@@ -657,7 +659,7 @@ static uint16_t MifareDesfireCmdGetApplicationIds2(uint8_t* Buffer, uint16_t Byt
     return WriteIndex;
 }
 
-static uint16_t MifareDesfireCmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount)
 {
     /* Validate command length */
     if (ByteCount != 1) {
@@ -679,10 +681,10 @@ static uint16_t MifareDesfireCmdGetApplicationIds1(uint8_t* Buffer, uint16_t Byt
 
     /* Setup the job and jump to the worker routine */
     DesfireCommandState.GetApplicationIds.NextIndex = 0;
-    return MifareDesfireCmdGetApplicationIds2(Buffer, ByteCount);
+    return EV0CmdGetApplicationIds2(Buffer, ByteCount);
 }
 
-static uint16_t MifareDesfireCmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
     const MifareDesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t Slot;
@@ -767,7 +769,7 @@ invalid_args:
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
-static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdDeleteApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
     const MifareDesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t Slot;
@@ -827,7 +829,7 @@ static uint16_t MifareDesfireCmdDeleteApplication(uint8_t* Buffer, uint16_t Byte
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
-static uint16_t MifareDesfireCmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t EV0CmdSelectApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
     const MifareDesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     uint8_t Slot;
@@ -868,25 +870,25 @@ static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
 {
     switch (Buffer[0]) {
     case CMD_GET_VERSION:
-        return MifareDesfireCmdGetVersion1(Buffer, ByteCount);
+        return EV0CmdGetVersion1(Buffer, ByteCount);
     case CMD_FORMAT_PICC:
-        return MifareDesfireCmdFormatPicc(Buffer, ByteCount);
+        return EV0CmdFormatPicc(Buffer, ByteCount);
     case CMD_AUTHENTICATE:
-        return MifareDesfireCmdAuthenticate1(Buffer, ByteCount);
+        return EV0CmdAuthenticate2KTDEA1(Buffer, ByteCount);
     case CMD_CHANGE_KEY:
-        return MifareDesfireCmdChangeKey(Buffer, ByteCount);
+        return EV0CmdChangeKey(Buffer, ByteCount);
     case CMD_GET_KEY_SETTINGS:
-        return MifareDesfireCmdGetKeySettings(Buffer, ByteCount);
+        return EV0CmdGetKeySettings(Buffer, ByteCount);
     case CMD_CHANGE_KEY_SETTINGS:
-        return MifareDesfireCmdChangeKeySettings(Buffer, ByteCount);
+        return EV0CmdChangeKeySettings(Buffer, ByteCount);
     case CMD_GET_APPLICATION_IDS:
-        return MifareDesfireCmdGetApplicationIds1(Buffer, ByteCount);
+        return EV0CmdGetApplicationIds1(Buffer, ByteCount);
     case CMD_CREATE_APPLICATION:
-        return MifareDesfireCmdCreateApplication(Buffer, ByteCount);
+        return EV0CmdCreateApplication(Buffer, ByteCount);
     case CMD_DELETE_APPLICATION:
-        return MifareDesfireCmdDeleteApplication(Buffer, ByteCount);
+        return EV0CmdDeleteApplication(Buffer, ByteCount);
     case CMD_SELECT_APPLICATION:
-        return MifareDesfireCmdSelectApplication(Buffer, ByteCount);
+        return EV0CmdSelectApplication(Buffer, ByteCount);
     default:
         Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -908,13 +910,13 @@ static uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount)
 
     switch (DesfireState) {
     case DESFIRE_GET_VERSION2:
-        return MifareDesfireCmdGetVersion2(Buffer, ByteCount);
+        return EV0CmdGetVersion2(Buffer, ByteCount);
     case DESFIRE_GET_VERSION3:
-        return MifareDesfireCmdGetVersion3(Buffer, ByteCount);
+        return EV0CmdGetVersion3(Buffer, ByteCount);
     case DESFIRE_GET_APPLICATION_IDS2:
-        return MifareDesfireCmdGetApplicationIds2(Buffer, ByteCount);
+        return EV0CmdGetApplicationIds2(Buffer, ByteCount);
     case DESFIRE_AUTHENTICATE2:
-        return MifareDesfireCmdAuthenticate2(Buffer, ByteCount);
+        return EV0CmdAuthenticate2KTDEA2(Buffer, ByteCount);
     default:
         /* Should not happen. */
         Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;
@@ -1199,7 +1201,7 @@ void MifareDesfireAppInit(void)
     MemoryReadBlock(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(Picc));
     if (Picc.Uid[0] == 0xFF && Picc.Uid[1] == 0xFF && Picc.Uid[2] == 0xFF && Picc.Uid[3] == 0xFF) {
         DEBUG_PRINT("\r\nFactory resetting the device\r\n");
-        FactoryFormatPicc();
+        FactoryFormatPiccEV0();
     }
     else {
         MemoryReadBlock(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, sizeof(AppDir));
