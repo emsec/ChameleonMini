@@ -926,6 +926,7 @@ static uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount)
 
 static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
 {
+    /* TODO: Properly detect ISO 7816-4 PDUs and switch modes to avoid doing ths all the time */
     if (Buffer[0] == 0x90 && Buffer[2] == 0x00 && Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
         /* Unwrap the PDU from ISO 7816-4 */
         ByteCount = Buffer[4];
