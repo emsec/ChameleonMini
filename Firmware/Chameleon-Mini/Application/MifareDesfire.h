@@ -57,6 +57,7 @@ typedef uint8_t MifareDesfireAidType[MIFARE_DESFIRE_AID_SIZE];
 
 #define MIFARE_DESFIRE_EEPROM_BLOCK_SIZE 32 /* Bytes */
 
+/* Source: http://www.proxmark.org/forum/viewtopic.php?id=2982 */
 /* DESFire EV0 versions */
 #define MIFARE_DESFIRE_HW_MAJOR_EV0     0x00
 #define MIFARE_DESFIRE_HW_MINOR_EV0     0x01
@@ -77,12 +78,16 @@ typedef uint8_t MifareDesfireAidType[MIFARE_DESFIRE_AID_SIZE];
 #define MIFARE_DESFIRE_STORAGE_SIZE_4K  0x18
 #define MIFARE_DESFIRE_STORAGE_SIZE_8K  0x1A
 
+/* The following mimics the ISO 7816-4 file system structure */
+
+#define ISO7816_4_CURRENT_EF_FILE_ID 0x0000
+#define ISO7816_4_CURRENT_DF_FILE_ID 0x3FFF
+#define ISO7816_4_MASTER_FILE_ID 0x3F00
+
 typedef struct {
-    uint8_t Type;
-    uint8_t Flags;
+    uint8_t DataPointer;
     uint16_t AccessRights;
     uint16_t FileSize;
-    uint8_t DataPointer[2];
 } MifareDesfireFileType;
 
 typedef uint8_t MifareDesfireKeyType[CRYPTO_TDES_KEY_OPTION_2_KEY_SIZE];
