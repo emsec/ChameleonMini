@@ -56,6 +56,8 @@ typedef uint8_t MifareDesfireAidType[MIFARE_DESFIRE_AID_SIZE];
 #define MIFARE_DESFIRE_APP_SLOT_INACTIVE 2
 
 #define MIFARE_DESFIRE_EEPROM_BLOCK_SIZE 32 /* Bytes */
+#define MIFARE_DESFIRE_BYTES_TO_BLOCKS(x) \
+    ( ((x) + MIFARE_DESFIRE_EEPROM_BLOCK_SIZE - 1) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE )
 
 /* Source: http://www.proxmark.org/forum/viewtopic.php?id=2982 */
 /* DESFire EV0 versions */
@@ -80,22 +82,51 @@ typedef uint8_t MifareDesfireAidType[MIFARE_DESFIRE_AID_SIZE];
 
 /* The following mimics the ISO 7816-4 file system structure */
 
-#define ISO7816_4_CURRENT_EF_FILE_ID 0x0000
-#define ISO7816_4_CURRENT_DF_FILE_ID 0x3FFF
-#define ISO7816_4_MASTER_FILE_ID 0x3F00
+#define ISO7816_4_CURRENT_EF_FILE_ID    0x0000
+#define ISO7816_4_CURRENT_DF_FILE_ID    0x3FFF
+#define ISO7816_4_MASTER_FILE_ID        0x3F00
 
 typedef struct {
-    uint8_t DataPointer;
+    uint8_t Type;
+    uint8_t CommSettings;
     uint16_t AccessRights;
-    uint16_t FileSize;
+    union {
+        struct {
+            uint16_t FileSize;
+        } StandardFile;
+        struct {
+            uint16_t FileSize;
+            uint8_t BlockCount;
+            uint8_t Dirty;
+        } BackupFile;
+        struct {
+            int32_t LowerLimit;
+            int32_t UpperLimit;
+            int32_t CleanValue;
+            int32_t DirtyValue;
+            uint8_t LimitedCreditEnabled;
+            uint8_t Dirty;
+            int32_t PreviousDebit;
+        } ValueFile;
+        struct {
+            uint8_t BlockCount;
+            uint8_t Dirty;
+            uint8_t ClearPending;
+            uint16_t RecordSize;
+            uint16_t MaxRecordCount;
+        } LinearRecordFile;
+    };
 } MifareDesfireFileType;
 
+/* TODO: This doesn't work for EV1... */
 typedef uint8_t MifareDesfireKeyType[CRYPTO_TDES_KEY_OPTION_2_KEY_SIZE];
+
+#define MIFARE_DESFIRE_MAX_SLOTS (MIFARE_DESFIRE_MAX_APPS + 1)
 
 /** Data about applications is kept in these structures */
 typedef struct {
     uint8_t Spare0;
-    uint8_t AppData[MIFARE_DESFIRE_MAX_APPS + 1];
+    uint8_t AppData[MIFARE_DESFIRE_MAX_SLOTS];
     uint16_t Checksum; /* Not actually used atm */
 } MifareDesfireApplicationDataType;
 
@@ -119,23 +150,30 @@ typedef struct {
 /** Defines the application directory contents. */
 typedef struct {
     uint8_t FirstFreeSlot;
-    uint8_t Spare[11];
-    MifareDesfireAidType AppIds[MIFARE_DESFIRE_MAX_APPS]; /* 84 */
+    uint8_t Spare[8];
+    MifareDesfireAidType AppIds[MIFARE_DESFIRE_MAX_SLOTS]; /* 84 */
 } MifareDesfireAppDirType;
 
 /* This resolves to 4 */
-#define MIFARE_DESFIRE_APP_DIR_BLOCKS (sizeof(MifareDesfireAppDirType) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE)
-/* This resolves to 4 */
-#define MIFARE_DESFIRE_FILE_STATE_BLOCKS (MIFARE_DESFIRE_MAX_FILES * sizeof(MifareDesfireFileType) / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE)
+#define MIFARE_DESFIRE_APP_DIR_BLOCKS MIFARE_DESFIRE_BYTES_TO_BLOCKS(sizeof(MifareDesfireAppDirType))
+/* This resolves to 1 */
+#define MIFARE_DESFIRE_FILE_INDEX_BLOCKS MIFARE_DESFIRE_BYTES_TO_BLOCKS(MIFARE_DESFIRE_MAX_FILES * sizeof(uint8_t))
 
 /* The actual layout */
 enum MifareDesfireCardLayout {
+    /* PICC related informaton is kept here */
     MIFARE_DESFIRE_PICC_INFO_BLOCK_ID = 0,
+    /* Keeps the list of all applications created */
     MIFARE_DESFIRE_APP_DIR_BLOCK_ID,
+    /* AppData keeping track of apps' key settings */
     MIFARE_DESFIRE_APP_KEY_SETTINGS_BLOCK_ID = MIFARE_DESFIRE_APP_DIR_BLOCK_ID + MIFARE_DESFIRE_APP_DIR_BLOCKS,
+    /* AppData keeping track how many keys each app has */
     MIFARE_DESFIRE_APP_KEY_COUNT_BLOCK_ID,
+    /* AppData keeping track of apps' key locations */
     MIFARE_DESFIRE_APP_KEYS_PTR_BLOCK_ID,
+    /* AppData keeping track of apps' file index blocks */
     MIFARE_DESFIRE_APP_FILES_PTR_BLOCK_ID,
+    /* Free space starts here */
     MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID,
 };
 
