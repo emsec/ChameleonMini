@@ -65,6 +65,9 @@ static void DebugPrintP(const char *fmt, ...)
 #define ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
 #define ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
 
+#define GET_LE16(p) \
+    ((uint16_t)((p)[0] | ((p)[1] << 8)))
+
 /*
  * DESFire-specific things follow
  */
@@ -169,6 +172,8 @@ typedef enum {
     DESFIRE_GET_VERSION3,
     DESFIRE_GET_APPLICATION_IDS2,
     DESFIRE_AUTHENTICATE2,
+    DESFIRE_READING_DATA,
+    DESFIRE_WRITING_DATA,
 } DesfireStateType;
 
 typedef union {
@@ -179,10 +184,16 @@ typedef union {
     struct {
         uint8_t NextIndex;
     } GetApplicationIds;
+    struct {
+        uint8_t BlockId;
+        uint8_t Offset;
+        uint16_t RemainingBytes;
+    } XxxDataFile;
 } DesfireSavedCommandStateType;
 
 static DesfireStateType DesfireState;
 static DesfireSavedCommandStateType DesfireCommandState;
+static uint16_t CardCapacityBlocks;
 static uint8_t AuthenticatedWithKey;
 static MifareDesfireKeyType SessionKey;
 
@@ -211,7 +222,7 @@ static void SynchronizePiccInfo(void)
 }
 
 
-static uint8_t GetFreeBlocksCount(void)
+static uint8_t GetCardCapacityBlocks(void)
 {
     uint8_t MaxFreeBlocks;
 
@@ -225,10 +236,13 @@ static uint8_t GetFreeBlocksCount(void)
     case MIFARE_DESFIRE_STORAGE_SIZE_8K:
         MaxFreeBlocks = 0 - MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID;
         break;
+    default:
+        return 0;
     }
 
     return MaxFreeBlocks - Picc.FirstFreeBlock;
 }
+
 
 static uint8_t AllocateBlocks(uint8_t BlockCount)
 {
@@ -544,7 +558,12 @@ static uint8_t DeleteFile(uint8_t FileNum)
 
     FileIndexBlock = GetAppFileIndexBlockId(SelectedAppSlot);
     ReadBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
-    FileIndex[FileNum] = 0;
+    if (FileIndex[FileNum]) {
+        FileIndex[FileNum] = 0;
+    }
+    else {
+        return STATUS_FILE_NOT_FOUND;
+    }
     WriteBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     return STATUS_OPERATION_OK;
 }
@@ -1149,9 +1168,99 @@ static uint16_t EV0CmdChangeFileSettings(uint8_t* Buffer, uint16_t ByteCount)
  * DESFire data manipulation commands
  */
 
+static void EncipherData(uint8_t* Buffer, uint16_t ByteCount)
+{
+    /* IMPLEMENT ME */
+}
+
+static uint8_t DecipherData(uint8_t* Buffer, uint16_t ByteCount)
+{
+    /* IMPLEMENT ME */
+    return STATUS_OPERATION_OK;
+}
+
+static uint8_t ReadDataFileIterator(void)
+{
+    /* IMPLEMENT ME */
+    return STATUS_OPERATION_OK;
+}
+
+static uint8_t ReadDataFile(uint8_t FileNum, uint16_t Offset, uint16_t ByteCount)
+{
+    uint8_t FileIndexBlock;
+    uint8_t FileIndex[MIFARE_DESFIRE_MAX_FILES];
+    uint8_t BlockId;
+    MifareDesfireFileType File;
+    uint8_t RequiredKeyId1, RequiredKeyId2;
+    uint8_t CommSettings;
+
+    /* Read in the file index */
+    FileIndexBlock = GetAppFileIndexBlockId(SelectedAppSlot);
+    ReadBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
+    /* Check whether the file exists */
+    BlockId = FileIndex[FileNum];
+    if (!BlockId) {
+        return STATUS_FILE_NOT_FOUND;
+    }
+    /* Read the file control block */
+    ReadBlocks(&File, BlockId, sizeof(File));
+    CommSettings = File.CommSettings;
+    /* Verify authentication: read or read&write required */
+    RequiredKeyId1 = (File.AccessRights >> MIFARE_DESFIRE_READWRITE_ACCESS_RIGHTS_SHIFT) & 0x0F;
+    RequiredKeyId2 = (File.AccessRights >> MIFARE_DESFIRE_READ_ACCESS_RIGHTS_SHIFT) & 0x0F;
+    if (AuthenticatedWithKey == DESFIRE_NOT_AUTHENTICATED) {
+        /* Require free access */
+        if (RequiredKeyId1 != MIFARE_DESFIRE_ACCESS_FREE && RequiredKeyId2 != MIFARE_DESFIRE_ACCESS_FREE) {
+            return STATUS_AUTHENTICATION_ERROR;
+        }
+        /* Force plain comms, as we have no key anyways */
+        CommSettings = MIFARE_DESFIRE_COMMS_PLAINTEXT;
+    }
+    else {
+        if (AuthenticatedWithKey != RequiredKeyId1 && AuthenticatedWithKey != RequiredKeyId2) {
+            return STATUS_AUTHENTICATION_ERROR;
+        }
+        /* We have a valid key, so we can CMAC/encipher as required by comms settings */
+    }
+
+    /* Prepare the transfer and start it */
+    DesfireCommandState.XxxDataFile.BlockId = BlockId + 1 + Offset / MIFARE_DESFIRE_EEPROM_BLOCK_SIZE;
+    DesfireCommandState.XxxDataFile.Offset = Offset & (MIFARE_DESFIRE_EEPROM_BLOCK_SIZE - 1);
+    DesfireCommandState.XxxDataFile.RemainingBytes = ByteCount;
+    return ReadDataFileIterator();
+}
+
 static uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount)
 {
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    uint8_t Status;
+    uint8_t FileNum;
+    uint16_t Offset;
+    uint16_t Length;
+    uint16_t CardCapacity;
+
+    /* Validate command length */
+    if (ByteCount != 1 + 1 + 3 + 3) {
+        Status = STATUS_LENGTH_ERROR;
+        goto exit_with_status;
+    }
+    FileNum = Buffer[1];
+    /* Validate file number */
+    if (FileNum >= MIFARE_DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        goto exit_with_status;
+    }
+    /* Validate offset and length (preliminary) */
+    Offset = GET_LE16(&Buffer[2]);
+    Length = GET_LE16(&Buffer[5]);
+    if (Buffer[4] || Buffer[7]) {
+        Status = STATUS_BOUNDARY_ERROR;
+        goto exit_with_status;
+    }
+
+    Status = ReadDataFile(FileNum, Offset, Length);
+
+exit_with_status:
+    Buffer[0] = Status;
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
@@ -1580,6 +1689,7 @@ void MifareDesfireAppInit(void)
     else {
         ReadBlocks(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID, sizeof(AppDir));
     }
+    CardCapacityBlocks = GetCardCapacityBlocks();
     SelectPiccApp();
     DesfireState = DESFIRE_IDLE;
 }
