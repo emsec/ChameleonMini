@@ -1145,6 +1145,80 @@ static uint16_t EV0CmdChangeFileSettings(uint8_t* Buffer, uint16_t ByteCount)
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
+/*
+ * DESFire data manipulation commands
+ */
+
+static uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint16_t EV0CmdCredit(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint16_t EV0CmdDebit(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint16_t EV0CmdLimitedCredit(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint16_t EV0CmdReadRecords(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint16_t EV0CmdWriteRecord(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint16_t EV0CmdClearRecords(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+/*
+ * DESFire transaction handling commands
+ */
+
+static uint16_t EV0CmdCommitTransaction(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint16_t EV0CmdAbortTransaction(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
 /* Dispatching routines */
 
 static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
