@@ -1100,7 +1100,30 @@ static uint16_t EV0CmdCreateCyclicRecordFile(uint8_t* Buffer, uint16_t ByteCount
 
 static uint16_t EV0CmdDeleteFile(uint8_t* Buffer, uint16_t ByteCount)
 {
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    uint8_t Status;
+    uint8_t FileNum;
+
+    /* Validate command length */
+    if (ByteCount != 1 + 1) {
+        Status = STATUS_LENGTH_ERROR;
+        goto exit_with_status;
+    }
+    FileNum = Buffer[1];
+    /* Validate file number */
+    if (FileNum >= MIFARE_DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        goto exit_with_status;
+    }
+    /* Validate access settings */
+    if (!(SelectedAppKeySettings & MIFARE_DESFIRE_FREE_CREATE_DELETE) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
+        Status = STATUS_AUTHENTICATION_ERROR;
+        goto exit_with_status;
+    }
+
+    Status = DeleteFile(FileNum);
+
+exit_with_status:
+    Buffer[0] = Status;
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
