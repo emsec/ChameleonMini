@@ -48,7 +48,7 @@ void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount);
 bool ISO14443ACheckCRCA(void* Buffer, uint16_t ByteCount);
 
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
-INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue);
+INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt);
 
 INLINE
 bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue)
@@ -98,11 +98,12 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
 }
 
 INLINE
-bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue)
+bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt)
 {
     uint8_t* DataPtr = (uint8_t*) Buffer;
 
-    if ( (DataPtr[0] == ISO14443A_CMD_REQA) || (DataPtr[0] == ISO14443A_CMD_WUPA) ){
+    if ( ((! FromHalt) && (DataPtr[0] == ISO14443A_CMD_REQA)) ||
+         (DataPtr[0] == ISO14443A_CMD_WUPA) ){
         DataPtr[0] = (ATQAValue >> 0) & 0x00FF;
         DataPtr[1] = (ATQAValue >> 8) & 0x00FF;
 

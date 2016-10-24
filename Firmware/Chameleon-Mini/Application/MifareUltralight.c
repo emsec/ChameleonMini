@@ -86,7 +86,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
     switch(State) {
     case STATE_IDLE:
     case STATE_HALT:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, State == STATE_HALT)) {
             /* We received a REQA or WUPA command, so wake up. */
             State = STATE_READY1;
             return BitCount;
@@ -94,7 +94,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY1:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, false)) {
             State = STATE_READY1;
             return BitCount;
         } else if (Cmd == ISO14443A_CMD_SELECT_CL1) {
@@ -118,7 +118,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY2:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, false)) {
             State = STATE_READY1;
             return BitCount;
         } else if (Cmd == ISO14443A_CMD_SELECT_CL2) {
@@ -141,7 +141,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_ACTIVE:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, false)) {
             State = STATE_READY1;
             return BitCount;
         } else if (Cmd == CMD_READ) {
