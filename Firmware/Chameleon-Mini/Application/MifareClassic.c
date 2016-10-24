@@ -90,6 +90,7 @@ static uint8_t CurrentAddress;
 static uint8_t BlockBuffer[MEM_BYTES_PER_BLOCK];
 static uint16_t CardATQAValue;
 static uint8_t CardSAKValue;
+static bool FromHalt = false;
 
 
 INLINE bool CheckValueIntegrity(uint8_t* Block)
@@ -139,6 +140,7 @@ void MifareClassicAppInit1K(void)
     State = STATE_IDLE;
     CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_1K_SAK_VALUE;
+    FromHalt = false;
 }
 
 void MifareClassicAppInit4K(void)
@@ -146,6 +148,7 @@ void MifareClassicAppInit4K(void)
     State = STATE_IDLE;
     CardATQAValue = MFCLASSIC_4K_7B_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_4K_SAK_VALUE;
+    FromHalt = false;
 }
 
 void MifareClassicAppReset(void)
@@ -163,7 +166,8 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
     switch(State) {
     case STATE_IDLE:
     case STATE_HALT:
-        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, State == STATE_HALT)) {
+    	FromHalt = State == STATE_HALT;
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             State = STATE_READY1;
             return BitCount;
         }
@@ -252,9 +256,9 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 #endif
 
     case STATE_READY1:
-        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false)) {
-            State = STATE_READY1;
-            return BitCount;
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
+            State = FromHalt ? STATE_HALT : STATE_IDLE;
+            return ISO14443A_APP_NO_RESPONSE;
         } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
             /* Load UID CL1 and perform anticollision */
             uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
@@ -278,9 +282,9 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY2:
-    if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false)) {
-	    State = STATE_READY1;
-	    return BitCount;
+    if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
+        State = FromHalt ? STATE_HALT : STATE_IDLE;
+	    return ISO14443A_APP_NO_RESPONSE;
 	    } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
 	    /* Load UID CL2 and perform anticollision */
 	    uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
@@ -297,9 +301,9 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
     }
     break;
     case STATE_ACTIVE:
-        if (ISO14443AWakeUp(Buffer, &BitCount, MFCLASSIC_1K_ATQA_VALUE, false)) {
-            State = STATE_READY1;
-            return BitCount;
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
+            State = FromHalt ? STATE_HALT : STATE_IDLE;
+            return ISO14443A_APP_NO_RESPONSE;
         } else if (Buffer[0] == CMD_HALT) {
             /* Halts the tag. According to the ISO14443, the second
             * byte is supposed to be 0. */
