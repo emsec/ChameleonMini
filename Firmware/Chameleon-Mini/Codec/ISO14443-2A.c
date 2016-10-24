@@ -433,8 +433,6 @@ void ISO14443ACodecTask(void) {
                 /* We have to generate the parity bits ourself */
             	ParityBufferPtr = 0;
             }
-        } else {
-            ApplicationReset();
         }
 
         if (AnswerBitCount != ISO14443A_APP_NO_RESPONSE) {

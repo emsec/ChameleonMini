@@ -73,7 +73,6 @@ void MifareUltralightAppInit(void)
 void MifareUltralightAppReset(void)
 {
     State = STATE_IDLE;
-    FromHalt = false;
 }
 
 void MifareUltralightAppTask(void)
