@@ -46,7 +46,7 @@
     ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
 
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount);
-bool ISO14443ACheckCRCA(void* Buffer, uint16_t ByteCount);
+bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount);
 
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
 INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt);
