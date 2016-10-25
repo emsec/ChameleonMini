@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Command line tool to analyze binary dump files from the Chameleon
 # Authors: Simon K. (simon.kueppers@rub.de)
