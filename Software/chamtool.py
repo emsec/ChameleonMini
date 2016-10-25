@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Command line tool to control the Chameleon through command line
 # Authors: Simon K. (simon.kueppers@rub.de)
