@@ -86,7 +86,7 @@ class XModem:
                 lastBlock = True
             if (0 < len(dataBlock) < 128):
                 # Last part smaller than xmodem block -> pad it
-                dataBlock += '\x00' * (128 - len(dataBlock))
+                dataBlock += b'\x00' * (128 - len(dataBlock))
             if (len(dataBlock) == 128):
                 # Write SOH, pktId, data and checksum
                 self.ioStream.write(self.BYTE_SOH)
