@@ -28,8 +28,8 @@
  * 
  * \note If you are using Ubuntu 14.04, avrdude may not support flip2. In this case, you can run `add-apt-repository ppa:pmjdebruijn/avrdude-release`, then `apt-get update` and finally `apt-get install avrdude` to upgrade to a version of avrdude that supports flip2.
  * 
- * Optionally copy Drivers/98-ChameleonMini.rules to /etc/udev/rules.d/, to allow non-root users to open the chameleon serial port at /dev/chameleon. 
- * `sudo cp (Path to Chameleon Repo)/Drivers/98-ChameleonMini.rules /etc/udev/rules.d/` 
+ * Optionally copy [Driver/98-ChameleonMini.rules](https://cdn.rawgit.com/emsec/ChameleonMini/master/Driver/98-ChameleonMini.rules) to /etc/udev/rules.d/, to allow non-root users to open the chameleon serial port at /dev/chameleon. 
+ * `sudo cp (Path to Chameleon Repo)/Driver/98-ChameleonMini.rules /etc/udev/rules.d/` 
  * Remember to restart the udev daemon, or reboot to activate the rule. 
  * 'sudo udevadm control --reload' 
  *  
