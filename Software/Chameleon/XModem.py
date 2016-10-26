@@ -78,9 +78,15 @@ class XModem:
             # Timeout or different char received
             return None
 
+        lastBlock = False
         while True:
             dataBlock = dataStream.read(128)
 
+            if (len(dataBlock) < 128):
+                lastBlock = True
+            if (0 < len(dataBlock) < 128):
+                # Last part smaller than xmodem block -> pad it
+                dataBlock += b'\x00' * (128 - len(dataBlock))
             if (len(dataBlock) == 128):
                 # Write SOH, pktId, data and checksum
                 self.ioStream.write(self.BYTE_SOH)
@@ -93,8 +99,7 @@ class XModem:
                     #Proceed to next packet
                     packetCounter = (packetCounter + 1) % 256
                     bytesSent += 128
-                
-            else:
+            if lastBlock:
                 # Write EOT and wait for ACK
                 self.ioStream.write(self.BYTE_EOT)
                 self.ioStream.read(1)
