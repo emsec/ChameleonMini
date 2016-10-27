@@ -31,11 +31,11 @@ do_des_rounds:
 ; This routine performs Triple DES encryption using keying option 2: K1, K2, K1.
 ;
 ; Input:
-;     R21:R20 - Key block pointer.
+;     R19:R18 - Key block pointer.
 ;     R7:R0   - Input data, LSB in R0
 ;
 ; Returns:
-;     R7:R0   - Result of en/deciphering, LSB in R0
+;     R7:R0   - Result of enciphering, LSB in R0
 encrypt_2ktdea:
     ; Reload Z with the key block pointer
     movw    r30, r18
@@ -119,29 +119,33 @@ CryptoEncrypt_2KTDEA_CBC:
     movw    r26, r20
 
     ; Set IV to all zeros
-    mov     r0, r1
-    movw    r2, r0
-    movw    r4, r0
-    movw    r6, r0
+    eor     r7, r7
+    eor     r6, r6
+    eor     r5, r5
+    eor     r4, r4
+    eor     r3, r3
+    eor     r2, r2
+    eor     r1, r1
+    eor     r0, r0
 
 CryptoEncrypt_2KTDEA_CBC_loop:
     ; Load and XOR plaintext with the IV.
-    ld      r31, Y+
-    eor     r7, r31
-    ld      r31, Y+
-    eor     r6, r31
-    ld      r31, Y+
-    eor     r5, r31
-    ld      r31, Y+
-    eor     r4, r31
-    ld      r31, Y+
-    eor     r3, r31
-    ld      r31, Y+
-    eor     r2, r31
-    ld      r31, Y+
-    eor     r1, r31
-    ld      r31, Y+
-    eor     r0, r31
+    ld      r15, Y+
+    ld      r14, Y+
+    ld      r13, Y+
+    ld      r12, Y+
+    ld      r11, Y+
+    ld      r10, Y+
+    ld      r9, Y+
+    ld      r8, Y+
+    eor     r7, r15
+    eor     r6, r14
+    eor     r5, r13
+    eor     r4, r12
+    eor     r3, r11
+    eor     r2, r10
+    eor     r1, r9
+    eor     r0, r8
 
     rcall   encrypt_2ktdea
     

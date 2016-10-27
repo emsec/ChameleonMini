@@ -470,6 +470,7 @@ static void FactoryFormatPiccEV0(void)
 {
     /* Wipe PICC data */
     memset(&Picc, 0xFF, sizeof(Picc));
+    memset(&Picc.Uid[0], 0x00, MIFARE_DESFIRE_UID_SIZE);
     /* Initialize params to look like EV0 */
     Picc.StorageSize = MIFARE_DESFIRE_STORAGE_SIZE_4K;
     Picc.HwVersionMajor = MIFARE_DESFIRE_HW_MAJOR_EV0;
@@ -1675,8 +1676,12 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
     return ISO14443A_APP_NO_RESPONSE;
 }
 
+void RunTDEATests();
+
 void MifareDesfireAppInit(void)
 {
+    RunTDEATests();
+
     /* Init lower layers */
     ISO144433AInit();
     ISO144434Init();
@@ -1696,7 +1701,9 @@ void MifareDesfireAppInit(void)
 
 void MifareDesfireAppReset(void)
 {
-    MifareDesfireAppInit();
+    /* This is called repeatedly, so limit the amount of work done */
+    SelectPiccApp();
+    DesfireState = DESFIRE_IDLE;
 }
 
 void MifareDesfireAppTask(void)
