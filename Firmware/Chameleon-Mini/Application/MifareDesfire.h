@@ -10,7 +10,7 @@
 
 #include "Application.h"
 #include "ISO14443-3A.h"
-#include "CryptoDES.h"
+#include "CryptoTDEA.h"
 
 #define MIFARE_DESFIRE_UID_SIZE     ISO14443A_UID_SIZE_DOUBLE
 
