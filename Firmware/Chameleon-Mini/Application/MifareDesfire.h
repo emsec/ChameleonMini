@@ -119,7 +119,7 @@ typedef struct {
 } MifareDesfireFileType;
 
 /* TODO: This doesn't work for EV1... */
-typedef uint8_t MifareDesfireKeyType[CRYPTO_TDES_KEY_OPTION_2_KEY_SIZE];
+typedef uint8_t MifareDesfireKeyType[CRYPTO_2KTDEA_KEY_SIZE];
 
 #define MIFARE_DESFIRE_MAX_SLOTS (MIFARE_DESFIRE_MAX_APPS + 1)
 

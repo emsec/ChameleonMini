@@ -36,7 +36,7 @@ do_des_rounds:
 ;
 ; Returns:
 ;     R7:R0   - Result of en/deciphering, LSB in R0
-encrypt_tdes_ko2:
+encrypt_2ktdea:
     ; Reload Z with the key block pointer
     movw    r30, r18
     ; Load the K1
@@ -93,8 +93,8 @@ encrypt_tdes_ko2:
 ;
 ; Returns:
 ;     Nothing.
-.global CryptoEncrypt_3DES_KeyOption2_CBC
-CryptoEncrypt_3DES_KeyOption2_CBC:
+.global CryptoEncrypt_2KTDEA_CBC
+CryptoEncrypt_2KTDEA_CBC:
     ; Preserve the clobbered regs
     push    r2
     push    r3
@@ -124,7 +124,7 @@ CryptoEncrypt_3DES_KeyOption2_CBC:
     movw    r4, r0
     movw    r6, r0
 
-CryptoEncrypt_3DES_KeyOption2_CBC_loop:
+CryptoEncrypt_2KTDEA_CBC_loop:
     ; Load and XOR plaintext with the IV.
     ld      r31, Y+
     eor     r7, r31
@@ -143,7 +143,7 @@ CryptoEncrypt_3DES_KeyOption2_CBC_loop:
     ld      r31, Y+
     eor     r0, r31
 
-    rcall   encrypt_tdes_ko2
+    rcall   encrypt_2ktdea
     
     ; Store the ciphertext
     st      X+, r7
@@ -157,7 +157,7 @@ CryptoEncrypt_3DES_KeyOption2_CBC_loop:
 
     ; Decrement the counter, repeat if more blocks.
     sbiw    r24, 1
-    brne    CryptoEncrypt_3DES_KeyOption2_CBC_loop
+    brne    CryptoEncrypt_2KTDEA_CBC_loop
 
     ; Restore clobbered regs
     pop     r29
