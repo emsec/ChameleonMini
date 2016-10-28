@@ -105,6 +105,11 @@ AVRDUDE_WRITE_APP = -U application:w:$(TARGET).hex
 AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 
+#AVRDUDE settings to program the precompiled firmware
+AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
+AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
+
+
 # Default target
 all:
 
@@ -136,6 +141,10 @@ spmhelper: $(TARGET).elf
 # Program the device using avrdude  
 program: $(TARGET).hex $(TARGET).eep
 	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP) $(AVRDUDE_WRITE_EEPROM)
+
+# Program the device using avrdude with the latest official firmware
+program-latest:
+	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP_LATEST) $(AVRDUDE_WRITE_EEPROM_LATEST)
 
 # Program the device using batchisp and the DFU bootloader
 # Note that the device has to be in bootloader mode already
