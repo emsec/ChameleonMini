@@ -218,14 +218,14 @@ void ConfigurationSetById( ConfigurationEnum Configuration )
 
 void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
 {
-	MapIdToText(ConfigurationMap, sizeof(ConfigurationMap)/sizeof(*ConfigurationMap), GlobalSettings.ActiveSettingPtr->Configuration, Configuration, BufferSize);
+	MapIdToText(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), GlobalSettings.ActiveSettingPtr->Configuration, Configuration, BufferSize);
 }
 
 bool ConfigurationSetByName(const char* Configuration)
 {
     MapIdType Id;
 
-    if (MapTextToId(ConfigurationMap, sizeof(ConfigurationMap)/sizeof(*ConfigurationMap), Configuration, &Id)) {
+    if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
     	ConfigurationSetById(Id);
     	LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX-1));
     	return true;
@@ -236,6 +236,6 @@ bool ConfigurationSetByName(const char* Configuration)
 
 void ConfigurationGetList(char* List, uint16_t BufferSize)
 {
-	MapToString(ConfigurationMap, sizeof(ConfigurationMap)/sizeof(*ConfigurationMap), List, BufferSize);
+	MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
 }
 
