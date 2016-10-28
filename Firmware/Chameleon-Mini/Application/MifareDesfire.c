@@ -361,7 +361,7 @@ static uint8_t SelectAppByAid(const MifareDesfireAidType Aid)
         return STATUS_APP_NOT_FOUND;
     }
 
-    SelectAppBySlot(Slot + 1);
+    SelectAppBySlot(Slot);
     return STATUS_OPERATION_OK;
 }
 
