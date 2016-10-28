@@ -459,6 +459,8 @@ static void FormatPicc(void)
 {
     /* Wipe application directory */
     memset(&AppDir, 0, sizeof(AppDir));
+    /* Set the first free slot to 1 -- slot 0 is the PICC app */
+    AppDir.FirstFreeSlot = 1;
     /* Reset the free block pointer */
     Picc.FirstFreeBlock = MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID;
 
