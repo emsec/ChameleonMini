@@ -1432,6 +1432,12 @@ static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
     }
 }
 
+static void MifareDesfireReset(void)
+{
+    SelectPiccApp();
+    DesfireState = DESFIRE_IDLE;
+}
+
 /*
  * ISO/IEC 14443-4 implementation
  * Currently this only supports wrapping things in 14443-4 I-blocks.
@@ -1450,7 +1456,7 @@ static Iso144434StateType Iso144434State;
 static uint8_t Iso144434BlockNumber;
 static uint8_t Iso144434CardID;
 
-void ISO144434Init(void)
+void ISO144434Reset(void)
 {
     Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
     Iso144434BlockNumber = 1;
@@ -1589,7 +1595,7 @@ typedef enum {
 static Iso144433AStateType Iso144433AState;
 static Iso144433AStateType Iso144433AIdleState;
 
-void ISO144433AInit(void)
+void ISO144433AReset(void)
 {
     Iso144433AState = ISO14443_3A_STATE_IDLE;
 }
@@ -1686,15 +1692,14 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
     return ISO14443A_APP_NO_RESPONSE;
 }
 
-void RunTDEATests();
+extern void RunTDEATests(void);
 
 void MifareDesfireAppInit(void)
 {
     RunTDEATests();
 
-    /* Init lower layers */
-    ISO144433AInit();
-    ISO144434Init();
+    /* Init lower layers: nothing for now */
+
     /* Init DESFire junk */
     ReadBlocks(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
     if (Picc.Uid[0] == 0xFF && Picc.Uid[1] == 0xFF && Picc.Uid[2] == 0xFF && Picc.Uid[3] == 0xFF) {
@@ -1705,15 +1710,15 @@ void MifareDesfireAppInit(void)
         ReadBlocks(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID, sizeof(AppDir));
     }
     CardCapacityBlocks = GetCardCapacityBlocks();
-    SelectPiccApp();
-    DesfireState = DESFIRE_IDLE;
+    /* The rest is handled in reset */
 }
 
 void MifareDesfireAppReset(void)
 {
     /* This is called repeatedly, so limit the amount of work done */
-    SelectPiccApp();
-    DesfireState = DESFIRE_IDLE;
+    ISO144433AReset();
+    ISO144434Reset();
+    MifareDesfireReset();
 }
 
 void MifareDesfireAppTask(void)
