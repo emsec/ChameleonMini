@@ -13,7 +13,7 @@ import datetime
 def verboseLog(text):
     formatString = "[{}] {}"
     timeString = datetime.datetime.utcnow()
-    print(formatString.format(timeString, text), file=sys.stderr)
+    sys.stderr.write(formatString.format(timeString, text) + "\n")
 	
 def formatText(log):
     formatString  = '{timestamp:0>5d} ms <{deltaTimestamp:>+6d} ms>:'
