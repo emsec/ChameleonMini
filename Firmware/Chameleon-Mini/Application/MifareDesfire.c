@@ -207,18 +207,18 @@ static uint8_t SelectedAppKeyCount;
 static MifareDesfireFileType* SelectedAppFilesAddress; /* in FRAM */
 static MifareDesfireKeyType* SelectedAppKeyAddress; /* in FRAM */
 
-static void ReadBlocks(void* Buffer, uint8_t StartBlock, uint16_t Count);
-static void WriteBlocks(void* Buffer, uint8_t StartBlock, uint16_t Count);
+static void ReadBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count);
+static void WriteBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count);
 
 
 static void SynchronizeAppDir(void)
 {
-    WriteBlocks(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID, sizeof(MifareDesfireAppDirType));
+    WriteBlockBytes(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID, sizeof(MifareDesfireAppDirType));
 }
 
 static void SynchronizePiccInfo(void)
 {
-    WriteBlocks(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
+    WriteBlockBytes(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
 }
 
 
@@ -259,12 +259,12 @@ static uint8_t AllocateBlocks(uint8_t BlockCount)
     return Block;
 }
 
-static void ReadBlocks(void* Buffer, uint8_t StartBlock, uint16_t Count)
+static void ReadBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count)
 {
     MemoryReadBlock(Buffer, StartBlock * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, Count);
 }
 
-static void WriteBlocks(void* Buffer, uint8_t StartBlock, uint16_t Count)
+static void WriteBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count)
 {
     MemoryWriteBlock(Buffer, StartBlock * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE, Count);
 }
@@ -274,7 +274,7 @@ static uint8_t GetAppProperty(uint8_t BlockId, uint8_t AppSlot)
 {
     MifareDesfireApplicationDataType Data;
 
-    ReadBlocks(&Data, BlockId, sizeof(Data));
+    ReadBlockBytes(&Data, BlockId, sizeof(Data));
     return Data.AppData[AppSlot];
 }
 
@@ -282,9 +282,9 @@ static void SetAppProperty(uint8_t BlockId, uint8_t AppSlot, uint8_t Value)
 {
     MifareDesfireApplicationDataType Data;
 
-    ReadBlocks(&Data, BlockId, sizeof(Data));
+    ReadBlockBytes(&Data, BlockId, sizeof(Data));
     Data.AppData[AppSlot] = Value;
-    WriteBlocks(&Data, BlockId, sizeof(Data));
+    WriteBlockBytes(&Data, BlockId, sizeof(Data));
 }
 
 static uint8_t GetAppKeySettings(uint8_t AppSlot)
@@ -494,7 +494,7 @@ static uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_
 
     /* Read in the file index */
     FileIndexBlock = GetAppFileIndexBlockId(SelectedAppSlot);
-    ReadBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
+    ReadBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     /* Check if the file already exists */
     if (FileIndex[FileNum]) {
         return STATUS_DUPLICATE_ERROR;
@@ -510,10 +510,10 @@ static uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_
     File.CommSettings = CommSettings;
     File.AccessRights = AccessRights;
     File.StandardFile.FileSize = FileSize;
-    WriteBlocks(&File, BlockId, sizeof(File));
+    WriteBlockBytes(&File, BlockId, sizeof(File));
     /* Write the file index */
     FileIndex[FileNum] = BlockId;
-    WriteBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
+    WriteBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     return STATUS_OPERATION_OK;
 }
 
@@ -527,7 +527,7 @@ static uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t 
 
     /* Read in the file index */
     FileIndexBlock = GetAppFileIndexBlockId(SelectedAppSlot);
-    ReadBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
+    ReadBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     /* Check if the file already exists */
     if (FileIndex[FileNum]) {
         return STATUS_DUPLICATE_ERROR;
@@ -545,10 +545,10 @@ static uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t 
     File.BackupFile.FileSize = FileSize;
     File.BackupFile.BlockCount = BlockCount;
     File.BackupFile.Dirty = false;
-    WriteBlocks(&File, BlockId, sizeof(File));
+    WriteBlockBytes(&File, BlockId, sizeof(File));
     /* Write the file index */
     FileIndex[FileNum] = BlockId;
-    WriteBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
+    WriteBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     return STATUS_OPERATION_OK;
 }
 
@@ -558,14 +558,14 @@ static uint8_t DeleteFile(uint8_t FileNum)
     uint8_t FileIndex[MIFARE_DESFIRE_MAX_FILES];
 
     FileIndexBlock = GetAppFileIndexBlockId(SelectedAppSlot);
-    ReadBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
+    ReadBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     if (FileIndex[FileNum]) {
         FileIndex[FileNum] = 0;
     }
     else {
         return STATUS_FILE_NOT_FOUND;
     }
-    WriteBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
+    WriteBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     return STATUS_OPERATION_OK;
 }
 
@@ -1197,14 +1197,14 @@ static uint8_t ReadDataFile(uint8_t FileNum, uint16_t Offset, uint16_t ByteCount
 
     /* Read in the file index */
     FileIndexBlock = GetAppFileIndexBlockId(SelectedAppSlot);
-    ReadBlocks(&FileIndex, FileIndexBlock, sizeof(FileIndex));
+    ReadBlockBytes(&FileIndex, FileIndexBlock, sizeof(FileIndex));
     /* Check whether the file exists */
     BlockId = FileIndex[FileNum];
     if (!BlockId) {
         return STATUS_FILE_NOT_FOUND;
     }
     /* Read the file control block */
-    ReadBlocks(&File, BlockId, sizeof(File));
+    ReadBlockBytes(&File, BlockId, sizeof(File));
     CommSettings = File.CommSettings;
     /* Verify authentication: read or read&write required */
     RequiredKeyId1 = (File.AccessRights >> MIFARE_DESFIRE_READWRITE_ACCESS_RIGHTS_SHIFT) & 0x0F;
@@ -1701,13 +1701,13 @@ void MifareDesfireAppInit(void)
     /* Init lower layers: nothing for now */
 
     /* Init DESFire junk */
-    ReadBlocks(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
+    ReadBlockBytes(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
     if (Picc.Uid[0] == 0xFF && Picc.Uid[1] == 0xFF && Picc.Uid[2] == 0xFF && Picc.Uid[3] == 0xFF) {
         DEBUG_PRINT("\r\nFactory resetting the device\r\n");
         FactoryFormatPiccEV0();
     }
     else {
-        ReadBlocks(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID, sizeof(AppDir));
+        ReadBlockBytes(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID, sizeof(AppDir));
     }
     CardCapacityBlocks = GetCardCapacityBlocks();
     /* The rest is handled in reset */
