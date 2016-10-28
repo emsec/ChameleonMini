@@ -17,7 +17,7 @@ Repository Structure
 --------------------
 The code repository contains
 * Doc: A doxygen documentation 
-* Driver: The Chameleon driver for Windows
+* Drivers: Chameleon drivers for Windows and Linux
 * Dumps: Dumps of different smartcards
 * Hardware: The layout and schematics of the PCB
 * Firmware: The complete firmware including a modified Atmel DFU bootloader and LUFA
