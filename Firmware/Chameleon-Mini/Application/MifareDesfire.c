@@ -670,8 +670,22 @@ static uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount)
     /* Fetch the key */
     DesfireCommandState.Authenticate.KeyId = KeyId;
     ReadSelectedAppKey(KeyId, Key);
+    LogEntry(LOG_APP_AUTH_KEY, Key, sizeof(Key));
     /* Generate the nonce B */
+#if 0
     RandomGetBuffer(DesfireCommandState.Authenticate.RndB, DESFIRE_NONCE_SIZE);
+#else
+    /* Fixed nonce for testing */
+    DesfireCommandState.Authenticate.RndB[0] = 0xCA;
+    DesfireCommandState.Authenticate.RndB[0] = 0xFE;
+    DesfireCommandState.Authenticate.RndB[0] = 0xBA;
+    DesfireCommandState.Authenticate.RndB[0] = 0xBE;
+    DesfireCommandState.Authenticate.RndB[0] = 0x00;
+    DesfireCommandState.Authenticate.RndB[0] = 0x11;
+    DesfireCommandState.Authenticate.RndB[0] = 0x22;
+    DesfireCommandState.Authenticate.RndB[0] = 0x33;
+#endif
+    LogEntry(LOG_APP_NONCE_B, DesfireCommandState.Authenticate.RndB, DESFIRE_NONCE_SIZE);
     /* Encipher the nonce B with the selected key */
     CryptoEncrypt_2KTDEA_CBC(DESFIRE_NONCE_SIZE / CRYPTO_DES_BLOCK_SIZE, DesfireCommandState.Authenticate.RndB, &Buffer[1], Key);
     /* Scrub the key */
@@ -697,6 +711,7 @@ static uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount)
     ReadSelectedAppKey(DesfireCommandState.Authenticate.KeyId, Key);
     /* Encipher to obtain plain text */
     CryptoEncrypt_2KTDEA_CBC(2 * DESFIRE_NONCE_SIZE / CRYPTO_DES_BLOCK_SIZE, &Buffer[1], &Buffer[1], Key);
+    LogEntry(LOG_APP_NONCE_AB, &Buffer[1], 2 * DESFIRE_NONCE_SIZE);
     /* Now, RndA is at Buffer[1], RndB' is at Buffer[9] */
     if (memcmp(&Buffer[9], &DesfireCommandState.Authenticate.RndB[1], DESFIRE_NONCE_SIZE - 1) || (Buffer[16] != DesfireCommandState.Authenticate.RndB[0])) {
         /* Scrub the key */

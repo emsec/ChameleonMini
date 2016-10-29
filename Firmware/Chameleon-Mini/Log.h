@@ -36,6 +36,10 @@ typedef enum {
     LOG_ERR_APP_CHECKSUM_FAIL	= 0xC1, ///< Application had a checksum fail.
     LOG_ERR_APP_NOT_AUTHED		= 0xC2, ///< Application is not authenticated.
 
+    /* DESFire app */
+    LOG_APP_AUTH_KEY            = 0xD0, ///< The key used for authentication
+    LOG_APP_NONCE_B             = 0xD1, ///< Nonce B's value (generated)
+    LOG_APP_NONCE_AB            = 0xD2, ///< Nonces A and B values (received)
     LOG_EMPTY 					= 0x00  ///< Empty Log Entry. This is not followed by a length byte nor the two systick bytes nor any data.
 } LogEntryEnum;
 

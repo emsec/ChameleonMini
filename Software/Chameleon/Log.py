@@ -40,6 +40,10 @@ eventTypes = {
     0xC0: { 'name': 'APP AUTH FAILED', 'decoder': binaryDecoder },
     0xC1: { 'name': 'APP CSUM FAILED', 'decoder': binaryDecoder },
     0xC2: { 'name': 'APP NOT AUTHED',  'decoder': binaryDecoder },
+
+    0xD0: { 'name': 'APP AUTH KEY',     'decoder': binaryDecoder },
+    0xD1: { 'name': 'APP NONCE B',      'decoder': binaryDecoder },
+    0xD2: { 'name': 'APP NONCE AB',     'decoder': binaryDecoder },
 }
 
 TIMESTAMP_MAX = 65536
