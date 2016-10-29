@@ -64,8 +64,8 @@
  * 
  * \warning This command does not deactivate the reader field after finishing in order to make it possible to keep up the conversation with the card.
  * 
- * `SEND <2-BYTEVALUE> <BYTEVALUE>`
- * --------------------------------
+ * `SEND_RAW <2-BYTEVALUE> <BYTEVALUE>`
+ * ------------------------------------
  * Does the same like the command with only one parameter, but the first parameter indicates the to-be-sent bit count.
  * 
  * ### Examples ###
