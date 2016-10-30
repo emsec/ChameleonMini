@@ -205,8 +205,8 @@ static MifareDesfireAppDirType AppDir;
 static uint8_t SelectedAppSlot;
 static uint8_t SelectedAppKeySettings;
 static uint8_t SelectedAppKeyCount;
-static MifareDesfireFileType* SelectedAppFilesAddress; /* in FRAM */
-static MifareDesfireKeyType* SelectedAppKeyAddress; /* in FRAM */
+static uint16_t SelectedAppFilesAddress; /* in FRAM */
+static uint16_t SelectedAppKeyAddress; /* in FRAM */
 
 static void ReadBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count);
 static void WriteBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count);
@@ -321,12 +321,12 @@ static void SetAppFileIndexBlockId(uint8_t AppSlot, uint8_t Value)
 
 static void ReadSelectedAppKey(uint8_t KeyId, uint8_t* Key)
 {
-    MemoryReadBlock(Key, (uint16_t)&SelectedAppKeyAddress[KeyId], sizeof(MifareDesfireKeyType));
+    MemoryReadBlock(Key, SelectedAppKeyAddress + KeyId * sizeof(MifareDesfireKeyType), sizeof(MifareDesfireKeyType));
 }
 
 static void WriteSelectedAppKey(uint8_t KeyId, const uint8_t* Key)
 {
-    MemoryWriteBlock(Key, (uint16_t)&SelectedAppKeyAddress[KeyId], sizeof(MifareDesfireKeyType));
+    MemoryWriteBlock(Key, SelectedAppKeyAddress + KeyId * sizeof(MifareDesfireKeyType), sizeof(MifareDesfireKeyType));
 }
 
 static uint8_t LookupAppSlot(const MifareDesfireAidType Aid)
@@ -348,8 +348,8 @@ static void SelectAppBySlot(uint8_t AppSlot)
 
     SelectedAppKeySettings = GetAppProperty(MIFARE_DESFIRE_APP_KEY_SETTINGS_BLOCK_ID, AppSlot);
     SelectedAppKeyCount = GetAppProperty(MIFARE_DESFIRE_APP_KEY_COUNT_BLOCK_ID, AppSlot);
-    SelectedAppFilesAddress = (MifareDesfireFileType*)(GetAppProperty(MIFARE_DESFIRE_APP_KEYS_PTR_BLOCK_ID, AppSlot) * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
-    SelectedAppKeyAddress = (MifareDesfireKeyType*)(GetAppProperty(MIFARE_DESFIRE_APP_FILES_PTR_BLOCK_ID, AppSlot) * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE);
+    SelectedAppKeyAddress = GetAppProperty(MIFARE_DESFIRE_APP_KEYS_PTR_BLOCK_ID, AppSlot) * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE;
+    SelectedAppFilesAddress = GetAppProperty(MIFARE_DESFIRE_APP_FILES_PTR_BLOCK_ID, AppSlot) * MIFARE_DESFIRE_EEPROM_BLOCK_SIZE;
 }
 
 static uint8_t SelectAppByAid(const MifareDesfireAidType Aid)
