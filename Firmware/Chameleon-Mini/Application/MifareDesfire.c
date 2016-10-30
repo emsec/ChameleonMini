@@ -438,13 +438,6 @@ static uint8_t DeleteApp(const MifareDesfireAidType Aid)
 }
 
 
-static void CreatePiccApp(void)
-{
-    SetAppKeySettings(DESFIRE_PICC_APP_INDEX, 0x0F);
-    SetAppKeyCount(DESFIRE_PICC_APP_INDEX, 1);
-    SetAppKeyStorageBlockId(DESFIRE_PICC_APP_INDEX, AllocateBlocks(1));
-}
-
 static void SelectPiccApp(void)
 {
     SelectAppBySlot(DESFIRE_PICC_APP_INDEX);
@@ -453,6 +446,18 @@ static void SelectPiccApp(void)
 static uint8_t IsPiccAppSelected(void)
 {
     return SelectedAppSlot == DESFIRE_PICC_APP_INDEX;
+}
+
+static void CreatePiccApp(void)
+{
+    MifareDesfireKeyType Key;
+
+    SetAppKeySettings(DESFIRE_PICC_APP_INDEX, 0x0F);
+    SetAppKeyCount(DESFIRE_PICC_APP_INDEX, 1);
+    SetAppKeyStorageBlockId(DESFIRE_PICC_APP_INDEX, AllocateBlocks(1));
+    SelectPiccApp();
+    memset(Key, 0, sizeof(Key));
+    WriteSelectedAppKey(0, Key);
 }
 
 
@@ -678,13 +683,13 @@ static uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount)
 #else
     /* Fixed nonce for testing */
     DesfireCommandState.Authenticate.RndB[0] = 0xCA;
-    DesfireCommandState.Authenticate.RndB[0] = 0xFE;
-    DesfireCommandState.Authenticate.RndB[0] = 0xBA;
-    DesfireCommandState.Authenticate.RndB[0] = 0xBE;
-    DesfireCommandState.Authenticate.RndB[0] = 0x00;
-    DesfireCommandState.Authenticate.RndB[0] = 0x11;
-    DesfireCommandState.Authenticate.RndB[0] = 0x22;
-    DesfireCommandState.Authenticate.RndB[0] = 0x33;
+    DesfireCommandState.Authenticate.RndB[1] = 0xFE;
+    DesfireCommandState.Authenticate.RndB[2] = 0xBA;
+    DesfireCommandState.Authenticate.RndB[3] = 0xBE;
+    DesfireCommandState.Authenticate.RndB[4] = 0x00;
+    DesfireCommandState.Authenticate.RndB[5] = 0x11;
+    DesfireCommandState.Authenticate.RndB[6] = 0x22;
+    DesfireCommandState.Authenticate.RndB[7] = 0x33;
 #endif
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.Authenticate.RndB, DESFIRE_NONCE_SIZE);
     /* Encipher the nonce B with the selected key; zero IV = no CBC */
@@ -712,6 +717,7 @@ static uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount)
 
     /* Fetch the key */
     ReadSelectedAppKey(DesfireCommandState.Authenticate.KeyId, Key);
+    LogEntry(LOG_APP_AUTH_KEY, Key, sizeof(Key));
     /* Encipher to obtain plain text; zero IV = no CBC */
     memset(CurrentIV, 0, sizeof(CurrentIV));
     CryptoEncrypt_2KTDEA_CBC_Receive(2 * DESFIRE_NONCE_SIZE / CRYPTO_DES_BLOCK_SIZE,
