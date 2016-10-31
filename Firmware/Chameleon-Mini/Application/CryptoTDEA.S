@@ -191,14 +191,14 @@ CryptoEncrypt_2KTDEA_CBC_Send:
     ; Load the IV pointer to Y
     movw    r28, r18
     ; Load the IV
-    ld      r15, Y+
-    ld      r14, Y+
-    ld      r13, Y+
-    ld      r12, Y+
-    ld      r11, Y+
-    ld      r10, Y+
-    ld      r9, Y+
-    ld      r8, Y+
+    ld      r7, Y+
+    ld      r6, Y+
+    ld      r5, Y+
+    ld      r4, Y+
+    ld      r3, Y+
+    ld      r2, Y+
+    ld      r1, Y+
+    ld      r0, Y+
 
     ; Load the plaintext pointer to Y
     movw    r28, r22
@@ -228,6 +228,7 @@ CryptoEncrypt_2KTDEA_CBC_Send:
     rcall   _Encrypt2KTDEA
     
     ; Store the ciphertext
+    ; It will be reused as thte IV for the next block, if any
     st      X+, r7
     st      X+, r6
     st      X+, r5
