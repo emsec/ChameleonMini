@@ -1,34 +1,51 @@
+;
+; DEA related code is kept in this file.
+; All data is handled big-endian style (MSByte first) in memory.
+;
 
 .section .text
 
-; This routine performs 16 rounds of DES.
+; This routine loads the key and performs 16 rounds of DEA.
 ;
 ; Input:
-;     R15:R8  - 8-byte key (with parity bits), LSB in R8.
-;     R7:R0   - Input data, LSB in R0
+;     R31:R30 - A pointer to the 8-byte key (with parity bits), MSB first.
+;     R7:R0   - 8-byte input data block, LSB in R0.
+;     SREG:H  - Set to decipher, clear to encipher.
 ;
 ; Returns:
 ;     R7:R0   - Result of en/deciphering, LSB in R0
-CryptoEncrypt_DEA:
-    des 0
-    des 1
-    des 2
-    des 3
-    des 4
-    des 5
-    des 6
-    des 7
-    des 8
-    des 9
-    des 10
-    des 11
-    des 12
-    des 13
-    des 14
-    des 15
+_LoadKeyAndRunDEA:
+    ld      r15, Z+
+    ld      r14, Z+
+    ld      r13, Z+
+    ld      r12, Z+
+    ld      r11, Z+
+    ld      r10, Z+
+    ld      r9,  Z+
+    ld      r8,  Z+
+    des     0
+    des     1
+    des     2
+    des     3
+    des     4
+    des     5
+    des     6
+    des     7
+    des     8
+    des     9
+    des     10
+    des     11
+    des     12
+    des     13
+    des     14
+    des     15
     ret
 
-; This routine performs Triple DES encryption using keying option 2: K1, K2, K1.
+;
+; Triple DEA subroutines
+;
+
+; This routine performs Triple DEA encryption (E-D-E) using keying option 1: K1, K2, K3.
 ;
 ; Input:
 ;     R17:R16 - Key block pointer.
@@ -36,47 +53,104 @@ CryptoEncrypt_DEA:
 ;
 ; Returns:
 ;     R7:R0   - Result of enciphering, LSB in R0
-CryptoEncrypt_2KTDEA:
+_Encrypt3KTDEA:
     ; Reload Z with the key block pointer
     movw    r30, r16
-    ; Load the K1
-    ld      r15, Z+
-    ld      r14, Z+
-    ld      r13, Z+
-    ld      r12, Z+
-    ld      r11, Z+
-    ld      r10, Z+
-    ld      r9,  Z+
-    ld      r8,  Z+
     ; Encipher
     clh
-    rcall   CryptoEncrypt_DEA
-    ; Load the K2
-    ld      r15, Z+
-    ld      r14, Z+
-    ld      r13, Z+
-    ld      r12, Z+
-    ld      r11, Z+
-    ld      r10, Z+
-    ld      r9,  Z+
-    ld      r8,  Z+
+    rcall   _LoadKeyAndRunDEA
+
+    ; Z now points to K2
     ; Decipher
     seh
-    rcall   CryptoEncrypt_DEA
-    ; Reload Z with the key block pointer
-    movw    r30, r16
-    ; Load the K1
-    ld      r15, Z+
-    ld      r14, Z+
-    ld      r13, Z+
-    ld      r12, Z+
-    ld      r11, Z+
-    ld      r10, Z+
-    ld      r9,  Z+
-    ld      r8,  Z+
+    rcall   _LoadKeyAndRunDEA
+
+    ; Z now points to K3
     ; Encipher
     clh
-    rjmp    CryptoEncrypt_DEA
+    rjmp    _LoadKeyAndRunDEA
+
+; This routine performs Triple DEA encryption (E-D-E) using keying option 2: K1, K2, K1.
+;
+; Input:
+;     R17:R16 - Key block pointer.
+;     R7:R0   - Input data, LSB in R0
+;
+; Returns:
+;     R7:R0   - Result of enciphering, LSB in R0
+_Encrypt2KTDEA:
+    ; Reload Z with the key block pointer
+    movw    r30, r16
+    ; Encipher
+    clh
+    rcall   _LoadKeyAndRunDEA
+
+    ; Z now points to K2
+    ; Decipher
+    seh
+    rcall   _LoadKeyAndRunDEA
+
+    ; Reload Z with the key block pointer
+    movw    r30, r16
+    ; Encipher
+    clh
+    rjmp    _LoadKeyAndRunDEA
+
+
+; This routine performs Triple DEA decryption (D-E-D) using keying option 1: K1, K2, K3.
+;
+; Input:
+;     R17:R16 - Key block pointer.
+;     R7:R0   - Input data, LSB in R0
+;
+; Returns:
+;     R7:R0   - Result of enciphering, LSB in R0
+_Decrypt3KTDEA:
+    ; Reload Z with the key block pointer and adjust to point to K3
+    movw    r30, r16
+    adiw    r30, 16
+    ; Decipher
+    seh
+    rcall   _LoadKeyAndRunDEA
+
+    ; Reload Z with the key block pointer and adjust to point to K2
+    movw    r30, r16
+    adiw    r30, 8
+    ; Encipher
+    clh
+    rcall   _LoadKeyAndRunDEA
+
+    ; Reload Z with the key block pointer
+    movw    r30, r16
+    ; Decipher
+    seh
+    rjmp    _LoadKeyAndRunDEA
+
+; This routine performs Triple DEA decryption (D-E-D) using keying option 2: K1, K2, K1.
+;
+; Input:
+;     R17:R16 - Key block pointer.
+;     R7:R0   - Input data, LSB in R0
+;
+; Returns:
+;     R7:R0   - Result of enciphering, LSB in R0
+_Decrypt2KTDEA:
+    ; Reload Z with the key block pointer
+    movw    r30, r16
+    ; Decipher
+    seh
+    rcall   _LoadKeyAndRunDEA
+
+    ; Z now points to K2
+    ; Encipher
+    clh
+    rcall   _LoadKeyAndRunDEA
+
+    ; Reload Z with the key block pointer
+    movw    r30, r16
+    ; Encipher
+    clh
+    rjmp    _LoadKeyAndRunDEA
 
 ;
 ; Triple DES CBC Routines
@@ -131,7 +205,7 @@ CryptoEncrypt_2KTDEA_CBC_Send:
     ; Load the ciphertext pointer to X
     movw    r26, r20
 
-CryptoEncrypt_2KTDEA_CBC_Send_loop:
+1:
     ; Load the plaintext block
     ld      r15, Y+
     ld      r14, Y+
@@ -151,7 +225,7 @@ CryptoEncrypt_2KTDEA_CBC_Send_loop:
     eor     r1, r9
     eor     r0, r8
 
-    rcall   CryptoEncrypt_2KTDEA
+    rcall   _Encrypt2KTDEA
     
     ; Store the ciphertext
     st      X+, r7
@@ -165,7 +239,7 @@ CryptoEncrypt_2KTDEA_CBC_Send_loop:
 
     ; Decrement the counter, repeat if more blocks.
     sbiw    r24, 1
-    brne    CryptoEncrypt_2KTDEA_CBC_Send_loop
+    brne    1b
 
     ; Load the IV pointer to X
     movw    r26, r18
@@ -240,7 +314,7 @@ CryptoEncrypt_2KTDEA_CBC_Receive:
     ; Load the ciphertext pointer to X
     movw    r26, r20
 
-CryptoEncrypt_2KTDEA_CBC_Receive_loop:
+1:
     ; Load the plaintext block
     ldd     r15, Y+0
     ldd     r14, Y+1
@@ -251,7 +325,7 @@ CryptoEncrypt_2KTDEA_CBC_Receive_loop:
     ldd     r9, Y+6
     ldd     r8, Y+7
 
-    rcall   CryptoEncrypt_2KTDEA
+    rcall   _Encrypt2KTDEA
     
     ; Fetch the IV pointer
     movw    r30, r18
@@ -288,7 +362,7 @@ CryptoEncrypt_2KTDEA_CBC_Receive_loop:
 
     ; Decrement the counter, repeat if more blocks.
     sbiw    r24, 1
-    brne    CryptoEncrypt_2KTDEA_CBC_Receive_loop
+    brne    1b
 
     ; Fetch the IV pointer
     movw    r30, r18
