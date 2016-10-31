@@ -694,7 +694,7 @@ static uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount)
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.Authenticate.RndB, DESFIRE_NONCE_SIZE);
     /* Encipher the nonce B with the selected key; zero IV = no CBC */
     memset(CurrentIV, 0, sizeof(CurrentIV));
-    CryptoEncrypt_2KTDEA_CBC_Send(DESFIRE_NONCE_SIZE / CRYPTO_DES_BLOCK_SIZE,
+    CryptoEncrypt2KTDEA_CBCSend(DESFIRE_NONCE_SIZE / CRYPTO_DES_BLOCK_SIZE,
         DesfireCommandState.Authenticate.RndB, &Buffer[1], CurrentIV, Key);
     /* Scrub the key */
     memset(&Key, 0, sizeof(Key));
@@ -720,7 +720,7 @@ static uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount)
     LogEntry(LOG_APP_AUTH_KEY, Key, sizeof(Key));
     /* Encipher to obtain plain text; zero IV = no CBC */
     memset(CurrentIV, 0, sizeof(CurrentIV));
-    CryptoEncrypt_2KTDEA_CBC_Receive(2 * DESFIRE_NONCE_SIZE / CRYPTO_DES_BLOCK_SIZE,
+    CryptoEncrypt2KTDEA_CBCReceive(2 * DESFIRE_NONCE_SIZE / CRYPTO_DES_BLOCK_SIZE,
         &Buffer[1], &Buffer[1], CurrentIV, Key);
     LogEntry(LOG_APP_NONCE_AB, &Buffer[1], 2 * DESFIRE_NONCE_SIZE);
     /* Now, RndA is at Buffer[1], RndB' is at Buffer[9] */
@@ -753,7 +753,7 @@ static uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount)
     Buffer[9] = Buffer[1];
     /* Encipher the nonce A; zero IV = no CBC */
     memset(CurrentIV, 0, sizeof(CurrentIV));
-    CryptoEncrypt_2KTDEA_CBC_Send(DESFIRE_NONCE_SIZE / CRYPTO_DES_BLOCK_SIZE, &Buffer[2], &Buffer[1], CurrentIV, Key);
+    CryptoEncrypt2KTDEA_CBCSend(DESFIRE_NONCE_SIZE / CRYPTO_DES_BLOCK_SIZE, &Buffer[2], &Buffer[1], CurrentIV, Key);
     /* Scrub the key */
     memset(&Key, 0, sizeof(Key));
     /* Reset the session IV */
@@ -807,7 +807,7 @@ static uint16_t EV0CmdChangeKey(uint8_t* Buffer, uint16_t ByteCount)
     }
 
     /* Encipher to obtain plaintext */
-    CryptoEncrypt_2KTDEA_CBC_Receive(3, &Buffer[2], &Buffer[2], CurrentIV, SessionKey);
+    CryptoEncrypt2KTDEA_CBCReceive(3, &Buffer[2], &Buffer[2], CurrentIV, SessionKey);
     /* Verify the checksum first */
     if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(MifareDesfireKeyType))) {
         Buffer[0] = STATUS_INTEGRITY_ERROR;
@@ -886,7 +886,7 @@ static uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount)
     }
 
     /* Encipher to obtain plaintext */
-    CryptoEncrypt_2KTDEA_CBC_Receive(3, &Buffer[2], &Buffer[2], CurrentIV, SessionKey);
+    CryptoEncrypt2KTDEA_CBCReceive(3, &Buffer[2], &Buffer[2], CurrentIV, SessionKey);
     /* Verify the checksum first */
     if (!ISO14443ACheckCRCA(&Buffer[2], sizeof(MifareDesfireKeyType))) {
         Buffer[0] = STATUS_INTEGRITY_ERROR;

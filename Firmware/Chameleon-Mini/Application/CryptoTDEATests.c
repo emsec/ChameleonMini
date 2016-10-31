@@ -33,7 +33,7 @@ static void Test1(void)
     };
     uint8_t RealOutput[CRYPTO_DES_BLOCK_SIZE] = {0};
 
-    CryptoEncrypt_2KTDEA_CBC_Send(1, TestInput, RealOutput, TestIV, TestKey);
+    CryptoEncrypt2KTDEA_CBCSend(1, TestInput, RealOutput, TestIV, TestKey);
     if (memcmp(TestOutput, RealOutput, CRYPTO_DES_BLOCK_SIZE)) {
         DebugPrintP(PSTR("\r\nTDEA TEST 1 FAILED\r\n"));
         DebugPrintP(PSTR("Out = %02X%02X%02X%02X%02X%02X%02X%02X\r\n"),

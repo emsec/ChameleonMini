@@ -33,7 +33,7 @@ PCD's side.
 #define CRYPTO_DES_BLOCK_SIZE       8 /* Bytes */
 
 /** Performs the Triple DES sequence in the CBC mode on the buffer */
-void CryptoEncrypt_2KTDEA_CBC_Send(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
-void CryptoEncrypt_2KTDEA_CBC_Receive(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+void CryptoEncrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+void CryptoEncrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
 
 #endif /* CRYPTODES_H_ */

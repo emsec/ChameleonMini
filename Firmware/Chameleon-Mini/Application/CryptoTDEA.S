@@ -153,13 +153,16 @@ _Decrypt2KTDEA:
     rjmp    _LoadKeyAndRunDEA
 
 ;
-; Triple DES CBC Routines
+; Triple DEA CBC Routines
 ;
 
-; This routine performs Triple DES encryption in CBC mode using keying option 2: K1, K2, K1.
-; The CBC is operated in the "send" mode: C = E(P ^ IV); IV = C
+; This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
+; This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
+; The original IV data is NOT updated.
 ;
 ; Input:
+;     SREG:T  - Set to perform "send" chaining, else "receive" chaining
+;     R31:R30 - Cryptographic primitive pointer
 ;     R25:R24 - Count of blocks.
 ;     R23:R22 - Pointer to plaintext input buffer
 ;     R21:R20 - Pointer to ciphertext output buffer
@@ -168,8 +171,8 @@ _Decrypt2KTDEA:
 ;
 ; Returns:
 ;     Nothing.
-.global CryptoEncrypt_2KTDEA_CBC_Send
-CryptoEncrypt_2KTDEA_CBC_Send:
+;
+_DEACBC:
     ; Preserve the clobbered regs
     push    r2
     push    r3
@@ -188,22 +191,31 @@ CryptoEncrypt_2KTDEA_CBC_Send:
     push    r28
     push    r29
 
-    ; Load the IV pointer to Y
-    movw    r28, r18
-    ; Load the IV
-    ld      r7, Y+
-    ld      r6, Y+
-    ld      r5, Y+
-    ld      r4, Y+
-    ld      r3, Y+
-    ld      r2, Y+
-    ld      r1, Y+
-    ld      r0, Y+
-
     ; Load the plaintext pointer to Y
     movw    r28, r22
     ; Load the ciphertext pointer to X
     movw    r26, r20
+    ; Store the crypto primitive pointer in r23:r22
+    movw    r22, r30
+
+    ; Choose the proper mode
+    brtc    _DEACBCReceive
+
+    ;
+    ; Send mode chaining (xor-then-crypt)
+    ;
+
+    ; Load the IV pointer to Z
+    movw    r30, r18
+    ; Load the IV
+    ld      r7, Z+
+    ld      r6, Z+
+    ld      r5, Z+
+    ld      r4, Z+
+    ld      r3, Z+
+    ld      r2, Z+
+    ld      r1, Z+
+    ld      r0, Z+
 
 1:
     ; Load the plaintext block
@@ -225,10 +237,12 @@ CryptoEncrypt_2KTDEA_CBC_Send:
     eor     r1, r9
     eor     r0, r8
 
-    rcall   _Encrypt2KTDEA
+    ; Call the primitive
+    movw    r30, r22
+    icall
     
     ; Store the ciphertext
-    ; It will be reused as thte IV for the next block, if any
+    ; It will be reused as the IV for the next block, if any
     st      X+, r7
     st      X+, r6
     st      X+, r5
@@ -241,95 +255,31 @@ CryptoEncrypt_2KTDEA_CBC_Send:
     ; Decrement the counter, repeat if more blocks.
     sbiw    r24, 1
     brne    1b
+    rjmp    _DEACBCDone
 
-    ; Load the IV pointer to X
-    movw    r26, r18
-    ; Store the IV
-    st      X+, r7
-    st      X+, r6
-    st      X+, r5
-    st      X+, r4
-    st      X+, r3
-    st      X+, r2
-    st      X+, r1
-    st      X+, r0
+    ;
+    ; Receive mode chaining (crypt-then-xor)
+    ;
 
-    ; Restore clobbered regs
-    pop     r29
-    pop     r28
-    pop     r15
-    pop     r14
-    pop     r13
-    pop     r12
-    pop     r11
-    pop     r10
-    pop     r9
-    pop     r8
-    pop     r7
-    pop     r6
-    pop     r5
-    pop     r4
-    pop     r3
-    pop     r2
-    eor     r1, r1
-    ret
-
-; This routine performs Triple DES encryption in CBC mode using keying option 2: K1, K2, K1.
-; The CBC is operated in the "receive" mode: C = E(P) ^ IV; IV = P
-;
-; Input:
-;     R25:R24 - Count of blocks.
-;     R23:R22 - Pointer to plaintext input buffer
-;     R21:R20 - Pointer to ciphertext output buffer
-;     R19:R18 - IV block pointer.
-;     R17:R16 - Key block pointer.
-;
-; Returns:
-;     Nothing.
-.global CryptoEncrypt_2KTDEA_CBC_Receive
-CryptoEncrypt_2KTDEA_CBC_Receive:
-    ; Preserve the clobbered regs
-    push    r2
-    push    r3
-    push    r4
-    push    r5
-    push    r6
-    push    r7
-    push    r8
-    push    r9
-    push    r10
-    push    r11
-    push    r12
-    push    r13
-    push    r14
-    push    r15
-    push    r28
-    push    r29
-
-    ; Store the original IV pointer
-    push    r18
-    push    r19
-
-    ; Load the plaintext pointer to Y
-    movw    r28, r22
-    ; Load the ciphertext pointer to X
-    movw    r26, r20
-
-1:
+_DEACBCReceive:
     ; Load the plaintext block
-    ldd     r15, Y+0
-    ldd     r14, Y+1
-    ldd     r13, Y+2
-    ldd     r12, Y+3
-    ldd     r11, Y+4
-    ldd     r10, Y+5
-    ldd     r9, Y+6
-    ldd     r8, Y+7
+    ldd     r7, Y+0
+    ldd     r6, Y+1
+    ldd     r5, Y+2
+    ldd     r4, Y+3
+    ldd     r3, Y+4
+    ldd     r2, Y+5
+    ldd     r1, Y+6
+    ldd     r0, Y+7
 
-    rcall   _Encrypt2KTDEA
+    ; Call the primitive
+    movw    r30, r22
+    icall
     
-    ; Fetch the IV pointer
+    ; Fetch/update the IV pointer
     movw    r30, r18
+    movw    r20, r28
+    adiw    r28, 8
     ; Load the IV block
     ldd     r15, Z+0
     ldd     r14, Z+1
@@ -348,9 +298,6 @@ CryptoEncrypt_2KTDEA_CBC_Receive:
     eor     r2, r10
     eor     r1, r9
     eor     r0, r8
-    ; Update the IV pointer
-    movw    r18, r28
-    adiw    r28, 8
     ; Store the ciphertext
     st      X+, r7
     st      X+, r6
@@ -363,31 +310,9 @@ CryptoEncrypt_2KTDEA_CBC_Receive:
 
     ; Decrement the counter, repeat if more blocks.
     sbiw    r24, 1
-    brne    1b
+    brne    _DEACBCReceive
 
-    ; Fetch the IV pointer
-    movw    r30, r18
-    ; Load the IV block pointer to X
-    pop     r27
-    pop     r26
-    ; Copy over the IV
-    ld      r0, Z+
-    st      X+, r0
-    ld      r0, Z+
-    st      X+, r0
-    ld      r0, Z+
-    st      X+, r0
-    ld      r0, Z+
-    st      X+, r0
-    ld      r0, Z+
-    st      X+, r0
-    ld      r0, Z+
-    st      X+, r0
-    ld      r0, Z+
-    st      X+, r0
-    ld      r0, Z+
-    st      X+, r0
-
+_DEACBCDone:
     ; Restore clobbered regs
     pop     r29
     pop     r28
@@ -407,3 +332,45 @@ CryptoEncrypt_2KTDEA_CBC_Receive:
     pop     r2
     eor     r1, r1
     ret
+
+
+; This routine performs Triple DEA encryption in CBC mode using keying option 2: K1, K2, K1.
+; The CBC is operated in the "send" mode: C = E(P ^ IV); IV = C
+; The original IV data is NOT updated.
+;
+; Input:
+;     R25:R24 - Count of blocks.
+;     R23:R22 - Pointer to plaintext input buffer
+;     R21:R20 - Pointer to ciphertext output buffer
+;     R19:R18 - IV block pointer.
+;     R17:R16 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+.global CryptoEncrypt2KTDEA_CBCSend
+CryptoEncrypt2KTDEA_CBCSend:
+    ldi     r31, pm_hi8(_Encrypt2KTDEA)
+    ldi     r30, pm_lo8(_Encrypt2KTDEA)
+    set
+    rjmp    _DEACBC
+
+; This routine performs Triple DEA encryption in CBC mode using keying option 2: K1, K2, K1.
+; The CBC is operated in the "receive" mode: C = E(P) ^ IV; IV = P
+; The original IV data is NOT updated.
+;
+; Input:
+;     R25:R24 - Count of blocks.
+;     R23:R22 - Pointer to plaintext input buffer
+;     R21:R20 - Pointer to ciphertext output buffer
+;     R19:R18 - IV block pointer.
+;     R17:R16 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+.global CryptoEncrypt2KTDEA_CBCReceive
+CryptoEncrypt2KTDEA_CBCReceive:
+    ldi     r31, pm_hi8(_Encrypt2KTDEA)
+    ldi     r30, pm_lo8(_Encrypt2KTDEA)
+    clt
+    rjmp    _DEACBC
+
