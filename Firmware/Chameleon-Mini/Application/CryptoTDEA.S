@@ -153,6 +153,70 @@ _Decrypt2KTDEA:
     rjmp    _LoadKeyAndRunDEA
 
 ;
+; Triple DEA ECB Routines
+;
+
+; This routine performs Triple DEA encryption using keying option 2: K1, K2, K1.
+;
+; Input:
+;     R25:R24 - Pointer to plaintext input buffer
+;     R23:R22 - Pointer to ciphertext output buffer
+;     R21:R20 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+.global CryptoEncrypt2KTDEA
+CryptoEncrypt2KTDEA:
+    ; Preserve the clobbered regs
+    push    r2
+    push    r3
+    push    r4
+    push    r5
+    push    r6
+    push    r7
+    push    r8
+    push    r9
+    push    r10
+    push    r11
+    push    r12
+    push    r13
+    push    r14
+    push    r15
+    push    r16
+    push    r17
+
+    ; Load the plaintext pointer to Z and fetch data
+    movw    r30, r24
+    ld      r7, Z+
+    ld      r6, Z+
+    ld      r5, Z+
+    ld      r4, Z+
+    ld      r3, Z+
+    ld      r2, Z+
+    ld      r1, Z+
+    ld      r0, Z+
+    ; Encrypt
+    movw    r16, r20
+    rcall   _Encrypt2KTDEA
+    ; Store the ciphertext
+    movw    r30, r22
+    st      Z+, r7
+    st      Z+, r6
+    st      Z+, r5
+    st      Z+, r4
+    st      Z+, r3
+    st      Z+, r2
+    st      Z+, r1
+    st      Z+, r0
+
+    ; Restore clobbered regs
+    pop     r17
+    pop     r16
+    ; Reuse epilogue code
+    rjmp    _CommonEpilogue
+
+
+;
 ; Triple DEA CBC Routines
 ;
 
@@ -264,6 +328,8 @@ _DEACBC:
 _DEACBCReceive:
     ; Keep the running IV pointer in r21:r20
     movw    r20, r18
+
+1:
     ; Load the plaintext block
     ldd     r7, Y+0
     ldd     r6, Y+1
@@ -312,10 +378,10 @@ _DEACBCReceive:
 
     ; Decrement the counter, repeat if more blocks.
     sbiw    r24, 1
-    brne    _DEACBCReceive
+    brne    1b
 
     ; Load the IV pointer
-    movw    r30, 20
+    movw    r30, r20
     ; Load the IV block
     ld      r7, Z+
     ld      r6, Z+
@@ -341,6 +407,8 @@ _DEACBCDone:
     ; Restore clobbered regs
     pop     r29
     pop     r28
+
+_CommonEpilogue:
     pop     r15
     pop     r14
     pop     r13
