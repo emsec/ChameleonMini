@@ -319,6 +319,17 @@ _DEACBC:
     sbiw    r24, 1
     brne    1b
 
+    ; Load the IV pointer to X
+    movw    r26, r18
+    ; Store the updated IV
+    st      X+, r7
+    st      X+, r6
+    st      X+, r5
+    st      X+, r4
+    st      X+, r3
+    st      X+, r2
+    st      X+, r1
+    st      X+, r0
     rjmp    _DEACBCDone
 
     ;
@@ -326,10 +337,7 @@ _DEACBC:
     ;
 
 _DEACBCReceive:
-    ; Keep the running IV pointer in r21:r20
-    movw    r20, r18
-
-1:
+2:
     ; Load the plaintext block
     ldd     r7, Y+0
     ldd     r6, Y+1
@@ -344,19 +352,16 @@ _DEACBCReceive:
     movw    r30, r22
     icall
     
-    ; Fetch/update the IV pointer
-    movw    r30, r20
-    movw    r20, r28
-    adiw    r28, 8
     ; Load the IV block
-    ldd     r15, Z+0
-    ldd     r14, Z+1
-    ldd     r13, Z+2
-    ldd     r12, Z+3
-    ldd     r11, Z+4
-    ldd     r10, Z+5
-    ldd     r9, Z+6
-    ldd     r8, Z+7
+    movw    r30, r18
+    ld      r15, Z+
+    ld      r14, Z+
+    ld      r13, Z+
+    ld      r12, Z+
+    ld      r11, Z+
+    ld      r10, Z+
+    ld      r9, Z+
+    ld      r8, Z+
     ; XOR the ciphertext with the IV
     eor     r7, r15
     eor     r6, r14
@@ -366,6 +371,25 @@ _DEACBCReceive:
     eor     r2, r10
     eor     r1, r9
     eor     r0, r8
+    ; Load the plaintext block
+    ld      r15, Y+
+    ld      r14, Y+
+    ld      r13, Y+
+    ld      r12, Y+
+    ld      r11, Y+
+    ld      r10, Y+
+    ld      r9, Y+
+    ld      r8, Y+
+    ; Store the new IV before it gets potentially overwritten
+    movw    r30, r18
+    st      Z+, r15
+    st      Z+, r14
+    st      Z+, r13
+    st      Z+, r12
+    st      Z+, r11
+    st      Z+, r10
+    st      Z+, r9
+    st      Z+, r8
     ; Store the ciphertext
     st      X+, r7
     st      X+, r6
@@ -378,32 +402,9 @@ _DEACBCReceive:
 
     ; Decrement the counter, repeat if more blocks.
     sbiw    r24, 1
-    brne    1b
-
-    ; Load the IV pointer
-    movw    r30, r20
-    ; Load the IV block
-    ld      r7, Z+
-    ld      r6, Z+
-    ld      r5, Z+
-    ld      r4, Z+
-    ld      r3, Z+
-    ld      r2, Z+
-    ld      r1, Z+
-    ld      r0, Z+
+    brne    2b
 
 _DEACBCDone:
-    ; Load the IV pointer to X
-    movw    r26, r18
-    ; Store the updated IV
-    st      X+, r7
-    st      X+, r6
-    st      X+, r5
-    st      X+, r4
-    st      X+, r3
-    st      X+, r2
-    st      X+, r1
-    st      X+, r0
     ; Restore clobbered regs
     pop     r29
     pop     r28
