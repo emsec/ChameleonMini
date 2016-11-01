@@ -158,7 +158,6 @@ _Decrypt2KTDEA:
 
 ; This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
 ; This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
-; The original IV data is NOT updated.
 ;
 ; Input:
 ;     SREG:T  - Set to perform "send" chaining, else "receive" chaining
@@ -255,6 +254,7 @@ _DEACBC:
     ; Decrement the counter, repeat if more blocks.
     sbiw    r24, 1
     brne    1b
+
     rjmp    _DEACBCDone
 
     ;
@@ -262,6 +262,8 @@ _DEACBC:
     ;
 
 _DEACBCReceive:
+    ; Keep the running IV pointer in r21:r20
+    movw    r20, r18
     ; Load the plaintext block
     ldd     r7, Y+0
     ldd     r6, Y+1
@@ -277,7 +279,7 @@ _DEACBCReceive:
     icall
     
     ; Fetch/update the IV pointer
-    movw    r30, r18
+    movw    r30, r20
     movw    r20, r28
     adiw    r28, 8
     ; Load the IV block
@@ -312,7 +314,30 @@ _DEACBCReceive:
     sbiw    r24, 1
     brne    _DEACBCReceive
 
+    ; Load the IV pointer
+    movw    r30, 20
+    ; Load the IV block
+    ld      r7, Z+
+    ld      r6, Z+
+    ld      r5, Z+
+    ld      r4, Z+
+    ld      r3, Z+
+    ld      r2, Z+
+    ld      r1, Z+
+    ld      r0, Z+
+
 _DEACBCDone:
+    ; Load the IV pointer to X
+    movw    r26, r18
+    ; Store the updated IV
+    st      X+, r7
+    st      X+, r6
+    st      X+, r5
+    st      X+, r4
+    st      X+, r3
+    st      X+, r2
+    st      X+, r1
+    st      X+, r0
     ; Restore clobbered regs
     pop     r29
     pop     r28
@@ -336,7 +361,6 @@ _DEACBCDone:
 
 ; This routine performs Triple DEA encryption in CBC mode using keying option 2: K1, K2, K1.
 ; The CBC is operated in the "send" mode: C = E(P ^ IV); IV = C
-; The original IV data is NOT updated.
 ;
 ; Input:
 ;     R25:R24 - Count of blocks.
@@ -356,7 +380,6 @@ CryptoEncrypt2KTDEA_CBCSend:
 
 ; This routine performs Triple DEA encryption in CBC mode using keying option 2: K1, K2, K1.
 ; The CBC is operated in the "receive" mode: C = E(P) ^ IV; IV = P
-; The original IV data is NOT updated.
 ;
 ; Input:
 ;     R25:R24 - Count of blocks.
