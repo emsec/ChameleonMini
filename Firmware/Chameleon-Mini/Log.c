@@ -172,8 +172,7 @@ bool LogSetModeByName(const char* Mode)
 {
 	MapIdType Id;
 
-	if (MapTextToId(LogModeMap, sizeof(LogModeMap)/sizeof(*LogModeMap),
-			Mode, &Id)) {
+	if (MapTextToId(LogModeMap, ARRAY_COUNT(LogModeMap), Mode, &Id)) {
 		LogSetModeById(Id);
 		return true;
 	}
@@ -183,13 +182,13 @@ bool LogSetModeByName(const char* Mode)
 
 void LogGetModeByName(char* Mode, uint16_t BufferSize)
 {
-	MapIdToText(LogModeMap, sizeof(LogModeMap)/sizeof(*LogModeMap),
+	MapIdToText(LogModeMap, ARRAY_COUNT(LogModeMap),
 			GlobalSettings.ActiveSettingPtr->LogMode, Mode, BufferSize);
 }
 
 void LogGetModeList(char* List, uint16_t BufferSize)
 {
-    MapToString(LogModeMap, sizeof(LogModeMap)/sizeof(*LogModeMap), List, BufferSize);
+    MapToString(LogModeMap, ARRAY_COUNT(LogModeMap), List, BufferSize);
 }
 
 void LogSRAMToFRAM(void)

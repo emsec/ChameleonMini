@@ -104,7 +104,7 @@ void LEDTick(void)
 
 void LEDGetFuncList(char* List, uint16_t BufferSize)
 {
-	MapToString(LEDFunctionMap, sizeof(LEDFunctionMap)/sizeof(*LEDFunctionMap), List, BufferSize);
+	MapToString(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap), List, BufferSize);
 }
 
 void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
@@ -146,10 +146,10 @@ void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
 void LEDGetFuncByName(uint8_t Mask, char* Function, uint16_t BufferSize)
 {
 	if (Mask == LED_GREEN) {
-		MapIdToText(LEDFunctionMap, sizeof(LEDFunctionMap)/sizeof(*LEDFunctionMap),
+		MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
 				GlobalSettings.ActiveSettingPtr->LEDGreenFunction, Function, BufferSize);
 	} else if (Mask == LED_RED) {
-		MapIdToText(LEDFunctionMap, sizeof(LEDFunctionMap)/sizeof(*LEDFunctionMap),
+		MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
 				GlobalSettings.ActiveSettingPtr->LEDRedFunction, Function, BufferSize);
 	}
 }
@@ -158,7 +158,7 @@ bool LEDSetFuncByName(uint8_t Mask, const char* Function)
 {
 	MapIdType Id;
 
-	if (MapTextToId(LEDFunctionMap, sizeof(LEDFunctionMap)/sizeof(*LEDFunctionMap), Function, &Id)) {
+	if (MapTextToId(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap), Function, &Id)) {
 		LEDSetFuncById(Mask, Id);
 		return true;
 	} else {

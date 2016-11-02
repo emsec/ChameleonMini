@@ -20,6 +20,9 @@
 #define INLINE \
     static inline __attribute__((always_inline))
 
+#define ARRAY_COUNT(x) \
+    (sizeof(x) / sizeof(x[0]))
+
 #define NIBBLE_TO_HEXCHAR(x) ( (x) < 0x0A ? (x) + '0' : (x) + 'A' - 0x0A )
 #define HEXCHAR_TO_NIBBLE(x) ( (x) < 'A'  ? (x) - '0' : (x) - 'A' + 0x0A )
 #define VALID_HEXCHAR(x) (  ( (x) >= '0' && (x) <= '9' ) || ( (x) >= 'A' && (x) <= 'F' ) )
