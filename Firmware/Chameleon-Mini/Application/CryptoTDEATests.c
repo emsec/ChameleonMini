@@ -41,11 +41,13 @@ void RunTDEATests(void)
     uint8_t Output[CRYPTO_DES_BLOCK_SIZE * 4];
     uint8_t IV[CRYPTO_DES_BLOCK_SIZE];
 
+    DebugPrintP(PSTR("\r\nTDEA BIST starting"));
+
     /* Test 2KTDEA ecnryption, ECB mode */
     CryptoEncrypt2KTDEA(ZeroBlock, Output, TestKey2KTDEA);
     if (memcmp(TestOutput2KTDEAECB, Output, sizeof(TestOutput2KTDEAECB))) {
-        DebugPrintP(PSTR("\r\n2KTDEA ecnryption, ECB mode FAILED\r\n"));
-        DebugPrintP(PSTR("Out = %02X%02X%02X%02X%02X%02X%02X%02X\r\n"),
+        DebugPrintP(PSTR("\r\n2KTDEA ecnryption, ECB mode FAILED"));
+        DebugPrintP(PSTR("\r\nOut = %02X%02X%02X%02X%02X%02X%02X%02X"),
             Output[0],Output[1],Output[2],Output[3],
             Output[4],Output[5],Output[6],Output[7]);
     }
@@ -54,9 +56,13 @@ void RunTDEATests(void)
     memset(IV, 0, sizeof(IV));
     CryptoEncrypt2KTDEA_CBCReceive(2, TestInput2KTDEACBCReceive, Output, IV, TestKey2KTDEA);
     if (memcmp(TestOutput2KTDEACBCReceive, Output, sizeof(TestOutput2KTDEACBCReceive))) {
-        DebugPrintP(PSTR("\r\n2KTDEA encryption, CBC receive mode FAILED\r\n"));
-        DebugPrintP(PSTR("Out = %02X%02X%02X%02X%02X%02X%02X%02X\r\n"),
+        DebugPrintP(PSTR("\r\n2KTDEA encryption, CBC receive mode FAILED"));
+        DebugPrintP(PSTR("\r\nOut = %02X%02X%02X%02X%02X%02X%02X%02X"),
             Output[0],Output[1],Output[2],Output[3],
             Output[4],Output[5],Output[6],Output[7]);
     }
+
+    /* TODO: test other modes */
+
+    DebugPrintP(PSTR("\r\nTDEA BIST completed\r\n"));
 }

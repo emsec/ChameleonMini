@@ -29,14 +29,49 @@ PCD's side.
 /* Key sizes, in bytes */
 #define CRYPTO_DES_KEY_SIZE         8 /* Bytes */
 #define CRYPTO_2KTDEA_KEY_SIZE      (CRYPTO_DES_KEY_SIZE * 2)
+#define CRYPTO_3KTDEA_KEY_SIZE      (CRYPTO_DES_KEY_SIZE * 3)
 
 #define CRYPTO_DES_BLOCK_SIZE       8 /* Bytes */
 
-/** Performs the Triple DES sequence on the buffer */
+/** Performs the Triple DEA enciphering in ECB mode (single block)
+ *
+ * \param Plaintext     Source buffer with plaintext
+ * \param Ciphertext    Destination buffer to contain ciphertext
+ * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
+ */
 void CryptoEncrypt2KTDEA(const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
 
-/** Performs the Triple DES sequence in the CBC mode on the buffer */
+/** Performs the 2-key Triple DES en/deciphering in the CBC "send" mode (xor-then-crypt)
+ *
+ * \param Count         Block count, expected to be >= 1
+ * \param Plaintext     Source buffer with plaintext
+ * \param Ciphertext    Destination buffer to contain ciphertext
+ * \param IV            Initialization vector buffer, will be updated
+ * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
+ */
 void CryptoEncrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+void CryptoDecrypt2KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+
+/** Performs the 2-key Triple DES en/deciphering in the CBC "receive" mode (crypt-then-xor)
+ *
+ * \param Count         Block count, expected to be >= 1
+ * \param Plaintext     Source buffer with plaintext
+ * \param Ciphertext    Destination buffer to contain ciphertext
+ * \param IV            Initialization vector buffer, will be updated
+ * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
+ */
 void CryptoEncrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+
+/** Performs the 3-key Triple DES en/deciphering in the CBC "send" or "receive" mode
+ *
+ * \param Count         Block count, expected to be >= 1
+ * \param Plaintext     Source buffer with plaintext
+ * \param Ciphertext    Destination buffer to contain ciphertext
+ * \param IV            Initialization vector buffer, will be updated
+ * \param Keys          Key block pointer (CRYPTO_3KTDEA_KEY_SIZE)
+ */
+void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
 
 #endif /* CRYPTODES_H_ */

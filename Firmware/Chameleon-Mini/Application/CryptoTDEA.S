@@ -153,6 +153,28 @@ _Decrypt2KTDEA:
     rjmp    _LoadKeyAndRunDEA
 
 ;
+; Common prologue and epilogue code
+;
+
+_CommonEpilogue:
+    pop     r15
+    pop     r14
+    pop     r13
+    pop     r12
+    pop     r11
+    pop     r10
+    pop     r9
+    pop     r8
+    pop     r7
+    pop     r6
+    pop     r5
+    pop     r4
+    pop     r3
+    pop     r2
+    eor     r1, r1
+    ret
+
+;
 ; Triple DEA ECB Routines
 ;
 
@@ -221,10 +243,8 @@ CryptoEncrypt2KTDEA:
 ;
 
 ; This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
-; This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
 ;
 ; Input:
-;     SREG:T  - Set to perform "send" chaining, else "receive" chaining
 ;     R31:R30 - Cryptographic primitive pointer
 ;     R25:R24 - Count of blocks.
 ;     R23:R22 - Pointer to plaintext input buffer
@@ -235,7 +255,7 @@ CryptoEncrypt2KTDEA:
 ; Returns:
 ;     Nothing.
 ;
-_DEACBC:
+_DEACBCSend:
     ; Preserve the clobbered regs
     push    r2
     push    r3
@@ -260,13 +280,6 @@ _DEACBC:
     movw    r26, r20
     ; Store the crypto primitive pointer in r23:r22
     movw    r22, r30
-
-    ; Choose the proper mode
-    brtc    _DEACBCReceive
-
-    ;
-    ; Send mode chaining (xor-then-crypt)
-    ;
 
     ; Load the IV pointer to Z
     movw    r30, r18
@@ -330,14 +343,52 @@ _DEACBC:
     st      X+, r2
     st      X+, r1
     st      X+, r0
-    rjmp    _DEACBCDone
 
-    ;
-    ; Receive mode chaining (crypt-then-xor)
-    ;
+    ; Restore clobbered regs
+    pop     r29
+    pop     r28
+    rjmp    _CommonEpilogue
 
+; This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
+;
+; Input:
+;     R31:R30 - Cryptographic primitive pointer
+;     R25:R24 - Count of blocks.
+;     R23:R22 - Pointer to plaintext input buffer
+;     R21:R20 - Pointer to ciphertext output buffer
+;     R19:R18 - IV block pointer.
+;     R17:R16 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+;
 _DEACBCReceive:
-2:
+    ; Preserve the clobbered regs
+    push    r2
+    push    r3
+    push    r4
+    push    r5
+    push    r6
+    push    r7
+    push    r8
+    push    r9
+    push    r10
+    push    r11
+    push    r12
+    push    r13
+    push    r14
+    push    r15
+    push    r28
+    push    r29
+
+    ; Load the plaintext pointer to Y
+    movw    r28, r22
+    ; Load the ciphertext pointer to X
+    movw    r26, r20
+    ; Store the crypto primitive pointer in r23:r22
+    movw    r22, r30
+
+1:
     ; Load the plaintext block
     ldd     r7, Y+0
     ldd     r6, Y+1
@@ -402,30 +453,12 @@ _DEACBCReceive:
 
     ; Decrement the counter, repeat if more blocks.
     sbiw    r24, 1
-    brne    2b
+    brne    1b
 
-_DEACBCDone:
     ; Restore clobbered regs
     pop     r29
     pop     r28
-
-_CommonEpilogue:
-    pop     r15
-    pop     r14
-    pop     r13
-    pop     r12
-    pop     r11
-    pop     r10
-    pop     r9
-    pop     r8
-    pop     r7
-    pop     r6
-    pop     r5
-    pop     r4
-    pop     r3
-    pop     r2
-    eor     r1, r1
-    ret
+    rjmp    _CommonEpilogue
 
 
 ; This routine performs Triple DEA encryption in CBC mode using keying option 2: K1, K2, K1.
@@ -444,8 +477,7 @@ _CommonEpilogue:
 CryptoEncrypt2KTDEA_CBCSend:
     ldi     r31, pm_hi8(_Encrypt2KTDEA)
     ldi     r30, pm_lo8(_Encrypt2KTDEA)
-    set
-    rjmp    _DEACBC
+    rjmp    _DEACBCSend
 
 ; This routine performs Triple DEA encryption in CBC mode using keying option 2: K1, K2, K1.
 ; The CBC is operated in the "receive" mode: C = E(P) ^ IV; IV = P
@@ -463,6 +495,76 @@ CryptoEncrypt2KTDEA_CBCSend:
 CryptoEncrypt2KTDEA_CBCReceive:
     ldi     r31, pm_hi8(_Encrypt2KTDEA)
     ldi     r30, pm_lo8(_Encrypt2KTDEA)
-    clt
-    rjmp    _DEACBC
+    rjmp    _DEACBCReceive
 
+; This routine performs Triple DEA decryption in CBC mode using keying option 2: K1, K2, K1.
+; The CBC is operated in the "send" mode: C = E(P ^ IV); IV = C
+;
+; Input:
+;     R25:R24 - Count of blocks.
+;     R23:R22 - Pointer to plaintext input buffer
+;     R21:R20 - Pointer to ciphertext output buffer
+;     R19:R18 - IV block pointer.
+;     R17:R16 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+.global CryptoDecrypt2KTDEA_CBCSend
+CryptoDecrypt2KTDEA_CBCSend:
+    ldi     r31, pm_hi8(_Decrypt2KTDEA)
+    ldi     r30, pm_lo8(_Decrypt2KTDEA)
+    rjmp    _DEACBCSend
+
+; This routine performs Triple DEA decryption in CBC mode using keying option 2: K1, K2, K1.
+; The CBC is operated in the "receive" mode: C = E(P) ^ IV; IV = P
+;
+; Input:
+;     R25:R24 - Count of blocks.
+;     R23:R22 - Pointer to plaintext input buffer
+;     R21:R20 - Pointer to ciphertext output buffer
+;     R19:R18 - IV block pointer.
+;     R17:R16 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+.global CryptoDecrypt2KTDEA_CBCReceive
+CryptoDecrypt2KTDEA_CBCReceive:
+    ldi     r31, pm_hi8(_Decrypt2KTDEA)
+    ldi     r30, pm_lo8(_Decrypt2KTDEA)
+    rjmp    _DEACBCReceive
+
+; This routine performs Triple DEA encryption in CBC mode using keying option 1: K1, K2, K3.
+; The CBC is operated in the "send" mode: C = E(P ^ IV); IV = C
+;
+; Input:
+;     R25:R24 - Count of blocks.
+;     R23:R22 - Pointer to plaintext input buffer
+;     R21:R20 - Pointer to ciphertext output buffer
+;     R19:R18 - IV block pointer.
+;     R17:R16 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+.global CryptoEncrypt3KTDEA_CBCSend
+CryptoEncrypt3KTDEA_CBCSend:
+    ldi     r31, pm_hi8(_Encrypt3KTDEA)
+    ldi     r30, pm_lo8(_Encrypt3KTDEA)
+    rjmp    _DEACBCSend
+
+; This routine performs Triple DEA decryption in CBC mode using keying option 1: K1, K2, K3.
+; The CBC is operated in the "receive" mode: C = E(P) ^ IV; IV = P
+;
+; Input:
+;     R25:R24 - Count of blocks.
+;     R23:R22 - Pointer to plaintext input buffer
+;     R21:R20 - Pointer to ciphertext output buffer
+;     R19:R18 - IV block pointer.
+;     R17:R16 - Key block pointer.
+;
+; Returns:
+;     Nothing.
+.global CryptoEncrypt3KTDEA_CBCReceive
+CryptoEncrypt3KTDEA_CBCReceive:
+    ldi     r31, pm_hi8(_Decrypt3KTDEA)
+    ldi     r30, pm_lo8(_Decrypt3KTDEA)
+    rjmp    _DEACBCReceive
