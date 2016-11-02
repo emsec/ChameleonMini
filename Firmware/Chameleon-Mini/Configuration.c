@@ -31,7 +31,10 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 	{ .Id = CONFIG_MF_CLASSIC_4K_7B, 	.Text = "MF_CLASSIC_4K_7B" },
 #endif
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-    { .Id = CONFIG_MF_DESFIRE,    .Text = "MF_DESFIRE" },
+	{ .Id = CONFIG_MF_DESFIRE,			.Text = "MF_DESFIRE" },
+	{ .Id = CONFIG_MF_DESFIRE_EV1_2K,	.Text = "MF_DESFIRE_EV1_2K" },
+	{ .Id = CONFIG_MF_DESFIRE_EV1_4K,	.Text = "MF_DESFIRE_EV1_4K" },
+	{ .Id = CONFIG_MF_DESFIRE_EV1_8K,	.Text = "MF_DESFIRE_EV1_8K" },
 #endif
 
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
@@ -59,54 +62,54 @@ static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
 
 
 static const PROGMEM ConfigurationType ConfigurationTable[] = {
-    [CONFIG_NONE] = {
-        .CodecInitFunc = CodecInitDummy,
-        .CodecDeInitFunc = CodecDeInitDummy,
-        .CodecTaskFunc = CodecTaskDummy,
-        .ApplicationInitFunc = ApplicationInitDummy,
-        .ApplicationResetFunc = ApplicationResetDummy,
-        .ApplicationTaskFunc = ApplicationTaskDummy,
-        .ApplicationTickFunc = ApplicationTickDummy,
-        .ApplicationProcessFunc = ApplicationProcessDummy,
-        .ApplicationGetUidFunc = ApplicationGetUidDummy,
-        .ApplicationSetUidFunc = ApplicationSetUidDummy,
-        .UidSize = 0,
-        .MemorySize = 0,
-        .ReadOnly = true
-    },
+	[CONFIG_NONE] = {
+		.CodecInitFunc = CodecInitDummy,
+		.CodecDeInitFunc = CodecDeInitDummy,
+		.CodecTaskFunc = CodecTaskDummy,
+		.ApplicationInitFunc = ApplicationInitDummy,
+		.ApplicationResetFunc = ApplicationResetDummy,
+		.ApplicationTaskFunc = ApplicationTaskDummy,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = ApplicationProcessDummy,
+		.ApplicationGetUidFunc = ApplicationGetUidDummy,
+		.ApplicationSetUidFunc = ApplicationSetUidDummy,
+		.UidSize = 0,
+		.MemorySize = 0,
+		.ReadOnly = true
+	},
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
-    [CONFIG_MF_ULTRALIGHT] = {
-        .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
-        .CodecTaskFunc = ISO14443ACodecTask,
-        .ApplicationInitFunc = MifareUltralightAppInit,
-        .ApplicationResetFunc = MifareUltralightAppReset,
-        .ApplicationTaskFunc = MifareUltralightAppTask,
-        .ApplicationTickFunc = ApplicationTickDummy,
-        .ApplicationProcessFunc = MifareUltralightAppProcess,
-        .ApplicationGetUidFunc = MifareUltralightGetUid,
-        .ApplicationSetUidFunc = MifareUltralightSetUid,
-        .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
-        .MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
-        .ReadOnly = false
-    },
+	[CONFIG_MF_ULTRALIGHT] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareUltralightAppInit,
+		.ApplicationResetFunc = MifareUltralightAppReset,
+		.ApplicationTaskFunc = MifareUltralightAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareUltralightAppProcess,
+		.ApplicationGetUidFunc = MifareUltralightGetUid,
+		.ApplicationSetUidFunc = MifareUltralightSetUid,
+		.UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
+		.MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
+		.ReadOnly = false
+	},
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
-    [CONFIG_MF_CLASSIC_1K] = {
-        .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
-        .CodecTaskFunc = ISO14443ACodecTask,
-        .ApplicationInitFunc = MifareClassicAppInit1K,
-        .ApplicationResetFunc = MifareClassicAppReset,
-        .ApplicationTaskFunc = MifareClassicAppTask,
-        .ApplicationTickFunc = ApplicationTickDummy,
-        .ApplicationProcessFunc = MifareClassicAppProcess,
-        .ApplicationGetUidFunc = MifareClassicGetUid,
-        .ApplicationSetUidFunc = MifareClassicSetUid,
-        .UidSize = MIFARE_CLASSIC_UID_SIZE,
-        .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
-        .ReadOnly = false
-    },
+	[CONFIG_MF_CLASSIC_1K] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareClassicAppInit1K,
+		.ApplicationResetFunc = MifareClassicAppReset,
+		.ApplicationTaskFunc = MifareClassicAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareClassicAppProcess,
+		.ApplicationGetUidFunc = MifareClassicGetUid,
+		.ApplicationSetUidFunc = MifareClassicSetUid,
+		.UidSize = MIFARE_CLASSIC_UID_SIZE,
+		.MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+		.ReadOnly = false
+	},
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
 	[CONFIG_MF_CLASSIC_1K_7B] = {
@@ -126,60 +129,105 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	},
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
-    [CONFIG_MF_CLASSIC_4K] = {
-        .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
-        .CodecTaskFunc = ISO14443ACodecTask,
-        .ApplicationInitFunc = MifareClassicAppInit4K,
-        .ApplicationResetFunc = MifareClassicAppReset,
-        .ApplicationTaskFunc = MifareClassicAppTask,
-        .ApplicationTickFunc = ApplicationTickDummy,
-        .ApplicationProcessFunc = MifareClassicAppProcess,
-        .ApplicationGetUidFunc = MifareClassicGetUid,
-        .ApplicationSetUidFunc = MifareClassicSetUid,
-        .UidSize = MIFARE_CLASSIC_UID_SIZE,
-        .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
-        .ReadOnly = false
-    },
+	[CONFIG_MF_CLASSIC_4K] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareClassicAppInit4K,
+		.ApplicationResetFunc = MifareClassicAppReset,
+		.ApplicationTaskFunc = MifareClassicAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareClassicAppProcess,
+		.ApplicationGetUidFunc = MifareClassicGetUid,
+		.ApplicationSetUidFunc = MifareClassicSetUid,
+		.UidSize = MIFARE_CLASSIC_UID_SIZE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
-    [CONFIG_MF_CLASSIC_4K_7B] = {
-        .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
-        .CodecTaskFunc = ISO14443ACodecTask,
-        .ApplicationInitFunc = MifareClassicAppInit4K,
-        .ApplicationResetFunc = MifareClassicAppReset,
-        .ApplicationTaskFunc = MifareClassicAppTask,
-        .ApplicationTickFunc = ApplicationTickDummy,
-        .ApplicationProcessFunc = MifareClassicAppProcess,
-        .ApplicationGetUidFunc = MifareClassicGetUid,
-        .ApplicationSetUidFunc = MifareClassicSetUid,
-        .UidSize = ISO14443A_UID_SIZE_DOUBLE,
-        .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
-        .ReadOnly = false
-    },
+	[CONFIG_MF_CLASSIC_4K_7B] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareClassicAppInit4K,
+		.ApplicationResetFunc = MifareClassicAppReset,
+		.ApplicationTaskFunc = MifareClassicAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareClassicAppProcess,
+		.ApplicationGetUidFunc = MifareClassicGetUid,
+		.ApplicationSetUidFunc = MifareClassicSetUid,
+		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
 #endif
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-    [CONFIG_MF_DESFIRE] = {
-        .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
-        .CodecTaskFunc = ISO14443ACodecTask,
-        .ApplicationInitFunc = MifareDesfireAppInit,
-        .ApplicationResetFunc = MifareDesfireAppReset,
-        .ApplicationTaskFunc = MifareDesfireAppTask,
-        .ApplicationTickFunc = ApplicationTickDummy,
-        .ApplicationProcessFunc = MifareDesfireAppProcess,
-        .ApplicationGetUidFunc = MifareDesfireGetUid,
-        .ApplicationSetUidFunc = MifareDesfireSetUid,
-        .UidSize = ISO14443A_UID_SIZE_DOUBLE,
-        .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
-        .ReadOnly = false
-    },
+	[CONFIG_MF_DESFIRE] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareDesfireEV0AppInit,
+		.ApplicationResetFunc = MifareDesfireAppReset,
+		.ApplicationTaskFunc = MifareDesfireAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareDesfireAppProcess,
+		.ApplicationGetUidFunc = MifareDesfireGetUid,
+		.ApplicationSetUidFunc = MifareDesfireSetUid,
+		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
+	[CONFIG_MF_DESFIRE_EV1_2K] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareDesfire2kEV1AppInit,
+		.ApplicationResetFunc = MifareDesfireAppReset,
+		.ApplicationTaskFunc = MifareDesfireAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareDesfireAppProcess,
+		.ApplicationGetUidFunc = MifareDesfireGetUid,
+		.ApplicationSetUidFunc = MifareDesfireSetUid,
+		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
+	[CONFIG_MF_DESFIRE_EV1_4K] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareDesfire4kEV1AppInit,
+		.ApplicationResetFunc = MifareDesfireAppReset,
+		.ApplicationTaskFunc = MifareDesfireAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareDesfireAppProcess,
+		.ApplicationGetUidFunc = MifareDesfireGetUid,
+		.ApplicationSetUidFunc = MifareDesfireSetUid,
+		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
+	[CONFIG_MF_DESFIRE_EV1_4K] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
+		.CodecTaskFunc = ISO14443ACodecTask,
+		.ApplicationInitFunc = MifareDesfire8kEV1AppInit,
+		.ApplicationResetFunc = MifareDesfireAppReset,
+		.ApplicationTaskFunc = MifareDesfireAppTask,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = MifareDesfireAppProcess,
+		.ApplicationGetUidFunc = MifareDesfireGetUid,
+		.ApplicationSetUidFunc = MifareDesfireSetUid,
+		.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+		.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+		.ReadOnly = false
+	},
 #endif
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
-    [CONFIG_ISO14443A_SNIFF] = {
-    	.CodecInitFunc = ISO14443ACodecInit,
-    	.CodecDeInitFunc = ISO14443ACodecDeInit,
+	[CONFIG_ISO14443A_SNIFF] = {
+		.CodecInitFunc = ISO14443ACodecInit,
+		.CodecDeInitFunc = ISO14443ACodecDeInit,
 		.CodecTaskFunc = ISO14443ACodecTask,
 		.ApplicationInitFunc = ApplicationInitDummy,
 		.ApplicationResetFunc = ApplicationResetDummy,
@@ -191,13 +239,13 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.UidSize = 0,
 		.MemorySize = 0,
 		.ReadOnly = true
-    },
+	},
 #endif
 #ifdef CONFIG_ISO14443A_READER_SUPPORT
-    [CONFIG_ISO14443A_READER] = {
-    	.CodecInitFunc = Reader14443ACodecInit,
-    	.CodecDeInitFunc = Reader14443ACodecDeInit,
-    	.CodecTaskFunc = Reader14443ACodecTask,
+	[CONFIG_ISO14443A_READER] = {
+		.CodecInitFunc = Reader14443ACodecInit,
+		.CodecDeInitFunc = Reader14443ACodecDeInit,
+		.CodecTaskFunc = Reader14443ACodecTask,
 		.ApplicationInitFunc = Reader14443AAppInit,
 		.ApplicationResetFunc = Reader14443AAppReset,
 		.ApplicationTaskFunc = Reader14443AAppTask,
@@ -208,7 +256,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.UidSize = 0,
 		.MemorySize = 0,
 		.ReadOnly = false
-    },
+	},
 #endif
 };
 
@@ -216,10 +264,10 @@ ConfigurationType ActiveConfiguration;
 
 void ConfigurationInit(void)
 {
-    memcpy_P(&ActiveConfiguration,
-            &ConfigurationTable[CONFIG_NONE], sizeof(ConfigurationType));
+	memcpy_P(&ActiveConfiguration,
+			&ConfigurationTable[CONFIG_NONE], sizeof(ConfigurationType));
 
-    ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
+	ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
 }
 
 void ConfigurationSetById( ConfigurationEnum Configuration )
@@ -230,12 +278,12 @@ void ConfigurationSetById( ConfigurationEnum Configuration )
 
 	GlobalSettings.ActiveSettingPtr->Configuration = Configuration;
 
-    /* Copy struct from PROGMEM to RAM */
-    memcpy_P(&ActiveConfiguration,
-            &ConfigurationTable[Configuration], sizeof(ConfigurationType));
+	/* Copy struct from PROGMEM to RAM */
+	memcpy_P(&ActiveConfiguration,
+			&ConfigurationTable[Configuration], sizeof(ConfigurationType));
 
-    CodecInit();
-    ApplicationInit();
+	CodecInit();
+	ApplicationInit();
 }
 
 void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
@@ -245,15 +293,15 @@ void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
 
 bool ConfigurationSetByName(const char* Configuration)
 {
-    MapIdType Id;
+	MapIdType Id;
 
-    if (MapTextToId(ConfigurationMap, sizeof(ConfigurationMap)/sizeof(*ConfigurationMap), Configuration, &Id)) {
-    	ConfigurationSetById(Id);
-    	LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX-1));
-    	return true;
-    } else {
-    	return false;
-    }
+	if (MapTextToId(ConfigurationMap, sizeof(ConfigurationMap)/sizeof(*ConfigurationMap), Configuration, &Id)) {
+		ConfigurationSetById(Id);
+		LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX-1));
+		return true;
+	} else {
+		return false;
+	}
 }
 
 void ConfigurationGetList(char* List, uint16_t BufferSize)

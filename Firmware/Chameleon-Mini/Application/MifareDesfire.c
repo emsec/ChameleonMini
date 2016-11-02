@@ -57,13 +57,12 @@ static void DebugPrintP(const char *fmt, ...)
 #define MEM_UID_BCC2_ADDRESS        0x08
 
 #define STATUS_FRAME_SIZE           (1 * 8) /* Bits */
-#define ATS_FRAME_SIZE              6 /* Bytes */
 
-#define ATS_TL_BYTE 0x06 /* TL: ATS length, 6 bytes */
-#define ATS_T0_BYTE 0x75 /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
-#define ATS_TA_BYTE 0x00 /* TA: Only the lowest bit rate is supported */
-#define ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
-#define ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
+#define DESFIRE_EV0_ATS_TL_BYTE 0x06 /* TL: ATS length, 6 bytes */
+#define DESFIRE_EV0_ATS_T0_BYTE 0x75 /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
+#define DESFIRE_EV0_ATS_TA_BYTE 0x00 /* TA: Only the lowest bit rate is supported */
+#define DESFIRE_EV0_ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
+#define DESFIRE_EV0_ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
 
 #define GET_LE16(p) \
     ((uint16_t)((p)[0] | ((p)[1] << 8)))
@@ -166,6 +165,13 @@ typedef enum {
 #define DESFIRE_NOT_AUTHENTICATED 0xFF
 
 typedef enum {
+    DESFIRE_AUTH_LEGACY,
+    DESFIRE_AUTH_ISO_2KTDEA,
+    DESFIRE_AUTH_ISO_3KTDEA,
+    DESFIRE_AUTH_AES,
+} DesfireAuthType;
+
+typedef enum {
     DESFIRE_IDLE,
     /* Handling GetVersion's multiple frames */
     DESFIRE_GET_VERSION2,
@@ -211,6 +217,15 @@ static uint16_t SelectedAppKeyAddress; /* in FRAM */
 static void ReadBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count);
 static void WriteBlockBytes(void* Buffer, uint8_t StartBlock, uint16_t Count);
 
+static uint8_t IsEV1Enabled(void)
+{
+    return Picc.HwVersionMajor >= MIFARE_DESFIRE_HW_MAJOR_EV1;
+}
+
+static uint8_t IsEV2Enabled(void)
+{
+    return Picc.HwVersionMajor >= MIFARE_DESFIRE_HW_MAJOR_EV2;
+}
 
 static void SynchronizeAppDir(void)
 {
@@ -491,6 +506,23 @@ static void FactoryFormatPiccEV0(void)
     FormatPicc();
 }
 
+static void FactoryFormatPiccEV1(uint8_t StorageSize)
+{
+    /* Wipe PICC data */
+    memset(&Picc, 0xFF, sizeof(Picc));
+    memset(&Picc.Uid[0], 0x00, MIFARE_DESFIRE_UID_SIZE);
+    /* Initialize params to look like EV1 */
+    Picc.StorageSize = StorageSize;
+    Picc.HwVersionMajor = MIFARE_DESFIRE_HW_MAJOR_EV1;
+    Picc.HwVersionMinor = MIFARE_DESFIRE_HW_MINOR_EV1;
+    Picc.SwVersionMajor = MIFARE_DESFIRE_SW_MAJOR_EV1;
+    Picc.SwVersionMinor = MIFARE_DESFIRE_SW_MINOR_EV1;
+    /* Initialize the root app data */
+    CreatePiccApp();
+    /* Continue with user data initialization */
+    FormatPicc();
+}
+
 
 static uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize)
 {
@@ -577,6 +609,12 @@ static uint8_t DeleteFile(uint8_t FileNum)
     return STATUS_OPERATION_OK;
 }
 
+/*
+ *
+ * The following section implements:
+ * DESFire EV0 / D40 specific commands
+ *
+ */
 
 /*
  * DESFire general commands
@@ -1361,11 +1399,13 @@ static uint16_t EV0CmdAbortTransaction(uint8_t* Buffer, uint16_t ByteCount)
 
 static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
 {
+    /* Handle EV0 commands */
     switch (Buffer[0]) {
     case CMD_GET_VERSION:
         return EV0CmdGetVersion1(Buffer, ByteCount);
     case CMD_FORMAT_PICC:
         return EV0CmdFormatPicc(Buffer, ByteCount);
+
     case CMD_AUTHENTICATE:
         return EV0CmdAuthenticate2KTDEA1(Buffer, ByteCount);
     case CMD_CHANGE_KEY:
@@ -1374,6 +1414,7 @@ static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
         return EV0CmdGetKeySettings(Buffer, ByteCount);
     case CMD_CHANGE_KEY_SETTINGS:
         return EV0CmdChangeKeySettings(Buffer, ByteCount);
+
     case CMD_GET_APPLICATION_IDS:
         return EV0CmdGetApplicationIds1(Buffer, ByteCount);
     case CMD_CREATE_APPLICATION:
@@ -1382,6 +1423,7 @@ static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
         return EV0CmdDeleteApplication(Buffer, ByteCount);
     case CMD_SELECT_APPLICATION:
         return EV0CmdSelectApplication(Buffer, ByteCount);
+
     case CMD_CREATE_STANDARD_DATA_FILE:
         return EV0CmdCreateStandardDataFile(Buffer, ByteCount);
     case CMD_CREATE_BACKUP_DATA_FILE:
@@ -1400,10 +1442,49 @@ static uint16_t MifareDesfireProcessIdle(uint8_t* Buffer, uint16_t ByteCount)
         return EV0CmdGetFileSettings(Buffer, ByteCount);
     case CMD_CHANGE_FILE_SETTINGS:
         return EV0CmdChangeFileSettings(Buffer, ByteCount);
+
+    case CMD_READ_DATA:
+        return EV0CmdReadData(Buffer, ByteCount);
+    case CMD_WRITE_DATA:
+        return EV0CmdWriteData(Buffer, ByteCount);
+
+    case CMD_GET_VALUE:
+        return EV0CmdGetValue(Buffer, ByteCount);
+    case CMD_CREDIT:
+        return EV0CmdCredit(Buffer, ByteCount);
+    case CMD_DEBIT:
+        return EV0CmdDebit(Buffer, ByteCount);
+    case CMD_LIMITED_CREDIT:
+        return EV0CmdLimitedCredit(Buffer, ByteCount);
+
+    case CMD_READ_RECORDS:
+        return EV0CmdReadRecords(Buffer, ByteCount);
+    case CMD_WRITE_RECORD:
+        return EV0CmdWriteRecord(Buffer, ByteCount);
+    case CMD_CLEAR_RECORD_FILE:
+        return EV0CmdClearRecords(Buffer, ByteCount);
+
+    case CMD_COMMIT_TRANSACTION:
+        return EV0CmdCommitTransaction(Buffer, ByteCount);
+    case CMD_ABORT_TRANSACTION:
+        return EV0CmdAbortTransaction(Buffer, ByteCount);
+
     default:
-        Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
+        break;
     }
+
+    /* Handle EV1 commands, if enabled */
+    if (IsEV1Enabled()) {
+        /* To be implemented */
+    }
+
+    /* Handle EV2 commands, if enabled */
+    if (IsEV2Enabled()) {
+        /* To be implemented */
+    }
+
+    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 static uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount)
@@ -1527,14 +1608,15 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
          */
         Iso144434CardID = Buffer[1] & 0x0F;
 
-        Buffer[0] = ATS_TL_BYTE;
-        Buffer[1] = ATS_T0_BYTE;
-        Buffer[2] = ATS_TA_BYTE;
-        Buffer[3] = ATS_TB_BYTE;
-        Buffer[4] = ATS_TC_BYTE;
-        Buffer[5] = 0x00; /* T1: dummy value for historical bytes */
+        Buffer[0] = DESFIRE_EV0_ATS_TL_BYTE;
+        Buffer[1] = DESFIRE_EV0_ATS_T0_BYTE;
+        Buffer[2] = DESFIRE_EV0_ATS_TA_BYTE;
+        Buffer[3] = DESFIRE_EV0_ATS_TB_BYTE;
+        Buffer[4] = DESFIRE_EV0_ATS_TC_BYTE;
+        Buffer[5] = 0x80; /* T1: dummy value for historical bytes */
+
         Iso144434State = ISO14443_4_STATE_ACTIVE;
-        ByteCount = ATS_FRAME_SIZE;
+        ByteCount = Buffer[0];
         break;
 
     case ISO14443_4_STATE_ACTIVE:
@@ -1722,7 +1804,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
 
 extern void RunTDEATests(void);
 
-void MifareDesfireAppInit(void)
+void MifareDesfireEV0AppInit(void)
 {
     RunTDEATests();
 
@@ -1739,6 +1821,41 @@ void MifareDesfireAppInit(void)
     }
     CardCapacityBlocks = GetCardCapacityBlocks();
     /* The rest is handled in reset */
+}
+
+static void MifareDesfireEV1AppInit(uint8_t StorageSize)
+{
+    RunTDEATests();
+
+    /* Init lower layers: nothing for now */
+
+    /* Init DESFire junk */
+    ReadBlockBytes(&Picc, MIFARE_DESFIRE_PICC_INFO_BLOCK_ID, sizeof(Picc));
+    if (Picc.Uid[0] == 0xFF && Picc.Uid[1] == 0xFF && Picc.Uid[2] == 0xFF && Picc.Uid[3] == 0xFF) {
+        DEBUG_PRINT("\r\nFactory resetting the device\r\n");
+        FactoryFormatPiccEV1(StorageSize);
+    }
+    else {
+        ReadBlockBytes(&AppDir, MIFARE_DESFIRE_APP_DIR_BLOCK_ID, sizeof(AppDir));
+    }
+    CardCapacityBlocks = GetCardCapacityBlocks();
+    /* The rest is handled in reset */
+
+}
+
+void MifareDesfire2kEV1AppInit(void)
+{
+    MifareDesfireEV1AppInit(MIFARE_DESFIRE_STORAGE_SIZE_2K);
+}
+
+void MifareDesfire4kEV1AppInit(void)
+{
+    MifareDesfireEV1AppInit(MIFARE_DESFIRE_STORAGE_SIZE_4K);
+}
+
+void MifareDesfire8kEV1AppInit(void)
+{
+    MifareDesfireEV1AppInit(MIFARE_DESFIRE_STORAGE_SIZE_8K);
 }
 
 void MifareDesfireAppReset(void)

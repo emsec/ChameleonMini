@@ -177,7 +177,10 @@ enum MifareDesfireCardLayout {
     MIFARE_DESFIRE_FIRST_FREE_BLOCK_ID,
 };
 
-void MifareDesfireAppInit(void);
+void MifareDesfireEV0AppInit(void);
+void MifareDesfire2kEV1AppInit(void);
+void MifareDesfire4kEV1AppInit(void);
+void MifareDesfire8kEV1AppInit(void);
 void MifareDesfireAppReset(void);
 void MifareDesfireAppTask(void);
 
