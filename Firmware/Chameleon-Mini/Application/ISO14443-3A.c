@@ -7,21 +7,17 @@
 
 #include "ISO14443-3A.h"
 
-#define CRC_INIT		0x6363
-#define CRC_INIT_R		0xC6C6 /* Bit reversed */
-
 #define USE_HW_CRC
 
 #ifdef USE_HW_CRC
 
-uint16_t ISO14443AComputeCRCA(const void* Buffer, uint16_t ByteCount)
+uint16_t ISO14443AUpdateCRCA(const void* Buffer, uint16_t ByteCount, uint16_t Checksum)
 {
-    uint16_t Checksum;
     const uint8_t* DataPtr = (const uint8_t*) Buffer;
 
     CRC.CTRL = CRC_RESET0_bm;
-    CRC.CHECKSUM1 = (CRC_INIT_R >> 8) & 0xFF;
-    CRC.CHECKSUM0 = (CRC_INIT_R >> 0) & 0xFF;
+    CRC.CHECKSUM1 = BitReverseByte(Checksum >> 0);
+    CRC.CHECKSUM0 = BitReverseByte(Checksum >> 8);
     CRC.CTRL = CRC_SOURCE_IO_gc;
 
     while(ByteCount--) {
@@ -39,9 +35,8 @@ uint16_t ISO14443AComputeCRCA(const void* Buffer, uint16_t ByteCount)
 
 #include <util/crc16.h>
 
-uint16_t ISO14443AComputeCRCA(const void* Buffer, uint16_t ByteCount)
+uint16_t ISO14443AUpdateCRCA(const void* Buffer, uint16_t ByteCount, uint16_t Checksum)
 {
-    uint16_t Checksum = CRC_INIT;
     const uint8_t* DataPtr = (const uint8_t*) Buffer;
 
     while(ByteCount--) {
@@ -53,6 +48,11 @@ uint16_t ISO14443AComputeCRCA(const void* Buffer, uint16_t ByteCount)
 }
 
 #endif
+
+uint16_t ISO14443AComputeCRCA(const void* Buffer, uint16_t ByteCount)
+{
+    return ISO14443AUpdateCRCA(Buffer, ByteCount, ISO14443A_CRCA_INIT);
+}
 
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount)
 {

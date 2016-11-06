@@ -42,10 +42,19 @@
 #define ISO14443A_UID0_CT           0x88
 
 #define ISO14443A_CRCA_SIZE         2
+#define ISO14443A_CRCA_INIT         0x6363
 
 #define ISO14443A_CALC_BCC(ByteBuffer) \
     ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
 
+/** Update a CRCA checksum according to the ISO 14443 standard.
+ *
+ * \param Buffer Pointer to the start of the buffer.
+ * \param ByteCount Count of bytes to process.
+ * \param Checksum The CRCA checksum to be updated.
+ * \return The updated CRCA checksum.
+ */
+uint16_t ISO14443AUpdateCRCA(const void* Buffer, uint16_t ByteCount, uint16_t Checksum);
 /** Compute a CRCA checksum according to the ISO 14443 standard.
  *
  * \param Buffer Pointer to the start of the buffer.
