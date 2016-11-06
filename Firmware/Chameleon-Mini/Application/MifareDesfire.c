@@ -14,6 +14,13 @@
 #include "ISO14443-4.h"
 #include "../Codec/ISO14443-2A.h"
 
+/* 
+ * Shared variables
+ */
+
+uint8_t SessionKey[DESFIRE_CRYPTO_SESSION_KEY_SIZE];
+uint8_t SessionIV[DESFIRE_CRYPTO_IV_SIZE];
+
 // #define DEBUG_THIS
 
 #ifdef DEBUG_THIS
@@ -138,22 +145,19 @@ typedef union {
     struct {
         uint8_t NextIndex;
     } GetApplicationIds;
-    struct {
-        uint8_t BlockId;
-        uint8_t Offset;
-        uint16_t RemainingBytes;
-    } XxxDataFile;
 } DesfireSavedCommandStateType;
 
-/* 
- * Shared variables
- */
+typedef enum {
+    DESFIRE_IDLE,
+    DESFIRE_GET_VERSION2,
+    DESFIRE_GET_VERSION3,
+    DESFIRE_GET_APPLICATION_IDS2,
+    DESFIRE_AUTHENTICATE2,
+    DESFIRE_READ_DATA_FILE,
+} DesfireStateType;
 
-DesfireStateType DesfireState;
-uint8_t AuthenticatedWithKey;
-Desfire2KTDEAKeyType SessionKey;
-uint8_t SessionIV[CRYPTO_DES_BLOCK_SIZE];
-
+static DesfireStateType DesfireState;
+static uint8_t AuthenticatedWithKey;
 static DesfireSavedCommandStateType DesfireCommandState;
 
 /*
@@ -764,13 +768,59 @@ static uint16_t EV0CmdChangeFileSettings(uint8_t* Buffer, uint16_t ByteCount)
  * DESFire data manipulation commands
  */
 
+#define VALIDATE_ACCESS_READWRITE   (1 << 0)
+#define VALIDATE_ACCESS_WRITE       (1 << 1)
+#define VALIDATE_ACCESS_READ        (1 << 2)
+
+#define VALIDATED_ACCESS_DENIED 0
+#define VALIDATED_ACCESS_GRANTED 1
+#define VALIDATED_ACCESS_GRANTED_PLAINTEXT 2
+
+static uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask)
+{
+    uint8_t RequiredKeyId;
+    bool HaveFreeAccess = false;
+
+    AccessRights >>= 4;
+    while (CheckMask) {
+        if (CheckMask & 1) {
+            RequiredKeyId = AccessRights & 0x0F;
+            if (AuthenticatedWithKey == RequiredKeyId) {
+                return VALIDATED_ACCESS_GRANTED;
+            }
+            if (RequiredKeyId == DESFIRE_ACCESS_FREE) {
+                HaveFreeAccess = true;
+            }
+        }
+        CheckMask >>= 1;
+        AccessRights >>= 4;
+    }
+    return HaveFreeAccess ? VALIDATED_ACCESS_GRANTED_PLAINTEXT : VALIDATED_ACCESS_DENIED;
+}
+
+static uint16_t EV0ReadDataFile(uint8_t* Buffer, uint16_t ByteCount)
+{
+    /* NOTE: incoming ByteCount is not verified here for now */
+
+    ByteCount = ReadDataFileTransfer(&Buffer[1]);
+    if (ByteCount & DESFIRE_XFER_LAST_BLOCK) {
+        ByteCount &= 0xFF;
+        Buffer[0] = STATUS_OPERATION_OK;
+        DesfireState = DESFIRE_IDLE;
+    }
+    else {
+        Buffer[0] = STATUS_ADDITIONAL_FRAME;
+        DesfireState = DESFIRE_READ_DATA_FILE;
+    }
+    return ByteCount + 1;
+}
+
 static uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount)
 {
     uint8_t Status;
     uint8_t FileNum;
     uint16_t Offset;
     uint16_t Length;
-    uint8_t RequiredKeyId1, RequiredKeyId2;
     uint8_t CommSettings;
 
     /* Validate command length */
@@ -778,9 +828,35 @@ static uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount)
         Status = STATUS_LENGTH_ERROR;
         goto exit_with_status;
     }
+    ByteCount = DESFIRE_STATUS_RESPONSE_SIZE;
     FileNum = Buffer[1];
     /* Validate file number */
     if (FileNum >= DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        goto exit_with_status;
+    }
+
+    Status = SelectFile(FileNum);
+    if (Status != STATUS_OPERATION_OK) {
+        goto exit_with_status;
+    }
+
+    CommSettings = GetSelectedFileCommSettings();
+    /* Verify authentication: read or read&write required */
+    switch (ValidateAuthentication(GetSelectedFileAccessRights(), VALIDATE_ACCESS_READWRITE|VALIDATE_ACCESS_READ)) {
+    case VALIDATED_ACCESS_DENIED:
+        Status = STATUS_AUTHENTICATION_ERROR;
+        goto exit_with_status;
+    case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+        CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        /* Fall through */
+    case VALIDATED_ACCESS_GRANTED:
+        /* Carry on */
+        break;
+    }
+
+    /* Validate the file type */
+    if (GetSelectedFileType() != DESFIRE_FILE_STANDARD_DATA && GetSelectedFileType() != DESFIRE_FILE_BACKUP_DATA) {
         Status = STATUS_PARAMETER_ERROR;
         goto exit_with_status;
     }
@@ -792,36 +868,16 @@ static uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount)
         goto exit_with_status;
     }
 
-    Status = SelectFile(FileNum);
-    if (Status != STATUS_OPERATION_OK) {
+    /* Setup and start the transfer */
+    Status = ReadDataFileSetup(CommSettings, Offset, Length);
+    if (Status) {
         goto exit_with_status;
     }
-
-    CommSettings = GetSelectedFileCommSettings();
-    /* Verify authentication: read or read&write required */
-    RequiredKeyId1 = (GetSelectedFileAccessRights() >> DESFIRE_READWRITE_ACCESS_RIGHTS_SHIFT) & 0x0F;
-    RequiredKeyId2 = (GetSelectedFileAccessRights() >> DESFIRE_READ_ACCESS_RIGHTS_SHIFT) & 0x0F;
-    if (AuthenticatedWithKey == DESFIRE_NOT_AUTHENTICATED) {
-        /* Require free access */
-        if (RequiredKeyId1 != DESFIRE_ACCESS_FREE && RequiredKeyId2 != DESFIRE_ACCESS_FREE) {
-            return STATUS_AUTHENTICATION_ERROR;
-        }
-        /* Force plain comms, as we have no key anyways */
-        CommSettings = DESFIRE_COMMS_PLAINTEXT;
-    }
-    else {
-        if (AuthenticatedWithKey != RequiredKeyId1 && AuthenticatedWithKey != RequiredKeyId2) {
-            return STATUS_AUTHENTICATION_ERROR;
-        }
-        /* We have a valid key, so we can CMAC/encipher as required by comms settings */
-    }
-
-    /* TODO: setup and start the transfer */
-    Status = STATUS_BOUNDARY_ERROR;
+    return EV0ReadDataFile(Buffer, 1);
 
 exit_with_status:
     Buffer[0] = Status;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    return ByteCount;
 }
 
 static uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount)
@@ -999,6 +1055,8 @@ static uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount)
         return EV0CmdGetApplicationIds2(Buffer, ByteCount);
     case DESFIRE_AUTHENTICATE2:
         return EV0CmdAuthenticate2KTDEA2(Buffer, ByteCount);
+    case DESFIRE_READ_DATA_FILE:
+        return EV0ReadDataFile(Buffer, ByteCount);
     default:
         /* Should not happen. */
         Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;

@@ -316,7 +316,7 @@ _DEACBCSend:
     ; Call the primitive
     movw    r30, r22
     icall
-    
+
     ; Store the ciphertext
     ; It will be reused as the IV for the next block, if any
     st      X+, r7
@@ -422,7 +422,7 @@ _DEACBCReceive:
     eor     r2, r10
     eor     r1, r9
     eor     r0, r8
-    ; Load the plaintext block
+    ; Reload the plaintext block
     ld      r15, Y+
     ld      r14, Y+
     ld      r13, Y+

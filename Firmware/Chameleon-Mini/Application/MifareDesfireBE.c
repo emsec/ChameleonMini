@@ -67,11 +67,34 @@ static DesfireAppDirType AppDir;
 static SelectedAppCacheType SelectedApp;
 static SelectedFileCacheType SelectedFile;
 
+typedef uint16_t (*TransferSourceFuncType)(uint8_t* Buffer, uint8_t MaxCount);
+typedef uint16_t (*TransferFilterFuncType)(uint8_t* Buffer);
+
 /* Stored transfer state for all transfers */
 typedef union {
     struct {
         uint8_t NextIndex;
     } GetApplicationIds;
+    struct {
+        struct {
+            TransferSourceFuncType Func;
+            uint16_t Pointer; /* in FRAM */
+            uint16_t BytesLeft;
+        } Source;
+        struct {
+            TransferFilterFuncType Func;
+            union {
+                struct {
+                    bool FirstPaddingBitSet;
+                    bool SendMACNext;
+                } TDEAMAC;
+                struct {
+                    bool FirstPaddingBitSet;
+                    uint16_t Checksum;
+                } TDEAEncrypt;
+            } Params;
+        } Filter;
+    } ReadData;
 } TransferStateType;
 
 static TransferStateType TransferState;
@@ -505,6 +528,32 @@ uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessR
     return Status;
 }
 
+uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights,
+    int32_t LowerLimit, int32_t UpperLimit, int32_t Value, bool LimitedCreditEnabled)
+{
+    uint8_t Status;
+    uint8_t BlockId;
+
+    /* Grab storage */
+    Status = AllocateFileStorage(FileNum, 1, &BlockId);
+    if (Status == STATUS_OPERATION_OK) {
+        /* Fill in the control structure and write it */
+        memset(&SelectedFile, 0, sizeof(SelectedFile));
+        SelectedFile.File.Type = DESFIRE_FILE_VALUE_DATA;
+        SelectedFile.File.CommSettings = CommSettings;
+        SelectedFile.File.AccessRights = AccessRights;
+        SelectedFile.File.ValueFile.LowerLimit = LowerLimit;
+        SelectedFile.File.ValueFile.UpperLimit = UpperLimit;
+        SelectedFile.File.ValueFile.CleanValue = Value;
+        SelectedFile.File.ValueFile.DirtyValue = Value;
+        SelectedFile.File.ValueFile.LimitedCreditEnabled = LimitedCreditEnabled;
+        SelectedFile.File.ValueFile.PreviousDebit = 0;
+        WriteBlockBytes(&SelectedFile.File, BlockId, sizeof(SelectedFile.File));
+    }
+    /* Done */
+    return Status;
+}
+
 uint8_t DeleteFile(uint8_t FileNum)
 {
     uint8_t FileIndexBlock;
@@ -523,7 +572,7 @@ uint8_t DeleteFile(uint8_t FileNum)
 }
 
 /*
- * File management: transaction realted routines
+ * File management: transaction related routines
  */
 
 static void StartTransaction(void)
@@ -582,7 +631,6 @@ static void FinaliseTransaction(bool Rollback)
 
     if (!Picc.TransactionStarted) 
         return;
-    /* For each dirty file, copy contents forward */
     for (FileNum = 0; FileNum < DESFIRE_MAX_FILES; ++FileNum) {
         if (DirtyFlags & (1 << FileNum)) {
             SynchFileCopies(FileNum, Rollback);
@@ -605,8 +653,6 @@ void AbortTransaction(void)
  * File management: data transfer related routines
  */
 
-
-
 uint8_t SelectFile(uint8_t FileNum)
 {
     SelectedFile.Num = FileNum;
@@ -626,6 +672,181 @@ uint8_t GetSelectedFileCommSettings(void)
 uint16_t GetSelectedFileAccessRights(void)
 {
     return SelectedFile.File.AccessRights;
+}
+
+static uint16_t ReadDataEepromSource(uint8_t* Buffer, uint8_t MaxCount)
+{
+    uint16_t BytesLeft = TransferState.ReadData.Source.BytesLeft;
+    uint16_t ToXfer;
+    bool LastBlock;
+
+    if (BytesLeft > MaxCount) {
+        ToXfer = MaxCount;
+        LastBlock = false;
+    }
+    else {
+        ToXfer = BytesLeft;
+        LastBlock = true;
+    }
+
+    MemoryReadBlock(Buffer, TransferState.ReadData.Source.Pointer, ToXfer);
+    TransferState.ReadData.Source.Pointer += ToXfer;
+    BytesLeft -= ToXfer;
+    TransferState.ReadData.Source.BytesLeft = BytesLeft;
+
+    if (LastBlock) {
+        ToXfer |= DESFIRE_XFER_LAST_BLOCK;
+    }
+    return ToXfer;
+}
+
+static void PadBufferForTDEA(uint8_t* Buffer, uint8_t Count, bool FirstPaddingBitSet)
+{
+    uint8_t PaddingByte = FirstPaddingBitSet ? 0x80 : 0x00;
+    uint8_t PaddingSize = CRYPTO_DES_BLOCK_SIZE - (Count & (CRYPTO_DES_BLOCK_SIZE - 1));
+    uint8_t i;
+
+    for (i = Count; i < Count + PaddingSize; ++i) {
+        Buffer[i] = PaddingByte;
+        PaddingByte = 0x00;
+    }
+}
+
+static uint16_t DataTransferFilterPlain(uint8_t* Buffer)
+{
+    return ReadDataEepromSource(Buffer, DESFIRE_MAX_PAYLOAD_SIZE);
+}
+
+static uint16_t DataTransferFilterMAC(uint8_t* Buffer)
+{
+    uint16_t ToXfer;
+    bool LastBlock;
+    uint8_t TempBuffer[DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE];
+    uint8_t XferBlocks;
+
+    /* Meaning, we have to send MAC */
+    if (TransferState.ReadData.Filter.Params.TDEAMAC.SendMACNext) {
+        memcpy(&Buffer[0], &SessionIV[0], 4);
+        return 4 | DESFIRE_XFER_LAST_BLOCK;
+    }
+
+    ToXfer = ReadDataEepromSource(Buffer, DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE);
+    LastBlock = !!(ToXfer & DESFIRE_XFER_LAST_BLOCK);
+    ToXfer &= 0xFF;
+
+    if (LastBlock) {
+        PadBufferForTDEA(Buffer, ToXfer, TransferState.ReadData.Filter.Params.TDEAMAC.FirstPaddingBitSet);
+    }
+
+    XferBlocks = ((uint8_t)ToXfer + CRYPTO_DES_BLOCK_SIZE - 1) / CRYPTO_DES_BLOCK_SIZE;
+    CryptoEncrypt2KTDEA_CBCSend(XferBlocks, Buffer, TempBuffer, SessionIV, SessionKey);
+
+    if (LastBlock) {
+        /* MAC is the first 4 bytes of the IV */
+        if (ToXfer < DESFIRE_MAX_PAYLOAD_SIZE - 4) {
+            /* Fits in the current frame */
+            memcpy(&Buffer[ToXfer], &SessionIV[0], 4);
+            ToXfer = (ToXfer + 4) | DESFIRE_XFER_LAST_BLOCK;
+        }
+        else {
+            /* Doesn't fit -- send in the next frame */
+            TransferState.ReadData.Filter.Params.TDEAMAC.SendMACNext = true;
+        }
+    }
+
+    return ToXfer;
+}
+
+static uint16_t DataTransferFilterEncrypt(uint8_t* Buffer)
+{
+    uint16_t ToXfer;
+    bool LastBlock;
+    uint8_t XferBlocks;
+
+    ToXfer = ReadDataEepromSource(Buffer, DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE);
+    LastBlock = !!(ToXfer & DESFIRE_XFER_LAST_BLOCK);
+    ToXfer &= 0xFF;
+
+    /* TODO: Compute CRC! */
+
+    if (LastBlock) {
+        PadBufferForTDEA(Buffer, ToXfer, TransferState.ReadData.Filter.Params.TDEAEncrypt.FirstPaddingBitSet);
+    }
+
+    XferBlocks = ((uint8_t)ToXfer + CRYPTO_DES_BLOCK_SIZE - 1) / CRYPTO_DES_BLOCK_SIZE;
+    ToXfer = XferBlocks * CRYPTO_DES_BLOCK_SIZE;
+    CryptoEncrypt2KTDEA_CBCSend(XferBlocks, Buffer, Buffer, SessionIV, SessionKey);
+
+    if (LastBlock) {
+        ToXfer |= DESFIRE_XFER_LAST_BLOCK;
+    }
+    return ToXfer;
+}
+
+uint8_t ReadDataFilterSetup(uint8_t CommSettings, bool FirstPaddingBitSet)
+{
+    switch (CommSettings) {
+    case DESFIRE_COMMS_PLAINTEXT:
+        TransferState.ReadData.Filter.Func = &DataTransferFilterPlain;
+        break;
+
+    case DESFIRE_COMMS_PLAINTEXT_MAC:
+        TransferState.ReadData.Filter.Func = &DataTransferFilterMAC;
+        TransferState.ReadData.Filter.Params.TDEAMAC.FirstPaddingBitSet = FirstPaddingBitSet;
+        TransferState.ReadData.Filter.Params.TDEAMAC.SendMACNext = false;
+        memset(SessionIV, 0, sizeof(SessionIV));
+        break;
+
+    case DESFIRE_COMMS_CIPHERTEXT_DES:
+        TransferState.ReadData.Filter.Func = &DataTransferFilterEncrypt;
+        TransferState.ReadData.Filter.Params.TDEAEncrypt.FirstPaddingBitSet = FirstPaddingBitSet;
+        TransferState.ReadData.Filter.Params.TDEAEncrypt.Checksum = ISO14443A_CRCA_INIT;
+        memset(SessionIV, 0, sizeof(SessionIV));
+        break;
+
+    default:
+        return STATUS_PARAMETER_ERROR;
+    }
+    return STATUS_OPERATION_OK;
+}
+
+uint16_t ReadDataFileTransfer(uint8_t* Buffer)
+{
+    return TransferState.ReadData.Filter.Func(Buffer);
+}
+
+uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length)
+{
+    bool FirstPaddingBitSet;
+
+    /* Setup data source */
+    TransferState.ReadData.Source.Func = &ReadDataEepromSource;
+    if (!Length) {
+        FirstPaddingBitSet = true;
+        TransferState.ReadData.Source.BytesLeft = SelectedFile.File.StandardFile.FileSize - Offset;
+    }
+    else {
+        FirstPaddingBitSet = false;
+        TransferState.ReadData.Source.BytesLeft = Length;
+    }
+    TransferState.ReadData.Source.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * DESFIRE_EEPROM_BLOCK_SIZE + Offset;
+    /* Setup data filter */
+    return ReadDataFilterSetup(CommSettings, FirstPaddingBitSet);
+}
+
+uint8_t ReadValueFileSetup(uint8_t CommSettings, uint8_t* Buffer)
+{
+    /* Setup data source (generic EEPROM source) */
+    TransferState.ReadData.Source.Func = &ReadDataEepromSource;
+    TransferState.ReadData.Source.BytesLeft = 4;
+    TransferState.ReadData.Source.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * DESFIRE_EEPROM_BLOCK_SIZE;
+    /* Setup data filter */
+    return ReadDataFilterSetup(CommSettings, false);
+}
+
+uint16_t ReadValueFileTransfer(uint8_t* Buffer)
+{
+    return TransferState.ReadData.Filter.Func(Buffer);
 }
 
 /*

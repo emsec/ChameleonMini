@@ -16,6 +16,14 @@
 #define ISO7816_4_CURRENT_DF_FILE_ID    0x3FFF
 #define ISO7816_4_MASTER_FILE_ID        0x3F00
 
+/* Cryptography related definitions */
+
+#define DESFIRE_CRYPTO_IV_SIZE          CRYPTO_DES_BLOCK_SIZE
+#define DESFIRE_CRYPTO_SESSION_KEY_SIZE CRYPTO_3KTDEA_KEY_SIZE
+
+typedef uint8_t Desfire2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
+typedef uint8_t Desfire3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
+
 /* Various limits */
 
 #define DESFIRE_UID_SIZE     ISO14443A_UID_SIZE_DOUBLE
@@ -27,6 +35,8 @@
 #define DESFIRE_MAX_FILES_EV0   16
 #define DESFIRE_MAX_FILES_EV1   32
 #define DESFIRE_MAX_FILES       DESFIRE_MAX_FILES_EV1
+
+#define DESFIRE_MAX_PAYLOAD_SIZE 59 /* Bytes */
 
 /* File types */
 
@@ -125,10 +135,6 @@ typedef enum {
 typedef uint8_t DesfireAidType[DESFIRE_AID_SIZE];
 
 
-typedef uint8_t Desfire2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
-typedef uint8_t Desfire3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
-
-
 typedef struct {
     uint8_t Type;
     uint8_t CommSettings;
@@ -142,10 +148,10 @@ typedef struct {
             uint8_t BlockCount;
         } BackupFile;
         struct {
-            int32_t LowerLimit;
-            int32_t UpperLimit;
             int32_t CleanValue;
             int32_t DirtyValue;
+            int32_t LowerLimit;
+            int32_t UpperLimit;
             uint8_t LimitedCreditEnabled;
             int32_t PreviousDebit;
         } ValueFile;
@@ -252,6 +258,10 @@ uint8_t SelectFile(uint8_t FileNum);
 uint8_t GetSelectedFileType(void);
 uint8_t GetSelectedFileCommSettings(void);
 uint16_t GetSelectedFileAccessRights(void);
+uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
+uint16_t ReadDataFileTransfer(uint8_t* Buffer);
+uint8_t ReadValueFileSetup(uint8_t CommSettings, uint8_t* Buffer);
+uint16_t ReadValueFileTransfer(uint8_t* Buffer);
 
 /* PICC management */
 void InitialisePiccBackendEV0(uint8_t StorageSize);
@@ -273,19 +283,6 @@ void FactoryFormatPiccEV1(uint8_t StorageSize);
  * State shared between frontend and backend
  */
 
-typedef enum {
-    DESFIRE_IDLE,
-    /* Handling GetVersion's multiple frames */
-    DESFIRE_GET_VERSION2,
-    DESFIRE_GET_VERSION3,
-    DESFIRE_GET_APPLICATION_IDS2,
-    DESFIRE_AUTHENTICATE2,
-    DESFIRE_READING_DATA,
-    DESFIRE_WRITING_DATA,
-} DesfireStateType;
-
-extern DesfireStateType DesfireState;
-/* TODO: Update with to accomodate other auth modes */
-extern Desfire2KTDEAKeyType SessionKey;
-extern uint8_t SessionIV[CRYPTO_DES_BLOCK_SIZE];
+extern uint8_t SessionKey[DESFIRE_CRYPTO_SESSION_KEY_SIZE];
+extern uint8_t SessionIV[DESFIRE_CRYPTO_IV_SIZE];
 
