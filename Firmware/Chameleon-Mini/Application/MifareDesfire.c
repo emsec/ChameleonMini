@@ -63,8 +63,8 @@ static void DebugPrintP(const char *fmt, ...)
 #define DESFIRE_EV0_ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
 #define DESFIRE_EV0_ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
 
-#define GET_LE16(p) \
-    ((uint16_t)((p)[0] | ((p)[1] << 8)))
+#define GET_LE16(p)     (*(uint16_t*)&(p)[0])
+#define GET_LE24(p)     (*(__uint24*)&(p)[0])
 
 /*
  * DESFire-specific things follow
@@ -154,6 +154,7 @@ typedef enum {
     DESFIRE_GET_APPLICATION_IDS2,
     DESFIRE_AUTHENTICATE2,
     DESFIRE_READ_DATA_FILE,
+    DESFIRE_WRITE_DATA_FILE,
 } DesfireStateType;
 
 static DesfireStateType DesfireState;
@@ -482,11 +483,12 @@ static uint16_t EV0CmdChangeKeySettings(uint8_t* Buffer, uint16_t ByteCount)
  * DESFire application management commands
  */
 
-static uint16_t EV0CmdGetApplicationIds2(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t GetApplicationIdsIterator(uint8_t* Buffer, uint16_t ByteCount)
 {
-    ByteCount = GetApplicationIdsTransfer(&Buffer[1]);
-    if (ByteCount & DESFIRE_XFER_LAST_BLOCK) {
-        ByteCount &= ~DESFIRE_XFER_LAST_BLOCK;
+    TransferStatus Status;
+
+    Status = GetApplicationIdsTransfer(&Buffer[1]);
+    if (Status.IsComplete) {
         Buffer[0] = STATUS_OPERATION_OK;
         DesfireState = DESFIRE_IDLE;
     }
@@ -494,7 +496,7 @@ static uint16_t EV0CmdGetApplicationIds2(uint8_t* Buffer, uint16_t ByteCount)
         Buffer[0] = STATUS_ADDITIONAL_FRAME;
         DesfireState = DESFIRE_GET_APPLICATION_IDS2;
     }
-    return ByteCount;
+    return DESFIRE_STATUS_RESPONSE_SIZE + Status.BytesProcessed;
 }
 
 static uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount)
@@ -518,7 +520,7 @@ static uint16_t EV0CmdGetApplicationIds1(uint8_t* Buffer, uint16_t ByteCount)
 
     /* Setup the job and jump to the worker routine */
     GetApplicationIdsSetup();
-    return EV0CmdGetApplicationIds2(Buffer, ByteCount);
+    return GetApplicationIdsIterator(Buffer, ByteCount);
 }
 
 static uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount)
@@ -635,7 +637,7 @@ static uint16_t EV0CmdCreateStandardDataFile(uint8_t* Buffer, uint16_t ByteCount
     uint8_t FileNum;
     uint8_t CommSettings;
     uint16_t AccessRights;
-    uint16_t FileSize;
+    __uint24 FileSize;
 
     /* Validate command length */
     if (ByteCount != 1 + 1 + 1 + 2 + 3) {
@@ -651,13 +653,13 @@ static uint16_t EV0CmdCreateStandardDataFile(uint8_t* Buffer, uint16_t ByteCount
         goto exit_with_status;
     }
     /* Validate the file size */
-    FileSize = Buffer[5] | (Buffer[6] << 8);
-    if (Buffer[7] || FileSize >= 8160) {
+    FileSize = GET_LE24(&Buffer[5]);
+    if (FileSize > 8160) {
         Status = STATUS_OUT_OF_EEPROM_ERROR;
         goto exit_with_status;
     }
 
-    Status = CreateStandardFile(FileNum, CommSettings, AccessRights, FileSize);
+    Status = CreateStandardFile(FileNum, CommSettings, AccessRights, (uint16_t)FileSize);
 
 exit_with_status:
     Buffer[0] = Status;
@@ -670,7 +672,7 @@ static uint16_t EV0CmdCreateBackupDataFile(uint8_t* Buffer, uint16_t ByteCount)
     uint8_t FileNum;
     uint8_t CommSettings;
     uint16_t AccessRights;
-    uint16_t FileSize;
+    __uint24 FileSize;
 
     /* Validate command length */
     if (ByteCount != 1 + 1 + 1 + 2 + 3) {
@@ -686,13 +688,13 @@ static uint16_t EV0CmdCreateBackupDataFile(uint8_t* Buffer, uint16_t ByteCount)
         goto exit_with_status;
     }
     /* Validate the file size */
-    FileSize = Buffer[5] | (Buffer[6] << 8);
-    if (Buffer[7] || FileSize >= 4096) {
+    FileSize = GET_LE24(&Buffer[5]);
+    if (FileSize > 4096) {
         Status = STATUS_OUT_OF_EEPROM_ERROR;
         goto exit_with_status;
     }
 
-    Status = CreateBackupFile(FileNum, CommSettings, AccessRights, FileSize);
+    Status = CreateBackupFile(FileNum, CommSettings, AccessRights, (uint16_t)FileSize);
 
 exit_with_status:
     Buffer[0] = Status;
@@ -798,13 +800,13 @@ static uint8_t ValidateAuthentication(uint16_t AccessRights, uint8_t CheckMask)
     return HaveFreeAccess ? VALIDATED_ACCESS_GRANTED_PLAINTEXT : VALIDATED_ACCESS_DENIED;
 }
 
-static uint16_t EV0ReadDataFile(uint8_t* Buffer, uint16_t ByteCount)
+static uint16_t ReadDataFileIterator(uint8_t* Buffer, uint16_t ByteCount)
 {
+    TransferStatus Status;
     /* NOTE: incoming ByteCount is not verified here for now */
 
-    ByteCount = ReadDataFileTransfer(&Buffer[1]);
-    if (ByteCount & DESFIRE_XFER_LAST_BLOCK) {
-        ByteCount &= 0xFF;
+    Status = ReadDataFileTransfer(&Buffer[1]);
+    if (Status.IsComplete) {
         Buffer[0] = STATUS_OPERATION_OK;
         DesfireState = DESFIRE_IDLE;
     }
@@ -812,23 +814,22 @@ static uint16_t EV0ReadDataFile(uint8_t* Buffer, uint16_t ByteCount)
         Buffer[0] = STATUS_ADDITIONAL_FRAME;
         DesfireState = DESFIRE_READ_DATA_FILE;
     }
-    return ByteCount + 1;
+    return DESFIRE_STATUS_RESPONSE_SIZE + Status.BytesProcessed;
 }
 
 static uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount)
 {
     uint8_t Status;
     uint8_t FileNum;
-    uint16_t Offset;
-    uint16_t Length;
     uint8_t CommSettings;
+    __uint24 Offset;
+    __uint24 Length;
 
     /* Validate command length */
     if (ByteCount != 1 + 1 + 3 + 3) {
         Status = STATUS_LENGTH_ERROR;
         goto exit_with_status;
     }
-    ByteCount = DESFIRE_STATUS_RESPONSE_SIZE;
     FileNum = Buffer[1];
     /* Validate file number */
     if (FileNum >= DESFIRE_MAX_FILES) {
@@ -861,34 +862,171 @@ static uint16_t EV0CmdReadData(uint8_t* Buffer, uint16_t ByteCount)
         goto exit_with_status;
     }
     /* Validate offset and length (preliminary) */
-    Offset = GET_LE16(&Buffer[2]);
-    Length = GET_LE16(&Buffer[5]);
-    if (Buffer[4] || Buffer[7]) {
+    Offset = GET_LE24(&Buffer[2]);
+    Length = GET_LE24(&Buffer[5]);
+    if (Offset > 8192 || Length > 8192) {
         Status = STATUS_BOUNDARY_ERROR;
         goto exit_with_status;
     }
 
     /* Setup and start the transfer */
-    Status = ReadDataFileSetup(CommSettings, Offset, Length);
+    Status = ReadDataFileSetup(CommSettings, (uint16_t)Offset, (uint16_t)Length);
     if (Status) {
         goto exit_with_status;
     }
-    return EV0ReadDataFile(Buffer, 1);
+    return ReadDataFileIterator(Buffer, 1);
 
 exit_with_status:
     Buffer[0] = Status;
-    return ByteCount;
+    return DESFIRE_STATUS_RESPONSE_SIZE;
+}
+
+static uint8_t WriteDataFileInternal(uint8_t* Buffer, uint16_t ByteCount)
+{
+    uint8_t Status;
+
+    Status = WriteDataFileTransfer(Buffer, ByteCount);
+
+    switch (Status) {
+    default:
+        /* In case anything goes wrong, abort things */
+        AbortTransaction();
+        /* Fall through */
+    case STATUS_OPERATION_OK:
+        DesfireState = DESFIRE_IDLE;
+        break;
+    case STATUS_ADDITIONAL_FRAME:
+        DesfireState = DESFIRE_WRITE_DATA_FILE;
+        break;
+    }
+    return Status;
+}
+
+static uint16_t WriteDataFileIterator(uint8_t* Buffer, uint16_t ByteCount)
+{
+    Buffer[0] = WriteDataFileInternal(&Buffer[1], ByteCount - 1);
+    return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 static uint16_t EV0CmdWriteData(uint8_t* Buffer, uint16_t ByteCount)
 {
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    uint8_t Status;
+    uint8_t FileNum;
+    uint8_t CommSettings;
+    __uint24 Offset;
+    __uint24 Length;
+
+    /* Validate command length */
+    if (ByteCount < 1 + 1 + 3 + 3) {
+        Status = STATUS_LENGTH_ERROR;
+        goto exit_with_status;
+    }
+    FileNum = Buffer[1];
+    /* Validate file number */
+    if (FileNum >= DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        goto exit_with_status;
+    }
+
+    Status = SelectFile(FileNum);
+    if (Status != STATUS_OPERATION_OK) {
+        goto exit_with_status;
+    }
+
+    CommSettings = GetSelectedFileCommSettings();
+    /* Verify authentication: read or read&write required */
+    switch (ValidateAuthentication(GetSelectedFileAccessRights(), VALIDATE_ACCESS_READWRITE|VALIDATE_ACCESS_WRITE)) {
+    case VALIDATED_ACCESS_DENIED:
+        Status = STATUS_AUTHENTICATION_ERROR;
+        goto exit_with_status;
+    case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+        CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        /* Fall through */
+    case VALIDATED_ACCESS_GRANTED:
+        /* Carry on */
+        break;
+    }
+
+    /* Validate the file type */
+    if (GetSelectedFileType() != DESFIRE_FILE_STANDARD_DATA && GetSelectedFileType() != DESFIRE_FILE_BACKUP_DATA) {
+        Status = STATUS_PARAMETER_ERROR;
+        goto exit_with_status;
+    }
+    /* Validate offset and length (preliminary) */
+    Offset = GET_LE24(&Buffer[2]);
+    Length = GET_LE24(&Buffer[5]);
+    if (Offset > 8192 || Length > 8192) {
+        Status = STATUS_BOUNDARY_ERROR;
+        goto exit_with_status;
+    }
+
+    /* Setup and start the transfer */
+    Status = WriteDataFileSetup(CommSettings, (uint16_t)Offset, (uint16_t)Length);
+    if (Status) {
+        goto exit_with_status;
+    }
+    Status = WriteDataFileIterator(&Buffer[8], ByteCount - 8);
+
+exit_with_status:
+    Buffer[0] = Status;
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
 static uint16_t EV0CmdGetValue(uint8_t* Buffer, uint16_t ByteCount)
 {
-    Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE;
+    uint8_t Status;
+    uint8_t FileNum;
+    uint8_t CommSettings;
+    TransferStatus XferStatus;
+
+    /* Validate command length */
+    if (ByteCount != 1 + 1) {
+        Status = STATUS_LENGTH_ERROR;
+        goto exit_with_status;
+    }
+    FileNum = Buffer[1];
+    /* Validate file number */
+    if (FileNum >= DESFIRE_MAX_FILES) {
+        Status = STATUS_PARAMETER_ERROR;
+        goto exit_with_status;
+    }
+
+    Status = SelectFile(FileNum);
+    if (Status != STATUS_OPERATION_OK) {
+        goto exit_with_status;
+    }
+
+    CommSettings = GetSelectedFileCommSettings();
+    /* Verify authentication: read or read&write required */
+    switch (ValidateAuthentication(GetSelectedFileAccessRights(), VALIDATE_ACCESS_READWRITE|VALIDATE_ACCESS_READ|VALIDATE_ACCESS_WRITE)) {
+    case VALIDATED_ACCESS_DENIED:
+        Status = STATUS_AUTHENTICATION_ERROR;
+        goto exit_with_status;
+    case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+        CommSettings = DESFIRE_COMMS_PLAINTEXT;
+        /* Fall through */
+    case VALIDATED_ACCESS_GRANTED:
+        /* Carry on */
+        break;
+    }
+
+    /* Validate the file type */
+    if (GetSelectedFileType() != DESFIRE_FILE_VALUE_DATA) {
+        Status = STATUS_PARAMETER_ERROR;
+        goto exit_with_status;
+    }
+
+    /* Setup and start the transfer */
+    Status = ReadValueFileSetup(CommSettings);
+    if (Status) {
+        goto exit_with_status;
+    }
+    XferStatus = ReadDataFileTransfer(&Buffer[1]);
+    Buffer[0] = STATUS_OPERATION_OK;
+    return DESFIRE_STATUS_RESPONSE_SIZE + XferStatus.BytesProcessed;
+
+exit_with_status:
+    Buffer[0] = Status;
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
 
@@ -1040,7 +1178,7 @@ static uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount)
 
     /* Expecting further data here */
     if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
-        /* TODO: Should the card abort the current command? For now, yes. */
+        AbortTransaction();
         DesfireState = DESFIRE_IDLE;
         Buffer[0] = STATUS_COMMAND_ABORTED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -1052,11 +1190,11 @@ static uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount)
     case DESFIRE_GET_VERSION3:
         return EV0CmdGetVersion3(Buffer, ByteCount);
     case DESFIRE_GET_APPLICATION_IDS2:
-        return EV0CmdGetApplicationIds2(Buffer, ByteCount);
+        return GetApplicationIdsIterator(Buffer, ByteCount);
     case DESFIRE_AUTHENTICATE2:
         return EV0CmdAuthenticate2KTDEA2(Buffer, ByteCount);
     case DESFIRE_READ_DATA_FILE:
-        return EV0ReadDataFile(Buffer, ByteCount);
+        return ReadDataFileIterator(Buffer, ByteCount);
     default:
         /* Should not happen. */
         Buffer[0] = STATUS_PICC_INTEGRITY_ERROR;

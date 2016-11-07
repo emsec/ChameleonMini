@@ -68,8 +68,6 @@ typedef uint8_t Desfire3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 #define DESFIRE_USE_TARGET_KEY           0xE
 #define DESFIRE_ALL_KEYS_FROZEN          0xF
 
-#define DESFIRE_XFER_LAST_BLOCK 0x8000
-
 /* Storage allocation constants */
 
 #define DESFIRE_EEPROM_BLOCK_SIZE 32 /* Bytes */
@@ -232,6 +230,11 @@ enum DesfireCardLayout {
  * DESFire backend API functions
  */
 
+typedef struct {
+    uint8_t BytesProcessed;
+    bool IsComplete;
+} TransferStatus;
+
 /* Application management */
 bool IsPiccAppSelected(void);
 void SelectPiccApp(void);
@@ -239,7 +242,7 @@ uint8_t SelectApp(const DesfireAidType Aid);
 uint8_t CreateApp(const DesfireAidType Aid, uint8_t KeyCount, uint8_t KeySettings);
 uint8_t DeleteApp(const DesfireAidType Aid);
 void GetApplicationIdsSetup(void);
-uint16_t GetApplicationIdsTransfer(uint8_t* Buffer);
+TransferStatus GetApplicationIdsTransfer(uint8_t* Buffer);
 
 /* Application key management */
 uint8_t GetSelectedAppKeyCount(void);
@@ -259,9 +262,11 @@ uint8_t GetSelectedFileType(void);
 uint8_t GetSelectedFileCommSettings(void);
 uint16_t GetSelectedFileAccessRights(void);
 uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
-uint16_t ReadDataFileTransfer(uint8_t* Buffer);
-uint8_t ReadValueFileSetup(uint8_t CommSettings, uint8_t* Buffer);
-uint16_t ReadValueFileTransfer(uint8_t* Buffer);
+TransferStatus ReadDataFileTransfer(uint8_t* Buffer);
+uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length);
+uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount);
+uint8_t ReadValueFileSetup(uint8_t CommSettings);
+TransferStatus ReadValueFileTransfer(uint8_t* Buffer);
 
 /* PICC management */
 void InitialisePiccBackendEV0(uint8_t StorageSize);
