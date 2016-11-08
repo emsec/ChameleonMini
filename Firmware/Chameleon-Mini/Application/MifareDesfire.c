@@ -527,6 +527,8 @@ static uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount)
 {
     uint8_t Status;
     const DesfireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
+    uint8_t KeyCount;
+    uint8_t KeySettings;
 
     /* Require the PICC app to be selected */
     if (!IsPiccAppSelected()) {
@@ -538,19 +540,21 @@ static uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount)
         Status = STATUS_LENGTH_ERROR;
         goto exit_with_status;
     }
-    /* Validate number of keys: less than max */
-    if (Buffer[5] > DESFIRE_MAX_KEYS) {
-        Status = STATUS_PARAMETER_ERROR;
-        goto exit_with_status;
-    }
     /* Verify authentication settings */
     if (!(GetSelectedAppKeySettings() & DESFIRE_FREE_CREATE_DELETE) && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         /* PICC master key authentication is required */
         Status = STATUS_AUTHENTICATION_ERROR;
         goto exit_with_status;
     }
+    /* Validate number of keys: less than max */
+    KeyCount = Buffer[5];
+    if (KeyCount > DESFIRE_MAX_KEYS) {
+        Status = STATUS_PARAMETER_ERROR;
+        goto exit_with_status;
+    }
+    KeySettings = Buffer[4];
     /* Done */
-    Status = CreateApp(Aid, Buffer[5], Buffer[4]);
+    Status = CreateApp(Aid, KeyCount, KeySettings);
 
 exit_with_status:
     Buffer[0] = Status;
