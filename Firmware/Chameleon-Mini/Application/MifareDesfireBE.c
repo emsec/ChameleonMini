@@ -371,10 +371,10 @@ uint8_t CreateApp(const DesfireAidType Aid, uint8_t KeyCount, uint8_t KeySetting
     }
 
     /* Initialise the application */
-    SetAppKeySettings(Slot + 1, KeySettings);
-    SetAppKeyCount(Slot + 1, KeyCount);
-    SetAppKeyStorageBlockId(Slot + 1, KeysBlockId);
-    SetAppFileIndexBlockId(Slot + 1, FilesBlockId);
+    SetAppKeySettings(Slot, KeySettings);
+    SetAppKeyCount(Slot, KeyCount);
+    SetAppKeyStorageBlockId(Slot, KeysBlockId);
+    SetAppFileIndexBlockId(Slot, FilesBlockId);
 
     /* Update the directory */
     AppDir.FirstFreeSlot = FreeSlot;
