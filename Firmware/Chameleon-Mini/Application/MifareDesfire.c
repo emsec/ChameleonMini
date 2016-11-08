@@ -539,7 +539,7 @@ static uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount)
         goto exit_with_status;
     }
     /* Validate number of keys: less than max */
-    if (Buffer[4] > DESFIRE_MAX_KEYS) {
+    if (Buffer[5] > DESFIRE_MAX_KEYS) {
         Status = STATUS_PARAMETER_ERROR;
         goto exit_with_status;
     }
@@ -550,7 +550,7 @@ static uint16_t EV0CmdCreateApplication(uint8_t* Buffer, uint16_t ByteCount)
         goto exit_with_status;
     }
     /* Done */
-    Status = CreateApp(Aid, Buffer[4], Buffer[5]);
+    Status = CreateApp(Aid, Buffer[5], Buffer[4]);
 
 exit_with_status:
     Buffer[0] = Status;
