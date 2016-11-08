@@ -132,7 +132,9 @@ typedef enum {
 
 typedef uint8_t DesfireAidType[DESFIRE_AID_SIZE];
 
-
+/** Data about an application's file is currently kept in this structure.
+ * The location of these structures is defined by the file index.
+ */
 typedef struct {
     uint8_t Type;
     uint8_t CommSettings;
@@ -163,13 +165,19 @@ typedef struct {
     };
 } DesfireFileType;
 
+/** Defines the block ID of each application's file on the card. */
 typedef uint8_t DesfireFileIndexType[DESFIRE_MAX_FILES];
 
 
 #define DESFIRE_PICC_APP_SLOT 0
 #define DESFIRE_MAX_SLOTS (DESFIRE_MAX_APPS + 1)
 
-/** Data about applications is kept in these structures */
+/** Data about applications is kept in these structures.
+ * The application is represented as a collection of one-byte "properties":
+ * key settings, key count, keystore block ID, file index block ID.
+ * Since pre-EV2 cards have a fixed maximum amount of applications (1 PICC + 28 user),
+ * using a fixed structure for this makes sense.
+ */
 typedef struct {
     uint8_t Spare0;
     uint8_t AppData[DESFIRE_MAX_SLOTS];
@@ -177,7 +185,9 @@ typedef struct {
 } DesfireApplicationDataType;
 
 
-/** Defines the global PICC configuration. */
+/** Defines the global PICC configuration.
+ * This is located in the very first block on the card.
+ */
 typedef struct {
     /* Static data: does not change during the PICC's lifetime */
     uint8_t Uid[DESFIRE_UID_SIZE];
@@ -195,7 +205,10 @@ typedef struct {
     uint8_t Spare[9];
 } DesfirePiccInfoType;
 
-/** Defines the application directory contents. */
+/** Defines the application directory contents.
+ * The application directory maps AIDs to application slots:
+ * the AID's index in `AppIds` is the slot number.
+ */
 typedef struct {
     uint8_t FirstFreeSlot;
     uint8_t Spare[8];
