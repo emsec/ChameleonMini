@@ -341,7 +341,7 @@ static const char* GetStatusMessageP(CommandStatusIdType StatusId)
 {
     uint8_t i;
 
-    for (i=0; i<(sizeof(StatusTable)/sizeof(*StatusTable)); i++) {
+    for (i = 0; i < ARRAY_COUNT(StatusTable); i++) {
         if (pgm_read_byte(&StatusTable[i].Id) == StatusId)
             return StatusTable[i].Message;
     }
@@ -409,7 +409,7 @@ static void DecodeCommand(void)
     *pCommandDelimiter = '\0';
 
     /* Search in command table */
-    for (i=0; i<(sizeof(CommandTable) / sizeof(*CommandTable)); i++) {
+    for (i = 0; i < ARRAY_COUNT(CommandTable); i++) {
       if (strcmp_P(pTerminalBuffer, CommandTable[i].Command) == 0) {
         /* Command found. Clear buffer, and call appropriate function */
         char* pParam = ++pCommandDelimiter;
@@ -451,8 +451,7 @@ bool CommandLineProcessByte(uint8_t Byte) {
 		}
 
 		/* Prevent buffer overflow and account for '\0' */
-		if (BufferIdx
-				< (sizeof(TerminalBuffer) / sizeof(*TerminalBuffer) - 1)) {
+		if (BufferIdx < TERMINAL_BUFFER_SIZE - 1) {
 			TerminalBuffer[BufferIdx++] = Byte;
 		}
 	} else if (Byte == '\r') {
@@ -529,25 +528,25 @@ void CommandLineAppendData(void const * const Buffer, uint16_t Bytes)
     char* pTerminalBuffer = (char*) TerminalBuffer;
 
     uint16_t tmpBytes = Bytes;
-    if (Bytes > (sizeof(TerminalBuffer) / 2))
-    	tmpBytes = sizeof(TerminalBuffer) / 2;
+    if (Bytes > (TERMINAL_BUFFER_SIZE / 2))
+    	tmpBytes = TERMINAL_BUFFER_SIZE / 2;
     Bytes -= tmpBytes;
 
-    BufferToHexString(pTerminalBuffer, sizeof(TerminalBuffer), Buffer, tmpBytes);
+    BufferToHexString(pTerminalBuffer, TERMINAL_BUFFER_SIZE, Buffer, tmpBytes);
     TerminalSendString(pTerminalBuffer);
 
     uint8_t i = 1;
-    while (Bytes > (sizeof(TerminalBuffer) / 2))
+    while (Bytes > (TERMINAL_BUFFER_SIZE / 2))
     {
-    	Bytes -= sizeof(TerminalBuffer) / 2;
-        BufferToHexString(pTerminalBuffer, sizeof(TerminalBuffer), Buffer + i * sizeof(TerminalBuffer) / 2, sizeof(TerminalBuffer));
+    	Bytes -= TERMINAL_BUFFER_SIZE / 2;
+        BufferToHexString(pTerminalBuffer, TERMINAL_BUFFER_SIZE, Buffer + i * TERMINAL_BUFFER_SIZE / 2, TERMINAL_BUFFER_SIZE);
         TerminalSendString(pTerminalBuffer);
     	i++;
     }
 
     if (Bytes > 0)
     {
-        BufferToHexString(pTerminalBuffer, sizeof(TerminalBuffer), Buffer + i * sizeof(TerminalBuffer) / 2, Bytes);
+        BufferToHexString(pTerminalBuffer, TERMINAL_BUFFER_SIZE, Buffer + i * TERMINAL_BUFFER_SIZE / 2, Bytes);
         TerminalSendString(pTerminalBuffer);
     }
 

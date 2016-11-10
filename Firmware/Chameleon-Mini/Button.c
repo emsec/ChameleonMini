@@ -239,7 +239,7 @@ void ButtonTick(void)
 
 void ButtonGetActionList(char* List, uint16_t BufferSize)
 {
-	MapToString(ButtonActionMap, sizeof(ButtonActionMap)/sizeof(*ButtonActionMap), List, BufferSize);
+	MapToString(ButtonActionMap, ARRAY_COUNT(ButtonActionMap), List, BufferSize);
 }
 
 void ButtonSetActionById(ButtonTypeEnum Type, ButtonActionEnum Action)
@@ -256,7 +256,7 @@ void ButtonSetActionById(ButtonTypeEnum Type, ButtonActionEnum Action)
 
 void ButtonGetActionByName(ButtonTypeEnum Type, char* Action, uint16_t BufferSize)
 {
-	MapIdToText(ButtonActionMap, sizeof(ButtonActionMap)/sizeof(*ButtonActionMap),
+	MapIdToText(ButtonActionMap, ARRAY_COUNT(ButtonActionMap),
 			GlobalSettings.ActiveSettingPtr->ButtonActions[Type], Action, BufferSize);
 }
 
@@ -264,8 +264,7 @@ bool ButtonSetActionByName(ButtonTypeEnum Type, const char* Action)
 {
 	MapIdType Id;
 
-	if (MapTextToId(ButtonActionMap, sizeof(ButtonActionMap)/sizeof(*ButtonActionMap),
-			Action, &Id)) {
+	if (MapTextToId(ButtonActionMap, ARRAY_COUNT(ButtonActionMap), Action, &Id)) {
 		ButtonSetActionById(Type, Id);
 		return true;
 	} else {
