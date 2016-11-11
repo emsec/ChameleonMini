@@ -67,9 +67,12 @@ static DesfireAppDirType AppDir;
 static SelectedAppCacheType SelectedApp;
 static SelectedFileCacheType SelectedFile;
 
-typedef TransferStatus (*TransferSourceFuncType)(uint8_t* Buffer, uint8_t MaxCount);
+typedef void (*TransferSourceFuncType)(uint8_t* Buffer, uint8_t Count);
+typedef void (*TransferSinkFuncType)(uint8_t* Buffer, uint8_t Count);
+typedef void (*TransferChecksumUpdateFuncType)(const uint8_t* Buffer, uint8_t Count);
+typedef uint8_t (*TransferChecksumFinalFuncType)(uint8_t* Buffer);
+typedef uint8_t (*TransferEncryptFuncType)(uint8_t* Buffer, uint8_t Count);
 typedef TransferStatus (*PiccToPcdTransferFilterFuncType)(uint8_t* Buffer);
-typedef TransferStatus (*TransferSinkFuncType)(uint8_t* Buffer, uint8_t Count);
 typedef uint8_t (*PcdToPiccTransferFilterFuncType)(uint8_t* Buffer, uint8_t Count);
 
 /* Stored transfer state for all transfers */
@@ -77,35 +80,44 @@ typedef union {
     struct {
         uint8_t NextIndex;
     } GetApplicationIds;
+
     struct {
+        uint16_t BytesLeft;
         struct {
             TransferSourceFuncType Func;
             uint16_t Pointer; /* in FRAM */
-            uint16_t BytesLeft;
         } Source;
+        bool FirstPaddingBitSet;
         struct {
-            PiccToPcdTransferFilterFuncType Func;
+            TransferChecksumUpdateFuncType UpdateFunc;
+            TransferChecksumFinalFuncType FinalFunc;
+            uint8_t AvailablePlaintext;
             union {
                 struct {
-                    bool FirstPaddingBitSet;
-                } TDEAMAC;
+                    uint8_t BlockBuffer[CRYPTO_DES_BLOCK_SIZE];
+                } MAC;
+                uint16_t CRCA;
+            };
+        } Checksums;
+        struct {
+            TransferEncryptFuncType Func;
+            uint8_t AvailablePlaintext;
+            union {
                 struct {
-                    bool FirstPaddingBitSet;
-                    uint16_t Checksum;
-                    uint8_t Leftovers[8];
-                    uint8_t LeftoversSize;
-                } TDEAEncrypt;
-            } Params;
-        } Filter;
+                    uint8_t BlockBuffer[CRYPTO_DES_BLOCK_SIZE];
+                } TDEA;
+            };
+        } Encryption;
     } ReadData;
+
     struct {
         struct {
             TransferSinkFuncType Func;
             uint16_t Pointer; /* in FRAM */
-            uint16_t BytesLeft;
         } Sink;
         struct {
             PcdToPiccTransferFilterFuncType Func;
+            uint16_t BytesLeft;
             union {
                 struct {
                     uint8_t PartialBlock[8];
@@ -116,7 +128,7 @@ typedef union {
                     uint8_t PartialCount;
                     uint16_t ChecksumComputed;
                     uint8_t Checksum1stByte;
-                    bool Want2BytesMore;
+                    uint8_t RemainingChecksumBytes;
                 } TDEAEncrypt;
             } Params;
         } Filter;
@@ -702,53 +714,158 @@ uint16_t GetSelectedFileAccessRights(void)
     return SelectedFile.File.AccessRights;
 }
 
-static TransferStatus ReadDataEepromSource(uint8_t* Buffer, uint8_t MaxCount)
+static void ReadDataEepromSource(uint8_t* Buffer, uint8_t Count)
 {
-    uint16_t BytesLeft = TransferState.ReadData.Source.BytesLeft;
-    TransferStatus Status;
+    MemoryReadBlock(Buffer, TransferState.ReadData.Source.Pointer, Count);
+    TransferState.ReadData.Source.Pointer += Count;
+}
 
-    if (BytesLeft > MaxCount) {
-        Status.BytesProcessed = MaxCount;
-        Status.IsComplete = false;
+static void WriteDataEepromSink(uint8_t* Buffer, uint8_t Count)
+{
+    MemoryWriteBlock(Buffer, TransferState.WriteData.Sink.Pointer, Count);
+    TransferState.WriteData.Sink.Pointer += Count;
+}
+
+static void PaddingTDEA(uint8_t* Buffer, uint8_t Count, bool FirstPaddingBitSet)
+{
+    uint8_t PaddingByte = FirstPaddingBitSet ? 0x80 : 0x00;
+    uint8_t PaddingSize = CRYPTO_DES_BLOCK_SIZE - (Count & (CRYPTO_DES_BLOCK_SIZE - 1));
+    uint8_t i;
+
+    for (i = Count; i < Count + PaddingSize; ++i) {
+        Buffer[i] = PaddingByte;
+        PaddingByte = 0x00;
+    }
+}
+
+#define DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE)
+
+static void PiccToPcdUpdateCRCA(const uint8_t* Buffer, uint8_t Count)
+{
+    TransferState.ReadData.Checksums.CRCA = ISO14443AUpdateCRCA(Buffer, Count, TransferState.ReadData.Checksums.CRCA);
+}
+
+static uint8_t PiccToPcdFinalCRCA(uint8_t* Buffer)
+{
+    /* Copy the checksum to destination */
+    memcpy(Buffer, &TransferState.ReadData.Checksums.CRCA, 2);
+    /* Return the checksum size */
+    return 2;
+}
+
+static void PiccToPcdUpdateMACTDEASend(const uint8_t* Buffer, uint8_t Count)
+{
+    uint8_t AvailablePlaintext = TransferState.ReadData.Checksums.AvailablePlaintext;
+    uint8_t TempBytes;
+    uint8_t TempBuffer[CRYPTO_DES_BLOCK_SIZE];
+
+    if (AvailablePlaintext) {
+        /* Fill the partial block */
+        TempBytes = CRYPTO_DES_BLOCK_SIZE - AvailablePlaintext;
+        if (TempBytes > Count)
+            TempBytes = Count;
+        memcpy(&TransferState.ReadData.Checksums.MAC.BlockBuffer[AvailablePlaintext], &Buffer[0], TempBytes);
+        Count -= TempBytes;
+        Buffer += TempBytes;
+        /* MAC the partial block */
+        CryptoEncrypt2KTDEA_CBCSend(1, &TransferState.ReadData.Checksums.MAC.BlockBuffer[0], &TempBuffer[0], SessionIV, SessionKey);
+    }
+    /* MAC complete blocks in the buffer */
+    while (Count >= CRYPTO_DES_BLOCK_SIZE) {
+        /* NOTE: This is block-by-block, hence slow. See if it's better to just allocate a temp buffer large enough (64 bytes). */
+        CryptoEncrypt2KTDEA_CBCSend(1, &Buffer[0], &TempBuffer[0], SessionIV, SessionKey);
+        Count -= CRYPTO_DES_BLOCK_SIZE;
+        Buffer += CRYPTO_DES_BLOCK_SIZE;
+    }
+    /* Copy the new partial block */
+    if (Count) {
+        memcpy(&TransferState.ReadData.Checksums.MAC.BlockBuffer[0], &Buffer[0], Count);
+    }
+    TransferState.ReadData.Checksums.AvailablePlaintext = Count;
+}
+
+static uint8_t PiccToPcdFinalMACTDEASend(uint8_t* Buffer)
+{
+    uint8_t AvailablePlaintext = TransferState.ReadData.Checksums.AvailablePlaintext;
+    uint8_t TempBuffer[CRYPTO_DES_BLOCK_SIZE];
+
+    if (AvailablePlaintext) {
+        /* Apply padding */
+        PaddingTDEA(&TransferState.ReadData.Checksums.MAC.BlockBuffer[0], AvailablePlaintext, TransferState.ReadData.FirstPaddingBitSet);
+        /* MAC the partial block */
+        CryptoEncrypt2KTDEA_CBCSend(1, &TransferState.ReadData.Checksums.MAC.BlockBuffer[0], &TempBuffer[0], SessionIV, SessionKey);
+        TransferState.ReadData.Checksums.AvailablePlaintext = 0;
+    }
+    /* Copy the checksum to destination */
+    memcpy(Buffer, SessionIV, 4);
+    /* Return the checksum size */
+    return 4;
+}
+
+static uint8_t PiccToPcdEncryptTDEASend(uint8_t* Buffer, uint8_t Count)
+{
+    uint8_t AvailablePlaintext = TransferState.ReadData.Encryption.AvailablePlaintext;
+    uint8_t TempBuffer[(DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS + 1) * CRYPTO_DES_BLOCK_SIZE];
+    uint8_t BlockCount;
+
+    if (AvailablePlaintext) {
+        /* Fill the partial block */
+        memcpy(&TempBuffer[0], &TransferState.ReadData.Encryption.TDEA.BlockBuffer[0], AvailablePlaintext);
+    }
+    /* Copy fresh plaintext to the temp buffer */
+    memcpy(&TempBuffer[AvailablePlaintext], Buffer, Count);
+    Count += AvailablePlaintext;
+    BlockCount = Count / CRYPTO_DES_BLOCK_SIZE;
+    /* Stash extra plaintext for later */
+    AvailablePlaintext = Count - BlockCount * CRYPTO_DES_BLOCK_SIZE;
+    if (AvailablePlaintext) {
+        memcpy(&TransferState.ReadData.Encryption.TDEA.BlockBuffer[0], &Buffer[BlockCount * CRYPTO_DES_BLOCK_SIZE], AvailablePlaintext);
+    }
+    TransferState.ReadData.Encryption.AvailablePlaintext = AvailablePlaintext;
+    /* Encrypt complete blocks in the buffer */
+    CryptoEncrypt2KTDEA_CBCSend(BlockCount, &TempBuffer[0], &Buffer[0], SessionIV, SessionKey);
+    /* Return byte count to transfer */
+    return BlockCount * CRYPTO_DES_BLOCK_SIZE;
+}
+
+static TransferStatus PiccToPcdTransfer(uint8_t* Buffer)
+{
+    TransferStatus Status;
+    uint8_t XferBytes;
+
+    /* Only read if required */
+    if (TransferState.ReadData.BytesLeft) {
+        /* Figure out how much to read */
+        XferBytes = (uint8_t)TransferState.ReadData.BytesLeft;
+        if (TransferState.ReadData.BytesLeft > DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE) {
+            XferBytes = DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE;
+        }
+        /* Read input bytes */
+        TransferState.ReadData.Source.Func(Buffer, XferBytes);
+        TransferState.ReadData.BytesLeft -= XferBytes;
+        /* Update checksum/MAC */
+        if (TransferState.ReadData.Checksums.UpdateFunc)
+            TransferState.ReadData.Checksums.UpdateFunc(Buffer, XferBytes);
+        if (TransferState.ReadData.BytesLeft == 0) {
+            /* Finalise checksumming and append the checksum */
+            if (TransferState.ReadData.Checksums.FinalFunc)
+                XferBytes += TransferState.ReadData.Checksums.FinalFunc(&Buffer[XferBytes]);
+        }
+        /* Encrypt */
+        Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, XferBytes);
+        Status.IsComplete = TransferState.ReadData.Encryption.AvailablePlaintext == 0;
     }
     else {
-        Status.BytesProcessed = BytesLeft;
+        /* Final encryption block */
+        Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, 0);
         Status.IsComplete = true;
     }
-
-    MemoryReadBlock(Buffer, TransferState.ReadData.Source.Pointer, Status.BytesProcessed);
-    TransferState.ReadData.Source.Pointer += Status.BytesProcessed;
-    TransferState.ReadData.Source.BytesLeft = BytesLeft - Status.BytesProcessed;
 
     return Status;
 }
 
-static TransferStatus WriteDataEepromSink(uint8_t* Buffer, uint8_t ByteCount)
-{
-    uint16_t BytesLeft = TransferState.WriteData.Sink.BytesLeft;
-    TransferStatus Status;
 
-    if (BytesLeft > ByteCount) {
-        Status.BytesProcessed = ByteCount;
-        Status.IsComplete = false;
-    }
-    else {
-        Status.BytesProcessed = BytesLeft;
-        Status.IsComplete = true;
-    }
-
-    MemoryWriteBlock(Buffer, TransferState.WriteData.Sink.Pointer, Status.BytesProcessed);
-    TransferState.WriteData.Sink.Pointer += Status.BytesProcessed;
-    TransferState.WriteData.Sink.BytesLeft = BytesLeft - Status.BytesProcessed;
-
-    return Status;
-}
-
-static TransferStatus PiccToPcdTransferFilterNull(uint8_t* Buffer)
-{
-    return TransferState.ReadData.Source.Func(Buffer, DESFIRE_MAX_PAYLOAD_SIZE);
-}
-
+#if 0
 static uint8_t PcdToPiccTransferFilterNull(uint8_t* Buffer, uint8_t ByteCount)
 {
     TransferStatus Status;
@@ -764,118 +881,55 @@ static uint8_t PcdToPiccTransferFilterNull(uint8_t* Buffer, uint8_t ByteCount)
     return STATUS_BOUNDARY_ERROR;
 }
 
-static void PadBufferForTDEA(uint8_t* Buffer, uint8_t Count, bool FirstPaddingBitSet)
+static uint8_t PrependPartialDataMAC(uint8_t* Buffer, uint8_t ByteCount, uint8_t PartialCount)
 {
-    uint8_t PaddingByte = FirstPaddingBitSet ? 0x80 : 0x00;
-    uint8_t PaddingSize = CRYPTO_DES_BLOCK_SIZE - (Count & (CRYPTO_DES_BLOCK_SIZE - 1));
-    uint8_t i;
-
-    for (i = Count; i < Count + PaddingSize; ++i) {
-        Buffer[i] = PaddingByte;
-        PaddingByte = 0x00;
+    if (PartialCount) {
+        memmove(&Buffer[PartialCount], &Buffer[0], ByteCount);
+        memcpy(&Buffer[0], &TransferState.WriteData.Filter.Params.TDEAMAC.PartialBlock[0], PartialCount);
+        ByteCount += PartialCount;
     }
-}
-
-#define DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE)
-
-static TransferStatus PiccToPcdTransferFilterMACFinal(uint8_t* Buffer)
-{
-    TransferStatus Status;
-
-    Status.BytesProcessed = 4;
-    Status.IsComplete = true;
-    memcpy(&Buffer[0], &SessionIV[0], Status.BytesProcessed);
-
-    return Status;
-}
-
-static TransferStatus PiccToPcdTransferFilterMAC(uint8_t* Buffer)
-{
-    TransferStatus Status;
-    uint8_t TempBuffer[DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE];
-    uint8_t XferBlocks;
-
-    Status = TransferState.ReadData.Source.Func(Buffer, DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE);
-
-    if (Status.IsComplete) {
-        PadBufferForTDEA(Buffer, Status.BytesProcessed, TransferState.ReadData.Filter.Params.TDEAMAC.FirstPaddingBitSet);
-    }
-
-    XferBlocks = (Status.BytesProcessed + CRYPTO_DES_BLOCK_SIZE - 1) / CRYPTO_DES_BLOCK_SIZE;
-    CryptoEncrypt2KTDEA_CBCSend(XferBlocks, Buffer, TempBuffer, SessionIV, SessionKey);
-
-    if (Status.IsComplete) {
-        /* MAC is the first 4 bytes of the IV */
-        if (Status.BytesProcessed < DESFIRE_MAX_PAYLOAD_SIZE - 4) {
-            /* Fits in the current frame */
-            memcpy(&Buffer[Status.BytesProcessed], &SessionIV[0], 4);
-            Status.BytesProcessed += 4;
-        }
-        else {
-            /* Doesn't fit -- send in the next frame */
-            Status.IsComplete = false;
-            TransferState.ReadData.Filter.Func = &PiccToPcdTransferFilterMACFinal;
-        }
-    }
-
-    return Status;
+    TransferState.WriteData.Filter.Params.TDEAMAC.PartialCount = 0;
+    return ByteCount;
 }
 
 static uint8_t PcdToPiccTransferFilterMAC(uint8_t* Buffer, uint8_t ByteCount)
 {
+    TransferStatus Status;
+    uint8_t PartialCount = TransferState.WriteData.Filter.Params.TDEAMAC.PartialCount;
+
+    /* Prepend previously received leftover data */
+    ByteCount = PrependPartialDataMAC(Buffer, ByteCount, PartialCount);
+    /* Compute how many complete blocks we have; stash extra if any */
+    XferBlocks = ByteCount / CRYPTO_DES_BLOCK_SIZE;
+    XferBytes = XferBlocks * CRYPTO_DES_BLOCK_SIZE;
+    PartialCount = ByteCount - XferBytes;
+    if (PartialCount) {
+        memcpy(&TransferState.WriteData.Filter.Params.TDEAMAC.PartialBlock[0], &Buffer[XferBytes], PartialCount);
+        TransferState.WriteData.Filter.Params.TDEAMAC.PartialCount = PartialCount;
+    }
+    /* Push plaintext data to the sink; it will write no more than required */
+    Status = TransferState.WriteData.Sink.Func(Buffer, XferBytes);
+    /* Update running MAC over complete blocks */
+    CryptoEncrypt2KTDEA_CBCReceive(1, Buffer, Buffer, SessionIV, SessionKey);
+
+    /* If we pushed all the bytes we had to, it is time to verify MAC */
+    if (Status.IsComplete) {
+        /* Received MAC will be stashed in PartialBlock[] since it is shorter than one DES block */
+    }
+
     /* TODO */
     return STATUS_PICC_INTEGRITY_ERROR;
 }
 
-static TransferStatus PiccToPcdTransferFilterEncryptFinal(uint8_t* Buffer)
+static uint8_t PrependPartialDataEncrypt(uint8_t* Buffer, uint8_t ByteCount, uint8_t PartialCount)
 {
-    TransferStatus Status;
-    uint8_t XferBlocks;
-
-    Status.BytesProcessed = TransferState.ReadData.Filter.Params.TDEAEncrypt.LeftoversSize;
-    Status.IsComplete = true;
-    memcpy(&Buffer[0], &TransferState.ReadData.Filter.Params.TDEAEncrypt.Leftovers[0], Status.BytesProcessed);
-    PadBufferForTDEA(Buffer, Status.BytesProcessed, TransferState.ReadData.Filter.Params.TDEAEncrypt.FirstPaddingBitSet);
-
-    XferBlocks = (Status.BytesProcessed + CRYPTO_DES_BLOCK_SIZE - 1) / CRYPTO_DES_BLOCK_SIZE;
-    CryptoEncrypt2KTDEA_CBCSend(XferBlocks, Buffer, Buffer, SessionIV, SessionKey);
-    Status.BytesProcessed = XferBlocks * CRYPTO_DES_BLOCK_SIZE;
-
-    return Status;
-}
-
-static TransferStatus PiccToPcdTransferFilterEncrypt(uint8_t* Buffer)
-{
-    TransferStatus Status;
-    uint8_t XferBlocks;
-
-    Status = TransferState.ReadData.Source.Func(Buffer, DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE);
-
-    TransferState.ReadData.Filter.Params.TDEAEncrypt.Checksum = ISO14443AUpdateCRCA(Buffer, Status.BytesProcessed, TransferState.ReadData.Filter.Params.TDEAEncrypt.Checksum);
-
-    if (Status.IsComplete) {
-        /* Append the CRC */
-        memcpy(&Buffer[Status.BytesProcessed], &TransferState.ReadData.Filter.Params.TDEAEncrypt.Checksum, ISO14443A_CRCA_SIZE);
-        Status.BytesProcessed += 2;
-        if (Status.BytesProcessed <= DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE) {
-            /* Still fits; pad and encrypt */
-            PadBufferForTDEA(Buffer, Status.BytesProcessed, TransferState.ReadData.Filter.Params.TDEAEncrypt.FirstPaddingBitSet);
-        }
-        else {
-            /* Doesn't fit. Copy excess to the temp buffer and reset the IsComplete flag */
-            TransferState.ReadData.Filter.Params.TDEAEncrypt.LeftoversSize = Status.BytesProcessed - DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE;
-            Status.BytesProcessed = DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS * CRYPTO_DES_BLOCK_SIZE;
-            memcpy(&TransferState.ReadData.Filter.Params.TDEAEncrypt.Leftovers[0], &Buffer[Status.BytesProcessed], TransferState.ReadData.Filter.Params.TDEAEncrypt.LeftoversSize);
-            Status.IsComplete = false;
-            TransferState.ReadData.Filter.Func = &PiccToPcdTransferFilterEncryptFinal;
-        }
+    if (PartialCount) {
+        memmove(&Buffer[PartialCount], &Buffer[0], ByteCount);
+        memcpy(&Buffer[0], &TransferState.WriteData.Filter.Params.TDEAEncrypt.PartialBlock[0], PartialCount);
+        ByteCount += PartialCount;
     }
-
-    XferBlocks = (Status.BytesProcessed + CRYPTO_DES_BLOCK_SIZE - 1) / CRYPTO_DES_BLOCK_SIZE;
-    CryptoEncrypt2KTDEA_CBCSend(XferBlocks, Buffer, Buffer, SessionIV, SessionKey);
-    Status.BytesProcessed = XferBlocks * CRYPTO_DES_BLOCK_SIZE;
-
-    return Status;
+    TransferState.WriteData.Filter.Params.TDEAEncrypt.PartialCount = 0;
+    return ByteCount;
 }
 
 static uint8_t PcdToPiccTransferFilterEncryptFinal(uint8_t* Buffer, uint8_t ByteCount)
@@ -883,21 +937,19 @@ static uint8_t PcdToPiccTransferFilterEncryptFinal(uint8_t* Buffer, uint8_t Byte
     uint8_t PartialCount = TransferState.WriteData.Filter.Params.TDEAEncrypt.PartialCount;
     uint16_t ChecksumReceived;
 
-    /* TODO: Make this beautiful. */
-    if (PartialCount) {
-        memmove(&Buffer[PartialCount], &Buffer[0], ByteCount);
-        memcpy(&Buffer[0], &TransferState.WriteData.Filter.Params.TDEAEncrypt.PartialBlock[0], PartialCount);
-        ByteCount += PartialCount;
-    }
-
+    /* Prepend previously received leftover data */
+    ByteCount = PrependPartialDataEncrypt(Buffer, ByteCount, PartialCount);
+    /* TODO: Verify we've got a complete block */
+    /* Encrypt the complete block in CBC receive mode to recover plaintext */
     CryptoEncrypt2KTDEA_CBCReceive(1, Buffer, Buffer, SessionIV, SessionKey);
-    if (TransferState.WriteData.Filter.Params.TDEAEncrypt.Want2BytesMore) {
+    /* Depending on how many bytes we expected, build the checksum */
+    if (TransferState.WriteData.Filter.Params.TDEAEncrypt.RemainingChecksumBytes == 2) {
         ChecksumReceived = *(uint16_t*)&Buffer[0];
     }
     else {
         ChecksumReceived = (Buffer[0] << 8) | TransferState.WriteData.Filter.Params.TDEAEncrypt.Checksum1stByte;
     }
-
+    /* Verify checksum */
     if (TransferState.WriteData.Filter.Params.TDEAEncrypt.ChecksumComputed == ChecksumReceived) {
         return STATUS_OPERATION_OK;
     }
@@ -913,37 +965,38 @@ static uint8_t PcdToPiccTransferFilterEncrypt(uint8_t* Buffer, uint8_t ByteCount
     uint8_t XferBlocks;
     uint8_t XferBytes;
 
-    /* TODO: Make this beautiful. */
-    if (PartialCount) {
-        memmove(&Buffer[PartialCount], &Buffer[0], ByteCount);
-        memcpy(&Buffer[0], &TransferState.WriteData.Filter.Params.TDEAEncrypt.PartialBlock[0], PartialCount);
-        ByteCount += PartialCount;
-    }
-
+    /* Prepend previously received leftover data */
+    ByteCount = PrependPartialDataEncrypt(Buffer, ByteCount, PartialCount);
+    /* Compute how many complete blocks we have; stash extra if any */
     XferBlocks = ByteCount / CRYPTO_DES_BLOCK_SIZE;
     XferBytes = XferBlocks * CRYPTO_DES_BLOCK_SIZE;
     PartialCount = ByteCount - XferBytes;
-    CryptoEncrypt2KTDEA_CBCReceive(XferBlocks, Buffer, Buffer, SessionIV, SessionKey);
-
     if (PartialCount) {
         memcpy(&TransferState.WriteData.Filter.Params.TDEAEncrypt.PartialBlock[0], &Buffer[XferBytes], PartialCount);
+        TransferState.WriteData.Filter.Params.TDEAEncrypt.PartialCount = PartialCount;
     }
-    TransferState.WriteData.Filter.Params.TDEAEncrypt.PartialCount = PartialCount;
-
+    /* Encrypt complete blocks in CBC receive mode to recover plaintext */
+    CryptoEncrypt2KTDEA_CBCReceive(XferBlocks, Buffer, Buffer, SessionIV, SessionKey);
+    /* Push plaintext data to the sink; it will write no more than required */
     Status = TransferState.WriteData.Sink.Func(Buffer, XferBytes);
+    /* Update running checksum over written bytes */
     TransferState.WriteData.Filter.Params.TDEAEncrypt.ChecksumComputed = ISO14443AUpdateCRCA(Buffer, Status.BytesProcessed, TransferState.WriteData.Filter.Params.TDEAEncrypt.ChecksumComputed);
+    /* If we pushed all the bytes we had to, it is time to verify checksum */
     if (Status.IsComplete) {
+        /* Compute how many plaintext bytes we have remaining */
         uint8_t ExtraBytes = XferBytes - Status.BytesProcessed;
         /* Checksum can be in the same block. */
         switch (ExtraBytes) {
         case 0:
-            TransferState.WriteData.Filter.Params.TDEAEncrypt.Want2BytesMore = true;
+            /* The checksum is completely in the next block */
+            TransferState.WriteData.Filter.Params.TDEAEncrypt.RemainingChecksumBytes = 2;
             TransferState.WriteData.Filter.Func = &PcdToPiccTransferFilterEncryptFinal;
             return STATUS_ADDITIONAL_FRAME;
 
         case 1:
+            /* The checksum is split between this and the next block */
             TransferState.WriteData.Filter.Params.TDEAEncrypt.Checksum1stByte = Buffer[Status.BytesProcessed];
-            TransferState.WriteData.Filter.Params.TDEAEncrypt.Want2BytesMore = false;
+            TransferState.WriteData.Filter.Params.TDEAEncrypt.RemainingChecksumBytes = 1;
             TransferState.WriteData.Filter.Func = &PcdToPiccTransferFilterEncryptFinal;
             return STATUS_ADDITIONAL_FRAME;
 
@@ -962,24 +1015,27 @@ static uint8_t PcdToPiccTransferFilterEncrypt(uint8_t* Buffer, uint8_t ByteCount
 
     return STATUS_ADDITIONAL_FRAME;
 }
+#endif
 
-uint8_t ReadDataFilterSetup(uint8_t CommSettings, bool FirstPaddingBitSet)
+static uint8_t ReadDataFilterSetup(uint8_t CommSettings)
 {
+    memset(&TransferState, 0, sizeof(TransferState));
+
     switch (CommSettings) {
     case DESFIRE_COMMS_PLAINTEXT:
-        TransferState.ReadData.Filter.Func = &PiccToPcdTransferFilterNull;
         break;
 
     case DESFIRE_COMMS_PLAINTEXT_MAC:
-        TransferState.ReadData.Filter.Func = &PiccToPcdTransferFilterMAC;
-        TransferState.ReadData.Filter.Params.TDEAMAC.FirstPaddingBitSet = FirstPaddingBitSet;
+        TransferState.ReadData.Checksums.UpdateFunc = &PiccToPcdUpdateMACTDEASend;
+        TransferState.ReadData.Checksums.FinalFunc = &PiccToPcdFinalMACTDEASend;
         memset(SessionIV, 0, sizeof(SessionIV));
         break;
 
     case DESFIRE_COMMS_CIPHERTEXT_DES:
-        TransferState.ReadData.Filter.Func = &PiccToPcdTransferFilterEncrypt;
-        TransferState.ReadData.Filter.Params.TDEAEncrypt.FirstPaddingBitSet = FirstPaddingBitSet;
-        TransferState.ReadData.Filter.Params.TDEAEncrypt.Checksum = ISO14443A_CRCA_INIT;
+        TransferState.ReadData.Checksums.UpdateFunc = &PiccToPcdUpdateCRCA;
+        TransferState.ReadData.Checksums.FinalFunc = &PiccToPcdFinalCRCA;
+        TransferState.ReadData.Checksums.CRCA = ISO14443A_CRCA_INIT;
+        TransferState.ReadData.Encryption.Func = &PiccToPcdEncryptTDEASend;
         memset(SessionIV, 0, sizeof(SessionIV));
         break;
 
@@ -991,6 +1047,7 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings, bool FirstPaddingBitSet)
 
 static uint8_t WriteDataFilterSetup(uint8_t CommSettings)
 {
+#if 0
     switch (CommSettings) {
     case DESFIRE_COMMS_PLAINTEXT:
         TransferState.WriteData.Filter.Func = &PcdToPiccTransferFilterNull;
@@ -1012,12 +1069,13 @@ static uint8_t WriteDataFilterSetup(uint8_t CommSettings)
     default:
         return STATUS_PARAMETER_ERROR;
     }
+#endif
     return STATUS_OPERATION_OK;
 }
 
 TransferStatus ReadDataFileTransfer(uint8_t* Buffer)
 {
-    return TransferState.ReadData.Filter.Func(Buffer);
+    return PiccToPcdTransfer(Buffer);
 }
 
 uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount)
@@ -1027,8 +1085,6 @@ uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount)
 
 uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length)
 {
-    bool FirstPaddingBitSet;
-
     /* Verify boundary conditions */
     if (Offset + Length >= SelectedFile.File.StandardFile.FileSize) {
         return STATUS_BOUNDARY_ERROR;
@@ -1037,21 +1093,22 @@ uint8_t ReadDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length
     /* Setup data source */
     TransferState.ReadData.Source.Func = &ReadDataEepromSource;
     if (!Length) {
-        FirstPaddingBitSet = true;
-        TransferState.ReadData.Source.BytesLeft = SelectedFile.File.StandardFile.FileSize - Offset;
+        TransferState.ReadData.FirstPaddingBitSet = true;
+        TransferState.ReadData.BytesLeft = SelectedFile.File.StandardFile.FileSize - Offset;
     }
     else {
-        FirstPaddingBitSet = false;
-        TransferState.ReadData.Source.BytesLeft = Length;
+        TransferState.ReadData.FirstPaddingBitSet = false;
+        TransferState.ReadData.BytesLeft = Length;
     }
     /* Clean data is always located in the beginning of data area */
     TransferState.ReadData.Source.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * DESFIRE_EEPROM_BLOCK_SIZE + Offset;
     /* Setup data filter */
-    return ReadDataFilterSetup(CommSettings, FirstPaddingBitSet);
+    return ReadDataFilterSetup(CommSettings);
 }
 
 uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Length)
 {
+#if 0
     /* Verify boundary conditions */
     if (Offset + Length >= SelectedFile.File.StandardFile.FileSize) {
         return STATUS_BOUNDARY_ERROR;
@@ -1067,22 +1124,24 @@ uint8_t WriteDataFileSetup(uint8_t CommSettings, uint16_t Offset, uint16_t Lengt
     }
     /* Setup data filter */
     return WriteDataFilterSetup(CommSettings);
+#endif
 }
 
 
 TransferStatus ReadValueFileTransfer(uint8_t* Buffer)
 {
-    return TransferState.ReadData.Filter.Func(Buffer);
+    return PiccToPcdTransfer(Buffer);
 }
 
 uint8_t ReadValueFileSetup(uint8_t CommSettings)
 {
     /* Setup data source (generic EEPROM source) */
     TransferState.ReadData.Source.Func = &ReadDataEepromSource;
-    TransferState.ReadData.Source.BytesLeft = 4;
     TransferState.ReadData.Source.Pointer = GetFileDataAreaBlockId(SelectedFile.Num) * DESFIRE_EEPROM_BLOCK_SIZE;
+    TransferState.ReadData.BytesLeft = 4;
+    TransferState.ReadData.FirstPaddingBitSet = false;
     /* Setup data filter */
-    return ReadDataFilterSetup(CommSettings, false);
+    return ReadDataFilterSetup(CommSettings);
 }
 
 /*
