@@ -33,6 +33,9 @@ PCD's side.
 
 #define CRYPTO_DES_BLOCK_SIZE       8 /* Bytes */
 
+/* Prototype the CBC function pointer in case anyone needs it */
+typedef void (*CryptoTDEACBCFuncType)(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+
 /** Performs the Triple DEA enciphering in ECB mode (single block)
  *
  * \param Plaintext     Source buffer with plaintext
@@ -73,5 +76,22 @@ void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void*
  */
 void CryptoEncrypt3KTDEA_CBCSend(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
 void CryptoDecrypt3KTDEA_CBCReceive(uint16_t Count, const void* Plaintext, void* Ciphertext, void *IV, const uint8_t* Keys);
+
+/** Applies padding to the data within the buffer
+ *
+ * \param Buffer 		Data buffer to pad
+ * \param BytesInBuffer	How much data there is in the buffer already
+ * \param FirstPaddingBitSet Whether the very first bit (MSB) will be set or not
+ */
+INLINE void CryptoPaddingTDEA(uint8_t* Buffer, uint8_t BytesInBuffer, bool FirstPaddingBitSet)
+{
+    uint8_t PaddingByte = FirstPaddingBitSet << 7;
+    uint8_t i;
+
+    for (i = BytesInBuffer; i < CRYPTO_DES_BLOCK_SIZE; ++i) {
+        Buffer[i] = PaddingByte;
+        PaddingByte = 0x00;
+    }
+}
 
 #endif /* CRYPTODES_H_ */

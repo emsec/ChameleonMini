@@ -1,3 +1,4 @@
+#include "../Common.h"
 #include "CryptoTDEA.h"
 
 #include "../Terminal/Terminal.h"
