@@ -1366,7 +1366,11 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
 
         case ISO14443_PCB_S_BLOCK:
             if (PCB == ISO14443_PCB_S_DESELECT) {
+                /* Transition to HALT */
                 ISO144433AHalt();
+                /* Answer with S(DESELECT) -- just send the copy of the message */
+                ByteCount = PrologueLength;
+                break;
             }
             return ISO14443A_APP_NO_RESPONSE;
         }
@@ -1398,12 +1402,12 @@ static Iso144433AStateType Iso144433AIdleState;
 
 void ISO144433AReset(void)
 {
-    Iso144433AState = ISO14443_3A_STATE_IDLE;
+    Iso144433AIdleState = Iso144433AState = ISO14443_3A_STATE_IDLE;
 }
 
 void ISO144433AHalt(void)
 {
-    Iso144433AState = ISO14443_3A_STATE_HALT;
+    Iso144433AIdleState = Iso144433AState = ISO14443_3A_STATE_HALT;
 }
 
 static bool ISO144433AIsHalt(const uint8_t* Buffer, uint16_t BitCount)
