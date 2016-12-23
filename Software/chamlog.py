@@ -3,6 +3,7 @@
 # Command line tool to analyze binary dump files from the Chameleon
 # Authors: Simon K. (simon.kueppers@rub.de)
 
+from __future__ import print_function
 import argparse
 import sys
 import json

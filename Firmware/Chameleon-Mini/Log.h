@@ -20,6 +20,10 @@ typedef enum {
     LOG_INFO_CODEC_RX_DATA		= 0x40, ///< Currently active codec received data.
     LOG_INFO_CODEC_TX_DATA		= 0x41, ///< Currently active codec sent data.
 
+    /* ISO 14443 related entries */
+    LOG_ISO14443_3A_STATE       = 0x53,
+    LOG_ISO14443_4_STATE        = 0x54,
+
     /* App */
     LOG_INFO_APP_CMD_READ		= 0x80, ///< Application processed read command.
     LOG_INFO_APP_CMD_WRITE		= 0x81, ///< Application processed write command.

@@ -17,11 +17,14 @@ eventTypes = {
     0x10: { 'name': 'GENERIC',        'decoder': textDecoder },
     0x11: { 'name': 'CONFIG SET',     'decoder': textDecoder },
     0x12: { 'name': 'SETTING SET',    'decoder': textDecoder },
-    0x13: { 'name': 'UID SET',        'decoder': textDecoder },
+    0x13: { 'name': 'UID SET',        'decoder': binaryDecoder },
     0x20: { 'name': 'RESET APP',      'decoder': noDecoder },
 
     0x40: { 'name': 'CODEC RX',       'decoder': binaryDecoder },
     0x41: { 'name': 'CODEC TX',       'decoder': binaryDecoder },
+
+    0x53: { 'name': '14443-3A STATE', 'decoder': binaryDecoder },
+    0x54: { 'name': '14443-4 STATE',  'decoder': binaryDecoder },
 
     0x80: { 'name': 'APP READ',       'decoder': binaryDecoder },
     0x81: { 'name': 'APP WRITE',      'decoder': binaryDecoder },

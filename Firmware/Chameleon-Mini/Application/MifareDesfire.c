@@ -1256,8 +1256,15 @@ static Iso144434StateType Iso144434State;
 static uint8_t Iso144434BlockNumber;
 static uint8_t Iso144434CardID;
 
+static void ISO144434SwitchState(Iso144434StateType NewState)
+{
+    Iso144434State = NewState;
+    LogEntry(LOG_ISO14443_4_STATE, &Iso144434State, 1);
+}
+
 void ISO144434Reset(void)
 {
+    /* No logging -- spams the log */
     Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
     Iso144434BlockNumber = 1;
 }
@@ -1306,7 +1313,7 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
         Buffer[4] = DESFIRE_EV0_ATS_TC_BYTE;
         Buffer[5] = 0x80; /* T1: dummy value for historical bytes */
 
-        Iso144434State = ISO14443_4_STATE_ACTIVE;
+        ISO144434SwitchState(ISO14443_4_STATE_ACTIVE);
         ByteCount = Buffer[0];
         break;
 
@@ -1366,6 +1373,9 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
 
         case ISO14443_PCB_S_BLOCK:
             if (PCB == ISO14443_PCB_S_DESELECT) {
+                /* Reset our state */
+                ISO144434Reset();
+                LogEntry(LOG_ISO14443_4_STATE, &Iso144434State, 1);
                 /* Transition to HALT */
                 ISO144433AHalt();
                 /* Answer with S(DESELECT) -- just send the copy of the message */
@@ -1386,8 +1396,6 @@ uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount)
  */
 
 typedef enum {
-    /* Something went wrong or we've received a halt command */
-    ISO14443_3A_STATE_HALT,
     /* The card is powered up but not selected */
     ISO14443_3A_STATE_IDLE,
     /* Entered on REQA or WUPA; anticollision is being performed */
@@ -1395,19 +1403,30 @@ typedef enum {
     ISO14443_3A_STATE_READY2,
     /* Entered when the card has been selected */
     ISO14443_3A_STATE_ACTIVE,
+    /* Something went wrong or we've received a halt command */
+    ISO14443_3A_STATE_HALT,
 } Iso144433AStateType;
 
 static Iso144433AStateType Iso144433AState;
 static Iso144433AStateType Iso144433AIdleState;
 
+static void ISO144433ASwitchState(Iso144433AStateType NewState)
+{
+    Iso144433AState = NewState;
+    LogEntry(LOG_ISO14443_3A_STATE, &Iso144433AState, 1);
+}
+
 void ISO144433AReset(void)
 {
-    Iso144433AIdleState = Iso144433AState = ISO14443_3A_STATE_IDLE;
+    /* No logging -- spams the log */
+    Iso144433AState = ISO14443_3A_STATE_IDLE;
+    Iso144433AIdleState = ISO14443_3A_STATE_IDLE;
 }
 
 void ISO144433AHalt(void)
 {
-    Iso144433AIdleState = Iso144433AState = ISO14443_3A_STATE_HALT;
+    ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
+    Iso144433AIdleState = ISO14443_3A_STATE_HALT;
 }
 
 static bool ISO144433AIsHalt(const uint8_t* Buffer, uint16_t BitCount)
@@ -1437,7 +1456,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
         }
 
         Iso144433AIdleState = Iso144433AState;
-        Iso144433AState = ISO14443_3A_STATE_READY1;
+        ISO144433ASwitchState(ISO14443_3A_STATE_READY1);
         Buffer[0] = (ATQA_VALUE >> 0) & 0x00FF;
         Buffer[1] = (ATQA_VALUE >> 8) & 0x00FF;
         return ISO14443A_ATQA_FRAME_SIZE;
@@ -1456,7 +1475,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
             }
             if (ISO14443ASelect(Buffer, &BitCount, Uid, SAK_CL1_VALUE)) {
                 /* CL1 stage has ended successfully */
-                Iso144433AState = ISO14443_3A_STATE_READY2;
+                ISO144433ASwitchState(ISO14443_3A_STATE_READY2);
             }
 
             return BitCount;
@@ -1472,7 +1491,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
             if (ISO14443ASelect(Buffer, &BitCount, &Uid[3], SAK_CL2_VALUE)) {
                 /* CL2 stage has ended successfully. This means
                  * our complete UID has been sent to the reader. */
-                Iso144433AState = ISO14443_3A_STATE_ACTIVE;
+                ISO144433ASwitchState(ISO14443_3A_STATE_ACTIVE);
             }
 
             return BitCount;
@@ -1483,7 +1502,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
         /* Recognise the HLTA command */
         if (ISO144433AIsHalt(Buffer, BitCount)) {
             LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
-            Iso144433AState = ISO14443_3A_STATE_HALT;
+            ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
             DEBUG_PRINT("\r\nISO14443-3: Got HALT");
             return ISO14443A_APP_NO_RESPONSE;
         }
@@ -1493,7 +1512,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount)
 
     /* Unknown command. Reset back to idle/halt state. */
     DEBUG_PRINT("\r\nISO14443-3: RESET TO IDLE");
-    Iso144433AState = Iso144433AIdleState;
+    ISO144433ASwitchState(Iso144433AIdleState);
     return ISO14443A_APP_NO_RESPONSE;
 }
 
