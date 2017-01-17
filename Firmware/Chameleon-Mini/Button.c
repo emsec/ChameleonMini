@@ -47,11 +47,17 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
 
     case BUTTON_ACTION_UID_LEFT_INCREMENT:
     {
+        uint8_t offset = 0;
+#ifdef SUPPORT_UID7_FIX_MANUFACTURER_BYTE
+        if (ActiveConfiguration.UidSize == 7) {
+            offset = 1;
+        }
+#endif
         ApplicationGetUid(UidBuffer);
         bool Carry = 1;
         uint8_t i;
 
-        for (i=0; i<ActiveConfiguration.UidSize; i++) {
+        for (i=offset; i<ActiveConfiguration.UidSize; i++) {
             if (Carry) {
                 if (UidBuffer[i] == 0xFF) {
                     Carry = 1;
@@ -91,11 +97,17 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
 
     case BUTTON_ACTION_UID_LEFT_DECREMENT:
     {
+        uint8_t offset = 0;
+#ifdef SUPPORT_UID7_FIX_MANUFACTURER_BYTE
+        if (ActiveConfiguration.UidSize == 7) {
+            offset = 1;
+        }
+#endif
         ApplicationGetUid(UidBuffer);
         bool Carry = 1;
         uint8_t i;
 
-        for (i=0; i<ActiveConfiguration.UidSize; i++) {
+        for (i=offset; i<ActiveConfiguration.UidSize; i++) {
             if (Carry) {
                 if (UidBuffer[i] == 0x00) {
                     Carry = 1;
