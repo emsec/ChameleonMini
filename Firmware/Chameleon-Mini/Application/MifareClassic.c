@@ -143,6 +143,15 @@ void MifareClassicAppInit1K(void)
     FromHalt = false;
 }
 
+void MifareClassicAppInit1K7B(void)
+{
+    State = STATE_IDLE;
+    CardATQAValue = MFCLASSIC_1K_7B_ATQA_VALUE;
+    CardSAKValue = MFCLASSIC_1K_SAK_VALUE;
+    FromHalt = false;
+}
+
+
 void MifareClassicAppInit4K(void)
 {
     State = STATE_IDLE;
