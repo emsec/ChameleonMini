@@ -45,7 +45,7 @@
  * -# Run the `ChameleonFirmwareUpgrade.bat` as Administrator (right click -> run as Administrator) and wait for the firmware upgrade to terminate. Upon success, the green LED of the ChameleonMini should light up.
  *
  * Finally, install the driver for Chameleon: 
- * Download both [ChameleonDriver.inf](https://cdn.rawgit.com/emsec/ChameleonMini/master/Drivers/ChameleonDriver.inf) and [ChameleonDriver.cat](https://cdn.rawgit.com/emsec/ChameleonMini/master/Drivers/ChameleonDriver.cat) from the Drivers directory and install the INF file (right click -> install).
+ * Download both [ChameleonDriver.inf](https://cdn.rawgit.com/emsec/ChameleonMini/master/Drivers/ChameleonDriver.inf) and [ChameleonDriver.cat](https://cdn.rawgit.com/emsec/ChameleonMini/master/Drivers/ChameleonDriver.cat) from the Drivers directory and install the INF file (right click -> install). \note If you have problems with the driver installation, try the instructions in [sections 6.2.1 and 6.2.2 from this Atmel document](http://www.atmel.com/images/doc8429.pdf).
  * 
  * Now, Chameleon should appear in the Windows device manager and you should be able to open a terminal program such as TeraTerm and connect to the Chameleon-Mini via the COM port shown in the device manager. On Mac or Linux you can use screen (`screen /dev/tty.usbmodem1421`, please replace your device path with the appropriate one) to communicate with your Chameleon. Further information about how to "talk" to the Chameleon can be found here: \ref Page_CommandLine.
  */
