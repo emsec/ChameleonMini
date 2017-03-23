@@ -18,7 +18,9 @@ class Device:
     COMMAND_LOG_CLEAR = "LOGCLEAR"
     COMMAND_LOGMODE = "LOGMODE"
     COMMAND_LBUTTON = "LBUTTON"
+    COMMAND_LBUTTONLONG = "LBUTTON_LONG"
     COMMAND_RBUTTON = "RBUTTON"
+    COMMAND_RBUTTONLONG = "RBUTTON_LONG"
     COMMAND_GREEN_LED = "LEDGREEN"
     COMMAND_RED_LED = "LEDRED"
     
@@ -69,7 +71,6 @@ class Device:
         return devices                                                 
                                      
     def connect(self, comport):
-
         self.serial.port = comport
         try:
             self.serial.open()
@@ -223,11 +224,23 @@ class Device:
         else:
             return self.getSetCmd(self.COMMAND_LBUTTON, newAction)
 
+    def cmdLButtonLong(self, newAction = None):
+        if (newAction == self.SUGGEST_CHAR):
+            return self.getCmdSuggestions(self.COMMAND_LBUTTONLONG)
+        else:
+            return self.getSetCmd(self.COMMAND_LBUTTONLONG, newAction)
+
     def cmdRButton(self, newAction = None):
         if (newAction == self.SUGGEST_CHAR):
             return self.getCmdSuggestions(self.COMMAND_RBUTTON)
         else:
             return self.getSetCmd(self.COMMAND_RBUTTON, newAction)
+
+    def cmdRButtonLong(self, newAction = None):
+        if (newAction == self.SUGGEST_CHAR):
+            return self.getCmdSuggestions(self.COMMAND_RBUTTONLONG)
+        else:
+            return self.getSetCmd(self.COMMAND_RBUTTONLONG, newAction)
 
     def cmdGreenLED(self, newFunction = None):
         if (newFunction == self.SUGGEST_CHAR):
