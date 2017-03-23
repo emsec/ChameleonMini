@@ -11,7 +11,7 @@ import datetime
 def verboseLog(text):
     formatString = "[{}] {}"
     timeString = datetime.datetime.utcnow()
-    print(formatString.format(timeString, text), file=sys.stderr)
+    print(formatString.format(timeString, text), sys.stderr)
     
 # Command funcs
 def cmdInfo(chameleon, arg):
@@ -81,6 +81,19 @@ def cmdLButton(chameleon, arg):
         else:
             return "Setting left button action to {} failed: {}".format(arg, result['statusText'])
 
+def cmdLButtonLong(chameleon, arg):
+    result = chameleon.cmdLButtonLong(arg)
+    
+    if (arg is None):
+        return "Current long press left button action: {}".format(result['response'])
+    else:
+        if (arg == chameleon.SUGGEST_CHAR):
+            return "Possible long press left button actions: {}".format(", ".join(result['suggestions']))
+        elif (result['statusCode'] in chameleon.STATUS_CODES_SUCCESS):
+            return "Long press left button action has been set to {}".format(chameleon.cmdLButtonLong()['response'])
+        else:
+            return "Setting long press left button action to {} failed: {}".format(arg, result['statusText'])
+
 def cmdRButton(chameleon, arg):
     result = chameleon.cmdRButton(arg)
     
@@ -93,6 +106,19 @@ def cmdRButton(chameleon, arg):
             return "Right button action has been set to {}".format(chameleon.cmdRButton()['response'])
         else:
             return "Setting right button action to {} failed: {}".format(arg, result['statusText'])
+
+def cmdRButtonLong(chameleon, arg):
+    result = chameleon.cmdRButtonLong(arg)
+    
+    if (arg is None):
+        return "Current long press right button action: {}".format(result['response'])
+    else:
+        if (arg == chameleon.SUGGEST_CHAR):
+            return "Possible long press right button actions: {}".format(", ".join(result['suggestions']))
+        elif (result['statusCode'] in chameleon.STATUS_CODES_SUCCESS):
+            return "Long press right button action has been set to {}".format(chameleon.cmdRButtonLong()['response'])
+        else:
+            return "Setting long press right button action to {} failed: {}".format(arg, result['statusText'])
 
 def cmdGreenLED(chameleon, arg):
     result = chameleon.cmdGreenLED(arg)
@@ -151,7 +177,9 @@ def main():
     cmdArgGroup.add_argument("-U",  "--uid",         dest="uid",         action=CmdListAction, nargs='?',            help="retrieve or set the current UID")
     cmdArgGroup.add_argument("-c",  "--config",      dest="config",      action=CmdListAction, metavar="CFGNAME", nargs='?', help="retrieve or set the current configuration")
     cmdArgGroup.add_argument("-lb",  "--lbutton",    dest="lbutton",     action=CmdListAction, metavar="ACTION", nargs='?', help="retrieve or set the current left button action")
+    cmdArgGroup.add_argument("-lbl",  "--lbuttonlong",    dest="lbutton_long",     action=CmdListAction, metavar="ACTION", nargs='?', help="retrieve or set the current left button long press action")
     cmdArgGroup.add_argument("-rb",  "--rbutton",    dest="rbutton",     action=CmdListAction, metavar="ACTION", nargs='?', help="retrieve or set the current right button action")
+    cmdArgGroup.add_argument("-rbl",  "--rbuttonlong",    dest="rbutton_long",     action=CmdListAction, metavar="ACTION", nargs='?', help="retrieve or set the current right button long press action")
     cmdArgGroup.add_argument("-gl",  "--gled",       dest="gled",        action=CmdListAction, metavar="FUNCTION", nargs='?', help="retrieve or set the current green led function")
     cmdArgGroup.add_argument("-rl",  "--rled",       dest="rled",        action=CmdListAction, metavar="FUNCTION", nargs='?', help="retrieve or set the current red led function")
     args = argParser.parse_args()
@@ -176,6 +204,8 @@ def main():
                 "download"  : cmdDownload,
                 "log"       : cmdLog,
                 "lbutton"   : cmdLButton,
+		"lbutton_long" : cmdLButtonLong,
+		"rbutton_long" : cmdRButtonLong,
                 "rbutton"   : cmdRButton,
                 "gled"      : cmdGreenLED,
                 "rled"      : cmdRedLED,
