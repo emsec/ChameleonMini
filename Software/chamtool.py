@@ -50,7 +50,7 @@ def cmdDumpMFU(chameleon, arg):
     return "{}".format(chameleon.cmdDumpMFU()['response'])
 
 def cmdConfig(chameleon, arg):
-    result = chameleon.cmdConfig(chameleon, arg)
+    result = chameleon.cmdConfig(arg)
 
     if (arg is None):
         return "Current configuration: {}".format(result['response'])
