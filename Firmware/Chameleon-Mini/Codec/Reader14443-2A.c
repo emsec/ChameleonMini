@@ -326,7 +326,7 @@ void Reader14443ACodecTask(void)
 						if (BitCount % 8) // copy the last byte, if there is an incomplete byte
 							CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
 						LEDHook(LED_CODEC_RX, LED_PULSE);
-						LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (BitCount + 7) / 8);
+						LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
 						breakflag = true;
 						break;
 
@@ -384,7 +384,7 @@ void Reader14443ACodecTask(void)
 			CODEC_DEMOD_IN_PORT.INTCTRL = 0;
 
 			LEDHook(LED_CODEC_TX, LED_PULSE);
-			LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, (BitCount + 7) / 8);
+			LogEntry(LOG_INFO_CODEC_TX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
 
 			/* Set state and start timer for Miller encoding. */
 			State = STATE_MILLER_SOF0;

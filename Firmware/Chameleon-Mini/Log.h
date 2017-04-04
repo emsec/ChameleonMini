@@ -19,6 +19,8 @@ typedef enum {
     /* Codec */
     LOG_INFO_CODEC_RX_DATA		= 0x40, ///< Currently active codec received data.
     LOG_INFO_CODEC_TX_DATA		= 0x41, ///< Currently active codec sent data.
+    LOG_INFO_CODEC_RX_DATA_W_PARITY		= 0x42, ///< Currently active codec received data.
+    LOG_INFO_CODEC_TX_DATA_W_PARITY		= 0x43, ///< Currently active codec sent data.
 
     /* App */
     LOG_INFO_APP_CMD_READ		= 0x80, ///< Application processed read command.

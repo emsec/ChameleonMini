@@ -22,6 +22,8 @@ eventTypes = {
 
     0x40: { 'name': 'CODEC RX',       'decoder': binaryDecoder },
     0x41: { 'name': 'CODEC TX',       'decoder': binaryDecoder },
+    0x42: { 'name': 'CODEC RX W/ PARITY', 'decoder': binaryDecoder },
+    0x43: { 'name': 'CODEC TX W/ PARITY', 'decoder': binaryDecoder },
 
     0x80: { 'name': 'APP READ',       'decoder': binaryDecoder },
     0x81: { 'name': 'APP WRITE',      'decoder': binaryDecoder },
