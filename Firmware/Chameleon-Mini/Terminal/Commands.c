@@ -570,7 +570,7 @@ CommandStatusIdType CommandSetTimeout(char* OutMessage, const char* InParam)
 		return COMMAND_INFO_OK_WITH_TEXT_ID;
 	}
 	uint16_t tmp = 601;
-	if (!sscanf(InParam, "%5d", &tmp) || tmp > 600)
+	if (!sscanf_P(InParam, PSTR("%5d"), &tmp) || tmp > 600)
 		return COMMAND_ERR_INVALID_PARAM_ID;
 	GlobalSettings.ActiveSettingPtr->PendingTaskTimeout = tmp;
 	return COMMAND_INFO_OK_ID;
@@ -590,7 +590,7 @@ CommandStatusIdType CommandSetThreshold(char* OutMessage, const char* InParam)
 		return COMMAND_INFO_OK_WITH_TEXT_ID;
 	}
 	uint16_t tmp = 0;
-	if (!sscanf(InParam, "%5d", &tmp) || tmp > CODEC_MAXIMUM_THRESHOLD)
+	if (!sscanf_P(InParam, PSTR("%5d"), &tmp) || tmp > CODEC_MAXIMUM_THRESHOLD)
 		return COMMAND_ERR_INVALID_PARAM_ID;
 	DACB.CH0DATA = tmp;
 	ReaderThreshold = tmp;
