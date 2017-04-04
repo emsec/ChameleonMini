@@ -100,11 +100,12 @@ bool LogMemLoadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
 	{
 		bool overflow = false;
 		uint16_t remainderByteCount = 0;
+		uint16_t SizeInFRAMStored = LogFRAMAddr - FRAM_LOG_START_ADDR;
 		// prevent buffer overflows:
-		if ((BlockAddress + ByteCount) >= sizeof(LogMem) + (LogFRAMAddr - FRAM_LOG_START_ADDR))
+		if ((BlockAddress + ByteCount) >= sizeof(LogMem) + SizeInFRAMStored)
 		{
 			overflow = true;
-			uint16_t tmp = sizeof(LogMem) + (LogFRAMAddr - FRAM_LOG_START_ADDR) - BlockAddress;
+			uint16_t tmp = sizeof(LogMem) + SizeInFRAMStored - BlockAddress;
 			remainderByteCount = ByteCount - tmp;
 			ByteCount = tmp;
 		}
@@ -114,15 +115,15 @@ bool LogMemLoadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
 		 * 2. case: The block wraps from FRAM to SRAM
 		 * 3. case: The whole block is in SRAM.
 		 */
-		if (BlockAddress < (LogFRAMAddr - FRAM_LOG_START_ADDR) && (BlockAddress + ByteCount) < (LogFRAMAddr - FRAM_LOG_START_ADDR))
+		if (BlockAddress < SizeInFRAMStored && (BlockAddress + ByteCount) < SizeInFRAMStored)
 		{
 			MemoryReadBlock(Buffer, BlockAddress + FRAM_LOG_START_ADDR, ByteCount);
-		} else if (BlockAddress < (LogFRAMAddr - FRAM_LOG_START_ADDR)) {
-			uint16_t FramByteCount = LogFRAMAddr - (BlockAddress + FRAM_LOG_START_ADDR);
+		} else if (BlockAddress < SizeInFRAMStored) {
+			uint16_t FramByteCount = SizeInFRAMStored - BlockAddress;
 			MemoryReadBlock(Buffer, BlockAddress + FRAM_LOG_START_ADDR, FramByteCount);
 			memcpy(Buffer + FramByteCount, LogMem, ByteCount - FramByteCount);
 		} else {
-			memcpy(Buffer, LogMem + BlockAddress - LogFRAMAddr, ByteCount);
+			memcpy(Buffer, LogMem + BlockAddress - SizeInFRAMStored, ByteCount);
 		}
 
 		if (overflow)
