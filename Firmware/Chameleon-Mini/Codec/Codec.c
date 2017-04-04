@@ -14,9 +14,12 @@ uint16_t Reader_FWT = ISO14443A_RX_PENDING_TIMEOUT;
 #define READER_FIELD_MINIMUM_WAITING_TIME	70 // ms
 
 static uint16_t ReaderFieldStartTimestamp = 0;
+static uint16_t ReaderFieldRestartTimestamp = 0;
+static uint16_t ReaderFieldRestartDelay = 0;
 static volatile struct {
 	bool Started;
 	bool Ready;
+	bool ToBeRestarted;
 } ReaderFieldFlags = { false };
 
 uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
@@ -25,7 +28,7 @@ uint16_t ReaderThreshold = 400; // standard value
 // the following three functions prevent sending data directly after turning on the reader field
 void CodecReaderFieldStart(void) // DO NOT CALL THIS FUNCTION INSIDE APPLICATION!
 {
-	if (!CodecGetReaderField())
+	if (!CodecGetReaderField() && !ReaderFieldFlags.ToBeRestarted)
 	{
 		CodecSetReaderField(true);
 		ReaderFieldFlags.Started = true;
@@ -39,6 +42,14 @@ void CodecReaderFieldStop(void)
 	CodecSetReaderField(false);
 	ReaderFieldFlags.Started = false;
 	ReaderFieldFlags.Ready = false;
+}
+
+void CodecReaderFieldRestart(uint16_t delay)
+{
+	ReaderFieldFlags.ToBeRestarted = true;
+	ReaderFieldRestartTimestamp = SystemGetSysTick();
+	ReaderFieldRestartDelay = delay;
+	CodecReaderFieldStop();
 }
 
 /*
@@ -56,3 +67,18 @@ bool CodecIsReaderFieldReady(void)
 	}
 	return false;
 }
+
+bool CodecIsReaderToBeRestarted(void)
+{
+	if (ReaderFieldFlags.ToBeRestarted)
+	{
+		if (SYSTICK_DIFF(ReaderFieldRestartTimestamp) >= ReaderFieldRestartDelay)
+		{
+			ReaderFieldFlags.ToBeRestarted = false;
+			CodecReaderFieldStart();
+		}
+		return true;
+	}
+	return false;
+}
+

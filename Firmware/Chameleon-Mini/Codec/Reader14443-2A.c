@@ -287,7 +287,7 @@ void Reader14443ACodecTask(void)
 		Flags.RxDone = true;
 		Flags.RxPending = false;
 	}
-	if (!CodecIsReaderFieldReady())
+	if (CodecIsReaderToBeRestarted() || !CodecIsReaderFieldReady())
 		return;
 	if (!Flags.RxPending && (Flags.Start || Flags.RxDone))
 	{

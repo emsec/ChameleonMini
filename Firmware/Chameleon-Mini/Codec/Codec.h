@@ -248,4 +248,7 @@ void CodecReaderFieldStart(void);
 void CodecReaderFieldStop(void);
 bool CodecIsReaderFieldReady(void);
 
+void CodecReaderFieldRestart(uint16_t delay);
+#define FIELD_RESTART()	CodecReaderFieldRestart(100)
+bool CodecIsReaderToBeRestarted(void);
 #endif /* CODEC_H_ */
