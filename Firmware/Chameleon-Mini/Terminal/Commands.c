@@ -321,8 +321,9 @@ CommandStatusIdType CommandSetLogMode(char* OutMessage, const char* InParam)
 
 CommandStatusIdType CommandGetLogMem(char* OutParam)
 {
+	uint16_t free = LogMemFree();
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-        PSTR("%u"), LogMemFree());
+        PSTR("%u (from which %u non-volatile)"), free, (free <= LOG_SIZE) ? 0 : (free - LOG_SIZE));
 
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
