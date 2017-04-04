@@ -548,7 +548,7 @@ CommandStatusIdType CommandExecIdentifyCard(char* OutMessage)
 		return COMMAND_ERR_INVALID_USAGE_ID;
 	ApplicationReset();
 
-	Reader14443CurrentCommand = Reader14443_Indentify;
+	Reader14443CurrentCommand = Reader14443_Identify;
 	Reader14443AAppInit();
 	Reader14443ACodecStart();
 	CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;

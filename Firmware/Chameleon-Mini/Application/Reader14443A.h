@@ -29,7 +29,7 @@ typedef enum {
 	Reader14443_Send_Raw,
 	Reader14443_Get_UID,
 	Reader14443_Read_MF_Ultralight,
-	Reader14443_Indentify
+	Reader14443_Identify
 } Reader14443Command;
 
 

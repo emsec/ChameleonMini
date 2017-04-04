@@ -225,7 +225,12 @@ INLINE uint16_t Reader14443A_Deselect(uint8_t* Buffer) // deselects the card bec
 INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
 {
 	if (Selected)
-		return 0;
+	{
+		if (ReaderState > STATE_HALT)
+			return 0;
+		else
+			Selected = false;
+	}
 	switch (ReaderState)
 	{
 	case STATE_IDLE:
@@ -540,7 +545,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 		/************************************
 		 * This function identifies a PICC. *
 		 ************************************/
-		case Reader14443_Indentify:
+		case Reader14443_Identify:
 		{
 			uint16_t rVal = Reader14443A_Select(Buffer, BitCount);
 			if (Selected)
@@ -548,6 +553,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 				if (ReaderState >= STATE_SAK_CL1 && ReaderState <= STATE_SAK_CL3)
 				{
 					bool ISO14443_4A_compliant = IS_ISO14443A_4_COMPLIANT(Buffer);
+					CardCandidatesIdx = 0;
 
 					uint8_t i;
 					for (i = 0; i < ARRAY_COUNT(CardIdentificationList); i++)
@@ -652,7 +658,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 							CardCandidatesIdx = 0;
 							return Reader14443A_Deselect(Buffer);
 						}
-						switch (Buffer[3])
+						switch (Buffer[5])
 						{
 						case 0x00:
 							CardCandidatesIdx = 1;
