@@ -230,6 +230,7 @@ INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
 	{
 	case STATE_IDLE:
 	case STATE_HALT:
+		Reader_FWT = ISO14443A_RX_PENDING_TIMEOUT;
 		/* Send a REQA */
 		Buffer[0] = ISO14443A_CMD_WUPA; // whenever REQA works, WUPA also works, so we choose WUPA always
 		ReaderState = STATE_READY;

@@ -281,7 +281,7 @@ ISR(CODEC_TIMER_LOADMOD_CCA_VECT) // pause found
 
 void Reader14443ACodecTask(void)
 {
-	if (Flags.RxPending && SYSTICK_DIFF(RxPendingSince) > ISO14443A_RX_PENDING_TIMEOUT + 1)
+	if (Flags.RxPending && SYSTICK_DIFF(RxPendingSince) > Reader_FWT + 1)
 	{
 		BitCount = 0;
 		Flags.RxDone = true;

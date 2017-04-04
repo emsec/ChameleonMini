@@ -90,6 +90,9 @@
 #define CodecPtrRegister2			(*((volatile uint8_t**) &GPIORA))
 
 extern uint16_t ReaderThreshold;
+extern uint16_t Reader_FWT;
+
+#define FWI2FWT(x)	((uint32_t)(256 * 16 * ((uint32_t)1 << (x))) / (CODEC_CARRIER_FREQ / 1000) + 1)
 
 typedef enum {
 	CODEC_SUBCARRIERMOD_OFF,
