@@ -103,7 +103,7 @@
  * `STORE`               | Stores the content of the current slot from FRAM into the Flash memory
  * `RECALL`              | Recalls/restores the content of the current slot from the Flash memory into the FRAM
  * `TIMEOUT=?`           | Returns the possible number range for timeouts. See also \ref Anchor_TimeoutCommands "Timeout commands".
- * `TIMEOUT=<NUMBER>`    | Sets the timeout for the current slot in multiples of 128 ms. If set to zero, there is no timeout. See also \ref Anchor_TimeoutCommands "Timeout commands".
+ * `TIMEOUT=<NUMBER>`    | Sets the timeout for the current slot in multiples of 100 ms. If set to zero, there is no timeout. See also \ref Anchor_TimeoutCommands "Timeout commands".
  * `TIMEOUT?`            | Returns the timeout for the current slot. See also \ref Anchor_TimeoutCommands "Timeout commands".
  * <B>Reader Commands</B>| Using these commands only makes sense, if the slot is configured as reader. See also @ref Page_14443AReader
  * `SEND <BYTEVALUE>`    | Adds parity bits, sends the given byte string <BYTEVALUE>, and returns the cards answer
