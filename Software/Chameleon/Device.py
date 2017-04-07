@@ -137,7 +137,19 @@ class Device:
         result = {'statusCode': statusCode, 'statusText': statusText, 'response': None}
         
         if (statusCode == self.STATUS_CODE_OK_WITH_TEXT):
-            result['response'] =  self.readResponse()
+           if cmd == "VERSION?":
+                multi_lines = []
+                while True:
+                    line = self.serial.readline().decode('ascii').rstrip()
+                    multi_lines.append(line)
+                    timeout = time.time() + 0.1
+                    while not self.serial.inWaiting() and timeout > time.time():
+                       pass
+                    if not self.serial.inWaiting():
+                       break
+                result['response'] =  '\n'.join(multi_lines)
+           else:
+           	result['response'] =  self.readResponse()
         elif (statusCode == self.STATUS_CODE_TRUE):
             result['response'] = True
         elif (statusCode == self.STATUS_CODE_FALSE):
