@@ -1213,7 +1213,7 @@ static uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t ByteCount)
         /* Unwrap the PDU from ISO 7816-4 */
         ByteCount = Buffer[4];
         Buffer[0] = Buffer[1];
-        memmove(&Buffer[2], &Buffer[5], ByteCount);
+        memmove(&Buffer[1], &Buffer[5], ByteCount);
         /* Process the command */
         ByteCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
         if (ByteCount) {
