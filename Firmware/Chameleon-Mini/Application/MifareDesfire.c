@@ -284,6 +284,7 @@ static uint16_t EV0CmdAuthenticate2KTDEA1(uint8_t* Buffer, uint16_t ByteCount)
 static uint16_t EV0CmdAuthenticate2KTDEA2(uint8_t* Buffer, uint16_t ByteCount)
 {
     Desfire2KTDEAKeyType Key;
+    DesfireState = DESFIRE_IDLE;
 
     /* Validate command length */
     if (ByteCount != 1 + 2 * CRYPTO_DES_BLOCK_SIZE) {
