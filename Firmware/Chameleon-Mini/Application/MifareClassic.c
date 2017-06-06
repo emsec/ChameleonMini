@@ -716,14 +716,14 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         * Furthermore it delivers an encrypted answer. Decrypt and check it */
 	Crypto1Auth(&Buffer[0]);
 
-        Crypto1ByteArray(&Buffer[start], 4);
+        Crypto1ByteArray(&Buffer[4], 4);
 
         LogEntry(LOG_INFO_APP_AUTHING, &Buffer[start], 4);
 
-        if ((Buffer[start] == ReaderResponse[0]) &&
-            (Buffer[start+1] == ReaderResponse[1]) &&
-            (Buffer[start+2] == ReaderResponse[2]) &&
-            (Buffer[start+3] == ReaderResponse[3])) {
+        if ((Buffer[4] == ReaderResponse[0]) &&
+            (Buffer[5] == ReaderResponse[1]) &&
+            (Buffer[6] == ReaderResponse[2]) &&
+            (Buffer[7] == ReaderResponse[3])) {
 
             /* Reader is authenticated. Encrypt the precalculated card response
             * and generate the parity bits. */
