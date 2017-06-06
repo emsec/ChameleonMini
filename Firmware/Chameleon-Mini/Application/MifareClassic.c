@@ -714,13 +714,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         /* Reader delivers an encrypted nonce. We use it
         * to setup the crypto1 LFSR in nonlinear feedback mode.
         * Furthermore it delivers an encrypted answer. Decrypt and check it */
-		LogEntry(LOG_INFO_APP_CMD_AUTH,&BitCount,1);
-		/*  Fix for quick nested authing no Reader Nonce */
-		uint8_t start = 4;
-		if (BitCount<64)
-			start = 0;
-		else
-			Crypto1Auth(&Buffer[0]);
+	Crypto1Auth(&Buffer[0]);
 
         Crypto1ByteArray(&Buffer[start], 4);
 
