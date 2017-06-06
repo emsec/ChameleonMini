@@ -718,7 +718,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
         Crypto1ByteArray(&Buffer[4], 4);
 
-        LogEntry(LOG_INFO_APP_AUTHING, &Buffer[start], 4);
+        LogEntry(LOG_INFO_APP_AUTHING, &Buffer[4], 4);
 
         if ((Buffer[4] == ReaderResponse[0]) &&
             (Buffer[5] == ReaderResponse[1]) &&
