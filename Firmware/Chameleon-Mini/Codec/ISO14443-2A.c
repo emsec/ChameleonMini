@@ -217,7 +217,7 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
      * modulation pauses by using the RESTART event.
      * This can be understood as a "poor mans PLL" and makes sure that we are
      * never too far out the bit-grid while sampling. */
-    //CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
+    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
 }
 
 ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
