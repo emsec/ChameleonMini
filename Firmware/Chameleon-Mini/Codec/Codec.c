@@ -23,7 +23,6 @@ static volatile struct {
 } ReaderFieldFlags = { false };
 
 uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
-uint16_t ReaderThreshold = 400; // standard value
 
 // the following three functions prevent sending data directly after turning on the reader field
 void CodecReaderFieldStart(void) // DO NOT CALL THIS FUNCTION INSIDE APPLICATION!

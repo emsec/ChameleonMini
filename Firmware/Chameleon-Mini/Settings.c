@@ -25,7 +25,8 @@ SettingsType EEMEM StoredSettings = {
 		.LogMode = DEFAULT_LOG_MODE,
 		.LEDRedFunction = DEFAULT_RED_LED_ACTION,
 		.LEDGreenFunction = DEFAULT_GREEN_LED_ACTION,
-		.PendingTaskTimeout = DEFAULT_PENDING_TASK_TIMEOUT
+		.PendingTaskTimeout = DEFAULT_PENDING_TASK_TIMEOUT,
+		.ReaderThreshold = 400
 	}}
 };
 

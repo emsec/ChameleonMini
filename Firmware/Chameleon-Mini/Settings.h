@@ -29,6 +29,7 @@ typedef struct {
 	LEDHookEnum LEDRedFunction; /// Red LED function for this setting.
 	LEDHookEnum LEDGreenFunction; /// Green LED function for this setting.
 	uint16_t PendingTaskTimeout; /// Timeout for timeout commands for this setting, in multiples of 100 ms.
+	uint16_t ReaderThreshold;
 } SettingsEntryType;
 
 typedef struct {

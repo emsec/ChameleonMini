@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include "../Common.h"
 #include "../Configuration.h"
+#include "../Settings.h"
 
 #include "ISO14443-2A.h"
 #include "Reader14443-2A.h"
@@ -89,7 +90,6 @@
 #define CodecPtrRegister1			(*((volatile uint8_t**) &GPIOR8))
 #define CodecPtrRegister2			(*((volatile uint8_t**) &GPIORA))
 
-extern uint16_t ReaderThreshold;
 extern uint16_t Reader_FWT;
 
 #define FWI2FWT(x)	((uint32_t)(256 * 16 * ((uint32_t)1 << (x))) / (CODEC_CARRIER_FREQ / 1000) + 1)
@@ -172,7 +172,7 @@ INLINE void CodecInitCommon(void)
     DACB.CTRLB = DAC_CHSEL_SINGLE_gc;
     DACB.CTRLC = DAC_REFSEL_AVCC_gc;
     DACB.CTRLA = DAC_IDOEN_bm | DAC_ENABLE_bm;
-    DACB.CH0DATA = ReaderThreshold; // real threshold voltage can be calculated with ch0data * Vref / 0xFFF
+    DACB.CH0DATA = GlobalSettings.ActiveSettingPtr->ReaderThreshold; // real threshold voltage can be calculated with ch0data * Vref / 0xFFF
 
     /* Configure Analog Comparator 0 to detect changes in demodulated reader field */
     ACA.AC0MUXCTRL = AC_MUXPOS_DAC_gc | AC_MUXNEG_PIN7_gc;

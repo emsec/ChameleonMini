@@ -578,7 +578,7 @@ CommandStatusIdType CommandSetTimeout(char* OutMessage, const char* InParam)
 
 CommandStatusIdType CommandGetThreshold(char* OutParam)
 {
-	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ReaderThreshold);
+	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), GlobalSettings.ActiveSettingPtr->ReaderThreshold);
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
@@ -593,7 +593,7 @@ CommandStatusIdType CommandSetThreshold(char* OutMessage, const char* InParam)
 	if (!sscanf_P(InParam, PSTR("%5d"), &tmp) || tmp > CODEC_MAXIMUM_THRESHOLD)
 		return COMMAND_ERR_INVALID_PARAM_ID;
 	DACB.CH0DATA = tmp;
-	ReaderThreshold = tmp;
+	GlobalSettings.ActiveSettingPtr->ReaderThreshold = tmp;
 	return COMMAND_INFO_OK_ID;
 }
 
