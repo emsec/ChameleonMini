@@ -32,6 +32,7 @@ typedef enum {
     BUTTON_ACTION_RECALL_MEM,
 	BUTTON_ACTION_TOGGLE_FIELD,
 	BUTTON_ACTION_STORE_LOG,
+	BUTTON_ACTION_CLONE,
 
     /* This has to be last element */
     BUTTON_ACTION_COUNT
