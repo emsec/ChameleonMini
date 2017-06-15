@@ -15,6 +15,7 @@ void CommandLineInit(void);
 bool CommandLineProcessByte(uint8_t Byte);
 void CommandLineTick(void);
 
+void CommandExecute(const char* command);
 void CommandLineAppendData(void const * const Buffer, uint16_t Bytes);
 
 /* Functions for timeout commands */

@@ -389,6 +389,18 @@ static CommandStatusIdType CallCommandFunc(
 	return Status;
 }
 
+void CommandExecute(const char* command)
+{
+	uint8_t i;
+
+	for (i = 0; i < ARRAY_COUNT(CommandTable); i++) {
+		if (strcmp_P(command, CommandTable[i].Command) == 0) {
+			CallCommandFunc(&CommandTable[i], CHAR_EXEC_MODE, NULL);
+			break;
+		}
+	}
+}
+
 static void DecodeCommand(void)
 {
   uint8_t i;
