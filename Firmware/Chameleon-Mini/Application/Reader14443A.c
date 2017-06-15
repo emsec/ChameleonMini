@@ -546,6 +546,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 		 * This function identifies a PICC. *
 		 ************************************/
 		case Reader14443_Identify:
+		case Reader14443_Identify_Clone:
 		{
 			uint16_t rVal = Reader14443A_Select(Buffer, BitCount);
 			if (Selected)
@@ -680,49 +681,98 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 					}
 				}
 
-				if (CardCandidatesIdx == 0)
-				{
-					CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Unknown card type.");
-				} else if (CardCandidatesIdx == 1) {
-					char tmpType[64];
-					memcpy_P(tmpType, &CardIdentificationList[CardCandidates[0]].Type, 64);
-					CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpType);
-				} else {
-					char tmpBuf[TERMINAL_BUFFER_SIZE];
-					uint16_t size = 0, tmpsize = 0;
-					bool enoughspace = true;
+				if (Reader14443CurrentCommand == Reader14443_Identify) {
+					if (CardCandidatesIdx == 0)
+					{
+						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Unknown card type.");
+					} else if (CardCandidatesIdx == 1) {
+						char tmpType[64];
+						memcpy_P(tmpType, &CardIdentificationList[CardCandidates[0]].Type, 64);
+						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpType);
+					} else {
+						char tmpBuf[TERMINAL_BUFFER_SIZE];
+						uint16_t size = 0, tmpsize = 0;
+						bool enoughspace = true;
 
-					uint8_t i;
-					for (i = 0; i < CardCandidatesIdx; i++)
-					{
-						if (size <= TERMINAL_BUFFER_SIZE) // prevents buffer overflow
+						uint8_t i;
+						for (i = 0; i < CardCandidatesIdx; i++)
 						{
-							char tmpType[64];
-							memcpy_P(tmpType, &CardIdentificationList[CardCandidates[i]].Type, 64);
-							tmpsize = snprintf(tmpBuf + size, TERMINAL_BUFFER_SIZE - size, "%s or ", tmpType);
-							size += tmpsize;
-						} else {
-							break;
+							if (size <= TERMINAL_BUFFER_SIZE) // prevents buffer overflow
+							{
+								char tmpType[64];
+								memcpy_P(tmpType, &CardIdentificationList[CardCandidates[i]].Type, 64);
+								tmpsize = snprintf(tmpBuf + size, TERMINAL_BUFFER_SIZE - size, "%s or ", tmpType);
+								size += tmpsize;
+							} else {
+								break;
+							}
 						}
+						if (size > TERMINAL_BUFFER_SIZE)
+						{
+							size -= tmpsize;
+							enoughspace = false;
+						}
+						tmpBuf[size-4] = '.';
+						tmpBuf[size-3] = '\0';
+						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpBuf);
+						if (!enoughspace)
+							TerminalSendString("There is at least one more card type candidate, but there was not enough terminal buffer space.\r\n");
 					}
-					if (size > TERMINAL_BUFFER_SIZE)
-					{
-						size -= tmpsize;
-						enoughspace = false;
+					// print general data
+					TerminalSendString("ATQA:\t");
+					CommandLineAppendData(&CardCharacteristics.ATQA, 2);
+					TerminalSendString("UID:\t");
+					CommandLineAppendData(CardCharacteristics.UID, CardCharacteristics.UIDSize);
+					TerminalSendString("SAK:\t");
+					CommandLineAppendData(&CardCharacteristics.SAK, 1);
+				} else if (Reader14443CurrentCommand == Reader14443_Identify_Clone) {
+					if (CardCandidatesIdx == 1) {
+						int cfgid = -1;
+						switch (CardCandidates[0]) {
+							case CardType_NXP_MIFARE_Ultralight:
+							{
+								cfgid = CONFIG_MF_ULTRALIGHT;
+								// TODO: enter MFU clone mdoe
+								break;
+							}
+							case CardType_NXP_MIFARE_Classic_1k:
+							case CardType_Infineon_MIFARE_Classic_1k:
+							{
+								if (CardCharacteristics.UIDSize == UIDSize_Single) {
+									cfgid = CONFIG_MF_CLASSIC_1K;
+								} else if (CardCharacteristics.UIDSize == UIDSize_Double) {
+									cfgid = CONFIG_MF_CLASSIC_1K_7B;
+								}
+								break;
+							}
+							case CardType_NXP_MIFARE_Classic_4k:
+							case CardType_Nokia_MIFARE_Classic_4k_emulated_6212:
+							case CardType_Nokia_MIFARE_Classic_4k_emulated_6131:
+							{
+								if (CardCharacteristics.UIDSize == UIDSize_Single) {
+									cfgid = CONFIG_MF_CLASSIC_4K;
+								} else if (CardCharacteristics.UIDSize == UIDSize_Double) {
+									cfgid = CONFIG_MF_CLASSIC_4K_7B;
+								}
+								break;
+							}
+							default:
+								cfgid = -1;
+						}
+
+						if (cfgid > -1) {
+							CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Cloned OK!");
+
+							ConfigurationSetById(cfgid);
+							ApplicationReset();
+							ApplicationSetUid(CardCharacteristics.UID);
+						} else {
+							CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Clone unsupported!");
+						}
+					} else {
+						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Multiple possibilities, not clonable!");
 					}
-					tmpBuf[size-4] = '.';
-					tmpBuf[size-3] = '\0';
-					CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpBuf);
-					if (!enoughspace)
-						TerminalSendString("There is at least one more card type candidate, but there was not enough terminal buffer space.\r\n");
 				}
-				// print general data
-				TerminalSendString("ATQA:\t");
-				CommandLineAppendData(&CardCharacteristics.ATQA, 2);
-				TerminalSendString("UID:\t");
-				CommandLineAppendData(CardCharacteristics.UID, CardCharacteristics.UIDSize);
-				TerminalSendString("SAK:\t");
-				CommandLineAppendData(&CardCharacteristics.SAK, 1);
 
 				Reader14443CurrentCommand = Reader14443_Do_Nothing;
 				CardCandidatesIdx = 0;

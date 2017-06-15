@@ -624,3 +624,17 @@ CommandStatusIdType CommandGetField(char* OutMessage)
 	OutMessage[1] = '\0';
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
+
+CommandStatusIdType CommandExecClone(char *OutMessage)
+{
+	ConfigurationSetById(CONFIG_ISO14443A_READER);
+
+	ApplicationReset();
+
+	Reader14443CurrentCommand = Reader14443_Identify_Clone;
+	Reader14443AAppInit();
+	Reader14443ACodecStart();
+	CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
+
+	return TIMEOUT_COMMAND;
+}

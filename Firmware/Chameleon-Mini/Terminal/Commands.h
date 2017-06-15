@@ -181,6 +181,9 @@ CommandStatusIdType CommandSetThreshold(char* OutMessage, const char* InParam);
 CommandStatusIdType CommandSetField(char* OutMessage, const char* InParam);
 CommandStatusIdType CommandGetField(char* OutMessage);
 
+#define COMMAND_CLONE  "CLONE"
+CommandStatusIdType CommandExecClone(char* OutMessage);
+
 #define COMMAND_LIST_END    ""
 /* Defines the end of command list. This is no actual command */
 

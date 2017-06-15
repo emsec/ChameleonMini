@@ -298,7 +298,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
   {
 	.Command	= COMMAND_FIELD,
 	.ExecFunc 	= NO_FUNCTION,
-    .ExecParamFunc = NO_FUNCTION,
+	.ExecParamFunc = NO_FUNCTION,
 	.SetFunc 	= CommandSetField,
 	.GetFunc 	= CommandGetField
   },
@@ -308,7 +308,14 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .ExecParamFunc = NO_FUNCTION,
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = NO_FUNCTION
-  }
+  },
+	{
+		.Command = COMMAND_CLONE,
+		.ExecFunc = CommandExecClone,
+		.ExecParamFunc = NO_FUNCTION,
+		.SetFunc        = NO_FUNCTION,
+		.GetFunc        = NO_FUNCTION
+	}
 };
 
 #define STATUS_TABLE_ENTRY(Id, Text) \
