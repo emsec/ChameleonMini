@@ -934,10 +934,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
     			Buffer[2] = CardNonce[2];
     			Buffer[3] = CardNonce[3];
     			/* Encryption is on, so we have also to encrypt the pariy */
-/*    			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 0] =  CardNonce[4];
+    			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 0] =  CardNonce[4];
     			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 1] =  CardNonce[5];
     			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 2] =  CardNonce[6];
-    			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 3] =  CardNonce[7]; */
+    			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 3] =  CardNonce[7];
     			State = STATE_AUTHING;
 
     			return CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE | ISO14443A_APP_CUSTOM_PARITY;
