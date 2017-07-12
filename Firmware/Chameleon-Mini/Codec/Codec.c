@@ -82,3 +82,22 @@ bool CodecIsReaderToBeRestarted(void)
 	return false;
 }
 
+void CodecThresholdSet(uint16_t th)
+{
+    ReaderThreshold = th;
+    DACB.CH0DATA = th;
+}
+
+uint16_t CodecThresholdIncrement(void)
+{
+    ReaderThreshold += CODEC_THRESHOLD_CALIBRATE_STEPS;
+    DACB.CH0DATA = ReaderThreshold;
+    return ReaderThreshold;
+}
+
+void CodecThresholdReset(void)
+{
+    ReaderThreshold = 400;
+    DACB.CH0DATA = ReaderThreshold;
+}
+

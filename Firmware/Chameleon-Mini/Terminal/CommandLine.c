@@ -296,11 +296,18 @@ const PROGMEM CommandEntryType CommandTable[] = {
 	.GetFunc 	= CommandGetThreshold
   },
   {
-	.Command	= COMMAND_FIELD,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command    = COMMAND_AUTOCALIBRATE,
+    .ExecFunc   = CommandExecAutocalibrate,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= CommandSetField,
-	.GetFunc 	= CommandGetField
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
+  },
+  {
+    .Command    = COMMAND_FIELD,
+    .ExecFunc   = NO_FUNCTION,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = CommandSetField,
+    .GetFunc    = CommandGetField
   },
   { /* This has to be last element */
     .Command    = COMMAND_LIST_END,
