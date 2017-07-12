@@ -249,13 +249,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <tr>
 <td><code>DUMP_MFU</code> </td><td>Reads the whole content of a Mifare Ultralight card that is in the range of the antenna and returns it. This command is a <a class="el" href="Page_CommandLine.html#Anchor_TimeoutCommands">Timeout command</a>. </td></tr>
 <tr>
-<td><code>IDENTIFY</code> </td><td>Identifies the type of a card in the range of the antenna and returns it. </td></tr>
+<td><code>IDENTIFY</code> </td><td>Identifies the type of a card in the range of the antenna and returns it. This command is a <a class="el" href="Page_CommandLine.html#Anchor_TimeoutCommands">Timeout command</a>. </td></tr>
 <tr>
 <td><code>THRESHOLD=?</code> </td><td>Returns the possible number range for the reader threshold. </td></tr>
 <tr>
 <td><code>THRESHOLD=&lt;NUMBER&gt;</code> </td><td>Globally sets the reader threshold. The &lt;NUMBER&gt; influences the reader function and range. Setting a wrong value may result in malfunctioning of the reader. DEFAULT: 400 </td></tr>
 <tr>
 <td><code>THRESHOLD?</code> </td><td>Returns the current reader threshold. </td></tr>
+<tr>
+<td><code>AUTOCALIBRATE</code> </td><td>Automatically finds a good threshold for communicating with the card that currently is on top of the Chameleon. This command is a <a class="el" href="Page_CommandLine.html#Anchor_TimeoutCommands">Timeout command</a>. </td></tr>
 <tr>
 <td><code>FIELD?</code> </td><td>Returns whether (1) or not (0) the reader field is active. </td></tr>
 <tr>
@@ -284,7 +286,7 @@ When setting the timeout to zero, there is no timeout and thus a process may con
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Apr 5 2017 10:03:12 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 12 2017 11:27:06 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>
