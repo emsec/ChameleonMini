@@ -526,7 +526,10 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         Thresholds[i] = 0; // reset the threshold so the next run won't show old results
                     }
 
-                    CodecThresholdSet((maxdiffoffset + maxdiff / 2) * CODEC_THRESHOLD_CALIBRATE_STEPS + CODEC_THRESHOLD_CALIBRATE_MIN);
+                    if (maxdiff != 0)
+                        CodecThresholdSet((maxdiffoffset + maxdiff / 2) * CODEC_THRESHOLD_CALIBRATE_STEPS + CODEC_THRESHOLD_CALIBRATE_MIN);
+                    else
+                        CodecThresholdReset();
 
                     Selected = false;
                     Reader14443CurrentCommand = Reader14443_Do_Nothing;
