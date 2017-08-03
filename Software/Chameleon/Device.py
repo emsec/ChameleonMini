@@ -147,9 +147,16 @@ class Device:
 
     def readResponse(self):
         # Read response to command, if any
-        response = self.serial.readline().decode('ascii').rstrip()
+        timeout = self.serial.timeout
+        self.serial.timeout = 1
+        response = ""
+        tmp = self.serial.read(1)
+        while tmp != b'\0':
+          response += tmp.decode('ascii')
+          tmp = self.serial.read(1)
         self.verboseLog("Response: {}".format(response))
-        return response
+        self.serial.timeout = timeout
+        return response.rstrip()
     
     def execCmd(self, cmd, args=None):
         if (args is None):
