@@ -76,10 +76,10 @@ static void StartDemod(void) {
 
     /* Start looking out for modulation pause via interrupt. */
     CODEC_DEMOD_IN_PORT.INTFLAGS = 0x03;
-    CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
+    CODEC_DEMOD_IN_PORT.INT1MASK = CODEC_DEMOD_IN_MASK0;
 }
 
-ISR(CODEC_DEMOD_IN_INT0_VECT) {
+ISR(CODEC_DEMOD_IN_INT1_VECT) {
     /* This is the first edge of the first modulation-pause after StartDemod.
      * Now we have time to start
      * demodulating beginning from one bit-width after this edge. */
@@ -109,7 +109,7 @@ ISR(CODEC_DEMOD_IN_INT0_VECT) {
     CODEC_TIMER_LOADMOD.CTRLA = CODEC_TIMER_CARRIER_CLKSEL;
 
     /* Disable this interrupt */
-    CODEC_DEMOD_IN_PORT.INT0MASK = 0;
+    CODEC_DEMOD_IN_PORT.INT1MASK = 0;
 }
 
 ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
@@ -389,6 +389,7 @@ void ISO14443ACodecDeInit(void)
 {
 	/* Gracefully shutdown codec */
 	CODEC_DEMOD_IN_PORT.INT0MASK = 0;
+	CODEC_DEMOD_IN_PORT.INT1MASK = 0;
 
 	Flags.DemodFinished = 0;
 	Flags.LoadmodFinished = 0;

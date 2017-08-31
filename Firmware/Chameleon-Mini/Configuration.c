@@ -35,6 +35,9 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_ISO14443A_READER_SUPPORT
 	{ .Id = CONFIG_ISO14443A_READER,	.Text = "ISO14443A_READER" },
 #endif
+#ifdef CONFIG_VICINITY_SUPPORT
+	{ .Id = CONFIG_VICINITY,	.Text = "VICINITY" },
+#endif
 };
 
 /* Include all Codecs and Applications */
@@ -185,6 +188,23 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ApplicationSetUidFunc = ApplicationSetUidDummy,
 		.UidSize = 0,
 		.MemorySize = 0,
+		.ReadOnly = false
+    },
+#endif
+#ifdef CONFIG_VICINITY_SUPPORT
+    [CONFIG_VICINITY] = {
+    	.CodecInitFunc = ISO15693CodecInit,
+    	.CodecDeInitFunc = ISO15693CodecDeInit,
+		.CodecTaskFunc = ISO15693CodecTask,
+		.ApplicationInitFunc = VicinityAppInit,
+		.ApplicationResetFunc = VicinityAppReset,
+		.ApplicationTaskFunc = VicinityAppTask,
+		.ApplicationTickFunc = VicinityAppTick,
+		.ApplicationProcessFunc = VicinityAppProcess,
+		.ApplicationGetUidFunc = VicinityGetUid,
+		.ApplicationSetUidFunc = VicinitySetUid,
+		.UidSize = ISO15693_GENERIC_UID_SIZE,
+		.MemorySize = ISO15693_GENERIC_MEM_SIZE,
 		.ReadOnly = false
     },
 #endif
