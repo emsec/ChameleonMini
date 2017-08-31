@@ -16,6 +16,8 @@
 #include "MifareUltralight.h"
 #include "MifareClassic.h"
 #include "Reader14443A.h"
+#include "Vicinity.h"
+
 
 /* Function wrappers */
 INLINE void ApplicationInit(void) {
