@@ -436,7 +436,6 @@ static void DecodeCommand(void)
     TerminalSendString(pTerminalBuffer);
     TerminalSendStringP(PSTR(OPTIONAL_ANSWER_TRAILER));
   }
-  TerminalSendChar('\0');
 }
 
 void CommandLineInit(void)
@@ -488,7 +487,6 @@ INLINE void Timeout(void)
 		CommandLinePendingTaskTimeout(); // call the function that ends the task
 		CommandLinePendingTaskTimeout = NO_FUNCTION;
 	}
-	TerminalSendChar('\0');
 }
 
 void CommandLineTick(void)
@@ -523,7 +521,6 @@ void CommandLinePendingTaskFinished(CommandStatusIdType ReturnStatusID, char con
 		TerminalSendString(OutMessage);
 	    TerminalSendStringP(PSTR(OPTIONAL_ANSWER_TRAILER));
 	}
-	TerminalSendChar('\0');
 }
 
 void CommandLineAppendData(void const * const Buffer, uint16_t Bytes)
@@ -554,5 +551,4 @@ void CommandLineAppendData(void const * const Buffer, uint16_t Bytes)
     }
 
     TerminalSendStringP(PSTR(OPTIONAL_ANSWER_TRAILER));
-    TerminalSendChar('\0');
 }
