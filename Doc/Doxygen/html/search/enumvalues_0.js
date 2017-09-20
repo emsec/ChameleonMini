@@ -16,10 +16,13 @@ var searchData=
   ['log_5finfo_5fapp_5fcmd_5funknown',['LOG_INFO_APP_CMD_UNKNOWN',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a51365dd939423069d8fe2c09f51c805b',1,'Log.h']]],
   ['log_5finfo_5fapp_5fcmd_5fwrite',['LOG_INFO_APP_CMD_WRITE',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0abb646871507173fe4978b1342f238b7c',1,'Log.h']]],
   ['log_5finfo_5fcodec_5frx_5fdata',['LOG_INFO_CODEC_RX_DATA',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a3b67fcd03ff3cc80231df3b7d9211380',1,'Log.h']]],
+  ['log_5finfo_5fcodec_5frx_5fdata_5fw_5fparity',['LOG_INFO_CODEC_RX_DATA_W_PARITY',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a84aebf39984089d411b7e12158cfbcfd',1,'Log.h']]],
   ['log_5finfo_5fcodec_5ftx_5fdata',['LOG_INFO_CODEC_TX_DATA',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a40884a5af2a5bfa73ab4824a3adc71af',1,'Log.h']]],
+  ['log_5finfo_5fcodec_5ftx_5fdata_5fw_5fparity',['LOG_INFO_CODEC_TX_DATA_W_PARITY',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0abbff6497a47c84b599fbf5f40e2e891e',1,'Log.h']]],
   ['log_5finfo_5fconfig_5fset',['LOG_INFO_CONFIG_SET',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a837ae1da35dbdeb2cc1d8b7c22a0025d',1,'Log.h']]],
   ['log_5finfo_5fgeneric',['LOG_INFO_GENERIC',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a0c156342f0056e472b5ac1ff48aa41fb',1,'Log.h']]],
   ['log_5finfo_5freset_5fapp',['LOG_INFO_RESET_APP',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a27bb078ecb411f03d2a81fb68d2644c8',1,'Log.h']]],
   ['log_5finfo_5fsetting_5fset',['LOG_INFO_SETTING_SET',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a1e360efb165c04ce7282511f80337483',1,'Log.h']]],
+  ['log_5finfo_5fsystem_5fboot',['LOG_INFO_SYSTEM_BOOT',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0af5b5f1a9a7e2d733e4958427da66985f',1,'Log.h']]],
   ['log_5finfo_5fuid_5fset',['LOG_INFO_UID_SET',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a54d679e676c487407959422049e43956',1,'Log.h']]]
 ];

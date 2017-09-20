@@ -155,12 +155,19 @@ Each of the following commands returns <code>INVALID COMMAND USAGE</code> on a n
 <p>If this command is called within the reader configuration, it ends in one of three ways:</p><ol type="1">
 <li>Return code <code>101:OK WITH TEXT</code>, the card type and ATQA value, UID value and SAK value of the highest cascade level.</li>
 <li>Return code <code>101:OK WITH TEXT</code>, the information that this card type is unknown to the ChameleonMini ("Unknown card.") and ATQA value, UID value and SAK value of the highest cascade level.</li>
-<li>Timeout (no matter if on setting/configuration change or on real timeout). </li>
+<li>Timeout (no matter if on setting/configuration change or on real timeout).</li>
 </ol>
+<h2><code>AUTOCALIBRATE</code> </h2>
+<p>This is a <a class="el" href="Page_CommandLine.html#Anchor_TimeoutCommands">timeout command</a>. Tries to select to a card with every threshold within a range with a specific step size and chooses the best threshold.</p>
+<p>If this command is called within the reader configuration, it ends in one of the following ways:</p><ol type="1">
+<li>Return code <code>101:OK WITH TEXT</code> and a list of the tested thresholds with a <code>+</code> for every threshold where the select protocol was successful and a <code>-</code> if the select protocol was not successfully finished.</li>
+<li>Timeout (no matter if on setting/configuration change or on real timeout).</li>
+</ol>
+<dl class="section note"><dt>Note</dt><dd>If no working threshold was found, the threshold is reset to the standard threshold. </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Feb 13 2017 10:27:54 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 12 2017 11:27:06 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.11
 </small></address>

@@ -321,8 +321,9 @@ CommandStatusIdType CommandSetLogMode(char* OutMessage, const char* InParam)
 
 CommandStatusIdType CommandGetLogMem(char* OutParam)
 {
+	uint16_t free = LogMemFree();
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-        PSTR("%u"), LogMemFree());
+        PSTR("%u (from which %u non-volatile)"), free, (free <= LOG_SIZE) ? 0 : (free - LOG_SIZE));
 
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
@@ -548,7 +549,7 @@ CommandStatusIdType CommandExecIdentifyCard(char* OutMessage)
 		return COMMAND_ERR_INVALID_USAGE_ID;
 	ApplicationReset();
 
-	Reader14443CurrentCommand = Reader14443_Indentify;
+	Reader14443CurrentCommand = Reader14443_Identify;
 	Reader14443AAppInit();
 	Reader14443ACodecStart();
 	CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
@@ -569,7 +570,7 @@ CommandStatusIdType CommandSetTimeout(char* OutMessage, const char* InParam)
 		return COMMAND_INFO_OK_WITH_TEXT_ID;
 	}
 	uint16_t tmp = 601;
-	if (!sscanf(InParam, "%5d", &tmp) || tmp > 600)
+	if (!sscanf_P(InParam, PSTR("%5d"), &tmp) || tmp > 600)
 		return COMMAND_ERR_INVALID_PARAM_ID;
 	GlobalSettings.ActiveSettingPtr->PendingTaskTimeout = tmp;
 	return COMMAND_INFO_OK_ID;
@@ -589,7 +590,7 @@ CommandStatusIdType CommandSetThreshold(char* OutMessage, const char* InParam)
 		return COMMAND_INFO_OK_WITH_TEXT_ID;
 	}
 	uint16_t tmp = 0;
-	if (!sscanf(InParam, "%5d", &tmp) || tmp > CODEC_MAXIMUM_THRESHOLD)
+	if (!sscanf_P(InParam, PSTR("%5d"), &tmp) || tmp > CODEC_MAXIMUM_THRESHOLD)
 		return COMMAND_ERR_INVALID_PARAM_ID;
 	DACB.CH0DATA = tmp;
 	ReaderThreshold = tmp;
@@ -622,4 +623,18 @@ CommandStatusIdType CommandGetField(char* OutMessage)
 		OutMessage[0] = COMMAND_CHAR_FALSE;
 	OutMessage[1] = '\0';
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+
+CommandStatusIdType CommandExecAutocalibrate(char* OutMessage)
+{
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    ApplicationReset();
+
+    Reader14443CurrentCommand = Reader14443_Autocalibrate;
+    Reader14443AAppInit();
+    Reader14443ACodecStart();
+    CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
+    return TIMEOUT_COMMAND;
 }

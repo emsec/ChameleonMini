@@ -177,6 +177,9 @@ CommandStatusIdType	CommandSetTimeout(char* OutMessage, const char* InParam);
 CommandStatusIdType CommandGetThreshold(char* OutParam);
 CommandStatusIdType CommandSetThreshold(char* OutMessage, const char* InParam);
 
+#define COMMAND_AUTOCALIBRATE   "AUTOCALIBRATE"
+CommandStatusIdType CommandExecAutocalibrate(char* OutMessage);
+
 #define COMMAND_FIELD	"FIELD"
 CommandStatusIdType CommandSetField(char* OutMessage, const char* InParam);
 CommandStatusIdType CommandGetField(char* OutMessage);

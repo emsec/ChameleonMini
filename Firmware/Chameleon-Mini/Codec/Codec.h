@@ -73,6 +73,9 @@
 #define CODEC_READER_PINCTRL_RIGHT	PIN1CTRL
 #define CODEC_AC_DEMOD_SETTINGS		AC_HSMODE_bm | AC_HYSMODE_NO_gc
 #define CODEC_MAXIMUM_THRESHOLD		0xFFF // the maximum voltage can be calculated with ch0data * Vref / 0xFFF
+#define CODEC_THRESHOLD_CALIBRATE_MIN   128
+#define CODEC_THRESHOLD_CALIBRATE_MAX   1024
+#define CODEC_THRESHOLD_CALIBRATE_STEPS 8
 #define CODEC_TIMER_TIMESTAMPS		TCD1
 #define CODEC_TIMER_TIMESTAMPS_CCA_VECT	TCD1_CCA_vect
 
@@ -90,6 +93,9 @@
 #define CodecPtrRegister2			(*((volatile uint8_t**) &GPIORA))
 
 extern uint16_t ReaderThreshold;
+extern uint16_t Reader_FWT;
+
+#define FWI2FWT(x)	((uint32_t)(256 * 16 * ((uint32_t)1 << (x))) / (CODEC_CARRIER_FREQ / 1000) + 1)
 
 typedef enum {
 	CODEC_SUBCARRIERMOD_OFF,
@@ -245,4 +251,11 @@ void CodecReaderFieldStart(void);
 void CodecReaderFieldStop(void);
 bool CodecIsReaderFieldReady(void);
 
+void CodecReaderFieldRestart(uint16_t delay);
+#define FIELD_RESTART()	CodecReaderFieldRestart(100)
+bool CodecIsReaderToBeRestarted(void);
+
+void CodecThresholdSet(uint16_t th);
+uint16_t CodecThresholdIncrement(void);
+void CodecThresholdReset(void);
 #endif /* CODEC_H_ */

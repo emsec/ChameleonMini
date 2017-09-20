@@ -6,9 +6,11 @@
 #include "LEDHook.h"
 
 static uint8_t LogMem[LOG_SIZE];
-static uint8_t* LogMemPtr;
+static uint8_t *LogMemPtr;
 static uint16_t LogMemLeft;
 static uint16_t LogFRAMAddr = FRAM_LOG_START_ADDR;
+static uint8_t EEMEM LogFRAMAddrValid = false;
+static bool EnableLogSRAMtoFRAM = false;
 LogFuncType CurrentLogFunc;
 
 static const MapEntryType PROGMEM LogModeMap[] = {
@@ -61,13 +63,30 @@ static void LogFuncLive(LogEntryEnum Entry, const void* Data, uint8_t Length)
 
 void LogInit(void)
 {
-    LogMemClear();
     LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
+    LogMemPtr = LogMem;
+    LogMemLeft = sizeof(LogMem);
+
+    uint8_t result;
+    ReadEEPBlock((uint16_t) &LogFRAMAddrValid, &result, 1);
+    memset(LogMemPtr, LOG_EMPTY, LOG_SIZE);
+    if (result)
+    {
+    	MemoryReadBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
+    } else {
+    	LogFRAMAddr = FRAM_LOG_START_ADDR;
+    	MemoryWriteBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
+    	result = true;
+    	WriteEEPBlock((uint16_t) &LogFRAMAddrValid, &result, 1);
+    }
+
+    LogEntry(LOG_INFO_SYSTEM_BOOT, NULL, 0);
 }
 
 void LogTick(void)
 {
-
+	if (EnableLogSRAMtoFRAM)
+		LogSRAMToFRAM();
 }
 
 void LogTask(void)
@@ -81,11 +100,12 @@ bool LogMemLoadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
 	{
 		bool overflow = false;
 		uint16_t remainderByteCount = 0;
+		uint16_t SizeInFRAMStored = LogFRAMAddr - FRAM_LOG_START_ADDR;
 		// prevent buffer overflows:
-		if ((BlockAddress + ByteCount) >= sizeof(LogMem) + (LogFRAMAddr - FRAM_LOG_START_ADDR))
+		if ((BlockAddress + ByteCount) >= sizeof(LogMem) + SizeInFRAMStored)
 		{
 			overflow = true;
-			uint16_t tmp = sizeof(LogMem) + (LogFRAMAddr - FRAM_LOG_START_ADDR) - BlockAddress;
+			uint16_t tmp = sizeof(LogMem) + SizeInFRAMStored - BlockAddress;
 			remainderByteCount = ByteCount - tmp;
 			ByteCount = tmp;
 		}
@@ -95,15 +115,15 @@ bool LogMemLoadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
 		 * 2. case: The block wraps from FRAM to SRAM
 		 * 3. case: The whole block is in SRAM.
 		 */
-		if (BlockAddress < (LogFRAMAddr - FRAM_LOG_START_ADDR) && (BlockAddress + ByteCount) < (LogFRAMAddr - FRAM_LOG_START_ADDR))
+		if (BlockAddress < SizeInFRAMStored && (BlockAddress + ByteCount) < SizeInFRAMStored)
 		{
 			MemoryReadBlock(Buffer, BlockAddress + FRAM_LOG_START_ADDR, ByteCount);
-		} else if (BlockAddress < (LogFRAMAddr - FRAM_LOG_START_ADDR)) {
-			uint16_t FramByteCount = LogFRAMAddr - (BlockAddress + FRAM_LOG_START_ADDR);
+		} else if (BlockAddress < SizeInFRAMStored) {
+			uint16_t FramByteCount = SizeInFRAMStored - BlockAddress;
 			MemoryReadBlock(Buffer, BlockAddress + FRAM_LOG_START_ADDR, FramByteCount);
 			memcpy(Buffer + FramByteCount, LogMem, ByteCount - FramByteCount);
 		} else {
-			memcpy(Buffer, LogMem + BlockAddress - LogFRAMAddr, ByteCount);
+			memcpy(Buffer, LogMem + BlockAddress - SizeInFRAMStored, ByteCount);
 		}
 
 		if (overflow)
@@ -118,23 +138,29 @@ bool LogMemLoadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
 	}
 }
 
+INLINE void LogSRAMClear(void)
+{
+	uint16_t i, until = LOG_SIZE - LogMemLeft;
+
+	for (i=0; i < until; i++) {
+		LogMem[i] = (uint8_t) LOG_EMPTY;
+	}
+
+	LogMemPtr = LogMem;
+	LogMemLeft = sizeof(LogMem);
+}
+
 void LogMemClear(void)
 {
-    uint16_t i;
-
-    for (i=0; i<sizeof(LogMem); i++) {
-        LogMem[i] = (uint8_t) LOG_EMPTY;
-    }
-
-    LogMemPtr = LogMem;
-    LogMemLeft = sizeof(LogMem);
+    LogSRAMClear();
     LogFRAMAddr = FRAM_LOG_START_ADDR;
+    MemoryWriteBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
     LEDHook(LED_LOG_MEM_FULL, LED_OFF);
 }
 
 uint16_t LogMemFree(void)
 {
-    return LogMemLeft;
+    return LogMemLeft + FRAM_LOG_SIZE - LogFRAMAddr + FRAM_LOG_START_ADDR;
 }
 
 
@@ -151,14 +177,17 @@ void LogSetModeById(LogModeEnum Mode)
 
     switch(Mode) {
     case LOG_MODE_OFF:
+    	EnableLogSRAMtoFRAM = false;
         CurrentLogFunc = LogFuncOff;
         break;
 
     case LOG_MODE_MEMORY:
+    	EnableLogSRAMtoFRAM = true;
         CurrentLogFunc = LogFuncMemory;
         break;
 
     case LOG_MODE_LIVE:
+    	EnableLogSRAMtoFRAM = false;
         CurrentLogFunc = LogFuncLive;
         break;
 
@@ -193,14 +222,14 @@ void LogGetModeList(char* List, uint16_t BufferSize)
 
 void LogSRAMToFRAM(void)
 {
-	if (LogMemLeft < sizeof(LogMem))
+	if (LogMemLeft < LOG_SIZE)
 	{
 		if (FRAM_LOG_SIZE - (LogFRAMAddr - FRAM_LOG_START_ADDR) >= LOG_SIZE - LogMemLeft)
 		{
 			MemoryWriteBlock(LogMem, LogFRAMAddr, LOG_SIZE - LogMemLeft);
-			uint16_t tmp = LogFRAMAddr + (LOG_SIZE - LogMemLeft);
-			LogMemClear(); // this function also resets LogFRAMAddr, but does not delete anything from FRAM, so we just save the new FRAM address
-			LogFRAMAddr = tmp;
+			LogFRAMAddr += LOG_SIZE - LogMemLeft;
+			LogSRAMClear();
+		    MemoryWriteBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
 		} else {
 			// TODO handle the case in which the FRAM is full
 		}

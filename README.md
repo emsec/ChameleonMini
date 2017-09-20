@@ -9,6 +9,10 @@ First Steps
 -----------
 To upgrade the firmware of your ChameleonMini, please visit the [Getting Started page](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/Page_GettingStarted.html) from the [doxygen documentation](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
 
+Supported Cards and Codecs
+--------------------------
+See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Codecs).
+
 
 Questions
 ---------
