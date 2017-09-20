@@ -40,6 +40,12 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_VICINITY_SUPPORT
 	{ .Id = CONFIG_VICINITY,	.Text = "VICINITY" },
 #endif
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+	{ .Id = CONFIG_ISO15693_SNIFF,	.Text = "ISO15693_SNIFF" },
+#endif
+#ifdef CONFIG_SL2S2002_SUPPORT
+	{ .Id = CONFIG_SL2S2002,	.Text = "SL2S2002" },
+#endif
 };
 
 /* Include all Codecs and Applications */
@@ -235,6 +241,40 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ApplicationProcessFunc = VicinityAppProcess,
 		.ApplicationGetUidFunc = VicinityGetUid,
 		.ApplicationSetUidFunc = VicinitySetUid,
+		.UidSize = ISO15693_GENERIC_UID_SIZE,
+		.MemorySize = ISO15693_GENERIC_MEM_SIZE,
+		.ReadOnly = false
+    },
+#endif
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+    [CONFIG_ISO15693_SNIFF] = {
+    	.CodecInitFunc = ISO15693CodecInit,
+    	.CodecDeInitFunc = ISO15693CodecDeInit,
+		.CodecTaskFunc = ISO15693CodecTask,
+		.ApplicationInitFunc = ApplicationInitDummy,
+		.ApplicationResetFunc = ApplicationResetDummy,
+		.ApplicationTaskFunc = ApplicationTaskDummy,
+		.ApplicationTickFunc = ApplicationTickDummy,
+		.ApplicationProcessFunc = ApplicationProcessDummy,
+		.ApplicationGetUidFunc = ApplicationGetUidDummy,
+		.ApplicationSetUidFunc = ApplicationSetUidDummy,
+		.UidSize = 0,
+		.MemorySize = 0,
+		.ReadOnly = true
+    },
+#endif
+#ifdef CONFIG_SL2S2002_SUPPORT
+    [CONFIG_SL2S2002] = {
+    	.CodecInitFunc = ISO15693CodecInit,
+    	.CodecDeInitFunc = ISO15693CodecDeInit,
+		.CodecTaskFunc = ISO15693CodecTask,
+		.ApplicationInitFunc = Sl2s2002AppInit,
+		.ApplicationResetFunc = Sl2s2002AppReset,
+		.ApplicationTaskFunc = Sl2s2002AppTask,
+		.ApplicationTickFunc = Sl2s2002AppTick,
+		.ApplicationProcessFunc = Sl2s2002AppProcess,
+		.ApplicationGetUidFunc = Sl2s2002GetUid,
+		.ApplicationSetUidFunc = Sl2s2002SetUid,
 		.UidSize = ISO15693_GENERIC_UID_SIZE,
 		.MemorySize = ISO15693_GENERIC_MEM_SIZE,
 		.ReadOnly = false
