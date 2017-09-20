@@ -44,6 +44,12 @@ typedef enum  {
 #ifdef CONFIG_VICINITY_SUPPORT
 	CONFIG_VICINITY,
 #endif
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+	CONFIG_ISO15693_SNIFF,
+#endif
+#ifdef CONFIG_SL2S2002_SUPPORT
+	CONFIG_SL2S2002,
+#endif
     /* This HAS to be the last element */
     CONFIG_COUNT
 } ConfigurationEnum;
