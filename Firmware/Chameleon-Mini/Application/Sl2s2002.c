@@ -90,7 +90,7 @@ uint16_t Sl2s2002AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                         ISO15693CopyUid(&FrameBuf[2], Sl2s2002Uid);
                         FrameBuf[10] = 0x00;
                         FrameBuf[11] = 0xC2;
-                        FrameBuf[12] = 0x04;
+                        FrameBuf[12] = 0x03;
                         FrameBuf[13] = 0x03;
                         FrameBuf[14] = 0x01;
                         ResponseByteCount = 15;
@@ -104,21 +104,36 @@ uint16_t Sl2s2002AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                     }
                 } else if (Command == ISO15693_CMD_READ_MULTIPLE) {
                     if (ISO15693Addressed(FrameBuf, Sl2s2002Uid)) {
-                        uint8_t PageAddressStart = FrameBuf[10];
-                        uint8_t PageAddressEnd = FrameBuf[11];
+                        uint16_t PageAddress = FrameBuf[10];
+                        uint16_t PageAddressCount = FrameBuf[11] + 1;
+
+                        uint8_t * FrameBufPtr = FrameBuf + 1;
+                        if (FrameBuf[0] & ISO15693_REQ_FLAG_OPTION)
+                        {
+                            uint8_t count;
+                            for (count = 0; count < PageAddressCount; count++)
+                            {
+                                *FrameBufPtr++ = 0; // block security status = unlocked
+                                MemoryReadBlock(FrameBufPtr, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
+                                FrameBufPtr += BYTES_PER_PAGE;
+                                PageAddress += 1;
+                            }
+                            ResponseByteCount = 1 + (BYTES_PER_PAGE + 1) * PageAddressCount;
+                        } else {
+                            MemoryReadBlock(FrameBufPtr, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE * PageAddressCount);
+                            ResponseByteCount = 1 + BYTES_PER_PAGE * PageAddressCount;
+                        }
                         FrameBuf[0] = 0; /* Flags */
-                        MemoryReadBlock(FrameBuf + 1, PageAddressStart * BYTES_PER_PAGE, BYTES_PER_PAGE * (PageAddressEnd - PageAddressStart + 1));
-                        ResponseByteCount = 1 + BYTES_PER_PAGE * (PageAddressEnd - PageAddressStart + 1);
                     }
                 } else if (Command == ISO15693_CMD_GET_BLOCK_SEC) {
                     if (ISO15693Addressed(FrameBuf, Sl2s2002Uid)) {                        
                         uint8_t PageAddressStart = FrameBuf[10];
-                        uint8_t PageAddressEnd = FrameBuf[11];
+                        uint8_t PageAddressCount = FrameBuf[11] + 1;
                         FrameBuf[0] = 0; /* Flags */
-                        for (int i = 1; i <= (PageAddressEnd - PageAddressStart + 1); i++) {
+                        for (uint8_t i = 0; i < PageAddressCount; i++) {
                             FrameBuf[i] = 0x00;
                         }
-                        ResponseByteCount = 1 + (PageAddressEnd - PageAddressStart + 1);
+                        ResponseByteCount = 1 + PageAddressCount;
                     }
                 }
                 break;
