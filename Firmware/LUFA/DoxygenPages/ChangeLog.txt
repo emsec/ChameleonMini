@@ -6,6 +6,90 @@
 
  /** \page Page_ChangeLog Project Changelog
   *
+  *  \section Sec_ChangeLog151115 Version 151115
+  *  <b>New:</b>
+  *   - Added support for the Atmel Xplained-MINI series of development kits
+  *   - Added new PROGMEM variant send functions to the CDC class device driver (thanks to Stefan Hellermann)
+  *   - Added new PROGMEM variant send functions to the CDC class host driver
+  *   - Added additional Arduino Uno board definitions for the main processor reset (thanks to NicoHood)
+  *   - Added modified DocBook transforms to generate Atmel Studio 6/7 internal help documentation (thanks to Morten Engelhardt Olsen)
+  *
+  *  <b>Changed:</b>
+  *  - Core:
+  *   - The TWI peripheral driver's TWI_WritePacket() and TWI_ReadPacket() functions now takes a 16-bit Length rather than an 8-bit
+  *     length, for longer transfers
+  *  - Library Applications:
+  *   - The CDC, DFU, Mass Storage and Printer class bootloaders will no longer run the user application if the application reset
+  *     vector is blank (thanks to Alex Kazik)
+  *   - The CDC, DFU and Printer class bootloaders are now compatible with the original Atmel XPLAIN and Arduino Leonardo boards
+  *   - The CDC, DFU, Mass Storage and Printer class bootloaders are not compatible with devices with the BOOTRST fuse set and will
+  *     exit automatically unless an external reset was the last reset cause (thanks to Alex Kazik)
+  *   - Added missing force-inline attribute to the endianness utility functions (thanks to Stefan Hellermann)
+  *   - Updated the DFU build system module to use updated EEPROM programming command arguments for dfu-programmer 0.6.2 or newer
+  *
+  *  <b>Fixed:</b>
+  *   - Fixed broken XMEGA serial stream driver due to missing USART base pointer parameter (thanks to William Patterson)
+  *   - Fixed incorrect signature reported in the CDC/DFU bootloaders for the AT90USB82 (thanks to NicoHood)
+  *   - Fixed broken RNDIS demos on Linux machines whose DHCP hosts require a Lease Time option (thanks to Stefan Hellermann)
+  *   - Fixed broken LEDs_Disable() implementation for the Arduino Uno board (thanks to NicoHood)
+  *   - Fixed missing bounds checks and off-by-one in the DFU bootloader signature bytes (thanks to Reuti)
+  *
+  *  \section Sec_ChangeLog140928 Version 140928
+  *  <b>New:</b>
+  *  - Core:
+  *   - Updated the BUILD build system module to add a new COMPILER_PATH optional variable
+  *   - Added Serial_IsSendReady() and Serial_IsSendComplete() functions to the Serial hardware peripheral driver
+  *   - Added support for the Arduino Yun board (ATMEGA32U4 co-processor)
+  *   - Added support for the Arduino Micro board (thanks to Zoltán Szőke)
+  *  - Library Applications:
+  *   - Added new Dual MIDI class driver device demo
+  *
+  *  <b>Changed:</b>
+  *  - Core:
+  *   - The RNDIS device class driver now takes a user-supplied buffer and buffer length for the internal RNDIS
+  *     message management (thanks to Peter Mc Shane)
+  *
+  *  <b>Fixed:</b>
+  *  - Core:
+  *   - Fixed device class driver pipe configuration routines returning success with a partially constructed instance
+  *     when a pipe configuration failed (thanks to Helge Suess)
+  *   - Fixed incorrect XMEGA DFLL reference frequency (thanks to Martin Aakerberg)
+  *   - Fixed possible infinite loop in the control endpoint stream write function (thanks to Clayton Knight)
+  *   - Fixed missing HID report ID prefix on HID class driver GetReport request responses (thanks to Bert van Hall)
+  *   - Fixed incorrect XMEGA USB controller clock division factory for non-Full Speed operation (thanks to Bert van Hall)
+  *   - Fixed the LUFA build system to prevent incorrect code from being generated in newer toolchains when building for larger
+  *     FLASH memory devices (thanks to demultiplexer)
+  *   - Fixed missing parenthesis in the MIDI_EVENT() macro which could cause incorrect results (thanks to hexwab)
+  *   - Fixed mixed capitalization of TWI in the XMEGA TWI driver causing compilation failures (thanks to Jacob Schloss)
+  *   - Fixed broken AVR8 USART-SPI peripheral driver (thanks to Phil Zakielarz)
+  *  - Library Applications:
+  *   - Fixed spurious 0xFE USART byte sent in the USBtoSerial project when the baud rate is changed (thanks to Carl Kjeldsen)
+  *   - Fixed blocking USART reads causing low throughput on slow baud rates in the USBtoSerial project (thanks to Nevada Smith)
+  *   - Fixed USART reception overrun corrupting the internal buffers in the USBtoSerial project (thanks to Nevada Smith)
+  *   - Fixed broken LowLevel Audio Out demo sampling frequency configuration (thanks to Torsten Duwe)
+  *
+  *  \section Sec_ChangeLog140302 Version 140302
+  *  <b>New:</b>
+  *  - Library Applications:
+  *   - Added new Bulk Vendor low level device demo
+  *   - Added new libUSB host Python and NodeJS application examples for the Class driver GenericHID demo (thanks to Laszlo Monda)
+  *   - Added new AVR8 USB option to keep 3.3V regulator enabled (thanks to Michael Hanselmann)
+  *   - Added new USB_STRING_DESCRIPTOR() and USB_STRING_DESCRIPTOR_ARRAY() convenience macros (thanks to Laszlo Monda)
+  *
+  *  <b>Changed:</b>
+  *  - Library Applications:
+  *   - Refactored out USB interface IDs in the demo applications into enums (thanks to Laszlo Monda)
+  *   - AVRISP-MKII Clone Project PDI/TPI frequency increased from 250KHz to 2MHz as it is now stable
+  *   - Increased TPI/PDI handshake delay to 100us from 1us to support targets with high amounts of capacitance on their
+  *     /RESET lines (thanks to Paul Duke)
+  *   - Changed the VERSION_BCD() macro to accept the major/minor/revision values as separate parameters
+  *
+  *  <b>Fixed:</b>
+  *  - Core:
+  *   - Fixed MIDI device class driver MIDI_Device_ReceiveEventPacket() for the XMEGA architecture
+  *  - Library Applications:
+  *   - Fixed incorrect signature bytes returned in the DFU bootloader
+  *
   *  \section Sec_ChangeLog130901 Version 130901
   *  <b>New:</b>
   *  - Core:

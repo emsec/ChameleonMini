@@ -9,6 +9,7 @@
 #include "System.h"
 #include "Memory.h"
 #include "LED.h"
+#include "LEDHook.h"
 #include "Terminal/Terminal.h"
 #include "Codec/Codec.h"
 #include "Application/Application.h"

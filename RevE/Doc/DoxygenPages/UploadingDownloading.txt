@@ -1,0 +1,28 @@
+/** @file */
+
+/** @page Page_UploadingDownloading Uploading and Downloading Memory dumps
+ * In order to be able to emulate different card contents, one can upload or download
+ * the memory used for emulation.
+ *
+ * The layout of the memory dump depends on the chosen configuration and is usually
+ * the same as the memory layout of the currently chosen card-emulation.
+ * The size of the memory dump also depends on the currently chosen configuration
+ * and can be requested with a specific command on the command-line.
+ *
+ * In order to upload or download a memory dump, the user has to send the
+ * corresponding command on the command-line first and the Chameleon responds
+ * with a status message indicating that it is waiting for an X-MODEM connection.
+ * Depending on whether upload or download is chosen, the Chameleon then waits
+ * for 10 seconds to initiate an X-MODEM receive or send connection.
+ *
+ * When waiting for a receiving X-MODEM connection, the X-MODEM NAK byte is sent
+ * upto 20 times with a delay of 500ms in order to establish
+ * a standard 128 byte frame-size X-MODEM connection with the simple checksum scheme.
+ * Within this time, the user has to get his X-MODEM client ready and choose the
+ * binary file to be uploaded into the memory.
+ *
+ * In case of waiting for an X-MODEM send connection to establish, a wait time
+ * of 10 seconds is performed to receive the X-MODEM NAK byte. Within this time,
+ * the user has to start the X-MODEM receiver and set it to the standard 128 byte
+ * frame using the simple checksum scheme in order to receive the binary memory dump.
+ */

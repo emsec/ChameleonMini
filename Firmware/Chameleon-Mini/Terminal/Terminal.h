@@ -16,7 +16,7 @@
 #define TERMINAL_VBUS_PORT      PORTD
 #define TERMINAL_VBUS_MASK      PIN5_bm
 
-#define TERMINAL_BUFFER_SIZE	256
+#define TERMINAL_BUFFER_SIZE	512
 
 typedef enum {
 	TERMINAL_UNINITIALIZED,
@@ -33,9 +33,9 @@ void TerminalInit(void);
 void TerminalTask(void);
 void TerminalTick(void);
 
-/*void TerminalSendBuffer(void* Buffer, uint16_t ByteCount);*/
+/*void TerminalSendHex(void* Buffer, uint16_t ByteCount);*/
 INLINE void TerminalSendByte(uint8_t Byte);
-void TerminalSendBlock(void* Buffer, uint16_t ByteCount);
+void TerminalSendBlock(const void* Buffer, uint16_t ByteCount);
 
 INLINE void TerminalSendChar(char c);
 void TerminalSendString(const char* s);

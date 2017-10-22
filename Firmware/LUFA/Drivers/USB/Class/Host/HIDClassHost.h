@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -93,7 +93,7 @@
 					#if !defined(HID_HOST_BOOT_PROTOCOL_ONLY)
 					HID_ReportInfo_t* HIDParserData; /**< HID parser data to store the parsed HID report data, when boot protocol
 					                                  *   is not used.
-													  *
+					                                  *
 					                                  *  \note When the \c HID_HOST_BOOT_PROTOCOL_ONLY compile time token is defined,
 					                                  *        this field is unavailable.
 					                                  */
@@ -120,9 +120,9 @@
 
 					uint8_t LargestReportSize; /**< Largest report the device will send, in bytes. */
 				} State; /**< State data for the USB class interface within the device. All elements in this section
-						  *   <b>may</b> be set to initial values, but may also be ignored to default to sane values when
-						  *   the interface is enumerated.
-						  */
+				          *   <b>may</b> be set to initial values, but may also be ignored to default to sane values when
+				          *   the interface is enumerated.
+				          */
 			} USB_ClassInfo_HID_Host_t;
 
 		/* Enums: */

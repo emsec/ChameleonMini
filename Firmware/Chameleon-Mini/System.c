@@ -9,24 +9,26 @@
 #include "LED.h"
 #include <avr/interrupt.h>
 
-/* AVR Toolchain 3.4.5 changed defines */
 #ifndef WDT_PER_500CLK_gc
 #define WDT_PER_500CLK_gc WDT_PER_512CLK_gc
 #endif
 
-
 ISR(BADISR_vect)
 {
+	//LED_PORT.OUTSET = LED_RED;
     while(1);
 }
 
-EMPTY_INTERRUPT(RTC_OVF_vect);
+ISR(RTC_OVF_vect)
+{
+	SYSTEM_TICK_REGISTER += SYSTEM_TICK_PERIOD;
+}
 
 void SystemInit(void)
 {
     if (RST.STATUS & RST_WDRF_bm) {
         /* On Watchdog reset clear WDRF bit, disable watchdog
-        * and jump into bootloader */
+         * and jump into bootloader */
         RST.STATUS = RST_WDRF_bm;
 
         CCP = CCP_IOREG_gc;
@@ -35,41 +37,44 @@ void SystemInit(void)
         asm volatile ("jmp %0"::"i" (BOOT_SECTION_START + 0x1FC));
     }
 
-    /* 32MHz system clock using internal RC and 32K DFLL*/
-    OSC.CTRL |= OSC_RC32MEN_bm | OSC_RC32KEN_bm;
-    while(!(OSC.STATUS & OSC_RC32MRDY_bm))
+    /* XTAL x 2 as SysCLK */
+    OSC.XOSCCTRL = OSC_FRQRANGE_12TO16_gc | OSC_XOSCSEL_XTAL_16KCLK_gc;
+    OSC.CTRL |= OSC_XOSCEN_bm;
+    while(!(OSC.STATUS & OSC_XOSCRDY_bm))
         ;
-    while(!(OSC.STATUS & OSC_RC32KRDY_bm))
-        ;
 
-    OSC.DFLLCTRL = OSC_RC32MCREF_RC32K_gc;
-    DFLLRC32M.CTRL = DFLL_ENABLE_bm;
+    OSC.PLLCTRL = OSC_PLLSRC_XOSC_gc | (2 << OSC_PLLFAC_gp);
+    OSC.CTRL |= OSC_PLLEN_bm;
 
-    CCP = CCP_IOREG_gc;
-    CLK.CTRL = CLK_SCLKSEL_RC32M_gc;
+	while(!(OSC.STATUS & OSC_PLLRDY_bm))
+		;
 
-    /* Use TCE0 as system tick */
-    TCE0.PER = F_CPU / 256 / SYSTEM_TICK_FREQ - 1;
-    TCE0.CTRLA = TC_CLKSEL_DIV256_gc;
+	/* Set PLL as main clock */
+	CCP = CCP_IOREG_gc;
+	CLK.CTRL = CLK_SCLKSEL_PLL_gc;
+
+	SYSTEM_TICK_REGISTER = 0;
 
     /* Enable RTC with roughly 1kHz clock for system tick
      * and to wake up while sleeping. */
     CLK.RTCCTRL = CLK_RTCSRC_ULP_gc | CLK_RTCEN_bm;
-    RTC.PER = 1000 / SYSTEM_TICK_FREQ - 1;
-    RTC.COMP = 1000 / SYSTEM_TICK_FREQ - 1;
+    RTC.PER = SYSTEM_TICK_PERIOD - 1;
+    RTC.COMP = SYSTEM_TICK_PERIOD - 1;
     RTC.CTRL = RTC_PRESCALER_DIV1_gc;
     RTC.INTCTRL = RTC_OVFINTLVL_LO_gc;
 
-
     /* Enable EEPROM data memory mapping */
-    NVM.CTRLB |= NVM_EEMAPEN_bm;
+    //NVM.CTRLB |= NVM_EEMAPEN_bm;
+
+    /* Enable DMA */
+	DMA.CTRL = DMA_ENABLE_bm | DMA_DBUFMODE_DISABLED_gc | DMA_PRIMODE_RR0123_gc;
+
 }
 
 void SystemReset(void)
 {
     CCP = CCP_IOREG_gc;
     RST.CTRL = RST_SWRST_bm;
-
 }
 
 void SystemEnterBootloader(void)
@@ -82,8 +87,8 @@ void SystemEnterBootloader(void)
 
 void SystemStartUSBClock(void)
 {
-	SystemSleepDisable();
-
+	//SystemSleepDisable();
+#if 0
     /* 48MHz USB Clock using 12MHz XTAL */
     OSC.XOSCCTRL = OSC_FRQRANGE_12TO16_gc | OSC_XOSCSEL_XTAL_16KCLK_gc;
     OSC.CTRL |= OSC_XOSCEN_bm;
@@ -95,16 +100,46 @@ void SystemStartUSBClock(void)
     OSC.CTRL |= OSC_PLLEN_bm;
     while(!(OSC.STATUS & OSC_PLLRDY_bm))
         ;
+#else
+    /* Use internal HS RC for USB */
+    OSC.CTRL |= OSC_RC32MEN_bm;
+    while(!(OSC.STATUS & OSC_RC32MRDY_bm))
+        ;
+
+    /* Load RC32 CAL values for 48MHz use */
+    NVM.CMD  = NVM_CMD_READ_CALIB_ROW_gc;
+    DFLLRC32M.CALA = pgm_read_byte(offsetof(NVM_PROD_SIGNATURES_t, USBRCOSCA));
+    DFLLRC32M.CALB = pgm_read_byte(offsetof(NVM_PROD_SIGNATURES_t, USBRCOSC));
+    NVM.CMD  = NVM_CMD_NO_OPERATION_gc;
+
+    /* For USBSOF operation, whe need to use COMP = 48MHz/1kHz = 0xBB80 */
+    DFLLRC32M.COMP1 = 0x80;
+    DFLLRC32M.COMP2 = 0xBB;
+
+    /* Select USBSOF as DFLL source */
+    OSC.DFLLCTRL &= ~OSC_RC32MCREF_gm;
+    OSC.DFLLCTRL |= OSC_RC32MCREF_USBSOF_gc;
+
+    /* Enable DFLL */
+    DFLLRC32M.CTRL |= DFLL_ENABLE_bm;
+#endif
 }
 
 void SystemStopUSBClock(void)
 {
-	SystemSleepEnable();
+	//SystemSleepEnable();
 
+#if 0
     /* Disable USB Clock to minimize power consumption */
     CLK.USBCTRL &= ~CLK_USBSEN_bm;
     OSC.CTRL &= ~OSC_PLLEN_bm;
     OSC.CTRL &= ~OSC_XOSCEN_bm;
+#else
+    /* Disable USB Clock to minimize power consumption */
+    CLK.USBCTRL &= ~CLK_USBSEN_bm;
+    DFLLRC32M.CTRL &= ~DFLL_ENABLE_bm;
+    OSC.CTRL &= ~OSC_RC32MEN_bm;
+#endif
 }
 
 void SystemInterruptInit(void)

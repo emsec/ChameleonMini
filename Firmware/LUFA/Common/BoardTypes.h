@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -233,6 +233,15 @@
 
 			/** Selects the U2S specific board drivers, including the Button and LEDs drivers. */
 			#define BOARD_U2S                  56
+
+			/** Selects the Arduino YUN specific board drivers, including the driver for the board LEDs. */
+			#define BOARD_YUN                  57
+
+			/** Selects the Arduino Micro specific board drivers, including the driver for the board LEDs. */
+			#define BOARD_MICRO                58
+
+			/** Selects the Atmel Xplained-MINI specific board drivers, including the driver for the board LEDs. */
+			#define BOARD_XPLAINED_MINI        59
 
 			#if !defined(__DOXYGEN__)
 				#define BOARD_                 BOARD_NONE

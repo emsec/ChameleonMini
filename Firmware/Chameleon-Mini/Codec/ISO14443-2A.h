@@ -17,6 +17,7 @@
 
 /* Codec Interface */
 void ISO14443ACodecInit(void);
+void ISO14443ACodecDeInit(void);
 void ISO14443ACodecTask(void);
 
 

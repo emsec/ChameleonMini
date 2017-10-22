@@ -1,7 +1,7 @@
 
 #include "Terminal.h"
 #include "../System.h"
-#include "../LED.h"
+#include "../LEDHook.h"
 
 #include "../LUFADescriptors.h"
 
@@ -32,7 +32,7 @@ TerminalStateEnum TerminalState = TERMINAL_UNINITIALIZED;
 static uint8_t TerminalInitDelay = INIT_DELAY;
 
 void TerminalSendString(const char* s) {
-    CDC_Device_SendString(&TerminalHandle, s);
+	CDC_Device_SendString(&TerminalHandle, s);
 }
 
 void TerminalSendStringP(const char* s) {
@@ -43,8 +43,8 @@ void TerminalSendStringP(const char* s) {
     }
 }
 
-#if 0
-void TerminalSendBuffer(void* Buffer, uint16_t ByteCount)
+/*
+void TerminalSendHex(void* Buffer, uint16_t ByteCount)
 {
     char* pTerminalBuffer = (char*) TerminalBuffer;
 
@@ -52,11 +52,11 @@ void TerminalSendBuffer(void* Buffer, uint16_t ByteCount)
 
     TerminalSendString(pTerminalBuffer);
 }
-#endif
+
+*/
 
 
-
-void TerminalSendBlock(void* Buffer, uint16_t ByteCount)
+void TerminalSendBlock(const void* Buffer, uint16_t ByteCount)
 {
     CDC_Device_SendData(&TerminalHandle, Buffer, ByteCount);
 }
@@ -67,7 +67,7 @@ static void ProcessByte(void) {
 
     if (Byte >= 0) {
         /* Byte received */
-    	LEDTrigger(LED_TERMINAL_RXTX, LED_PULSE);
+    	LEDHook(LED_TERMINAL_RXTX, LED_PULSE);
 
         if (XModemProcessByte(Byte)) {
             /* XModem handled the byte */
@@ -145,13 +145,13 @@ void TerminalTick(void)
 /** Event handler for the library USB Connection event. */
 void EVENT_USB_Device_Connect(void)
 {
-	LEDTrigger(LED_TERMINAL_CONN, LED_ON);
+	LEDHook(LED_TERMINAL_CONN, LED_ON);
 }
 
 /** Event handler for the library USB Disconnection event. */
 void EVENT_USB_Device_Disconnect(void)
 {
-	LEDTrigger(LED_TERMINAL_CONN, LED_OFF);
+	LEDHook(LED_TERMINAL_CONN, LED_OFF);
 }
 
 

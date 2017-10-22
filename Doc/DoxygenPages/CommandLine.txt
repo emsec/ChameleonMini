@@ -1,78 +1,144 @@
 /** @file */
 
-/** @page Page_CommandLine The chameleon command line
- * The Chameleon-Mini enumerates as a CDC-ACM virtual serial interface.
- * For a high level of compatibility to be both interfaced by a human as well as
- * a user application, it supports a text-based command line, which can be accessed by using
- * simple terminal software like hyper-terminal or teraterm.
- * The serial settings, as in baudrate, stopp and parity bits are ignored
- * on the Chameleon side.
- * Note that there is no echo of entered characters at the Chameleon.
+/** @page Page_CommandLine The Chameleon Command Structure
+ * After plugging in a USB cable, the ChameleonMini enumerates as a virtual serial interface.
+ * The settings of the serial interface, e.g. baudrate, stop and parity bits, are ignored by the Chameleon.
+ * For a high level of compatibility towards both humans and computers, Chameleon can be set up and controlled by means of a 
+ * text-based command line interface, which can be accessed by using
+ * simple terminal software like hyper-terminal or teraterm. The command line is optimized to cooperate with script languages such as Python or TCL. 
  *
- * Command structure
- * =================
  *
- * Each of the following commands can result into 3 actions,
- * depending on the character that is appended to it.
- * - `<COMMAND>?`: Indicates a request that will always return an information
- * - `<COMMAND>=<VALUE>`: Indicates to set a value on the Chameleon
- * - `<COMMAND>`: Indicates to execute a procedure on the Chameleon with an optional response
+ * Chameleon Command Structure
+ * ===========================
+ * For communicating with the Chameleon via USB, there exist four different syntax types:
+ * - `<COMMAND>=<VALUE>` sets a parameter of the Chameleon ('set')
+ * - `<COMMAND>=?` lists all possible values for the parameter ('suggest')
+ * - `<COMMAND>?` returns the current value of a parameter ('get') 
+ * - `<COMMAND>` Executes a function with an optional response ('execute') 
+ * 
+ * For example, `CONFIG=?` lists the available types of virtualized cards and other options to configure a slot, while `CONFIG=MF_CLASSIC_1K` sets the current slot to Mifare Classic 1k emulation. In consequence, `CONFIG?` will return MF_CLASSIC_1K. Examples for commands executing a function are CLEAR, RESET or UPLOAD.
  *
- * Note that some commands only support a subset of these 3 actions.
+ * The responses of Chameleon indicate whether an action was successful or whether (and why) an error occurred. Examples: In case of an invalid command, the Chameleon replies with `200:UNKNOWN COMMAND`. In case of a known command, but a wrong syntax, the Chameleon replies with `201:INVALID COMMAND USAGE`.
  *
- * In order to perform the desired command action the command has to be
- * suffixed with a carriage return (CR, 0D hexadecimal).
- * In order to be more user-friendly when interfacing the Chameleon with a
- * serial terminal, support for the backspace (08 hexadecimal) and
- * escape (1B hexadecimal) key have been added.
- * Any other control character as defined in the ASCII character set is ignored.
- * Furthermore the Chameleon does not distinguish between uppercase and lowercase.
- *
- * Supported Commands
- * ==================
- *
- * The following list shows the supported commands and how they are used.
- * Command               | Description
- * --------------------- | -----------
- * `VERSION?`            | Requests the version of the Chameleon
- * `RESET`               | Resets the Chameleon
- * `UPGRADE`             | Sets the Chameleon into firmware upgrade mode (DFU)
- * `CONFIG`              | Returns a comma-separated list of all supported configurations
- * `CONFIG?`             | Returns the currently used configuration
- * `CONFIG=<NAME>`       | Sets the current configuration to `<NAME>` (See @ref Page_Configurations)
- * `UIDSIZE?`            | Returns the size of the current configuration's UID
- * `UID?`                | Returns the currently set UID
- * `UID=<UID>`           | Sets a new UID to be used in hexadecimal notation
- * `READONLY?`           | Returns the current state of the read-only mode
- * `READONLY=[0;1]`      | Activates or deactivates the read-only mode (Any writing to the memory is silently ignored)
- * `MEMSIZE?`            | Returns the memory size of the current configuration
- * `UPLOAD`              | Waits for an XModem connection to be established in order to upload a memory dump upto the memory size
- * `DOWNLOAD`            | Waits for an XModem connection to be established in order to download a memory dump with exactly the memory size
- * `BUTTON`              | Returns a comma-separated list of supported button press actions for the button
- * `BUTTON?`             | Returns the currently set button press action for BUTTON0
- * `BUTTON=<NAME>`       | Sets the current button press action for BUTTON0
- * `SETTING?`            | Returns the currently activated setting of the chameleon-mini
- * `SETTING=<NUMBER>`    | Sets the active setting of the chameleon-mini
- * `CLEAR`               | Clears the entire memory of the currently activated setting
- *
+ * Note: Each command has to be followed by a carriage return (CR, 0D hexadecimal). The backspace (08 hexadecimal) and escape (1B hexadecimal) keys are supported. All other control characters of the ASCII character set are ignored. The Chameleon commands are not case-sensitive. There is no echo of entered characters by the Chameleon, thus remember to switch on the 'local echo' in your terminal program.
+ * 
  * Responses
- * =========
- *
- * Subsequent to ANY send command, the Chameleon responds with a status number and status message, separated by a colon and terminated with a carriage return and line feed (CR+LF, 0D+0A hexadecimal). Status numbers are of a 3 digit decimal format with the first digit showing the severity of the answer. Status numbers beginning with a '1' denote an informational item and those beginning with a '2' denote an error.
+ * ---------
+ * Subsequent to any command sent, the Chameleon responds with a status number and a corresponding status message, separated by a colon and terminated with a carriage return and line feed (CR+LF, 0D+0A hexadecimal). Status numbers are of a three-digit decimal format with the first digit showing the severity of the answer. Status numbers beginning with a '1' denote an informational item and those beginning with a '2' denote an error.
  * Response                     | Description
  * ---------------------------- | -----------
- * `100:OK`                     | The command executed successfully
- * `101:OK WITH TEXT`           | The command executed successfully and this answer is appended with an additional line of information, terminated with CR+LF
- * `110:WAITING FOR XMODEM`     | The Chameleon is waiting for an XMODEM connection to establish
+ * `100:OK`                     | The command has been successfully executed
+ * `101:OK WITH TEXT`           | The command has been successfully executed and this response is appended with an additional line of information, terminated with CR+LF
+ * `110:WAITING FOR XMODEM`     | The Chameleon is waiting for an XMODEM connection to be established
+ * `120:FALSE`                  | The request is answered with false
+ * `121:TRUE`                   | The request is answered with true
  * `200:UNKNOWN COMMAND`        | This command is unknown to the Chameleon
  * `201:INVALID COMMAND USAGE`  | This action is not supported by this command
- * `202:INVALID PARAM`          | The format or value of the given parameter value is invalid
+ * `202:INVALID PARAMETER`      | The format or value of the given parameter value is invalid
+ * `203:TIMEOUT`                | The timeout of the currently active command has expired
+ * 
+ *
+ * Chameleon Command Set
+ * =====================
+ * The current firmware supports the following global commands.
+ * Command               | Description
+ * --------------------- | -----------
+ * `CHARGING?`           | Returns if the battery is currently being charged (TRUE) or not (FALSE)
+ * `HELP`                | Returns a comma-separated list of all commands supported by the current firmware
+ * `RESET`               | Reboots the Chameleon, i.e., power down and subsequent power-up. Note: A reset usually requires a new Terminal session.
+ * `RSSI?`               | Returns the voltage measured at the antenna of the Chameleon, e.g., to detect the presence of an RF field or compare the field strength of different RFID readers.
+ * `SYSTICK?`            | Returns the system tick value in ms. Note: An overflow occurs every 65,536 ms.
+ * `UPGRADE`             | Sets the Chameleon into firmware upgrade mode (DFU). This command can be used instead of holding the RBUTTON while power-on to trigger the bootloader.
+ * `VERSION?`            | Requests version information of the current firmware
+ * <B>Button Commands</B>| See also @ref Page_Buttons
+ * `RBUTTON=?`           | Returns a comma-separated list of supported actions for pressing the right button shortly. 
+ * `RBUTTON?`            | Returns the currently set action for pressing the right button shortly. DEFAULT: `SETTING_CHANGE`
+ * `RBUTTON=<NAME>`      | Sets the action for pressing the right button shortly.
+ * `LBUTTON=?`           | Returns a comma-separated list of supported actions for pressing the left button shortly. 
+ * `LBUTTON?`            | Returns the currently set action for pressing the left button shortly. DEFAULT: `RECALL_MEM`
+ * `LBUTTON=<NAME>`      | Sets the action for pressing the left button shortly.
+ * `RBUTTON_LONG=?`      | Returns a comma-separated list of supported actions for pressing the right button a long time.
+ * `RBUTTON_LONG?`       | Returns the currently set action for pressing the right button a long time. DEFAULT: `SETTING_CHANGE`
+ * `RBUTTON_LONG=<NAME>` | Sets the action for pressing the right button a long time.
+ * `LBUTTON_LONG=?`      | Returns a comma-separated list of supported actions for pressing the left button a long time.
+ * `LBUTTON_LONG?`       | Returns the currently set action for pressing the left button a long time. DEFAULT: `RECALL_MEM`
+ * `LBUTTON_LONG=<NAME>` | Sets the action for pressing the left button a long time.
+ * <B>LED Commands</B>   | See also @ref Page_LED
+ * `LEDGREEN=?`          | Returns a comma-separated list of supported events for illuminating the green LED 
+ * `LEDGREEN?`           | Returns the currently set event for lighting the green LED
+ * `LEDGREEN=<NAME>`     | Sets the event for which the green LED is lit. DEFAULT: `POWERED`
+ * `LEDRED=?  `          | Returns a comma-separated list of supported events for illuminating the red LED 
+ * `LEDRED?`             | Returns the currently set event for lighting the red LED
+ * `LEDRED=<NAME>`       | Sets the event for which the green LED is lit. DEFAULT: `SETTING_CHANGE`
+ * <B>Log Commands</B>   | See also @ref Page_Log \anchor Anchor_LogFunctions
+ * `LOGMODE=?`           | Returns a comma-separated list of supported log modes
+ * `LOGMODE?`            | Returns the current state of the log mode
+ * `LOGMODE=<NAME>`      | Sets the current log mode. DEFAULT = `OFF`
+ * `LOGMEM?`             | Returns the remaining free space for logging data to the SRAM (max. 2048 byte) 
+ * `LOGDOWNLOAD`         | Waits for an XModem connection and then downloads the binary log - including any log data in FRAM.
+ * `LOGCLEAR`            | Clears the log memory (SRAM and FRAM)
+ * `LOGSTORE`            | Writes the current log from SRAM to FRAM and clears the SRAM log. \warning If the FRAM is full, currently no error message is shown. If calling `LOGMEM?` after executing this command returns any other value than the maximum SRAM log size, there was not sufficient space in the FRAM and nothing has been done.
+ * 
+ * ChameleonMini provides eight 'slots' that can be configured to store different virtualized cards, or as active NFC reader, or as completely passive device for sniffing purposes. Each slot stores its configuration and, if applicable, card content. To select a particular slot, use the following command (or configure a button accordingly):
+ * Command               | Description
+ * --------------------- | -----------
+ * `SETTING?`            | Returns the currently activated slot
+ * `SETTING=<NUMBER>`    | Sets the active slot, where <NUMBER> is a number between 1 and 8 (see \ref Page_Settings)
+ *
+ * The following commands have an effect on the currently selected slot only:
+ * Command               | Description
+ * --------------------- | -----------
+ * `CONFIG=?`            | Returns a comma-separated list of all supported configurations
+ * `CONFIG?`             | Returns the configuration of the current slot
+ * `CONFIG=<NAME>`       | Sets the configuration of the surrent slot to `<NAME>` (See @ref Page_Configurations)
+ * `UIDSIZE?`            | Returns the UID size of the currently selected card type in Byte
+ * `UID?`                | Returns the UID of a card in the current slot
+ * `UID=<UID>`           | Sets a new UID, passed in hexadecimal notation.
+ * `READONLY?`           | Returns the current state of the read-only mode
+ * `READONLY=[0;1]`      | Activates (1) or deactivates (0) the read-only mode (Any writing to the memory is silently ignored)
+ * `MEMSIZE?`            | Returns the memory size occupied by the current configuration in Byte
+ * `UPLOAD`              | Waits for an XModem connection in order to upload a new virtualized card into the currently selected slot, with a size up to the current memory size
+ * `DOWNLOAD`            | Waits for an XModem connection in order to download a virtualized card with the current memory size
+ * `CLEAR`               | Clears the content of the current slot
+ * `STORE`               | Stores the content of the current slot from FRAM into the Flash memory
+ * `RECALL`              | Recalls/restores the content of the current slot from the Flash memory into the FRAM
+ * `TIMEOUT=?`           | Returns the possible number range for timeouts. See also \ref Anchor_TimeoutCommands "Timeout commands".
+ * `TIMEOUT=<NUMBER>`    | Sets the timeout for the current slot in multiples of 128 ms. If set to zero, there is no timeout. See also \ref Anchor_TimeoutCommands "Timeout commands".
+ * `TIMEOUT?`            | Returns the timeout for the current slot. See also \ref Anchor_TimeoutCommands "Timeout commands".
+ * <B>Reader Commands</B>| Using these commands only makes sense, if the slot is configured as reader. See also @ref Page_14443AReader
+ * `SEND <BYTEVALUE>`    | Adds parity bits, sends the given byte string <BYTEVALUE>, and returns the cards answer
+ * `SEND_RAW <BYTEVALUE>`| Does NOT add parity bits, sends the given byte string <BYTEVALUE> and returns the cards answer
+ * `GETUID`              | Obtains the UID of a card that is in the range of the antenna and returns it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
+ * `DUMP_MFU`            | Reads the whole content of a Mifare Ultralight card that is in the range of the antenna and returns it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
+ * `IDENTIFY`            | Identifies the type of a card in the range of the antenna and returns it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
+ * `THRESHOLD=?`         | Returns the possible number range for the reader threshold.
+ * `THRESHOLD=<NUMBER>`  | Globally sets the reader threshold. The <NUMBER> influences the reader function and range. Setting a wrong value may result in malfunctioning of the reader. DEFAULT: 400
+ * `THRESHOLD?`          | Returns the current reader threshold.
+ * `AUTOCALIBRATE`       | Automatically finds a good threshold for communicating with the card that currently is on top of the Chameleon. This command is a \ref Anchor_TimeoutCommands "Timeout command".
+ * `FIELD?`              | Returns whether (1) or not (0) the reader field is active.
+ * `FIELD=[0;1]`         | Enables/disables the reader field.
+ * 
+ * 
+ * Timeout Commands \anchor Anchor_TimeoutCommands
+ * ----------------
+ * Some commands start a process with an unpredictable termination time. In these cases, 
+ * ChameleonMini waits with its response, until the result of this process is obtained. In order to prevent an infinite
+ * waiting time, an individual timeout value can be set for each slot, in multiples of roughly 100 ms up to 60,000 ms.
+ * When a timeout occurs or if a respective command is aborted by means of a setting change, the return code `203:TIMEOUT` is sent and a command-specific shutdown function is called, which terminates the timeout process gracefully.
+ * 
+ * \warning Any terminal input is completely ignored during the waiting period. 
+ * 
+ * \warning When setting the timeout to zero, there is no timeout and thus a process may continue forever. 
+ * Such a process can only be terminated by changing the setting, if a button is configured accordingly, 
+ * or by restarting the ChameleonMini (power off, power on).
+ * 
+ *
  *
  * Accessing the command-line using a terminal software
  * ====================================================
  * In order to have quick access to the Chameleon's command-line without using any complicated software,
- * we suggest using the TeraTerm terminal emulation software available for windows based operating systems.
- *
+ * we suggest using the [TeraTerm](https://ttssh2.osdn.jp/index.html.en) terminal emulation software available for windows based operating systems.
+ * 
  * Connecting and setting up
  * -------------------------
  * For establishing a connection to the Chameleon's command line, select File -> New Connection, choose

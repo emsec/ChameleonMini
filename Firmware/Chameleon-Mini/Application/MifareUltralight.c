@@ -9,6 +9,7 @@
 #include "ISO14443-3A.h"
 #include "../Codec/ISO14443-2A.h"
 #include "../Memory.h"
+#include "../LEDHook.h"
 
 
 #define ATQA_VALUE            0x0044
@@ -61,10 +62,12 @@ static enum {
 } State;
 
 static uint8_t CompatWritePageAddress;
+static bool FromHalt = false;
 
 void MifareUltralightAppInit(void)
 {
     State = STATE_IDLE;
+    FromHalt = false;
 }
 
 void MifareUltralightAppReset(void)
@@ -85,7 +88,8 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
     switch(State) {
     case STATE_IDLE:
     case STATE_HALT:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
+    	FromHalt = State == STATE_HALT;
+        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
             /* We received a REQA or WUPA command, so wake up. */
             State = STATE_READY1;
             return BitCount;
@@ -93,9 +97,9 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY1:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
-            State = STATE_READY1;
-            return BitCount;
+        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+            State = FromHalt ? STATE_HALT : STATE_IDLE;
+            return ISO14443A_APP_NO_RESPONSE;
         } else if (Cmd == ISO14443A_CMD_SELECT_CL1) {
             /* Load UID CL1 and perform anticollision. Since
             * MF Ultralight use a double-sized UID, the first byte
@@ -117,9 +121,9 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY2:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
-            State = STATE_READY1;
-            return BitCount;
+        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+            State = FromHalt ? STATE_HALT : STATE_IDLE;
+            return ISO14443A_APP_NO_RESPONSE;
         } else if (Cmd == ISO14443A_CMD_SELECT_CL2) {
             /* Load UID CL2 and perform anticollision */
             uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
@@ -140,9 +144,9 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_ACTIVE:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE)) {
-            State = STATE_READY1;
-            return BitCount;
+        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+            State = FromHalt ? STATE_HALT : STATE_IDLE;
+            return ISO14443A_APP_NO_RESPONSE;
         } else if (Cmd == CMD_READ) {
             uint8_t PageAddress = Buffer[1];
 
@@ -286,3 +290,4 @@ void MifareUltralightSetUid(ConfigurationUidType Uid)
     MemoryWriteBlock(&Uid[UID_CL1_SIZE], UID_CL2_ADDRESS, UID_CL2_SIZE);
     MemoryWriteBlock(&BCC2, UID_BCC2_ADDRESS, ISO14443A_CL_BCC_SIZE);
 }
+

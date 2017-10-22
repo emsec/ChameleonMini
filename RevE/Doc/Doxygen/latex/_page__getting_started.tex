@@ -1,0 +1,15 @@
+The first thing you should do is to program the fuse bits and the bootloader to the Chameleon-\/\-Mini. Use your preferred tool to set the fuse bits as follows\-:
+\begin{DoxyItemize}
+\item F\-U\-S\-E1\-: 0x00
+\item F\-U\-S\-E2\-: 0x\-B\-E
+\item F\-U\-S\-E4\-: 0x\-F\-F
+\item F\-U\-S\-E5\-: 0x\-E9
+\end{DoxyItemize}
+
+Next, program the appropriate bootloader from the Firmware/\-Bootloader directory into the chip. The A\-Txmega chip now automatically enumerates with its D\-F\-U bootloader. Now you can use Atmel's F\-L\-I\-P software or the open source dfu-\/programmer to program the Chameleon-\/\-Mini.\-hex/.eep into the F\-L\-A\-S\-H and E\-E\-P\-R\-O\-M using the bootloader. For this you should follow the instructions of the particular D\-F\-U tool. For windows machines, there is an example batch file in the Firmware/\-Chameleon-\/\-Mini directory.
+
+Once you have got the Chameleon up and running, it should enumerate as the L\-U\-F\-A C\-D\-C device. On windows, you should use the supplied L\-U\-F\-A Virtual\-Serial.\-inf in the Drivers folder. When the installation is successful, a new C\-O\-M port or /dev/tty\-S shows up on your system.
+
+This serial port is your means of controlling the Chameleon-\/\-Mini from any computer either using a simple terminal emulator, like Tera\-Term or your self-\/crafted scripts and applications.
+
+More info on how to use the serial interface can be found here\-: \hyperlink{Page_CommandLine}{The chameleon command line} 

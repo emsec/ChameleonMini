@@ -1,6 +1,6 @@
 #
 #             LUFA Library
-#     Copyright (C) Dean Camera, 2013.
+#     Copyright (C) Dean Camera, 2015.
 #
 #  dean [at] fourwalledcubicle [dot] com
 #           www.lufa-lib.org
@@ -10,8 +10,8 @@ LUFA_BUILD_MODULES         += DOXYGEN
 LUFA_BUILD_TARGETS         += doxygen doxygen_upgrade doxygen_create
 LUFA_BUILD_MANDATORY_VARS  += LUFA_PATH
 LUFA_BUILD_OPTIONAL_VARS   += DOXYGEN_CONF DOXYGEN_FAIL_ON_WARNING DOXYGEN_OVERRIDE_PARAMS
-LUFA_BUILD_PROVIDED_VARS   += 
-LUFA_BUILD_PROVIDED_MACROS += 
+LUFA_BUILD_PROVIDED_VARS   +=
+LUFA_BUILD_PROVIDED_MACROS +=
 
 # -----------------------------------------------------------------------------
 #                 LUFA Doxygen Buildsystem Makefile Module.
@@ -56,7 +56,7 @@ ERROR_IF_EMPTY   ?= $(if $(strip $($(strip $(1)))), , $(error Makefile $(strip $
 ERROR_IF_NONBOOL ?= $(if $(filter Y N, $($(strip $(1)))), , $(error Makefile $(strip $(1)) option must be Y or N))
 
 # Default values of optionally user-supplied variables
-DOXYGEN_CONF            ?= Doxygen.conf
+DOXYGEN_CONF            ?= doxyfile
 DOXYGEN_FAIL_ON_WARNING ?= Y
 DOXYGEN_OVERRIDE_PARAMS ?= QUIET=YES HTML_EXTRA_STYLESHEET=$(patsubst %/,%,$(LUFA_PATH))/DoxygenPages/Style/Style.css
 
@@ -72,7 +72,7 @@ MSG_DOXYGEN_CMD         := ' [DOXYGEN] :'
 # Determine Doxygen invocation command
 BASE_DOXYGEN_CMD := ( cat $(DOXYGEN_CONF) $(DOXYGEN_OVERRIDE_PARAMS:%=; echo "%") ) | doxygen -
 ifeq ($(DOXYGEN_FAIL_ON_WARNING), Y)
-   DOXYGEN_CMD := if ( $(BASE_DOXYGEN_CMD) 2>&1 | grep -v "warning: ignoring unsupported tag" ;); then exit 1; fi;
+   DOXYGEN_CMD := if ( $(BASE_DOXYGEN_CMD) 2>&1 | grep -v -e "[Ww]arning:\|recompile doxygen" ;); then exit 1; fi;
 else
    DOXYGEN_CMD := $(BASE_DOXYGEN_CMD)
 endif

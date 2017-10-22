@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -66,6 +66,12 @@
 		/* Macros: */
 			/** Indicates the board has hardware LEDs mounted. */
 			#define BOARD_HAS_LEDS
+
+			/** Pin that can reset the main MCU. */
+			#define AVR_RESET_LINE_PORT  PORTD
+			#define AVR_RESET_LINE_DDR   DDRD
+			#define AVR_RESET_LINE_PIN   PIND
+			#define AVR_RESET_LINE_MASK  (1 << PD7)
 
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)

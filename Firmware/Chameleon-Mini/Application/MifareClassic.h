@@ -16,7 +16,7 @@
 #define MIFARE_CLASSIC_4K_MEM_SIZE  4096
 
 void MifareClassicAppInit1K(void);
-void MifarePlus1kAppInit_7B(void);
+void MifareClassicAppInit1K7B(void);
 void MifareClassicAppInit4K(void);
 void MifareClassicAppReset(void);
 void MifareClassicAppTask(void);

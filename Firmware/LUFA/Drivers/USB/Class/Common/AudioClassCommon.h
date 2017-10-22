@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -618,7 +618,7 @@
 
 		/** \brief 24-Bit Audio Frequency Structure.
 		 *
-		 *  Type define for a 24bit audio sample frequency structure. As GCC does not contain a built in 24-bit datatype,
+		 *  Type define for a 24-bit audio sample frequency structure. As GCC does not contain a built in 24-bit datatype,
 		 *  this this structure is used to build up the value instead. Fill this structure with the \ref AUDIO_SAMPLE_FREQ() macro.
 		 *
 		 *  \note Regardless of CPU architecture, these values should be stored as little endian.

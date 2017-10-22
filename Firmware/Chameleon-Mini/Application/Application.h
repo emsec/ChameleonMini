@@ -15,7 +15,7 @@
 /* Applications */
 #include "MifareUltralight.h"
 #include "MifareClassic.h"
-
+#include "Reader14443A.h"
 
 /* Function wrappers */
 INLINE void ApplicationInit(void) {
@@ -23,7 +23,11 @@ INLINE void ApplicationInit(void) {
 }
 
 INLINE void ApplicationTask(void) {
-    ActiveConfiguration.ApplicationTaskFunc();
+	ActiveConfiguration.ApplicationTaskFunc();
+}
+
+INLINE void ApplicationTick(void) {
+	ActiveConfiguration.ApplicationTickFunc();
 }
 
 INLINE uint16_t ApplicationProcess(uint8_t* ByteBuffer, uint16_t ByteCount) {
@@ -32,7 +36,7 @@ INLINE uint16_t ApplicationProcess(uint8_t* ByteBuffer, uint16_t ByteCount) {
 
 INLINE void ApplicationReset(void) {
     ActiveConfiguration.ApplicationResetFunc();
-    //LogEntry(LOG_INFO_APP_RESET, NULL, 0);
+    //LogEntry(LOG_INFO_RESET_APP, NULL, 0);
 }
 
 INLINE void ApplicationGetUid(ConfigurationUidType Uid) {
@@ -41,6 +45,7 @@ INLINE void ApplicationGetUid(ConfigurationUidType Uid) {
 
 INLINE void ApplicationSetUid(ConfigurationUidType Uid) {
     ActiveConfiguration.ApplicationSetUidFunc(Uid);
+    LogEntry(LOG_INFO_UID_SET, Uid, ActiveConfiguration.UidSize);
 }
 
 #endif /* APPLICATION_H_ */

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -289,7 +289,7 @@
 			                                  *   must be \ref CDC_DSUBTYPE_CSInterface_ACM.
 			                                  */
 			uint8_t                 Capabilities; /**< Capabilities of the ACM interface, given as a bit mask. For most devices,
-			                                       *   this should be set to a fixed value of 0x06 - for other capabilities, refer
+			                                       *   this should be set to a fixed value of \c 0x06 - for other capabilities, refer
 			                                       *   to the CDC ACM specification.
 			                                       */
 		} ATTR_PACKED USB_CDC_Descriptor_FunctionalACM_t;

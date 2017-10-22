@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -66,9 +66,7 @@
  *  application.
  *
  *  \code
- *      // Initialize the SPI and board Dataflash drivers before first use
- *      SPI_Init(SPI_SPEED_FCPU_DIV_2 | SPI_ORDER_MSB_FIRST | SPI_SCK_LEAD_FALLING |
- *               SPI_SAMPLE_TRAILING | SPI_MODE_MASTER);
+ *      // Initialize the board Dataflash driver before first use
  *      Dataflash_Init();
  *
  *      uint8_t WriteBuffer[DATAFLASH_PAGE_SIZE];

@@ -1,22 +1,21 @@
 /** @file */
 
 /** @mainpage
- * Chameleon is a versatile emulator for ISO 14443 contactless smartcards.
- * It is meant to be a programmable platform to assess security aspects in
- * RFID environments and can be used in different attack scenarios like replay
- * or relay attacks and even for emulating an existing smartcard,
- * thus behaving as a perfect clone of a given card.
+ * ChameleonMini, created by Kasper & Oswald, is a freely programmable, portable tool for ISO14443 / ISO15693 / NFC security analysis that can for example read out compatible transponders, emulate or clone contactless cards, and sniff/log the RFID communication. The versatile, battery operated device is designed to assess security aspects in RFID environments and can be used in different scenarios like relay or replay attacks, including state restoration, and for virtualizing up to eight smartcards that behave as perfect clones of the original, given card.
  *
- * The Chameleon Project has been started by the Chair for Embedded Security
- * at the German University in Bochum and has been licensed as open source to
- * let everyone benefit from the work that has been done so far.
+ * The Chameleon Project has been started by the Chair for Embedded Security at the Ruhr-University Bochum, Germany, and has been licensed as open source to let everyone benefit from the work. Meanwhile the inventors of ChameleonMini have founded the security consulting company Kasper & Oswald and now continue the hardware and firmware development. 
  *
- * We are always looking forward to any means of contributing or contacting us.
+ * We appreciate all types of contributions (for example hardware mods, firmware upgrades, bug fixes, new supported card types, videos, pictures, example applications, reviews, instructions, documentation, translations, new findings, ANYTHING...) and are happy to upload the stuff for you into the github project. Please send your contribution to chameleon@kasper-oswald.de and we will (if desired) give you credit in the github log of the upload. Likewise, we are looking forward to your feedback about bugs, problems, and desired future upgrades. Please use the issues button accordingly. 
  *
  * *Pages:*
  *
  * - @subpage Page_GettingStarted
  * - @subpage Page_CommandLine
- * - @subpage Page_FirmwareUpgrade
  * - @subpage Page_UploadingDownloading
+ * - @subpage Page_LEDs
+ * - @subpage Page_Buttons
+ * - @subpage Page_Configurations
+ * - @subpage Page_Settings
+ * - @subpage Page_Log
+ * - @subpage Page_14443AReader
  */

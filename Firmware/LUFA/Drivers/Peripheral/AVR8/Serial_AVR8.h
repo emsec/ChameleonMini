@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -168,7 +168,8 @@
 			/** Initializes the USART, ready for serial data transmission and reception. This initializes the interface to
 			 *  standard 8-bit, no parity, 1 stop bit settings suitable for most applications.
 			 *
-			 *  \param[in] BaudRate     Serial baud rate, in bits per second.
+			 *  \param[in] BaudRate     Serial baud rate, in bits per second. This should be the target baud rate regardless of the
+			 *                          \c DoubleSpeed parameter's value.
 			 *  \param[in] DoubleSpeed  Enables double speed mode when set, halving the sample time to double the baud rate.
 			 */
 			static inline void Serial_Init(const uint32_t BaudRate,
@@ -210,14 +211,39 @@
 				return ((UCSR1A & (1 << RXC1)) ? true : false);
 			}
 
+			/** Indicates whether there is hardware buffer space for a new transmit on the USART. This
+			 *  function can be used to determine if a call to \ref Serial_SendByte() will block in advance.
+			 *
+			 *  \return Boolean \c true if a character can be queued for transmission immediately, \c false otherwise.
+			 */
+			static inline bool Serial_IsSendReady(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
+			static inline bool Serial_IsSendReady(void)
+			{
+				return ((UCSR1A & (1 << UDRE1)) ? true : false);
+			}
+
+			/** Indicates whether the hardware USART transmit buffer is completely empty, indicating all
+			 *  pending transmissions have completed.
+			 *
+			 *  \return Boolean \c true if no characters are buffered for transmission, \c false otherwise.
+			 */
+			static inline bool Serial_IsSendComplete(void) ATTR_WARN_UNUSED_RESULT ATTR_ALWAYS_INLINE;
+			static inline bool Serial_IsSendComplete(void)
+			{
+				return ((UCSR1A & (1 << TXC1)) ? true : false);
+			}
+
 			/** Transmits a given byte through the USART.
+			 *
+			 *  \note If no buffer space is available in the hardware USART, this function will block. To check if
+			 *        space is available before calling this function, see \ref Serial_IsSendReady().
 			 *
 			 *  \param[in] DataByte  Byte to transmit through the USART.
 			 */
 			static inline void Serial_SendByte(const char DataByte) ATTR_ALWAYS_INLINE;
 			static inline void Serial_SendByte(const char DataByte)
 			{
-				while (!(UCSR1A & (1 << UDRE1)));
+				while (!(Serial_IsSendReady()));
 				UDR1 = DataByte;
 			}
 

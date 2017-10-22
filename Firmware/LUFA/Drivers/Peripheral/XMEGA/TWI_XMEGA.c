@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -53,7 +53,7 @@ uint8_t TWI_StartTransmission(TWI_t* const TWI,
 		}
 		else if ((status & (TWI_MASTER_WIF_bm | TWI_MASTER_RXACK_bm)) == (TWI_MASTER_WIF_bm | TWI_MASTER_RXACK_bm))
 		{
-			TWI_StopTransmission(twi);
+			TWI_StopTransmission(TWI);
 			return TWI_ERROR_SlaveResponseTimeout;
 		}
 		else if (status & (TWI_MASTER_WIF_bm | TWI_MASTER_RIF_bm))
@@ -67,7 +67,7 @@ uint8_t TWI_StartTransmission(TWI_t* const TWI,
 
 	if (!(TimeoutRemaining)) {
 		if (TWI->MASTER.STATUS & TWI_MASTER_CLKHOLD_bm) {
-			TWI_StopTransmission(twi);
+			TWI_StopTransmission(TWI);
 		}
 	}
 
@@ -110,28 +110,28 @@ uint8_t TWI_ReadPacket(TWI_t* const TWI,
                        const uint8_t* InternalAddress,
                        uint8_t InternalAddressLen,
                        uint8_t* Buffer,
-                       uint8_t Length)
+                       uint16_t Length)
 {
 	uint8_t ErrorCode;
 
-	if ((ErrorCode = TWI_StartTransmission(twi, (SlaveAddress & TWI_DEVICE_ADDRESS_MASK) | TWI_ADDRESS_WRITE,
+	if ((ErrorCode = TWI_StartTransmission(TWI, (SlaveAddress & TWI_DEVICE_ADDRESS_MASK) | TWI_ADDRESS_WRITE,
 	                                       TimeoutMS)) == TWI_ERROR_NoError)
 	{
 		while (InternalAddressLen--)
 		{
-			if (!(TWI_SendByte(twi, *(InternalAddress++))))
+			if (!(TWI_SendByte(TWI, *(InternalAddress++))))
 			{
 				ErrorCode = TWI_ERROR_SlaveNAK;
 				break;
 			}
 		}
 
-		if ((ErrorCode = TWI_StartTransmission(twi, (SlaveAddress & TWI_DEVICE_ADDRESS_MASK) | TWI_ADDRESS_READ,
+		if ((ErrorCode = TWI_StartTransmission(TWI, (SlaveAddress & TWI_DEVICE_ADDRESS_MASK) | TWI_ADDRESS_READ,
 		                                       TimeoutMS)) == TWI_ERROR_NoError)
 		{
 			while (Length--)
 			{
-				if (!(TWI_ReceiveByte(twi, Buffer++, (Length == 0))))
+				if (!(TWI_ReceiveByte(TWI, Buffer++, (Length == 0))))
 				{
 					ErrorCode = TWI_ERROR_SlaveNAK;
 					break;
@@ -139,28 +139,28 @@ uint8_t TWI_ReadPacket(TWI_t* const TWI,
 			}
 		}
 
-		TWI_StopTransmission(twi);
+		TWI_StopTransmission(TWI);
 	}
 
 	return ErrorCode;
 }
 
-uint8_t TWI_WritePacket(TWI_t* const twi,
+uint8_t TWI_WritePacket(TWI_t* const TWI,
                         const uint8_t SlaveAddress,
                         const uint8_t TimeoutMS,
                         const uint8_t* InternalAddress,
                         uint8_t InternalAddressLen,
                         const uint8_t* Buffer,
-                        uint8_t Length)
+                        uint16_t Length)
 {
 	uint8_t ErrorCode;
 
-	if ((ErrorCode = TWI_StartTransmission(twi, (SlaveAddress & TWI_DEVICE_ADDRESS_MASK) | TWI_ADDRESS_WRITE,
+	if ((ErrorCode = TWI_StartTransmission(TWI, (SlaveAddress & TWI_DEVICE_ADDRESS_MASK) | TWI_ADDRESS_WRITE,
 	                                       TimeoutMS)) == TWI_ERROR_NoError)
 	{
 		while (InternalAddressLen--)
 		{
-			if (!(TWI_SendByte(twi, *(InternalAddress++))))
+			if (!(TWI_SendByte(TWI, *(InternalAddress++))))
 			{
 				ErrorCode = TWI_ERROR_SlaveNAK;
 				break;
@@ -169,14 +169,14 @@ uint8_t TWI_WritePacket(TWI_t* const twi,
 
 		while (Length--)
 		{
-			if (!(TWI_SendByte(twi, *(Buffer++))))
+			if (!(TWI_SendByte(TWI, *(Buffer++))))
 			{
 				ErrorCode = TWI_ERROR_SlaveNAK;
 				break;
 			}
 		}
 
-		TWI_StopTransmission(twi);
+		TWI_StopTransmission(TWI);
 	}
 
 	return ErrorCode;

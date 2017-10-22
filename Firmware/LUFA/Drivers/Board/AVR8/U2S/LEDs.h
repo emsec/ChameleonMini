@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -29,7 +29,7 @@
 */
 
 /** \file
- *  \brief Board specific LED driver header for the Tempusdictum Benito.
+ *  \brief Board specific LED driver header for the U2S.
  *  \copydetails Group_LEDs_U2S
  *
  *  \note This file should not be included directly. It is automatically included as needed by the LEDs driver

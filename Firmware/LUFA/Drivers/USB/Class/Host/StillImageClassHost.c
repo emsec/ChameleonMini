@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -100,13 +100,13 @@ uint8_t SI_Host_ConfigurePipes(USB_ClassInfo_SI_Host_t* const SIInterfaceInfo,
 	SIInterfaceInfo->Config.EventsPipe.Type = EP_TYPE_INTERRUPT;
 
 	if (!(Pipe_ConfigurePipeTable(&SIInterfaceInfo->Config.DataINPipe, 1)))
-	  return false;
+	  return SI_ENUMERROR_PipeConfigurationFailed;
 
 	if (!(Pipe_ConfigurePipeTable(&SIInterfaceInfo->Config.DataOUTPipe, 1)))
-	  return false;
+	  return SI_ENUMERROR_PipeConfigurationFailed;
 
 	if (!(Pipe_ConfigurePipeTable(&SIInterfaceInfo->Config.EventsPipe, 1)))
-	  return false;
+	  return SI_ENUMERROR_PipeConfigurationFailed;
 
 	SIInterfaceInfo->State.InterfaceNumber = StillImageInterface->InterfaceNumber;
 	SIInterfaceInfo->State.IsActive = true;

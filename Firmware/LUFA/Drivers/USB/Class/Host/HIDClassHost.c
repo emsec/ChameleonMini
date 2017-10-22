@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -99,7 +99,7 @@ uint8_t HID_Host_ConfigurePipes(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo
 	HIDInterfaceInfo->Config.DataINPipe.Type  = EP_TYPE_INTERRUPT;
 
 	if (!(Pipe_ConfigurePipeTable(&HIDInterfaceInfo->Config.DataINPipe, 1)))
-	  return false;
+	  return HID_ENUMERROR_PipeConfigurationFailed;
 
 	if (DataOUTEndpoint)
 	{
@@ -108,7 +108,7 @@ uint8_t HID_Host_ConfigurePipes(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo
 		HIDInterfaceInfo->Config.DataOUTPipe.Type = EP_TYPE_INTERRUPT;
 
 		if (!(Pipe_ConfigurePipeTable(&HIDInterfaceInfo->Config.DataOUTPipe, 1)))
-		  return false;
+		  return HID_ENUMERROR_PipeConfigurationFailed;
 	}
 
 	HIDInterfaceInfo->State.InterfaceNumber      = HIDInterface->InterfaceNumber;
@@ -238,7 +238,7 @@ uint8_t HID_Host_SendReportByID(USB_ClassInfo_HID_Host_t* const HIDInterfaceInfo
 {
 #if !defined(HID_HOST_BOOT_PROTOCOL_ONLY)
 	if ((USB_HostState != HOST_STATE_Configured) || !(HIDInterfaceInfo->State.IsActive))
-	  return false;
+	  return PIPE_RWSTREAM_NoError;
 
 	if (HIDInterfaceInfo->State.DeviceUsesOUTPipe && (ReportType == HID_REPORT_ITEM_Out))
 	{

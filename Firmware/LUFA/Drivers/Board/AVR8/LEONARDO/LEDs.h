@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -46,7 +46,7 @@
  *    <tr><th>Name</th><th>Color</th><th>Info</th><th>Active Level</th><th>Port Pin</th></tr>
  *    <tr><td>LEDS_LED1</td><td>Yellow</td><td>RX</td><td>Low</td><td>PORTB.0</td></tr>
  *    <tr><td>LEDS_LED2</td><td>Yellow</td><td>TX</td><td>Low</td><td>PORTD.5</td></tr>
- *    <tr><td>LEDS_LED1</td><td>Yellow</td><td>General Indicator</td><td>High</td><td>PORTC.7</td></tr>
+ *    <tr><td>LEDS_LED3</td><td>Yellow</td><td>General Indicator</td><td>High</td><td>PORTC.7</td></tr>
  *  </table>
  *
  *  @{
@@ -154,7 +154,7 @@
 			static inline uint8_t LEDs_GetLEDs(void) ATTR_WARN_UNUSED_RESULT;
 			static inline uint8_t LEDs_GetLEDs(void)
 			{
-				return ((PORTB & LEDS_PORTB_LEDS) | (PORTD & LEDS_PORTD_LEDS) | (~PORTC & LEDS_PORTC_LEDS));
+				return ((~PORTB & LEDS_PORTB_LEDS) | (~PORTD & LEDS_PORTD_LEDS) | (PORTC & LEDS_PORTC_LEDS));
 			}
 		#endif
 

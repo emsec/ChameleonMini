@@ -3,7 +3,10 @@
 #include "Configuration.h"
 #include "Log.h"
 #include "Memory.h"
-#include "LED.h"
+#include "LEDHook.h"
+#include "Terminal/CommandLine.h"
+
+#include "System.h"
 
 #define SETTING_TO_INDEX(S) (S - SETTINGS_FIRST)
 #define INDEX_TO_SETTING(I) (I + SETTINGS_FIRST)
@@ -15,21 +18,24 @@ SettingsType EEMEM StoredSettings = {
 
 	.Settings = { [0 ... (SETTINGS_COUNT-1)] =	{
 		.Configuration = DEFAULT_CONFIGURATION,
-		.ButtonAction =	DEFAULT_BUTTON_ACTION,
-		.ButtonLongAction = DEFAULT_BUTTON_LONG_ACTION,
+		.ButtonActions = {
+				[BUTTON_L_PRESS_SHORT] = DEFAULT_LBUTTON_ACTION, [BUTTON_R_PRESS_SHORT] = DEFAULT_RBUTTON_ACTION,
+				[BUTTON_L_PRESS_LONG]  = DEFAULT_LBUTTON_ACTION, [BUTTON_R_PRESS_LONG]  = DEFAULT_RBUTTON_ACTION
+		},
 		.LogMode = DEFAULT_LOG_MODE,
 		.LEDRedFunction = DEFAULT_RED_LED_ACTION,
-		.LEDGreenFunction = DEFAULT_GREEN_LED_ACTION
-	} }
+		.LEDGreenFunction = DEFAULT_GREEN_LED_ACTION,
+		.PendingTaskTimeout = DEFAULT_PENDING_TASK_TIMEOUT
+	}}
 };
 
 void SettingsLoad(void) {
-	eeprom_read_block(&GlobalSettings, &StoredSettings, sizeof(SettingsType));
+	ReadEEPBlock((uint16_t) &StoredSettings, &GlobalSettings, sizeof(SettingsType));
 }
 
 void SettingsSave(void) {
 #if ENABLE_EEPROM_SETTINGS
-	eeprom_write_block(&GlobalSettings, &StoredSettings, sizeof(SettingsType));
+	WriteEEPBlock((uint16_t) &StoredSettings, &GlobalSettings, sizeof(SettingsType));
 #endif
 }
 
@@ -52,6 +58,10 @@ void SettingsCycle(void) {
 bool SettingsSetActiveById(uint8_t Setting) {
 	if ( (Setting >= SETTINGS_FIRST) && (Setting <= SETTINGS_LAST) ) {
 		uint8_t SettingIdx = SETTING_TO_INDEX(Setting);
+
+		/* Break potentially pending timeout task (manual timeout) */
+		CommandLinePendingTaskBreak();
+
 		/* Store current memory contents permanently */
 		MemoryStore();
 
@@ -60,14 +70,14 @@ bool SettingsSetActiveById(uint8_t Setting) {
 				&GlobalSettings.Settings[SettingIdx];
 
 		/* Settings have changed. Progress changes through system */
-		ConfigurationInit();
-		LogInit();
+		ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
+		LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
 
 		/* Recall new memory contents */
 		MemoryRecall();
 
 		/* Notify LED. blink according to current setting */
-		LEDTrigger(LED_SETTING_CHANGE, LED_BLINK + SettingIdx);
+		LEDHook(LED_SETTING_CHANGE, LED_BLINK + SettingIdx);
 
 		return true;
 	} else {
@@ -88,6 +98,7 @@ bool SettingsSetActiveByName(const char* Setting) {
 	uint8_t SettingNr = Setting[0] - '0';
 
 	if (Setting[1] == '\0') {
+		LogEntry(LOG_INFO_SETTING_SET, Setting, 1);
 		return SettingsSetActiveById(SettingNr);
 	} else {
 		return false;

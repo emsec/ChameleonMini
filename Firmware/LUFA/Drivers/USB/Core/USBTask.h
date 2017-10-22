@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -186,9 +186,9 @@
 			#endif
 
 		/* Macros: */
-			#define HOST_TASK_NONBLOCK_WAIT(Duration, NextState) MACROS{ USB_HostState   = HOST_STATE_WaitForDevice; \
-			                                                             WaitMSRemaining = (Duration);               \
-			                                                             PostWaitState   = (NextState);              }MACROE
+			#define HOST_TASK_NONBLOCK_WAIT(Duration, NextState) do { USB_HostState   = HOST_STATE_WaitForDevice; \
+			                                                          WaitMSRemaining = (Duration);               \
+			                                                          PostWaitState   = (NextState);              } while (0)
 	#endif
 
 	/* Disable C linkage for C++ Compilers: */

@@ -121,7 +121,7 @@ INLINE_INHERITED_MEMB = NO
 # path before files name in the file list and in the header files. If set
 # to NO the shortest path that makes the file name unique will be used.
 
-FULL_PATH_NAMES = YES
+FULL_PATH_NAMES = NO
 
 # If the FULL_PATH_NAMES tag is set to YES then the STRIP_FROM_PATH tag
 # can be used to strip a user-defined part of the path. Stripping is
@@ -366,7 +366,7 @@ EXTRACT_PACKAGE = NO
 # If the EXTRACT_STATIC tag is set to YES all static members of a file
 # will be included in the documentation.
 
-EXTRACT_STATIC = NO
+EXTRACT_STATIC = YES
 
 # If the EXTRACT_LOCAL_CLASSES tag is set to YES classes (and structs)
 # defined locally in source files will be included in the documentation.
@@ -461,7 +461,7 @@ INLINE_INFO = YES
 # alphabetically by member name. If set to NO the members will appear in
 # declaration order.
 
-SORT_MEMBER_DOCS = YES
+SORT_MEMBER_DOCS = NO
 
 # If the SORT_BRIEF_DOCS tag is set to YES then doxygen will sort the
 # brief documentation of file, namespace and class members alphabetically
@@ -549,7 +549,7 @@ MAX_INITIALIZER_LINES = 30
 # at the bottom of the documentation of classes and structs. If set to YES the
 # list will mention the files that were used to generate the documentation.
 
-SHOW_USED_FILES = YES
+SHOW_USED_FILES = NO
 
 # Set the SHOW_FILES tag to NO to disable the generation of the Files page.
 # This will remove the Files entry from the Quick Index and from the
@@ -562,7 +562,7 @@ SHOW_FILES = YES
 # This will remove the Namespaces entry from the Quick Index
 # and from the Folder Tree View (if specified). The default is YES.
 
-SHOW_NAMESPACES = YES
+SHOW_NAMESPACES = NO
 
 # The FILE_VERSION_FILTER tag can be used to specify a program or script that
 # doxygen should invoke to get the current version for each file (typically from
@@ -1300,7 +1300,7 @@ EXTRA_SEARCH_MAPPINGS =
 # If the GENERATE_LATEX tag is set to YES (the default) Doxygen will
 # generate Latex output.
 
-GENERATE_LATEX = YES
+GENERATE_LATEX = NO
 
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put.
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be

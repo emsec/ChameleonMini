@@ -1,0 +1,22 @@
+/** @file */
+
+/** @mainpage
+ * Chameleon is a versatile emulator for ISO 14443 contactless smartcards.
+ * It is meant to be a programmable platform to assess security aspects in
+ * RFID environments and can be used in different attack scenarios like replay
+ * or relay attacks and even for emulating an existing smartcard,
+ * thus behaving as a perfect clone of a given card.
+ *
+ * The Chameleon Project has been started by the Chair for Embedded Security
+ * at the German University in Bochum and has been licensed as open source to
+ * let everyone benefit from the work that has been done so far.
+ *
+ * We are always looking forward to any means of contributing or contacting us.
+ *
+ * *Pages:*
+ *
+ * - @subpage Page_GettingStarted
+ * - @subpage Page_CommandLine
+ * - @subpage Page_FirmwareUpgrade
+ * - @subpage Page_UploadingDownloading
+ */

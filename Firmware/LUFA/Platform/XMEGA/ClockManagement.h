@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -171,8 +171,8 @@
 			 *
 			 *  \return Boolean \c true if the internal oscillator was successfully started, \c false if invalid parameters specified.
 			 */
-			static inline uint8_t XMEGACLK_StartInternalOscillator(const uint8_t Source) ATTR_ALWAYS_INLINE;
-			static inline uint8_t XMEGACLK_StartInternalOscillator(const uint8_t Source)
+			static inline bool XMEGACLK_StartInternalOscillator(const uint8_t Source) ATTR_ALWAYS_INLINE;
+			static inline bool XMEGACLK_StartInternalOscillator(const uint8_t Source)
 			{
 				switch (Source)
 				{
@@ -286,7 +286,7 @@
 			                                      const uint8_t Reference,
 			                                      const uint32_t Frequency)
 			{
-				uint16_t DFLLCompare = (Frequency / 1000);
+				uint16_t DFLLCompare = (Frequency / 1024);
 
 				switch (Source)
 				{

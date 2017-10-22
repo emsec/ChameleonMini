@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -68,6 +68,10 @@ void HID_Device_ProcessControlRequest(USB_ClassInfo_HID_Device_t* const HIDInter
 				Endpoint_SelectEndpoint(ENDPOINT_CONTROLEP);
 
 				Endpoint_ClearSETUP();
+
+				if (ReportID)
+				  Endpoint_Write_8(ReportID);
+
 				Endpoint_Write_Control_Stream_LE(ReportData, ReportSize);
 				Endpoint_ClearOUT();
 			}

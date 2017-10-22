@@ -7,41 +7,89 @@
 
 #include "ISO14443-3A.h"
 
-void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount) {
-    uint16_t Checksum = 0x6363;
+#define CRC_INIT		0x6363
+#define CRC_INIT_R		0xC6C6 /* Bit reversed */
+
+#define USE_HW_CRC
+
+#ifdef USE_HW_CRC
+void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount)
+{
     uint8_t* DataPtr = (uint8_t*) Buffer;
+
+    CRC.CTRL = CRC_RESET0_bm;
+    CRC.CHECKSUM1 = (CRC_INIT_R >> 8) & 0xFF;
+    CRC.CHECKSUM0 = (CRC_INIT_R >> 0) & 0xFF;
+    CRC.CTRL = CRC_SOURCE_IO_gc;
 
     while(ByteCount--) {
         uint8_t Byte = *DataPtr++;
+        Byte = BitReverseByte(Byte);
 
-        Byte ^= (uint8_t) (Checksum & 0x00FF);
-        Byte ^= Byte << 4;
-
-        Checksum = (Checksum >> 8) ^ ( (uint16_t) Byte << 8 ) ^
-                ( (uint16_t) Byte << 3 ) ^ ( (uint16_t) Byte >> 4 );
+        CRC.DATAIN = Byte;
     }
 
-    *DataPtr++ = (Checksum >> 0) & 0x00FF;
-    *DataPtr = (Checksum >> 8) & 0x00FF;
-}
+    DataPtr[0] = BitReverseByte(CRC.CHECKSUM1);
+    DataPtr[1] = BitReverseByte(CRC.CHECKSUM0);
 
-bool ISO14443ACheckCRCA(void* Buffer, uint16_t ByteCount)
+    CRC.CTRL = CRC_SOURCE_DISABLE_gc;
+}
+#else
+#include <util/crc16.h>
+void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount)
 {
-    uint16_t Checksum = 0x6363;
+    uint16_t Checksum = CRC_INIT;
     uint8_t* DataPtr = (uint8_t*) Buffer;
 
     while(ByteCount--) {
         uint8_t Byte = *DataPtr++;
+        Checksum = _crc_ccitt_update(Checksum, Byte);
+    }
 
-        Byte ^= (uint8_t) (Checksum & 0x00FF);
-        Byte ^= Byte << 4;
+    DataPtr[0] = (Checksum >> 0) & 0x00FF;
+    DataPtr[1] = (Checksum >> 8) & 0x00FF;
+}
+#endif
 
-        Checksum = (Checksum >> 8) ^ ( (uint16_t) Byte << 8 ) ^
-                ( (uint16_t) Byte << 3 ) ^ ( (uint16_t) Byte >> 4 );
+#ifdef USE_HW_CRC
+bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount)
+{
+    const uint8_t* DataPtr = (const uint8_t*) Buffer;
+
+    CRC.CTRL = CRC_RESET0_bm;
+    CRC.CHECKSUM1 = (CRC_INIT_R >> 8) & 0xFF;
+    CRC.CHECKSUM0 = (CRC_INIT_R >> 0) & 0xFF;
+    CRC.CTRL = CRC_SOURCE_IO_gc;
+
+    while(ByteCount--) {
+        uint8_t Byte = *DataPtr++;
+        Byte = BitReverseByte(Byte);
+
+        CRC.DATAIN = Byte;
+    }
+
+    bool Result = (DataPtr[0] == BitReverseByte(CRC.CHECKSUM1)) && (DataPtr[1] == BitReverseByte(CRC.CHECKSUM0));
+
+    CRC.CTRL = CRC_SOURCE_DISABLE_gc;
+
+    return Result;
+}
+#else
+#include <util/crc16.h>
+bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount)
+{
+    uint16_t Checksum = CRC_INIT;
+    const uint8_t* DataPtr = (const uint8_t*) Buffer;
+
+    while(ByteCount--) {
+        uint8_t Byte = *DataPtr++;
+
+        Checksum = _crc_ccitt_update(Checksum, Byte);
     }
 
     return (DataPtr[0] == ((Checksum >> 0) & 0xFF)) && (DataPtr[1] == ((Checksum >> 8) & 0xFF));
 }
+#endif
 
 #if 0
 bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue)
@@ -90,11 +138,12 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
     }
 }
 
-bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue)
+bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt)
 {
     uint8_t* DataPtr = (uint8_t*) Buffer;
 
-    if ( (DataPtr[0] == ISO14443A_CMD_REQA) || (DataPtr[0] == ISO14443A_CMD_WUPA) ){
+    if ( ((! FromHalt) && (DataPtr[0] == ISO14443A_CMD_REQA)) ||
+         (DataPtr[0] == ISO14443A_CMD_WUPA) ){
         DataPtr[0] = (ATQAValue >> 0) & 0x00FF;
         DataPtr[1] = (ATQAValue >> 8) & 0x00FF;
 
@@ -105,4 +154,5 @@ bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue)
         return false;
     }
 }
+
 #endif

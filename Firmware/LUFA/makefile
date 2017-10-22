@@ -1,6 +1,6 @@
 #
 #             LUFA Library
-#     Copyright (C) Dean Camera, 2013.
+#     Copyright (C) Dean Camera, 2015.
 #
 #  dean [at] fourwalledcubicle [dot] com
 #           www.lufa-lib.org
@@ -10,7 +10,7 @@
 # ---------------------------------------
 
 LUFA_VERSION_NUM         = $(shell grep LUFA_VERSION_STRING $(LUFA_PATH)/Version.h | cut -d'"' -f2)
-EXCLUDE_FROM_EXPORT     := Documentation DoxygenPages CodeTemplates Build StudioIntegration *.conf *.tar *.o *.d *.lss *.lst *.hex *.elf *.hex *.eep *.map *.bin
+EXCLUDE_FROM_EXPORT     := Documentation DoxygenPages CodeTemplates Build StudioIntegration doxyfile *.tar *.o *.d *.lss *.lst *.hex *.elf *.hex *.eep *.map *.bin
 
 # Default target - no default action when attempting to build the core directly
 all:

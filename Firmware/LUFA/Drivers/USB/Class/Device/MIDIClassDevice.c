@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -60,7 +60,7 @@ void MIDI_Device_USBTask(USB_ClassInfo_MIDI_Device_t* const MIDIInterfaceInfo)
 
 	#if !defined(NO_CLASS_DRIVER_AUTOFLUSH)
 	Endpoint_SelectEndpoint(MIDIInterfaceInfo->Config.DataINEndpoint.Address);
-	
+
 	if (Endpoint_IsINReady())
 	  MIDI_Device_Flush(MIDIInterfaceInfo);
 	#endif
@@ -112,6 +112,9 @@ bool MIDI_Device_ReceiveEventPacket(USB_ClassInfo_MIDI_Device_t* const MIDIInter
 	  return false;
 
 	Endpoint_SelectEndpoint(MIDIInterfaceInfo->Config.DataOUTEndpoint.Address);
+
+	if (!(Endpoint_IsOUTReceived()))
+		return false;
 
 	if (!(Endpoint_IsReadWriteAllowed()))
 	  return false;

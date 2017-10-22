@@ -6,55 +6,45 @@ SHELL = /bin/sh
 
 #Supported configurations
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
-SETTINGS    += -DCONFIG_MF_Plus1k_7B_SUPPORT
+SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
+SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
 SETTINGS	+= -DCONFIG_ISO14443A_SNIFF_SUPPORT
+SETTINGS	+= -DCONFIG_ISO14443A_READER_SUPPORT
 
 #Support magic mode on mifare classic configuration
 SETTINGS	+= -DSUPPORT_MF_CLASSIC_MAGIC_MODE
+
+#Don't touch manufacturer byte with BUTTON_ACTION_UID_LEFT_(DE/IN)CREMENT
+SETTINGS	+= -DSUPPORT_UID7_FIX_MANUFACTURER_BYTE
 
 #Support activating firmware upgrade mode through command-line
 SETTINGS	+= -DSUPPORT_FIRMWARE_UPGRADE
 
 #Default configuration
-#SETTINGS += -DDEFAULT_CONFIGURATION=CONFIG_MF_Plus1k_7B
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
 SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_NONE
+#SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_READER
 
 #Default button actions
-#SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_RANDOM
-#SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_LEFT_INCREMENT
-#SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_RIGHT_INCREMENT
-#SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_LEFT_DECREMENT
-#SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_UID_RIGHT_DECREMENT
-SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
-#SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_STORE_MEM
-SETTINGS	+= -DDEFAULT_BUTTON_LONG_ACTION=BUTTON_ACTION_RECALL_MEM
+#SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_UID_RANDOM
+#SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_UID_LEFT_INCREMENT
+#SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_UID_RIGHT_INCREMENT
+#SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_UID_LEFT_DECREMENT
+#SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_UID_RIGHT_DECREMENT
+SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
+#SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_STORE_MEM
+SETTINGS	+= -DDEFAULT_LBUTTON_ACTION=BUTTON_ACTION_RECALL_MEM
 
 #Define if button action setting should be independent of active setting 
 SETTINGS	+= -DBUTTON_SETTING_GLOBAL
 
 #Default LED functions
-	
-#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_TERMINAL_CONN 
-#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_TERMINAL_RXTX
 SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_SETTING_CHANGE
-#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_MEMORY_STORED
-#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_MEMORY_CHANGED
-#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_CODEC_RX
-#SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_CODEC_TX	
-
-SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_TERMINAL_CONN 
-#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_TERMINAL_RXTX
-#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_SETTING_CHANGE
-#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_MEMORY_STORED
-#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_MEMORY_CHANGED
-#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_CODEC_RX
-#SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_CODEC_TX	
-
+SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_POWERED
 
 #Define if LED function setting should be independent of active setting
 SETTINGS	+= -DLED_SETTING_GLOBAL
@@ -64,40 +54,64 @@ SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_OFF
 #SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_MEMORY
 #SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_TERMINAL
 
+#Define if log settings should be global
+SETTINGS	+= -DLOG_SETTING_GLOBAL
+
 #Default setting
 SETTINGS	+= -DDEFAULT_SETTING=SETTINGS_FIRST
+
+#Default pending task timeout
+SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=50 #* 100ms
+
 
 #Use EEPROM to store settings
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
+#Memory definitions and objcopy flags to include sections in binaries
+FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
+FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
+FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
+SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
+SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
+
 #Build configuration
-BUILD_DATE	 = $(shell date +'\"%y%m%d\"')
-MCU          = atxmega32a4u #atxmega128a4u
+ifeq ($(OS),Windows_NT)
+BUILD_DATE   = "\"$(shell date /t)\""
+else
+BUILD_DATE   = $(shell date +'\"%y%m%d\"')
+endif
+COMMIT_ID	 = $(shell git rev-parse --short HEAD)
+MCU          = atxmega128a4u
 ARCH         = XMEGA
 BOARD        = NONE
-F_CPU        = 32000000
+F_CPU        = 27120000
 F_USB        = 48000000
 TARGET       = Chameleon-Mini
-OPTIMIZATION = 3
-SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Log.c Settings.c LED.c
+OPTIMIZATION = s
+SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c MemoryAsm.S Button.c Log.c Settings.c LED.c Map.c AntennaLevel.c
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
-SRC         += Codec/Codec.c Codec/ISO14443-2A.c
-SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c
+SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c
+SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Reader14443A.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
-CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) $(SETTINGS)
-LD_FLAGS     =
+CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
+LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES = 
 
 
 #AVRDUDE settings
-AVRDUDE_PROGRAMMER = jtag2pdi #avrisp2
-AVRDUDE_MCU = atxmega32a4 #atxmega128a4
+AVRDUDE_PROGRAMMER = flip2
+AVRDUDE_MCU = atxmega128a4u
 AVRDUDE_PORT = usb
-AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
+AVRDUDE_WRITE_APP = -U application:w:$(TARGET).hex
 AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
+
+#AVRDUDE settings to program the precompiled firmware
+AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
+AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
+
 
 # Default target
 all:
@@ -113,9 +127,27 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 # include $(LUFA_PATH)/Build/lufa_avrdude.mk
 # include $(LUFA_PATH)/Build/lufa_atprogram.mk
 
+#Overwrite the LUFA versions of hex/bin file generation to include spmhelper and flashdata sections
+%.hex: %.elf
+	@echo $(MSG_OBJCPY_CMD) Extracting HEX file data from \"$<\"
+	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
+
+%.bin: %.elf
+	@echo $(MSG_OBJCPY_CMD) Extracting BIN file data from \"$<\"
+	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
+
+# Extract SPMHelper in the last 32 Byte of the bootloader section to externally combine it with any bootloader
+spmhelper: $(TARGET).elf
+	@echo $(MSG_OBJCPY_CMD) Extracting SPM helper HEX file from $(TARGET).elf
+	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
+		
 # Program the device using avrdude  
 program: $(TARGET).hex $(TARGET).eep
-	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
+	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP) $(AVRDUDE_WRITE_EEPROM)
+
+# Program the device using avrdude with the latest official firmware
+program-latest:
+	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP_LATEST) $(AVRDUDE_WRITE_EEPROM_LATEST)
 
 # Program the device using batchisp and the DFU bootloader
 # Note that the device has to be in bootloader mode already

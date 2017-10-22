@@ -1,0 +1,29 @@
+/** @file */
+
+/** @page Page_GettingStarted Getting Started
+ * The first thing you should do is to program the fuse bits and the bootloader 
+ * to the Chameleon-Mini.
+ * Use your preferred tool to set the fuse bits as follows:
+ * 
+ * - FUSE1: 0x00
+ * - FUSE2: 0xBE
+ * - FUSE4: 0xFF
+ * - FUSE5: 0xE9
+ * 
+ * Next, program the appropriate bootloader from the Firmware/Bootloader directory into the chip.
+ * The ATxmega chip now automatically enumerates with its DFU bootloader. 
+ * Now you can use Atmel's FLIP software or the open source dfu-programmer to program the 
+ * Chameleon-Mini.hex/.eep into the FLASH and EEPROM using the bootloader. For this you should
+ * follow the instructions of the particular DFU tool.
+ * For windows machines, there is an example batch file in the Firmware/Chameleon-Mini directory.
+ *
+ * Once you have got the Chameleon up and running, it should enumerate as the LUFA CDC device.
+ * On windows, you should use the supplied LUFA VirtualSerial.inf in the Drivers folder.
+ * When the installation is successful, a new COM port or /dev/ttyS shows up on your system.
+ * 
+ * This serial port is your means of controlling the Chameleon-Mini from any computer either
+ * using a simple terminal emulator, like TeraTerm or your self-crafted scripts and applications.
+ *
+ * More info on how to use the serial interface can be found here: @ref Page_CommandLine
+ *
+ */

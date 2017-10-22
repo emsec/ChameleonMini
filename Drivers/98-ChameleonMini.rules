@@ -1,0 +1,2 @@
+# Rule for ChameleonMini RFID Research tool
+ATTRS{product}=="Chameleon-Mini", SUBSYSTEMS=="usb", ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="04b2", GROUP="users", MODE="0666", SYMLINK+="chameleon", ENV{ID_MM_DEVICE_IGNORE}="1"

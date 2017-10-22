@@ -4,7 +4,7 @@
  *  Created on: 21.12.2013
  *      Author: skuser
  */
-
+/** @file */
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
@@ -12,18 +12,23 @@
 #include "Configuration.h"
 #include "Log.h"
 #include "LED.h"
+#include "Memory.h"
 
-#define SETTINGS_COUNT		8
+#define SETTINGS_COUNT		(MEMORY_SIZE / MEMORY_SIZE_PER_SETTING)
 #define SETTINGS_FIRST		1
 #define SETTINGS_LAST		(SETTINGS_FIRST + SETTINGS_COUNT - 1)
 
+/** Defines one setting.
+ *
+ * \note Some properties may change globally if this is defined in the Makefile.
+ */
 typedef struct {
-	ButtonActionEnum ButtonAction;
-	ButtonActionEnum ButtonLongAction;
-	LogModeEnum LogMode;
-	ConfigurationEnum Configuration;
-	LEDFunctionEnum LEDRedFunction;
-	LEDFunctionEnum LEDGreenFunction;
+	ButtonActionEnum ButtonActions[BUTTON_TYPE_COUNT]; /// Button actions for this setting.
+	LogModeEnum LogMode; /// Log mode for this setting.
+	ConfigurationEnum Configuration; /// Active configuration for this setting.
+	LEDHookEnum LEDRedFunction; /// Red LED function for this setting.
+	LEDHookEnum LEDGreenFunction; /// Green LED function for this setting.
+	uint16_t PendingTaskTimeout; /// Timeout for timeout commands for this setting, in multiples of 100 ms.
 } SettingsEntryType;
 
 typedef struct {

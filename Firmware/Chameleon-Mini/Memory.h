@@ -8,16 +8,12 @@
 #ifndef MEMORY_H_
 #define MEMORY_H_
 
+#define MEMORY_SIZE					(FLASH_DATA_SIZE) /* From makefile */
+#define MEMORY_INIT_VALUE			0x00
+#define MEMORY_SIZE_PER_SETTING		8192
+
+#ifndef __ASSEMBLER__
 #include "Common.h"
-
-#define MEMORY_FLASH_USART	USARTD0
-#define MEMORY_FLASH_PORT	PORTD
-#define MEMORY_FLASH_CS		PIN4_bm
-#define MEMORY_FLASH_MOSI	PIN3_bm
-#define MEMORY_FLASH_MISO	PIN2_bm
-#define MEMORY_FLASH_SCK	PIN1_bm
-
-#define MEMORY_SIZE_PER_SETTING	1024
 
 void MemoryInit(void);
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount);
@@ -31,5 +27,11 @@ void MemoryStore(void);
 /* For use with XModem */
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
+
+/* EEPROM functions */
+uint16_t WriteEEPBlock(uint16_t Address, const void *SrcPtr, uint16_t ByteCount);
+uint16_t ReadEEPBlock(uint16_t Address, void *DestPtr, uint16_t ByteCount);
+
+#endif /* __ASSEMBLER__ */
 
 #endif /* MEMORY_H_ */

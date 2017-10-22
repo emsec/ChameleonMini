@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -112,7 +112,8 @@ void USB_Disable(void)
 	if (!(USB_Options & USB_OPT_MANUAL_PLL))
 	  USB_PLL_Off();
 
-	USB_REG_Off();
+	if (!(USB_Options & USB_OPT_REG_KEEP_ENABLED))
+	  USB_REG_Off();
 
 	#if defined(USB_SERIES_4_AVR) || defined(USB_SERIES_6_AVR) || defined(USB_SERIES_7_AVR)
 	USB_OTGPAD_Off();

@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -132,6 +132,14 @@
 			 *  \note See USB AVR data sheet for more information on the internal pad regulator.
 			 */
 			#define USB_OPT_REG_ENABLED                (0 << 1)
+
+			/** Option mask for \ref USB_Init() to keep regulator enabled at all times. Indicates that \ref USB_Disable()
+			 *  should not disable the regulator as it would otherwise. Has no effect if regulator is disabled using
+			 *  \ref USB_OPT_REG_DISABLED.
+			 *
+			 *  \note See USB AVR data sheet for more information on the internal pad regulator.
+			 */
+			#define USB_OPT_REG_KEEP_ENABLED           (1 << 3)
 
 			/** Manual PLL control option mask for \ref USB_Init(). This indicates to the library that the user application
 			 *  will take full responsibility for controlling the AVR's PLL (used to generate the high frequency clock

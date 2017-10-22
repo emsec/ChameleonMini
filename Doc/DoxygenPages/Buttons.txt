@@ -1,0 +1,34 @@
+/** @file */
+/** @page Page_Buttons Buttons
+ * For user interaction, ChameleonMini provides two configurable push buttons, i.e., LBUTTON on the left side and RBUTTON on the right side of Chameleon. Chameleon distinguishes between
+ * -# a short (< ~1.28 s) press of the button and
+ * -# a long (&ge; ~1.28 s) press of the button.
+ * 
+ * Thus, there are four different commands for configuring the buttons:
+ * -# `LBUTTON`
+ * -# `RBUTTON`
+ * -# `LBUTTON_LONG`
+ * -# `RBUTTON_LONG`
+ * 
+ * Each of these commands can be used in the getting ("?"), setting ("=") and suggesting ("=?") version.
+ * 
+ * Supported Configurations
+ * ========================
+ * 
+ * The following table describes all currently implemented options for the button configuration.
+ * Configuration name   | Description
+ * ------------------   | -----------
+ * `NONE`               | No function, the button is disabled
+ * `UID_RANDOM`         | Sets a random UID for the current card slot. 
+ * `UID_LEFT_INCREMENT` | Increments the UID for the current card slot. The UID is interpreted as little-endian.
+ * `UID_RIGHT_INCREMENT`| Increments the UID for the current card slot. The UID is interpreted as big-endian.
+ * `UID_LEFT_DECREMENT` | Decrements the UID for the current card slot. The UID is interpreted as little-endian.
+ * `UID_RIGHT_DECREMENT`| Decrements the UID for the current card slot. The UID is interpreted as big-endian.
+ * `CYCLE_SETTINGS`     | Cycles through the slots/settings. If the configuration of a slot is set to `NONE`, this slot is skipped. When the last slot is reached, the next button press selects the first slot, again.
+ * `STORE_MEM`          | Stores the current setting into the permanent Flash memory. Equivalent to the `STORE` command.
+ * `RECALL_MEM`         | Recalls a setting from the permanent Flash memory. Equivalent to the `RECALL` command.
+ * `TOGGLE_FIELD`       | Activates the reader field if it was deactivated, deactivates the reader field if it was activated.
+ * `STORE_LOG`          | Writes the current log from SRAM to FRAM and clears the SRAM log. Equivalent to the `STORE_LOG` command.
+ * 
+ * Note the UID commands have no effect when the slot is configured as reader.
+ */

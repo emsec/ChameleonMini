@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -145,19 +145,11 @@
 
 	/* Public Interface - May be used in end-application: */
 		/* Macros: */
-			/** Macro for encasing other multi-statement macros. This should be used along with an opening brace
-			 *  before the start of any multi-statement macro, so that the macros contents as a whole are treated
-			 *  as a discrete block and not as a list of separate statements which may cause problems when used as
-			 *  a block (such as inline \c if statements).
-			 */
-			#define MACROS                  do
-
-			/** Macro for encasing other multi-statement macros. This should be used along with a preceding closing
-			 *  brace at the end of any multi-statement macro, so that the macros contents as a whole are treated
-			 *  as a discrete block and not as a list of separate statements which may cause problems when used as
-			 *  a block (such as inline \c if statements).
-			 */
-			#define MACROE                  while (0)
+			#if !defined(__DOXYGEN__)
+				// Obsolete, retained for compatibility with user code
+				#define MACROS                  do
+				#define MACROE                  while (0)
+			#endif
 
 			/** Convenience macro to determine the larger of two values.
 			 *

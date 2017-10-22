@@ -1,29 +1,34 @@
 #include "LED.h"
 #include "Settings.h"
+#include "Map.h"
 
-#define BLINK_PRESCALER	1 /* x LEDTick(); */
+#include "Terminal/CommandLine.h"
+#include "System.h"
+
+#define BLINK_PRESCALER	2 /* x LEDTick(); */
 
 LEDActionEnum LEDGreenAction = LED_NO_ACTION;
 LEDActionEnum LEDRedAction = LED_NO_ACTION;
 
-static const char PROGMEM LEDFuncTable[][32] =
-{
-    [LED_NO_FUNC] = "NONE",
-    [LED_TERMINAL_CONN] = "TERMINAL_CONN",
-    [LED_TERMINAL_RXTX] = "TERMINAL_RXTX",
-    [LED_SETTING_CHANGE] = "SETTING_CHANGE",
-    [LED_MEMORY_STORED] = "MEMORY_STORED",
-    [LED_MEMORY_CHANGED] = "MEMORY_CHANGED",
-    //TODO: [LED_FIELD_DETECTED] = "FIELD_DETECTED",
-    [LED_CODEC_RX] = "CODEC_RX",
-    [LED_CODEC_TX] = "CODEC_TX",
-    //TODO: [LED_APP_SELECTED] = "APP_SELECTED",
-
+static const MapEntryType PROGMEM LEDFunctionMap[] = {
+	{ .Id = LED_NO_FUNC, 		.Text = "NONE" 				},
+	{ .Id = LED_POWERED, 		.Text = "POWERED" 			},
+	{ .Id = LED_TERMINAL_CONN, 	.Text = "TERMINAL_CONN"		},
+	{ .Id = LED_TERMINAL_RXTX,	.Text = "TERMINAL_RXTX" 	},
+	{ .Id = LED_SETTING_CHANGE,	.Text = "SETTING_CHANGE" 	},
+	{ .Id = LED_MEMORY_STORED, 	.Text = "MEMORY_STORED"		},
+	{ .Id = LED_MEMORY_CHANGED,	.Text = "MEMORY_CHANGED"	},
+	{ .Id = LED_CODEC_RX,		.Text = "CODEC_RX"			},
+	{ .Id = LED_CODEC_TX,		.Text = "CODEC_TX"			},
+	{ .Id = LED_FIELD_DETECTED,	.Text = "FIELD_DETECTED"	},
+	{ .Id = LED_LOG_MEM_FULL,	.Text = "LOGMEM_FULL"		},
 };
 
 INLINE void Tick(uint8_t Mask, LEDActionEnum* Action)
 {
-	static uint8_t BlinkPrescaler = 0;
+	static uint8_t LEDRedBlinkPrescaler = 0;
+	static uint8_t LEDGreenBlinkPrescaler = 0;
+	uint8_t * BlinkPrescaler = (Action == &LEDGreenAction) ? &LEDGreenBlinkPrescaler : &LEDRedBlinkPrescaler;
 
 	switch (*Action)
 	{
@@ -56,10 +61,10 @@ INLINE void Tick(uint8_t Mask, LEDActionEnum* Action)
 			break;
 
 		case LED_BLINK_1X ... LED_BLINK_8X:
-			if (++BlinkPrescaler == BLINK_PRESCALER) {
-				BlinkPrescaler = 0;
-				/* Blink functionality occurs at slower speed than Tick-frequency */
+			if (++(*BlinkPrescaler) == BLINK_PRESCALER) {
+				*BlinkPrescaler = 0;
 
+				/* Blink functionality occurs at slower speed than Tick-frequency */
 				if (!(LED_PORT.OUT & Mask)) {
 					/* LED is off, turn it on */
 					LED_PORT.OUTSET = Mask;
@@ -97,65 +102,30 @@ void LEDTick(void)
 	Tick(LED_GREEN, &LEDGreenAction);
 }
 
-/* TODO: This would be nicer as INLINE */
-void LEDTrigger(LEDFunctionEnum Func, LEDActionEnum Action) {
-	if (GlobalSettings.ActiveSettingPtr->LEDGreenFunction == Func) {
-		LEDGreenAction = Action;
-	}
-
-	if (GlobalSettings.ActiveSettingPtr->LEDRedFunction == Func) {
-		LEDRedAction = Action;
-	}
-}
-
-void LEDGetFuncList(char* ListOut, uint16_t BufferSize)
+void LEDGetFuncList(char* List, uint16_t BufferSize)
 {
-    uint8_t i;
-
-    /* Account for '\0' */
-    BufferSize--;
-
-    for (i=0; i<LED_FUNC_COUNT; i++) {
-        const char* FuncName = LEDFuncTable[i];
-        char c;
-
-        while( (c = pgm_read_byte(FuncName)) != '\0' && BufferSize > sizeof(LEDFuncTable[i]) ) {
-            /* While not end-of-string and enough buffer to
-            * put a complete configuration name */
-            *ListOut++ = c;
-            FuncName++;
-            BufferSize--;
-        }
-
-        if ( i < (LED_FUNC_COUNT - 1) ) {
-            /* No comma on last configuration */
-            *ListOut++ = ',';
-            BufferSize--;
-        }
-    }
-
-    *ListOut = '\0';
+	MapToString(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap), List, BufferSize);
 }
 
-void LEDSetFuncById(uint8_t Mask, LEDFunctionEnum Func)
+void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
 {
 #ifndef LED_SETTING_GLOBAL
 	if (Mask & LED_GREEN) {
-		GlobalSettings.ActiveSettingPtr->LEDGreenFunction = Func;
+		GlobalSettings.ActiveSettingPtr->LEDGreenFunction = Function;
 	}
 
 	if (Mask & LED_RED) {
-		GlobalSettings.ActiveSettingPtr->LEDRedFunction = Func;
+		GlobalSettings.ActiveSettingPtr->LEDRedFunction = Function;
 	}
 #else
 	/* Write LED func to all settings when using global settings */
 	for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
 		if (Mask & LED_GREEN) {
-			GlobalSettings.Settings[i].LEDGreenFunction = Func;
+			GlobalSettings.Settings[i].LEDGreenFunction = Function;
 		}
 
 		if (Mask & LED_RED) {
-			GlobalSettings.Settings[i].LEDRedFunction = Func;
+			GlobalSettings.Settings[i].LEDRedFunction = Function;
 		}
 	}
 #endif
@@ -173,29 +143,26 @@ void LEDSetFuncById(uint8_t Mask, LEDFunctionEnum Func)
 
 }
 
-void LEDGetFuncByName(uint8_t Mask, char* FuncOut, uint16_t BufferSize)
+void LEDGetFuncByName(uint8_t Mask, char* Function, uint16_t BufferSize)
 {
 	if (Mask == LED_GREEN) {
-		strncpy_P(FuncOut, LEDFuncTable[GlobalSettings.ActiveSettingPtr->LEDGreenFunction], BufferSize);
+		MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
+				GlobalSettings.ActiveSettingPtr->LEDGreenFunction, Function, BufferSize);
 	} else if (Mask == LED_RED) {
-		strncpy_P(FuncOut, LEDFuncTable[GlobalSettings.ActiveSettingPtr->LEDRedFunction], BufferSize);
-	} else {
-		*FuncOut = '\0';
+		MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
+				GlobalSettings.ActiveSettingPtr->LEDRedFunction, Function, BufferSize);
 	}
 }
 
-bool LEDSetFuncByName(uint8_t Mask, const char* FuncName)
+bool LEDSetFuncByName(uint8_t Mask, const char* Function)
 {
-    uint8_t i;
+	MapIdType Id;
 
-    for (i=0; i<LED_FUNC_COUNT; i++) {
-        if (strcmp_P(FuncName, LEDFuncTable[i]) == 0) {
-            LEDSetFuncById(Mask, i);
-            return true;
-        }
-    }
-
-    /* LED Func not found */
-    return false;
+	if (MapTextToId(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap), Function, &Id)) {
+		LEDSetFuncById(Mask, Id);
+		return true;
+	} else {
+		return false;
+	}
 }
 

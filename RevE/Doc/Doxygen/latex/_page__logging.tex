@@ -1,0 +1,21 @@
+With the implemented logging mechanisms it is possible to trace an access to the Chameleon-\/\-Mini by a reader device.
+
+Logging is either done via the internal R\-A\-M, where the log can be downloaded from via the terminal or using the terminal line directly. Note that in case of using the internal R\-A\-M for logging the information, the data is only stored until the Chameleon-\/\-Mini loses power. If the memory is full, the logging is disabled automatically.
+
+The log format is very simple. Every log entry consists of a 1 byte entry identifier, a 1 byte length identifier and an arbitrary sized chunk of binary data with the length given in the byte before.
+
+\begin{TabularC}{6}
+\hline
+\rowcolor{lightgray}{\bf Byte 0 }&{\bf Byte 1 }&{\bf Byte 2 }&{\bf Byte 3 }&{\bf ... }&{\bf Byte Length+1  }\\\cline{1-6}
+Entry\-Id &Length &Data &Data &Data &Data \\\cline{1-6}
+\end{TabularC}
+The available Entry Ids are as follows\-: \begin{TabularC}{2}
+\hline
+\rowcolor{lightgray}{\bf Entry\-Id (Hex) }&{\bf Description  }\\\cline{1-2}
+20 &Received data \\\cline{1-2}
+21 &Send data \\\cline{1-2}
+30 &Application reset \\\cline{1-2}
+\end{TabularC}
+For getting or setting the logging mode, the {\ttfamily L\-O\-G\-M\-O\-D\-E?} respectively {\ttfamily L\-O\-G\-M\-O\-D\-E=$<$M\-O\-D\-E$>$} command can be used on the terminal. For a list of possible logging modes enter {\ttfamily L\-O\-G\-M\-O\-D\-E}.
+
+In order to get the remaining bytes of the logging memory, the {\ttfamily L\-O\-G\-M\-E\-M?} command is to be used. Using {\ttfamily L\-O\-G\-M\-E\-M=$<$C\-M\-D$>$} it is possible to execute commands on the logging memory, like clearing or downloading it via X\-M\-O\-D\-E\-M. To get a list of the available commands, enter {\ttfamily L\-O\-G\-M\-E\-M}. 

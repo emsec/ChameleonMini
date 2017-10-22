@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -171,9 +171,6 @@
 		#define OID_802_3_XMIT_ONE_COLLISION          0x01020102UL
 		#define OID_802_3_XMIT_MORE_COLLISIONS        0x01020103UL
 		//@}
-
-		/** Maximum size in bytes of a RNDIS control message which can be sent or received. */
-		#define RNDIS_MESSAGE_BUFFER_SIZE             128
 
 		/** Maximum size in bytes of an Ethernet frame according to the Ethernet standard. */
 		#define ETHERNET_FRAME_SIZE_MAX               1500

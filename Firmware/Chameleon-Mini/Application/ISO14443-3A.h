@@ -9,6 +9,7 @@
 #define ISO14443_3A_H_
 
 #include "../Common.h"
+#include <string.h>
 
 #define ISO14443A_UID_SIZE_SINGLE   4    /* bytes */
 #define ISO14443A_UID_SIZE_DOUBLE   7
@@ -45,10 +46,10 @@
     ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
 
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount);
-bool ISO14443ACheckCRCA(void* Buffer, uint16_t ByteCount);
+bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount);
 
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
-INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue);
+INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt);
 
 INLINE
 bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue)
@@ -91,6 +92,31 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
             return false;
         }
     default:
+    {
+    	uint8_t CollisionByteCount = ((NVB >> 4) & 0x0f) - 2;
+    	uint8_t CollisionBitCount  = (NVB >> 0) & 0x0f;
+    	uint8_t mask = 0xFF >> (8 - CollisionBitCount);
+    	// Since the UidCL does not contain the BCC, we have to distinguish here
+        if (
+        		((CollisionByteCount == 5 || (CollisionByteCount == 4 && CollisionBitCount > 0)) && memcmp(UidCL, &DataPtr[2], 4) == 0 && (ISO14443A_CALC_BCC(UidCL) & mask) == (DataPtr[6] & mask))
+				||
+				(CollisionByteCount == 4 && CollisionBitCount == 0 && memcmp(UidCL, &DataPtr[2], 4) == 0)
+				||
+				(CollisionByteCount < 4 && memcmp(UidCL, &DataPtr[2], CollisionByteCount) == 0 && (UidCL[CollisionByteCount] & mask) == (DataPtr[CollisionByteCount + 2] & mask))
+        )
+        {
+            DataPtr[0] = UidCL[0];
+            DataPtr[1] = UidCL[1];
+            DataPtr[2] = UidCL[2];
+            DataPtr[3] = UidCL[3];
+            DataPtr[4] = ISO14443A_CALC_BCC(DataPtr);
+
+            *BitCount = ISO14443A_CL_FRAME_SIZE;
+        } else {
+        	*BitCount = 0;
+        }
+        return false;
+    }
         /* TODO: No anticollision supported */
         *BitCount = 0;
         return false;
@@ -98,11 +124,12 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
 }
 
 INLINE
-bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue)
+bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt)
 {
     uint8_t* DataPtr = (uint8_t*) Buffer;
 
-    if ( (DataPtr[0] == ISO14443A_CMD_REQA) || (DataPtr[0] == ISO14443A_CMD_WUPA) ){
+    if ( ((! FromHalt) && (DataPtr[0] == ISO14443A_CMD_REQA)) ||
+         (DataPtr[0] == ISO14443A_CMD_WUPA) ){
         DataPtr[0] = (ATQAValue >> 0) & 0x00FF;
         DataPtr[1] = (ATQAValue >> 8) & 0x00FF;
 
@@ -110,6 +137,8 @@ bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue)
 
         return true;
     } else {
+    	*BitCount = 0;
+
         return false;
     }
 }

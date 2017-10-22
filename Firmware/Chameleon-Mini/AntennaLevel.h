@@ -10,8 +10,8 @@
 
 #include "Common.h"
 
-#define ANTENNA_LEVEL_R1	10E3
-#define ANTENNA_LEVEL_R2	220E0
+#define ANTENNA_LEVEL_R1	47E3
+#define ANTENNA_LEVEL_R2	1E3
 #define ANTENNA_LEVEL_VREF	1.0
 #define ANTENNA_LEVEL_RES	4096
 #define ANTENNA_LEVEL_OFFSET	190 /* LSB */
@@ -30,7 +30,7 @@ void AntennaLevelInit(void)
 	ADCA.REFCTRL = ADC_REFSEL_INT1V_gc | ADC_BANDGAP_bm;
 	ADCA.PRESCALER = ADC_PRESCALER_DIV32_gc;
 	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN7_gc;
+	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN1_gc;
 
 }
 
@@ -47,5 +47,8 @@ uint16_t AntennaLevelGet(void)
 
 	return (uint16_t) (((uint32_t) Result * ANTENNA_LEVEL_NUMERATOR) / ANTENNA_LEVEL_DENOMINATOR);
 }
+
+void AntennaLevelTick(void);
+void AntennaLevelResetMaxRssi(void);
 
 #endif /* ANTENNALEVEL_H_ */

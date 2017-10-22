@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -91,13 +91,13 @@
 					                              *  stored by the driver, for comparison purposes to detect report changes that
 					                              *  must be sent immediately to the host. This should point to a buffer big enough
 					                              *  to hold the largest HID input report sent from the HID interface. If this is set
-												  *  to \c NULL, it is up to the user to force transfers when needed in the
-												  *  \ref CALLBACK_HID_Device_CreateHIDReport() callback function.
-												  *
-												  *  \note Due to the single buffer, the internal driver can only correctly compare
-												  *        subsequent reports with identical report IDs. In multiple report devices,
-												  *        this buffer should be set to \c NULL and the decision to send reports made
-												  *        by the user application instead.
+					                              *  to \c NULL, it is up to the user to force transfers when needed in the
+					                              *  \ref CALLBACK_HID_Device_CreateHIDReport() callback function.
+					                              *
+					                              *  \note Due to the single buffer, the internal driver can only correctly compare
+					                              *        subsequent reports with identical report IDs. In multiple report devices,
+					                              *        this buffer should be set to \c NULL and the decision to send reports made
+					                              *        by the user application instead.
 					                              */
 					uint8_t  PrevReportINBufferSize; /**< Size in bytes of the given input report buffer. This is used to create a
 					                                  *  second buffer of the same size within the driver so that subsequent reports

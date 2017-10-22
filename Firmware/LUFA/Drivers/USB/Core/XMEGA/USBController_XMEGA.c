@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -109,14 +109,25 @@ void USB_Disable(void)
 
 void USB_ResetInterface(void)
 {
+	uint8_t PrescalerNeeded;
+
 	#if defined(USB_DEVICE_OPT_FULLSPEED)
 	if (USB_Options & USB_DEVICE_OPT_LOWSPEED)
-	  CLK.USBCTRL = (((F_USB / 6000000) - 1) << CLK_USBPSDIV_gp);
+	  PrescalerNeeded = F_USB / 6000000;
 	else
-	  CLK.USBCTRL = (((F_USB / 48000000) - 1) << CLK_USBPSDIV_gp);
+	  PrescalerNeeded = F_USB / 48000000;
 	#else
-	CLK.USBCTRL = (((F_USB / 6000000) - 1) << CLK_USBPSDIV_gp);
+	PrescalerNeeded = F_USB / 6000000;
 	#endif
+
+	uint8_t DividerIndex = 0;
+	while (PrescalerNeeded > 0)
+	{
+		DividerIndex++;
+		PrescalerNeeded >>= 1;
+	}
+
+	CLK.USBCTRL = (DividerIndex - 1) << CLK_USBPSDIV_gp;
 
 	if (USB_Options & USB_OPT_PLLCLKSRC)
 	  CLK.USBCTRL |= (CLK_USBSRC_PLL_gc   | CLK_USBSEN_bm);

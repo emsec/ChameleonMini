@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -135,7 +135,7 @@ uint8_t TWI_ReadPacket(const uint8_t SlaveAddress,
                        const uint8_t* InternalAddress,
                        uint8_t InternalAddressLen,
                        uint8_t* Buffer,
-                       uint8_t Length)
+                       uint16_t Length)
 {
 	uint8_t ErrorCode;
 
@@ -175,7 +175,7 @@ uint8_t TWI_WritePacket(const uint8_t SlaveAddress,
                         const uint8_t* InternalAddress,
                         uint8_t InternalAddressLen,
                         const uint8_t* Buffer,
-                        uint8_t Length)
+                        uint16_t Length)
 {
 	uint8_t ErrorCode;
 

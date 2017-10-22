@@ -1,0 +1,109 @@
+/** \file */
+/**
+ * \page Page_14443AReader ISO14443A Reader Functionality
+ * 
+ * The ChameleonMini is able to act as an ISO 14443A reader. This page describes how to use this configuration (See \ref Page_Configurations) correctly.
+ * 
+ * Supported Commands
+ * ==================
+ * Using the ISO 14443A reader configuration enables the usage of some commands that are only available within this configuration.
+ * 
+ * \note Technically, the `SEND` and `SEND_RAW` commands are also  \ref Anchor_TimeoutCommands "timeout commands", but they end successfully (either with `NO DATA` or the response) nearly immediately on every call.
+ * 
+ * \note Each of the following commands returns `INVALID COMMAND USAGE` on a non-reader \ref Page_Configurations "configuration".
+ * 
+ * \warning The reader field is only turned on if this is necessary. Some commands deactivate the reader field after they are done, some do not deactivate the reader field after finishing. Please be aware, that the reader field takes a massive amount of energy and thus the voltage of the battery can drop to a critical level fastly. If not mentioned differently, all of the commands below deactivate the reader field after work.
+ * 
+ * `SEND <BYTEVALUE>`
+ * ------------------
+ * There are two cases what is done, depending on the parameter:
+ * -# If the parameter is one byte, no parity bits are added, since this must be a short frame command. In this case the seven least significant bits are sent.
+ * -# If the parameter consists of more than one byte, parity bits are added and afterwards the whole sequence is sent.
+ * 
+ * After sending, the ChameleonMini waits for an answer and returns either
+ * - `NO DATA` if no answer could be detected or
+ * - the received data with removed parity bits, a 2-byte big-endian value indicating the bit count and either the string `PARITY OK` or `PARITY ERR` indicating whether the parity check failed or not.
+ * 
+ * In each case, the ChameleonMini code `101:OK WITH TEXT` is returned.
+ * 
+ * ### Examples ###
+ * - `SEND 52` sends the `WUPA` command
+ * - `SEND 9320` sends the `ANTICOLLISION` command
+ * - `SEND AB2` returns `INVALID PARAMETER` since the parameter is no byte sequence
+ * 
+ * \warning This command does not deactivate the reader field after finishing in order to make it possible to keep up the conversation with the card.
+ * 
+ * `SEND <2-BYTEVALUE> <BYTEVALUE>`
+ * --------------------------------
+ * Does the same like the command with only one parameter, but the first parameter indicates the to-be-sent bit count.
+ * 
+ * \warning If the bit count parameter is neither 7 or a multiple of 8, no parity bits will be appended, but the remaining functionality is the exact same!
+ * 
+ * ### Examples ###
+ * - `SEND 0007 26` sends the `REQA` command
+ * - `SEND 0010 9320` sends the `ANTICOLLISION` command
+ * - `SEND 0012 13DE4A` sends (on bit-processing-layer) SOC - 1100 1000 0111 1011 01 - EOC. The remaining bits are discarded. Note that the byte sequence is interpreted as little-endian and the bits are sent in reverse-order, just like defined in the ISO. Note also, that no parity bits are added, since `0x12` is neither 7 nor a multiple of 8.
+ * - `SEND 0300 52` returns `INVALID PARAMETER` since the second parameter does not contain 768 bits.
+ * 
+ * \warning This command does not deactivate the reader field after finishing in order to make it possible to keep up the conversation with the card.
+ * 
+ * `SEND_RAW <BYTEVALUE>`
+ * ----------------------
+ * Sends the given byte sequence. The ChameleonMini assumes that the parameter has the parity bits already appended and thus calculates the bit count itself:
+ * - If the parameter is one byte, the bit count is set to 7, since this seems to be a short frame.
+ * - If the parameter is *n* bytes long, the ChameleonMini sends `floor(n * 16 / 9)` bits.
+ * 
+ * After sending, the ChameleonMini waits for an answer and returns either
+ * - `NO DATA` if no answer could be detected or
+ * - the raw received data (including parity bits) and a 2-byte big-endian value indicating the bit count
+ * 
+ * ### Examples ###
+ * - `SEND_RAW 52` sends the `WUPA` command.
+ * - `SEND_RAW 934100` sends the `ANTICOLLISION` command as the bit sequence SOC - 1100 1001 1 0000 0100 0 - EOC is sent, which is the same as `0x9320` with parity bits.
+ * - `SEND_RAW AB2` returns `INVALID PARAMETER` since the parameter is no byte sequence
+ * 
+ * \warning This command does not deactivate the reader field after finishing in order to make it possible to keep up the conversation with the card.
+ * 
+ * `SEND_RAW <2-BYTEVALUE> <BYTEVALUE>`
+ * ------------------------------------
+ * Does the same like the command with only one parameter, but the first parameter indicates the to-be-sent bit count.
+ * 
+ * ### Examples ###
+ * - `SEND_RAW 0007 26` sends the `REQA` command
+ * - `SEND_RAW 0012 934100` sends the `ANTICOLLISION` command
+ * - `SEND_RAW 0012 934100AB` also sends the `ANTICOLLISION` command, since remaining bits are discarded
+ * - `SEND_RAW 0300 52` returns `INVALID PARAMETER` since the second parameter does not contain 768 bits.
+ * 
+ * \warning This command does not deactivate the reader field after finishing in order to make it possible to keep up the conversation with the card.
+ * 
+ * `GETUID`
+ * --------
+ * This is a \ref Anchor_TimeoutCommands "timeout command". It tries to obtain the UID from a card that is in reader range and returns it.
+ * 
+ * If this command is called within the reader configuration, it either ends up returning `101:OK WITH TEXT` and the UID or with a timeout (no matter if on setting/configuration change or on real timeout).
+ * 
+ * `DUMP_MFU`
+ * ----------
+ * This is a \ref Anchor_TimeoutCommands "timeout command". It tries to read the whole content of a MiFare Ultralight card that is in reader range and returns the content. 
+ * 
+ * If this command is called within the reader configuration, it either ends up returning `101:OK WITH TEXT` and the card content in 4 lines (each line contains 16 bytes) or with a timeout (no matter if on setting/configuration change or on real timeout).
+ * 
+ * `IDENTIFY`
+ * ----------
+ * This is a \ref Anchor_TimeoutCommands "timeout command". Tries to identify the type of a card in reader range and returns the type.
+ * 
+ * If this command is called within the reader configuration, it ends in one of three ways:
+ * -# Return code `101:OK WITH TEXT`, the card type and ATQA value, UID value and SAK value of the highest cascade level.
+ * -# Return code `101:OK WITH TEXT`, the information that this card type is unknown to the ChameleonMini ("Unknown card.") and ATQA value, UID value and SAK value of the highest cascade level.
+ * -# Timeout (no matter if on setting/configuration change or on real timeout).
+ * 
+ * `AUTOCALIBRATE`
+ * ---------------
+ * This is a \ref Anchor_TimeoutCommands "timeout command". Tries to select to a card with every threshold within a range with a specific step size and chooses the best threshold.
+ * 
+ * If this command is called within the reader configuration, it ends in one of the following ways:
+ * -# Return code `101:OK WITH TEXT` and a list of the tested thresholds with a `+` for every threshold where the select protocol was successful and a `-` if the select protocol was not successfully finished.
+ * -# Timeout (no matter if on setting/configuration change or on real timeout).
+ * 
+ * \note If no working threshold was found, the threshold is reset to the standard threshold.
+ */

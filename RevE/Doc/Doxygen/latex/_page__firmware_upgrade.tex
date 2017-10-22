@@ -1,0 +1,9 @@
+It is possible to upgrade the Firmware using the Atmel D\-F\-U Protocol as defined in application note A\-V\-R1916. With this possible, there is no need to use any other external programming hardware to upgrade the firmware.
+
+The Atmel D\-F\-U protocol is supported by Atmel's F\-L\-I\-P software, which also contains {\ttfamily batchisp} and the open source software {\ttfamily dfu-\/programmer}. In order to flash a new firmware, the device has to be put into D\-F\-U mode. To do this, you can either use the command-\/line by sending the corresponding command or press the button on the device while powering it up.
+
+Once the device is in D\-F\-U mode, it enumerates as an A\-Txmega\-X\-Y\-Z U\-S\-B device and can now be accessed using the above mentioned software tools for erasing, programming and verifying a new firmware H\-E\-X file.
+
+Depending on what tool you are using for the D\-F\-U firmware upgrade, you may have to install the corresponding driver.
+
+Note that this procedure can easily be implemented in a command-\/line script, diminishing the need for user interaction and speeding up the process. The \char`\"{}make dfu-\/batchisp\char`\"{} or \char`\"{}make dfu-\/prog\char`\"{} command can be used to program the device using batchisp or dfu-\/programmer. Note that in both cases, the directory of the tools executables have to exist in the P\-A\-T\-H environment variable. 

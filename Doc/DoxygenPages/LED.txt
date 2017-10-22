@@ -1,0 +1,19 @@
+/** @file */
+/** @page Page_LED LED functionality
+ * The Chameleon-Mini has two fully configurable LEDs: one red LED and one green LED. The configuration is done with the commands `LEDRED` and `LEDGREEN`, which both can be called as the getting ("?"), setting ("=") and suggesting ("=?") version.
+ * 
+ * The following table shows which LED functions are currently available.
+ * Function name    | Description
+ * -------------    | -----------
+ * `NONE`           | No function, the LED is deactivated.
+ * `POWERED`        | The LED lights up if the Chameleon-Mini is powered, regardless whether powered by USB or by battery.
+ * `TERMINAL_CONN`  | The LED is turned on when the Chameleon-Mini is connected via USB and is turned off when no USB connection is established.
+ * `TERMINAL_RXTX`  | The according LED blinks shortly when sending or receiving data via the USB interface.
+ * `SETTING_CHANGE` | The LED blinks one time if the new setting is setting 1, two times for setting 2, ..., eight times for setting 8.
+ * `MEMORY_STORED`  | The LED flashes everytime when a setting is stored to the permanent flash. This is currently the case when calling the command `STORE`, the button event `STORE_MEM` occurs or the setting is changed.
+ * `MEMORY_CHANGED` | The LED turns on when the FRAM is changed and is turned off when the currently active setting is written to the permanent flash. Thus, this function indicates when the current setting is changed.
+ * `CODEC_RX`       | The LED flashes when the currently active codec (e.g. ISO14443A emulation) receives data. Note that this is implemented on codec layer and the flashing is triggered before the received data are interpreted by the application.
+ * `CODEC_TX`       | The LED flashes when the currently active codec sends data. This function also is implemented on codec layer.
+ * `FIELD_DETECTED` | The LED is turned on if and only if a reader field is detected, which is recognized by the RSSI module (when the RSSI value hits a hardcoded threshold, it is assumed that there is a reader field). It is irrelevant whether the field comes from another reader or from the Chameleon-Mini itself.
+ * `LOGMEM_FULL`    | Lights up the LED, if the SRAM log memory is full.
+ */

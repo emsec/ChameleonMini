@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -70,11 +70,11 @@
  *      RingBuffer_InitBuffer(&Buffer, BufferData, sizeof(BufferData));
  *
  *      // Insert some data into the buffer
- *      RingBuffer_Insert(Buffer, 'H');
- *      RingBuffer_Insert(Buffer, 'E');
- *      RingBuffer_Insert(Buffer, 'L');
- *      RingBuffer_Insert(Buffer, 'L');
- *      RingBuffer_Insert(Buffer, 'O');
+ *      RingBuffer_Insert(&Buffer, 'H');
+ *      RingBuffer_Insert(&Buffer, 'E');
+ *      RingBuffer_Insert(&Buffer, 'L');
+ *      RingBuffer_Insert(&Buffer, 'L');
+ *      RingBuffer_Insert(&Buffer, 'O');
  *
  *      // Cache the number of stored bytes in the buffer
  *      uint16_t BufferCount = RingBuffer_GetCount(&Buffer);
@@ -235,8 +235,10 @@
 		 *  \param[in,out] Buffer  Pointer to a ring buffer structure to insert into.
 		 *  \param[in]     Data    Data element to insert into the buffer.
 		 */
-		static inline void RingBuffer_Insert(RingBuffer_t* Buffer, const uint8_t Data) ATTR_NON_NULL_PTR_ARG(1);
-		static inline void RingBuffer_Insert(RingBuffer_t* Buffer, const uint8_t Data)
+		static inline void RingBuffer_Insert(RingBuffer_t* Buffer,
+		                                     const uint8_t Data) ATTR_NON_NULL_PTR_ARG(1);
+		static inline void RingBuffer_Insert(RingBuffer_t* Buffer,
+		                                     const uint8_t Data)
 		{
 			GCC_FORCE_POINTER_ACCESS(Buffer);
 

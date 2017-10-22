@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -273,7 +273,7 @@
 			                       const uint8_t* InternalAddress,
 			                       uint8_t InternalAddressLen,
 			                       uint8_t* Buffer,
-			                       uint8_t Length) ATTR_NON_NULL_PTR_ARG(3);
+			                       uint16_t Length) ATTR_NON_NULL_PTR_ARG(3);
 
 			/** High level function to perform a complete packet transfer over the TWI bus from the specified
 			 *  device.
@@ -292,7 +292,7 @@
 			                        const uint8_t* InternalAddress,
 			                        uint8_t InternalAddressLen,
 			                        const uint8_t* Buffer,
-			                        uint8_t Length) ATTR_NON_NULL_PTR_ARG(3);
+			                        uint16_t Length) ATTR_NON_NULL_PTR_ARG(3);
 
 	/* Disable C linkage for C++ Compilers: */
 		#if defined(__cplusplus)

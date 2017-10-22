@@ -1,0 +1,103 @@
+/** @file */
+
+/** @page Page_CommandLine The chameleon command line
+ * The Chameleon-Mini enumerates as a CDC-ACM virtual serial interface.
+ * For a high level of compatibility to be both interfaced by a human as well as
+ * a user application, it supports a text-based command line, which can be accessed by using
+ * simple terminal software like hyper-terminal or teraterm.
+ * The serial settings, as in baudrate, stopp and parity bits are ignored
+ * on the Chameleon side.
+ * Note that there is no echo of entered characters at the Chameleon.
+ *
+ * Command structure
+ * =================
+ *
+ * Each of the following commands can result into 3 actions,
+ * depending on the character that is appended to it.
+ * - `<COMMAND>?`: Indicates a request that will always return an information
+ * - `<COMMAND>=<VALUE>`: Indicates to set a value on the Chameleon
+ * - `<COMMAND>`: Indicates to execute a procedure on the Chameleon with an optional response
+ *
+ * Note that some commands only support a subset of these 3 actions.
+ *
+ * In order to perform the desired command action the command has to be
+ * suffixed with a carriage return (CR, 0D hexadecimal).
+ * In order to be more user-friendly when interfacing the Chameleon with a
+ * serial terminal, support for the backspace (08 hexadecimal) and
+ * escape (1B hexadecimal) key have been added.
+ * Any other control character as defined in the ASCII character set is ignored.
+ * Furthermore the Chameleon does not distinguish between uppercase and lowercase.
+ *
+ * Supported Commands
+ * ==================
+ *
+ * The following list shows the supported commands and how they are used.
+ * Command               | Description
+ * --------------------- | -----------
+ * `VERSION?`            | Requests the version of the Chameleon
+ * `RESET`               | Resets the Chameleon
+ * `UPGRADE`             | Sets the Chameleon into firmware upgrade mode (DFU)
+ * `CONFIG`              | Returns a comma-separated list of all supported configurations
+ * `CONFIG?`             | Returns the currently used configuration
+ * `CONFIG=<NAME>`       | Sets the current configuration to `<NAME>` (See @ref Page_Configurations)
+ * `UIDSIZE?`            | Returns the size of the current configuration's UID
+ * `UID?`                | Returns the currently set UID
+ * `UID=<UID>`           | Sets a new UID to be used in hexadecimal notation
+ * `READONLY?`           | Returns the current state of the read-only mode
+ * `READONLY=[0;1]`      | Activates or deactivates the read-only mode (Any writing to the memory is silently ignored)
+ * `MEMSIZE?`            | Returns the memory size of the current configuration
+ * `UPLOAD`              | Waits for an XModem connection to be established in order to upload a memory dump upto the memory size
+ * `DOWNLOAD`            | Waits for an XModem connection to be established in order to download a memory dump with exactly the memory size
+ * `BUTTON`              | Returns a comma-separated list of supported button press actions for the button
+ * `BUTTON?`             | Returns the currently set button press action for BUTTON0
+ * `BUTTON=<NAME>`       | Sets the current button press action for BUTTON0
+ * `SETTING?`            | Returns the currently activated setting of the chameleon-mini
+ * `SETTING=<NUMBER>`    | Sets the active setting of the chameleon-mini
+ * `CLEAR`               | Clears the entire memory of the currently activated setting
+ *
+ * Responses
+ * =========
+ *
+ * Subsequent to ANY send command, the Chameleon responds with a status number and status message, separated by a colon and terminated with a carriage return and line feed (CR+LF, 0D+0A hexadecimal). Status numbers are of a 3 digit decimal format with the first digit showing the severity of the answer. Status numbers beginning with a '1' denote an informational item and those beginning with a '2' denote an error.
+ * Response                     | Description
+ * ---------------------------- | -----------
+ * `100:OK`                     | The command executed successfully
+ * `101:OK WITH TEXT`           | The command executed successfully and this answer is appended with an additional line of information, terminated with CR+LF
+ * `110:WAITING FOR XMODEM`     | The Chameleon is waiting for an XMODEM connection to establish
+ * `200:UNKNOWN COMMAND`        | This command is unknown to the Chameleon
+ * `201:INVALID COMMAND USAGE`  | This action is not supported by this command
+ * `202:INVALID PARAM`          | The format or value of the given parameter value is invalid
+ *
+ * Accessing the command-line using a terminal software
+ * ====================================================
+ * In order to have quick access to the Chameleon's command-line without using any complicated software,
+ * we suggest using the TeraTerm terminal emulation software available for windows based operating systems.
+ *
+ * Connecting and setting up
+ * -------------------------
+ * For establishing a connection to the Chameleon's command line, select File -> New Connection, choose
+ * the virtual serial port of the Chameleon and hit the "OK" button. TeraTerm now tries to open the serial port
+ * and should succeed without any error.
+ *
+ * For easier use of the command-line using a terminal software the local-echo functionality should be activated,
+ * to be able to see what is typed into the chameleon. When using TeraTerm, this can be achieved by selecting
+ * Setup -> Terminal and check "Local Echo".
+ *
+ * Uploading and Downloading dump files
+ * ------------------------------------
+ * In some configurations of the Chameleon, it is necessary to upload a card dump before it can be accessed by a reader.
+ * For doing so, the relatively simple and widely known XMODEM protocol is used.
+ *
+ * To upload a dump file using TeraTerm, follow these steps.
+ * 1. Enter `UPLOAD` and wait for the `110:WAITING FOR XMODEM` response
+ * 2. Select File -> Transfer -> XMODEM -> Send
+ * 3. In the dialog choose the binary dumpfile to be uploaded and make sure the option "Checksum" is checked in the lower left corner
+ * 4. Hitting the "Open" button will start the transfer. If no error is given to the user, the file has been uploaded sucessfully.
+ *
+ * To download the Chameleon's memory again, follow the instructions above except for using `DOWNLOAD` instead of `UPLOAD`
+ * and the Receive function of TeraTerm
+ *
+ * Note that there is a 10 second timeout after entering `UPLOAD` respectively `DOWNLOAD`
+ * after which the standard command-line is activated again. So try again if the timeout is already
+ * over when the XMODEM transfer is about to start.
+ */

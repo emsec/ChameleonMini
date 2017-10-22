@@ -1,11 +1,11 @@
 /** @file */
 
 /** @page Page_UploadingDownloading Uploading and Downloading Memory dumps
- * In order to be able to emulate different card contents, one can upload or download
- * the memory used for emulation.
+ * In order to be able to emulate different cards, one can upload or download
+ * the content used for the emulation.
  *
  * The layout of the memory dump depends on the chosen configuration and is usually
- * the same as the memory layout of the currently chosen card-emulation.
+ * the same as the memory layout of the currently chosen card emulation.
  * The size of the memory dump also depends on the currently chosen configuration
  * and can be requested with a specific command on the command-line.
  *

@@ -10,6 +10,28 @@
  *  to the next version released. It does not indicate all new additions to the library in each version change, only
  *  areas relevant to making older projects compatible with the API changes of each new release.
  *
+ *  \section Sec_Migration151115 Migrating from 140928 to 151115
+ *  <b>Non-USB Library Components</b>
+ *    - The ATPROGRAM LUFA build system module now defaults to the Atmel ICE debugger tool, instead of the Atmel JTAG ICE3.
+ *    - The \x Serial_CreateStream() and \c Serial_CreateBlockingStream() functions now require a USART base pointer for XMEGA devices as the first parameter.
+ *
+ *  \section Sec_Migration140928 Migrating from 140302 to 140928
+ *  <b>Device Mode</b>
+ *    - The device mode RNDIS class driver now requires a user-supplied buffer and buffer length to operate, rather
+ *      than allocating this buffer internally.
+ *
+ *  \section Sec_Migration140302 Migrating from 130901 to 140302
+ *  <b>USB Core</b>
+ *    - The \c VERSION_BCD() macro has changed from accepting one floating point parameter to taking three distinct major/minor/revision integer parameters, as
+ *      some edge cases caused incorrect parsing of the input float into the final integer BCD encoded value.
+ *
+ *  <b>Non-USB Library Components</b>
+ *    - The \c ATTR_NEVER_INLINE macro, erroneously introduced in a previous release has been removed, as it duplicates the existing \c ATTR_NO_INLINE macro.
+ *
+ *  <b>Build System</b>
+ *    - The default configuration file for Doxygen is now "doxyfile" rather than "Doxygen.conf", to conform to the Doxygen project's own default file name.
+ *      Set \c DOXYGEN_CONF to override the new default file name.
+ *
  *  \section Sec_Migration130901 Migrating from 130303 to 130901
  *  <b>Non-USB Library Components</b>
  *    - The Board Dataflash \c Dataflash_Init() function now automatically configures the appropriate communication interface.

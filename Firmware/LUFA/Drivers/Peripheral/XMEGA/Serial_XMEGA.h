@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -151,29 +151,32 @@
 			 *  be used when the read data is processed byte-per-bye (via \c getc()) or when the user application will implement its own
 			 *  line buffering.
 			 *
+			 *  \param[in,out] USART   Pointer to the base of the USART peripheral within the device.
 			 *  \param[in,out] Stream  Pointer to a FILE structure where the created stream should be placed, if \c NULL, \c stdout
 			 *                         and \c stdin will be configured to use the USART.
 			 *
 			 *  \pre The USART must first be configured via a call to \ref Serial_Init() before the stream is used.
 			 */
-			void Serial_CreateStream(FILE* Stream);
+			void Serial_CreateStream(USART_t* USART, FILE* Stream);
 
-			/** Identical to \ref Serial_CreateStream(), except that reads are blocking until the calling stream function terminates
+            /** Identical to \ref Serial_CreateStream(), except that reads are blocking until the calling stream function terminates
 			 *  the transfer.
 			 *
+			 *  \param[in,out] USART   Pointer to the base of the USART peripheral within the device.
 			 *  \param[in,out] Stream  Pointer to a FILE structure where the created stream should be placed, if \c NULL, \c stdout
 			 *                         and \c stdin will be configured to use the USART.
 			 *
 			 *  \pre The USART must first be configured via a call to \ref Serial_Init() before the stream is used.
 			 */
-			void Serial_CreateBlockingStream(FILE* Stream);
+			void Serial_CreateBlockingStream(USART_t* USART, FILE* Stream);
 
 		/* Inline Functions: */
 			/** Initializes the USART, ready for serial data transmission and reception. This initializes the interface to
 			 *  standard 8-bit, no parity, 1 stop bit settings suitable for most applications.
 			 *
 			 *  \param[in,out] USART        Pointer to the base of the USART peripheral within the device.
-			 *  \param[in]     BaudRate     Serial baud rate, in bits per second.
+			 *  \param[in]     BaudRate     Serial baud rate, in bits per second. This should be the target baud rate regardless of
+			 *                              the \c DoubleSpeed parameter's value.
 			 *  \param[in]     DoubleSpeed  Enables double speed mode when set, halving the sample time to double the baud rate.
 			 */
 			static inline void Serial_Init(USART_t* const USART,
@@ -216,7 +219,36 @@
 				return ((USART->STATUS & USART_RXCIF_bm) ? true : false);
 			}
 
+			/** Indicates whether there is hardware buffer space for a new transmit on the USART. This
+			 *  function can be used to determine if a call to \ref Serial_SendByte() will block in advance.
+			 *
+			 *  \param[in,out] USART  Pointer to the base of the USART peripheral within the device.
+			 *
+			 *  \return Boolean \c true if a character can be queued for transmission immediately, \c false otherwise.
+			 */
+			static inline bool Serial_IsSendReady(USART_t* const USART) ATTR_ALWAYS_INLINE ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(1);
+			static inline bool Serial_IsSendReady(USART_t* const USART)
+			{
+				return (USART->STATUS & USART_DREIF_bm) ? true : false;
+			}
+
+			/** Indicates whether the hardware USART transmit buffer is completely empty, indicating all
+			 *  pending transmissions have completed.
+			 *
+			 *  \param[in,out] USART  Pointer to the base of the USART peripheral within the device.
+			 *
+			 *  \return Boolean \c true if no characters are buffered for transmission, \c false otherwise.
+			 */
+			static inline bool Serial_IsSendComplete(USART_t* const USART) ATTR_ALWAYS_INLINE ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(1);
+			static inline bool Serial_IsSendComplete(USART_t* const USART)
+			{
+				return (USART->STATUS & USART_TXCIF_bm) ? true : false;
+			}
+
 			/** Transmits a given byte through the USART.
+			 *
+			 *  \note If no buffer space is available in the hardware USART, this function will block. To check if
+			 *        space is available before calling this function, see \ref Serial_IsSendReady().
 			 *
 			 *  \param[in,out] USART     Pointer to the base of the USART peripheral within the device.
 			 *  \param[in]     DataByte  Byte to transmit through the USART.
@@ -226,7 +258,7 @@
 			static inline void Serial_SendByte(USART_t* const USART,
 			                                   const char DataByte)
 			{
-				while (!(USART->STATUS & USART_DREIF_bm));
+				while (!(Serial_IsSendReady(USART)));
 				USART->DATA = DataByte;
 			}
 

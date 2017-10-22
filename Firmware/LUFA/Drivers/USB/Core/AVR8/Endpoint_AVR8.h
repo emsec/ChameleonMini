@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2015.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2015  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -314,7 +314,7 @@
 			}
 
 			/** Retrieves the number of busy banks in the currently selected endpoint, which have been queued for
-			 *  transmission via the \ref Endpoint_ClearIN() command, or are awaiting acknowledgement via the
+			 *  transmission via the \ref Endpoint_ClearIN() command, or are awaiting acknowledgment via the
 			 *  \ref Endpoint_ClearOUT() command.
 			 *
 			 *  \ingroup Group_EndpointPacketManagement_AVR8

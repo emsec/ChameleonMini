@@ -36,7 +36,7 @@
  */
 
 #include "LUFADescriptors.h"
-
+#include <LUFA/Version.h>
 
 /** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall
  *  device characteristics, including the supported USB version, control endpoint size and the
@@ -47,17 +47,24 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 {
     .Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
 
+#if LUFA_VERSION_INTEGER >= 0x140928
+    .USBSpecification       = VERSION_BCD(1,1,0),
+#else
     .USBSpecification       = VERSION_BCD(01.10),
+#endif
     .Class                  = CDC_CSCP_CDCClass,
     .SubClass               = CDC_CSCP_NoSpecificSubclass,
     .Protocol               = CDC_CSCP_NoSpecificProtocol,
 
     .Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
 
- 		.VendorID 							= 0x16D0, // MCS Electronics (http://www.mcselec.com)
+		.VendorID 							= 0x16D0, // MCS Electronics (http://www.mcselec.com)
  		.ProductID 							= 0x04B2, // darksimpson's PID #2 granted to Chameleon-Mini
+#if LUFA_VERSION_INTEGER >= 0x140928
+    .ReleaseNumber          = VERSION_BCD(0,0,1),
+#else
     .ReleaseNumber          = VERSION_BCD(00.01),
-
+#endif
     .ManufacturerStrIndex   = 0x01,
     .ProductStrIndex        = 0x02,
     .SerialNumStrIndex      = USE_INTERNAL_SERIAL,
@@ -108,7 +115,11 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
             .Header                 = {.Size = sizeof(USB_CDC_Descriptor_FunctionalHeader_t), .Type = DTYPE_CSInterface},
             .Subtype                = CDC_DSUBTYPE_CSInterface_Header,
 
+#if LUFA_VERSION_INTEGER >= 0x140928
+            .CDCSpecification       = VERSION_BCD(1,1,0),
+#else
             .CDCSpecification       = VERSION_BCD(01.10),
+#endif
         },
 
     .CDC_Functional_ACM =
@@ -192,9 +203,9 @@ const USB_Descriptor_String_t PROGMEM LanguageString =
  */
 const USB_Descriptor_String_t PROGMEM ManufacturerString =
 {
-    .Header                 = {.Size = USB_STRING_LEN(11), .Type = DTYPE_String},
+    .Header                 = {.Size = USB_STRING_LEN(20), .Type = DTYPE_String},
 
-    .UnicodeString          = L"Dean Camera"
+    .UnicodeString          = L"Kasper & Oswald GmbH"
 };
 
 /** Product descriptor string. This is a Unicode string containing the product's details in human readable form,
@@ -203,9 +214,9 @@ const USB_Descriptor_String_t PROGMEM ManufacturerString =
  */
 const USB_Descriptor_String_t PROGMEM ProductString =
 {
-    .Header                 = {.Size = USB_STRING_LEN(13), .Type = DTYPE_String},
+    .Header                 = {.Size = USB_STRING_LEN(14), .Type = DTYPE_String},
 
-    .UnicodeString          = L"LUFA CDC Demo"
+    .UnicodeString          = L"Chameleon-Mini"
 };
 
 /** This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"
