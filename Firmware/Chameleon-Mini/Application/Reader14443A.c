@@ -101,9 +101,6 @@ static uint8_t CardCandidatesIdx = 0;
 
 uint16_t addParityBits(uint8_t * Buffer, uint16_t BitCount)
 {
-	uint8_t i = CardIdentificationList[0].ATQA;
-	if (i == 0)
-		return 0;
 	if (BitCount == 7)
 		return 7;
 	if (BitCount % 8)
@@ -473,6 +470,90 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 			return rVal;
 		}
 
+        case Reader14443_Autocalibrate:
+        {
+            static enum {
+                RT_STATE_IDLE,
+                RT_STATE_SEARCHING
+            } RTState = RT_STATE_IDLE;
+            static uint8_t ErrorCount = 0;
+            static uint8_t Thresholds[(CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] = {0}; // todo this could be improved by using the bits and not the whole bytes
+
+            if (RTState == RT_STATE_IDLE)
+            {
+                CodecThresholdSet(CODEC_THRESHOLD_CALIBRATE_MIN);
+                RTState = RT_STATE_SEARCHING;
+                ErrorCount = 0;
+            } else if (RTState == RT_STATE_SEARCHING && ReaderState <= STATE_HALT && ErrorCount++ == 8) {
+                if (CodecThresholdIncrement() >= CODEC_THRESHOLD_CALIBRATE_MAX)
+                {
+                    RTState = RT_STATE_IDLE;
+
+                    bool block = false;
+                    uint16_t min = 0;
+                    uint16_t max = 0;
+                    uint16_t maxdiff = 0;
+                    uint16_t maxdiffoffset = 0;
+
+                    CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, NULL);
+                    uint16_t i;
+                    for (i = 0; i < (CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS; i++)
+                    {
+                        char tmpBuf[10];
+                        snprintf(tmpBuf, 10, "%4" PRIu16 ": ", i*CODEC_THRESHOLD_CALIBRATE_STEPS + CODEC_THRESHOLD_CALIBRATE_MIN);
+                        TerminalSendString(tmpBuf);
+                        if (Thresholds[i])
+                        {
+                            TerminalSendStringP(PSTR("+\r\n"));
+                            if (!block)
+                            {
+                                block = true;
+                                min = i;
+                            }
+                        } else {
+                            TerminalSendStringP(PSTR("-\r\n"));
+                            if (block)
+                            {
+                                block = false;
+                                max = i;
+                                if ((max - min) > maxdiff)
+                                {
+                                    maxdiff = max - min;
+                                    maxdiffoffset = min;
+                                }
+                            }
+                        }
+                        Thresholds[i] = 0; // reset the threshold so the next run won't show old results
+                    }
+
+                    if (maxdiff != 0)
+                        CodecThresholdSet((maxdiffoffset + maxdiff / 2) * CODEC_THRESHOLD_CALIBRATE_STEPS + CODEC_THRESHOLD_CALIBRATE_MIN);
+                    else
+                        CodecThresholdReset();
+
+                    Selected = false;
+                    Reader14443CurrentCommand = Reader14443_Do_Nothing;
+                    CodecReaderFieldStop();
+                    return 0;
+                }
+
+                Thresholds[(ReaderThreshold - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] = 0;
+                CodecThresholdIncrement();
+                ErrorCount = 0;
+            }
+
+            uint16_t rVal = Reader14443A_Select(Buffer, BitCount);
+            if (Selected) // we are done finding the threshold
+            {
+                Thresholds[(ReaderThreshold - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] = 1;
+                CodecThresholdIncrement();
+                ReaderState = STATE_IDLE;
+                Reader14443ACodecStart();
+                return Reader14443A_Halt(Buffer);
+            }
+            return rVal;
+        }
+
 		case Reader14443_Read_MF_Ultralight:
 		{
 			static uint8_t MFURead_CurrentAdress = 0;
@@ -714,14 +795,14 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 					tmpBuf[size-3] = '\0';
 					CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpBuf);
 					if (!enoughspace)
-						TerminalSendString("There is at least one more card type candidate, but there was not enough terminal buffer space.\r\n");
+						TerminalSendStringP(PSTR("There is at least one more card type candidate, but there was not enough terminal buffer space.\r\n"));
 				}
 				// print general data
-				TerminalSendString("ATQA:\t");
+				TerminalSendStringP(PSTR("ATQA:\t"));
 				CommandLineAppendData(&CardCharacteristics.ATQA, 2);
-				TerminalSendString("UID:\t");
+				TerminalSendStringP(PSTR("UID:\t"));
 				CommandLineAppendData(CardCharacteristics.UID, CardCharacteristics.UIDSize);
-				TerminalSendString("SAK:\t");
+				TerminalSendStringP(PSTR("SAK:\t"));
 				CommandLineAppendData(&CardCharacteristics.SAK, 1);
 
 				Reader14443CurrentCommand = Reader14443_Do_Nothing;
