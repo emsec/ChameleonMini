@@ -12,7 +12,11 @@
 #define INDEX_TO_SETTING(I) (I + SETTINGS_FIRST)
 
 SettingsType GlobalSettings;
+#if ENABLE_EEPROM_SETTINGS
 SettingsType EEMEM StoredSettings = {
+#else
+SettingsType StoredSettings = {
+#endif
 	.ActiveSettingIdx = SETTING_TO_INDEX(DEFAULT_SETTING),
 	.ActiveSettingPtr = &GlobalSettings.Settings[SETTING_TO_INDEX(DEFAULT_SETTING)],
 
@@ -30,7 +34,11 @@ SettingsType EEMEM StoredSettings = {
 };
 
 void SettingsLoad(void) {
+#if ENABLE_EEPROM_SETTINGS
 	ReadEEPBlock((uint16_t) &StoredSettings, &GlobalSettings, sizeof(SettingsType));
+#else
+	GlobalSettings = StoredSettings;
+#endif
 }
 
 void SettingsSave(void) {
