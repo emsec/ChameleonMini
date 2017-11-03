@@ -9,7 +9,11 @@ static uint8_t LogMem[LOG_SIZE];
 static uint8_t *LogMemPtr;
 static uint16_t LogMemLeft;
 static uint16_t LogFRAMAddr = FRAM_LOG_START_ADDR;
-static uint8_t EEMEM LogFRAMAddrValid = false;
+#if ENABLE_EEPROM_SETTINGS
+	static uint8_t EEMEM LogFRAMAddrValid = false;
+#else
+	static uint8_t LogFRAMAddrValid = false;
+#endif
 static bool EnableLogSRAMtoFRAM = false;
 LogFuncType CurrentLogFunc;
 
@@ -67,19 +71,24 @@ void LogInit(void)
     LogMemPtr = LogMem;
     LogMemLeft = sizeof(LogMem);
 
+#if ENABLE_EEPROM_SETTINGS
     uint8_t result;
     ReadEEPBlock((uint16_t) &LogFRAMAddrValid, &result, 1);
+#endif
     memset(LogMemPtr, LOG_EMPTY, LOG_SIZE);
+#if ENABLE_EEPROM_SETTINGS
     if (result)
     {
     	MemoryReadBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
     } else {
+#endif
     	LogFRAMAddr = FRAM_LOG_START_ADDR;
     	MemoryWriteBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
+#if ENABLE_EEPROM_SETTINGS
     	result = true;
     	WriteEEPBlock((uint16_t) &LogFRAMAddrValid, &result, 1);
     }
-
+#endif
     LogEntry(LOG_INFO_SYSTEM_BOOT, NULL, 0);
 }
 
