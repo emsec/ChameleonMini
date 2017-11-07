@@ -16,24 +16,24 @@ int main(void)
     SystemInterruptInit();
 
     while(1) {
-		if (SystemTick100ms()) {
+        if (SystemTick100ms()) {
             LEDTick(); // this has to be the first function called here, since it is time-critical - the functions below may have non-negligible runtimes!
 
-			RandomTick();
-			TerminalTick();
-			ButtonTick();
-			LogTick();
-			ApplicationTick();
-			CommandLineTick();
-			AntennaLevelTick();
+            RandomTick();
+            TerminalTick();
+            ButtonTick();
+            LogTick();
+            ApplicationTick();
+            CommandLineTick();
+            AntennaLevelTick();
 
-			LEDHook(LED_POWERED, LED_ON);
-		}
+            LEDHook(LED_POWERED, LED_ON);
+        }
 
-		TerminalTask();
-		LogTask();
-		ApplicationTask();
-		CodecTask();
+        TerminalTask();
+        LogTask();
+        ApplicationTask();
+        CodecTask();
     }
 }
 

@@ -86,7 +86,7 @@ Source: NXP: MF1S50YYX Product data sheet
 Access conditions for the sector trailer
 
 Access bits     Access condition for                   Remark
-	        KEYA         Access bits  KEYB
+            KEYA         Access bits  KEYB
 C1 C2 C3        read  write  read  write  read  write 
 0  0  0         never key A  key A never  key A key A  Key B may be read[1]
 0  1  0         never never  key A never  key A never  Key B may be read[1]
@@ -137,124 +137,124 @@ C1 C2 C3 	read 	write 	increment 	decrement,
 /* Decoding table for Access conditions of a data block */
 static const uint8_t abBlockAccessConditions[8][2] =
 {
-	/*C1C2C3 */
-	/* 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B 	transport configuration */
-	{
-		/* Access with Key A */
-		ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT,
-		/* Access with Key B */
-		ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
-	},
-	/* 1 0 0 R:key A|B W:key B I:never D:never 	read/write block */
-	{
-		/* Access with Key A */
-		ACC_BLOCK_READ,
-		/* Access with Key B */
-		ACC_BLOCK_READ | ACC_BLOCK_WRITE
-	},
-	/* 0 1 0 R:key A|B W:never I:never D:never 	read/write block */
-	{
-		/* Access with Key A */
-		ACC_BLOCK_READ,
-		/* Access with Key B */
-		ACC_BLOCK_READ
-	},
-	/* 1 1 0 R:key A|B W:key B I:key B D:key A|B 	value block */
-	{
-		/* Access with Key A */
-		ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
-		/* Access with Key B */
-		ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
-	},
-	/* 0 0 1 R:key A|B W:never I:never D:key A|B 	value block */
-	{
-		/* Access with Key A */
-		ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
-		/* Access with Key B */
-		ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT
-	},
-	/* 1 0 1 R:key B W:never I:never D:never 	read/write block */
-	{
-		/* Access with Key A */
-		0,
-		/* Access with Key B */
-		ACC_BLOCK_READ  
-	},
-	/* 0 1 1 R:key B W:key B I:never D:never	read/write block */
-	{
-		/* Access with Key A */
-		0,
-		/* Access with Key B */
-		ACC_BLOCK_READ | ACC_BLOCK_WRITE 
-	},
-	/* 1 1 1 R:never W:never I:never D:never	read/write block */
-	{
-		/* Access with Key A */
-		0,
-		/* Access with Key B */
-		0
-	}
+    /*C1C2C3 */
+    /* 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B 	transport configuration */
+    {
+        /* Access with Key A */
+        ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT,
+        /* Access with Key B */
+        ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
+    },
+    /* 1 0 0 R:key A|B W:key B I:never D:never 	read/write block */
+    {
+        /* Access with Key A */
+        ACC_BLOCK_READ,
+        /* Access with Key B */
+        ACC_BLOCK_READ | ACC_BLOCK_WRITE
+    },
+    /* 0 1 0 R:key A|B W:never I:never D:never 	read/write block */
+    {
+        /* Access with Key A */
+        ACC_BLOCK_READ,
+        /* Access with Key B */
+        ACC_BLOCK_READ
+    },
+    /* 1 1 0 R:key A|B W:key B I:key B D:key A|B 	value block */
+    {
+        /* Access with Key A */
+        ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
+        /* Access with Key B */
+        ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
+    },
+    /* 0 0 1 R:key A|B W:never I:never D:key A|B 	value block */
+    {
+        /* Access with Key A */
+        ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
+        /* Access with Key B */
+        ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT
+    },
+    /* 1 0 1 R:key B W:never I:never D:never 	read/write block */
+    {
+        /* Access with Key A */
+        0,
+        /* Access with Key B */
+        ACC_BLOCK_READ  
+    },
+    /* 0 1 1 R:key B W:key B I:never D:never	read/write block */
+    {
+        /* Access with Key A */
+        0,
+        /* Access with Key B */
+        ACC_BLOCK_READ | ACC_BLOCK_WRITE 
+    },
+    /* 1 1 1 R:never W:never I:never D:never	read/write block */
+    {
+        /* Access with Key A */
+        0,
+        /* Access with Key B */
+        0
+    }
 
 };
 /* Decoding table for Access conditions of the sector trailor */
 static const uint8_t abTrailorAccessConditions[8][2] =
 {
-	/* 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A  	Key B may be read[1] */
-	{
-		/* Access with Key A */
-		ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_READ_KEYB | ACC_TRAILOR_WRITE_KEYB,
-		/* Access with Key B */
-		0
-	},
-	/* 1  0  0 RdKA:never WrKA:key B  RdAcc:keyA|B WrAcc:never RdKB:never WrKB:key B */
-	{
-		/* Access with Key A */
-		ACC_TRAILOR_READ_ACC,
-		/* Access with Key B */
-		ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC |  ACC_TRAILOR_WRITE_KEYB
-	},
-	/* 0  1  0 RdKA:never WrKA:never  RdAcc:key A WrAcc:never  RdKB:key A WrKB:never  Key B may be read[1] */
-	{
-		/* Access with Key A */
-		ACC_TRAILOR_READ_ACC | ACC_TRAILOR_READ_KEYB,
-		/* Access with Key B */
-		0
-	},
-	/* 1  1  0         never never  keyA|B never never never */
-	{
-		/* Access with Key A */
-		ACC_TRAILOR_READ_ACC,
-		/* Access with Key B */
-		ACC_TRAILOR_READ_ACC
-	},
-	/* 0  0  1         never key A  key A  key A key A key A  Key B may be read,transport configuration[1] */
-	{
-		/* Access with Key A */
-		ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_READ_KEYB | ACC_TRAILOR_WRITE_KEYB,
-		/* Access with Key B */
-		0
-	},
-	/* 0  1  1         never key B  keyA|B key B never key B */
-	{
-		/* Access with Key A */
-		ACC_TRAILOR_READ_ACC,
-		/* Access with Key B */
-		ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_WRITE_KEYB
-	},
-	/* 1  0  1         never never  keyA|B key B never never */
-	{
-		/* Access with Key A */
-		ACC_TRAILOR_READ_ACC,
-		/* Access with Key B */
-		ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC
-	},
-	/* 1  1  1         never never  keyA|B never never never */
-	{
-		/* Access with Key A */
-		ACC_TRAILOR_READ_ACC,
-		/* Access with Key B */
-		ACC_TRAILOR_READ_ACC
-	},
+    /* 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A  	Key B may be read[1] */
+    {
+        /* Access with Key A */
+        ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_READ_KEYB | ACC_TRAILOR_WRITE_KEYB,
+        /* Access with Key B */
+        0
+    },
+    /* 1  0  0 RdKA:never WrKA:key B  RdAcc:keyA|B WrAcc:never RdKB:never WrKB:key B */
+    {
+        /* Access with Key A */
+        ACC_TRAILOR_READ_ACC,
+        /* Access with Key B */
+        ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC |  ACC_TRAILOR_WRITE_KEYB
+    },
+    /* 0  1  0 RdKA:never WrKA:never  RdAcc:key A WrAcc:never  RdKB:key A WrKB:never  Key B may be read[1] */
+    {
+        /* Access with Key A */
+        ACC_TRAILOR_READ_ACC | ACC_TRAILOR_READ_KEYB,
+        /* Access with Key B */
+        0
+    },
+    /* 1  1  0         never never  keyA|B never never never */
+    {
+        /* Access with Key A */
+        ACC_TRAILOR_READ_ACC,
+        /* Access with Key B */
+        ACC_TRAILOR_READ_ACC
+    },
+    /* 0  0  1         never key A  key A  key A key A key A  Key B may be read,transport configuration[1] */
+    {
+        /* Access with Key A */
+        ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_READ_KEYB | ACC_TRAILOR_WRITE_KEYB,
+        /* Access with Key B */
+        0
+    },
+    /* 0  1  1         never key B  keyA|B key B never key B */
+    {
+        /* Access with Key A */
+        ACC_TRAILOR_READ_ACC,
+        /* Access with Key B */
+        ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_WRITE_KEYB
+    },
+    /* 1  0  1         never never  keyA|B key B never never */
+    {
+        /* Access with Key A */
+        ACC_TRAILOR_READ_ACC,
+        /* Access with Key B */
+        ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC
+    },
+    /* 1  1  1         never never  keyA|B never never never */
+    {
+        /* Access with Key A */
+        ACC_TRAILOR_READ_ACC,
+        /* Access with Key B */
+        ACC_TRAILOR_READ_ACC
+    },
 };
 
 static enum {
@@ -309,17 +309,17 @@ INLINE uint8_t GetAccessCondition(uint8_t Block)
     }
     /* Fix for MFClassic 4K cards */
     if(Block<128)
-    	Block &= 3;
+        Block &= 3;
     else {
-    	Block &= 15;
-    	if (Block& 15)
-    		Block=3;
-    	else if (Block<=4)
-    		Block=0;
-    	else if (Block<=9)
-    		Block=1;
-    	else
-    		Block=2;
+        Block &= 15;
+        if (Block& 15)
+            Block=3;
+        else if (Block<=4)
+            Block=0;
+        else if (Block<=9)
+            Block=1;
+        else
+            Block=2;
     }
 
     Acc0 = ~Acc0;       /* C1x Bits to bit 0..3 */
@@ -431,7 +431,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
          /* precheck of WUP/REQ because ISO14443AWakeUp destroys BitCount */
          (((State != STATE_HALT) && (Buffer[0] == ISO14443A_CMD_REQA)) ||
          (Buffer[0] == ISO14443A_CMD_WUPA) )){
-    	FromHalt = State == STATE_HALT;
+        FromHalt = State == STATE_HALT;
         if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             AccessAddress = 0xff;
             State = STATE_READY1;
@@ -442,7 +442,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
     switch(State) {
     case STATE_IDLE:
     case STATE_HALT:
-    	FromHalt = State == STATE_HALT;
+        FromHalt = State == STATE_HALT;
         if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             State = STATE_READY1;
             return BitCount;
@@ -499,7 +499,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 if (ISO14443ACheckCRCA(Buffer, CMD_HALT_FRAME_SIZE)) {
                     /* According to ISO14443, we must not send anything
                     * in order to acknowledge the HALT command. */
-                	LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
+                    LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
                     State = STATE_HALT;
                     return ISO14443A_APP_NO_RESPONSE;
                 } else {
@@ -538,17 +538,17 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
             /* Load UID CL1 and perform anticollision */
             uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
-			/* For Longer UIDs indicate that more UID-Bytes follow (-> CL2) */
+            /* For Longer UIDs indicate that more UID-Bytes follow (-> CL2) */
             if (ActiveConfiguration.UidSize == 7) {
-	            MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
-	            UidCL1[0] = ISO14443A_UID0_CT;
-	            if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_UID_NOT_FINISHED))
-					State = STATE_READY2;
+                MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
+                UidCL1[0] = ISO14443A_UID0_CT;
+                if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_UID_NOT_FINISHED))
+                    State = STATE_READY2;
             } else {
-	            MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
-	            if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
+                MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
+                if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
                         AccessAddress = 0xff; /* invalid, force reload */
-			State = STATE_ACTIVE;
+            State = STATE_ACTIVE;
                     }
             }
 
@@ -562,21 +562,21 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
     case STATE_READY2:
     if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
         State = FromHalt ? STATE_HALT : STATE_IDLE;
-	    return ISO14443A_APP_NO_RESPONSE;
-	    } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
-	    /* Load UID CL2 and perform anticollision */
-	    uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
-	    MemoryReadBlock(UidCL2, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
+        return ISO14443A_APP_NO_RESPONSE;
+        } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
+        /* Load UID CL2 and perform anticollision */
+        uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
+        MemoryReadBlock(UidCL2, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
 
-	    if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
+        if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
                     AccessAddress = 0xff; /* invalid, force reload */
-		    State = STATE_ACTIVE;
-	    }
+            State = STATE_ACTIVE;
+        }
 
-	    return BitCount;
-	    } else {
-	    /* Unknown command. Enter HALT state. */
-	    State = STATE_HALT;
+        return BitCount;
+        } else {
+        /* Unknown command. Enter HALT state. */
+        State = STATE_HALT;
     }
     break;
     case STATE_ACTIVE:
@@ -590,9 +590,9 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 if (ISO14443ACheckCRCA(Buffer, CMD_HALT_FRAME_SIZE)) {
                     /* According to ISO14443, we must not send anything
                     * in order to acknowledge the HALT command. */
-                	LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
+                    LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
 
-                	State = STATE_HALT;
+                    State = STATE_HALT;
                     return ISO14443A_APP_NO_RESPONSE;
                 } else {
                     Buffer[0] = NAK_CRC_ERROR;
@@ -603,93 +603,93 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 return ACK_NAK_FRAME_SIZE;
             }
         } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B)) {
-        	if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
+            if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
 
-        		//uint16_t SectorAddress = Buffer[1] & MEM_SECTOR_ADDR_MASK;
-        		uint16_t KeyOffset = (Buffer[0] == CMD_AUTH_A ? MEM_KEY_A_OFFSET : MEM_KEY_B_OFFSET);
-        		uint16_t AccessOffset = MEM_KEY_A_OFFSET + MEM_KEY_SIZE;
-        		uint16_t SectorStartAddress;
-        		uint8_t Key[6];
-        		uint8_t Uid[4];
-        		uint8_t CardNonce[8];
+                //uint16_t SectorAddress = Buffer[1] & MEM_SECTOR_ADDR_MASK;
+                uint16_t KeyOffset = (Buffer[0] == CMD_AUTH_A ? MEM_KEY_A_OFFSET : MEM_KEY_B_OFFSET);
+                uint16_t AccessOffset = MEM_KEY_A_OFFSET + MEM_KEY_SIZE;
+                uint16_t SectorStartAddress;
+                uint8_t Key[6];
+                uint8_t Uid[4];
+                uint8_t CardNonce[8];
 
-        		/* Fix for MFClassic 4k cards */
-        		if(Buffer[1] >= 128) {
-        			SectorStartAddress = (Buffer[1] & MEM_BIGSECTOR_ADDR_MASK) * MEM_BYTES_PER_BLOCK ;
-        			KeyOffset += MEM_KEY_BIGSECTOR_OFFSET;
-        			AccessOffset += MEM_KEY_BIGSECTOR_OFFSET;
-        		} else {
-        			SectorStartAddress = (Buffer[1] & MEM_SECTOR_ADDR_MASK) * MEM_BYTES_PER_BLOCK ;
-        		}
+                /* Fix for MFClassic 4k cards */
+                if(Buffer[1] >= 128) {
+                    SectorStartAddress = (Buffer[1] & MEM_BIGSECTOR_ADDR_MASK) * MEM_BYTES_PER_BLOCK ;
+                    KeyOffset += MEM_KEY_BIGSECTOR_OFFSET;
+                    AccessOffset += MEM_KEY_BIGSECTOR_OFFSET;
+                } else {
+                    SectorStartAddress = (Buffer[1] & MEM_SECTOR_ADDR_MASK) * MEM_BYTES_PER_BLOCK ;
+                }
 
-        		LogEntry(LOG_INFO_APP_CMD_AUTH, Buffer, 2);
-        		/* set KeyInUse for global use to keep info about authentication */
-        		KeyInUse = Buffer[0] & 1;
-        		CurrentAddress = SectorStartAddress / MEM_BYTES_PER_BLOCK;
-        		//if (!AccessConditions[MEM_ACC_GPB_SIZE-1] ||(CurrentAddress != AccessAddress)) {
-        		/* Get access conditions from the sector trailor */
-        			MemoryReadBlock(AccessConditions, SectorStartAddress + AccessOffset, MEM_ACC_GPB_SIZE);
-        			AccessAddress = CurrentAddress;
-        		//}
+                LogEntry(LOG_INFO_APP_CMD_AUTH, Buffer, 2);
+                /* set KeyInUse for global use to keep info about authentication */
+                KeyInUse = Buffer[0] & 1;
+                CurrentAddress = SectorStartAddress / MEM_BYTES_PER_BLOCK;
+                //if (!AccessConditions[MEM_ACC_GPB_SIZE-1] ||(CurrentAddress != AccessAddress)) {
+                /* Get access conditions from the sector trailor */
+                    MemoryReadBlock(AccessConditions, SectorStartAddress + AccessOffset, MEM_ACC_GPB_SIZE);
+                    AccessAddress = CurrentAddress;
+                //}
 
 
-        		/* Generate a random nonce and read UID and key from memory */
-        		RandomGetBuffer(CardNonce, sizeof(CardNonce));
-        		if (ActiveConfiguration.UidSize == 7)
-        			MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
-        		else
-        			MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
-        		MemoryReadBlock(Key, SectorStartAddress + KeyOffset, MEM_KEY_SIZE);
+                /* Generate a random nonce and read UID and key from memory */
+                RandomGetBuffer(CardNonce, sizeof(CardNonce));
+                if (ActiveConfiguration.UidSize == 7)
+                    MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
+                else
+                    MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
+                MemoryReadBlock(Key, SectorStartAddress + KeyOffset, MEM_KEY_SIZE);
 
-        		/* Precalculate the reader response from card-nonce */
-        		for (uint8_t i=0; i<sizeof(ReaderResponse); i++)
-        			ReaderResponse[i] = CardNonce[i];
+                /* Precalculate the reader response from card-nonce */
+                for (uint8_t i=0; i<sizeof(ReaderResponse); i++)
+                    ReaderResponse[i] = CardNonce[i];
 
-        		Crypto1PRNG(ReaderResponse, 64);
+                Crypto1PRNG(ReaderResponse, 64);
 
-        		/* Precalculate our response from the reader response */
-        		for (uint8_t i=0; i<sizeof(CardResponse); i++)
-        			CardResponse[i] = ReaderResponse[i];
+                /* Precalculate our response from the reader response */
+                for (uint8_t i=0; i<sizeof(CardResponse); i++)
+                    CardResponse[i] = ReaderResponse[i];
 
-        		Crypto1PRNG(CardResponse, 32);
+                Crypto1PRNG(CardResponse, 32);
 
-        		/* Respond with the random card nonce and expect further authentication
-        		 * form the reader in the next frame. */
-        		State = STATE_AUTHING;
+                /* Respond with the random card nonce and expect further authentication
+                 * form the reader in the next frame. */
+                State = STATE_AUTHING;
 
-        		/* use unencrypted card nonce */
-        		Buffer[0] = CardNonce[0];
-        		Buffer[1] = CardNonce[1];
-        		Buffer[2] = CardNonce[2];
-        		Buffer[3] = CardNonce[3];
+                /* use unencrypted card nonce */
+                Buffer[0] = CardNonce[0];
+                Buffer[1] = CardNonce[1];
+                Buffer[2] = CardNonce[2];
+                Buffer[3] = CardNonce[3];
 
-        		/* Setup crypto1 cipher. Discard in-place encrypted CardNonce. */
-        		Crypto1Setup(Key, Uid, CardNonce);
+                /* Setup crypto1 cipher. Discard in-place encrypted CardNonce. */
+                Crypto1Setup(Key, Uid, CardNonce);
 
-        		return CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
-        	} else {
-        		Buffer[0] = NAK_CRC_ERROR;
-        		return ACK_NAK_FRAME_SIZE;
-        	}
+                return CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
+            } else {
+                Buffer[0] = NAK_CRC_ERROR;
+                return ACK_NAK_FRAME_SIZE;
+            }
 
-        	/* EV1 READ_SIG command is */
-        	/* same as CMD_RESTORE but has no operand, rely on CRC here! */
+            /* EV1 READ_SIG command is */
+            /* same as CMD_RESTORE but has no operand, rely on CRC here! */
       } else if ((Buffer[0] == CMD_SIG_READ) &&
                  (Buffer[1] == 0xe0) && 
                  (Buffer[2] == 0xb4)) {
             uint8_t Key[6];
-	    /* check if Originality check signature data available */
-	    /* Signature data is stored in (hidden) blocks 68..71 (0x44..0x47) */
-	    /* Signature data is read with key B, check if present */
-	    MemoryReadBlock(Key, 
-	                MEM_EV1_SIGNATURE_TRAILOR + MEM_KEY_B_OFFSET,
-	                MEM_KEY_SIZE);
-	    /* Key B = 4b791bea7bcc is used to read the data, check if correct key */
-	    if (   (Key[0] == 0x4b) && (Key[1] == 0x79) && (Key[2] == 0x1b) 
-	        && (Key[3] == 0xea) && (Key[4] == 0x7b) && (Key[5] == 0xcc) ) {
-	    /* no response! */
-	    /* Reader will send a HALT */
-	    return ISO14443A_APP_NO_RESPONSE;
+        /* check if Originality check signature data available */
+        /* Signature data is stored in (hidden) blocks 68..71 (0x44..0x47) */
+        /* Signature data is read with key B, check if present */
+        MemoryReadBlock(Key, 
+                    MEM_EV1_SIGNATURE_TRAILOR + MEM_KEY_B_OFFSET,
+                    MEM_KEY_SIZE);
+        /* Key B = 4b791bea7bcc is used to read the data, check if correct key */
+        if (   (Key[0] == 0x4b) && (Key[1] == 0x79) && (Key[2] == 0x1b) 
+            && (Key[3] == 0xea) && (Key[4] == 0x7b) && (Key[5] == 0xcc) ) {
+        /* no response! */
+        /* Reader will send a HALT */
+        return ISO14443A_APP_NO_RESPONSE;
             } else {
                 Buffer[0] = NAK_CRC_ERROR;
                 return ACK_NAK_FRAME_SIZE;
@@ -704,9 +704,9 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             return ACK_NAK_FRAME_SIZE;
         } else {
             /* Unknown command. Enter HALT state. */
-        	LogEntry(LOG_INFO_APP_CMD_UNKNOWN, Buffer, (BitCount+7)/8);
+            LogEntry(LOG_INFO_APP_CMD_UNKNOWN, Buffer, (BitCount+7)/8);
             State = STATE_IDLE;
-	    return ISO14443A_APP_NO_RESPONSE;
+        return ISO14443A_APP_NO_RESPONSE;
         }
         break;
 
@@ -714,7 +714,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         /* Reader delivers an encrypted nonce. We use it
         * to setup the crypto1 LFSR in nonlinear feedback mode.
         * Furthermore it delivers an encrypted answer. Decrypt and check it */
-	Crypto1Auth(&Buffer[0]);
+    Crypto1Auth(&Buffer[0]);
 
         Crypto1ByteArray(&Buffer[4], 4);
 
@@ -739,7 +739,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
             return (CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
         } else {
-        	LogEntry(LOG_ERR_APP_AUTH_FAIL, &ReaderResponse[0], 4);
+            LogEntry(LOG_ERR_APP_AUTH_FAIL, &ReaderResponse[0], 4);
 
             /* Just reset on authentication error. */
             State = STATE_IDLE;
@@ -747,229 +747,229 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_AUTHED_IDLE:
-    	/* If something went wrong the reader might send an unencrypted halt */
-    	if ((Buffer[0] == CMD_HALT) &&
-    			(Buffer[1] == 0) &&
-				(Buffer[2] == 0x57) &&
-				(Buffer[3] == 0xcd)) {
-    		/* According to ISO14443, we must not send anything
-    		 * in order to acknowledge the HALT command. */
-    		State = STATE_HALT;
-    		LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
-    		return ISO14443A_APP_NO_RESPONSE;
-    	}
-    	/* In this state, all communication is encrypted. Thus we first have to encrypt
-    	 * the incoming data. */
-    	Crypto1ByteArray(Buffer, 4);
+        /* If something went wrong the reader might send an unencrypted halt */
+        if ((Buffer[0] == CMD_HALT) &&
+                (Buffer[1] == 0) &&
+                (Buffer[2] == 0x57) &&
+                (Buffer[3] == 0xcd)) {
+            /* According to ISO14443, we must not send anything
+             * in order to acknowledge the HALT command. */
+            State = STATE_HALT;
+            LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
+            return ISO14443A_APP_NO_RESPONSE;
+        }
+        /* In this state, all communication is encrypted. Thus we first have to encrypt
+         * the incoming data. */
+        Crypto1ByteArray(Buffer, 4);
 
-    	if (Buffer[0] == CMD_READ) {
-    		if (ISO14443ACheckCRCA(Buffer, CMD_READ_FRAME_SIZE)) {
-    			/* Read command. Read data from memory and append CRCA. */
-    			/* Sector trailor? Use access conditions! */
+        if (Buffer[0] == CMD_READ) {
+            if (ISO14443ACheckCRCA(Buffer, CMD_READ_FRAME_SIZE)) {
+                /* Read command. Read data from memory and append CRCA. */
+                /* Sector trailor? Use access conditions! */
 
-    			if ((Buffer[1]<128 && (Buffer[1] & 3) == 3) || ((Buffer[1] & 15) == 15)) {
-    				uint8_t Acc;
-    				CurrentAddress = Buffer[1];
-    				/* Decode the access conditions */
-    				Acc = abTrailorAccessConditions[ GetAccessCondition(CurrentAddress) ][ KeyInUse ];
+                if ((Buffer[1]<128 && (Buffer[1] & 3) == 3) || ((Buffer[1] & 15) == 15)) {
+                    uint8_t Acc;
+                    CurrentAddress = Buffer[1];
+                    /* Decode the access conditions */
+                    Acc = abTrailorAccessConditions[ GetAccessCondition(CurrentAddress) ][ KeyInUse ];
 
-    				/* Prepare empty Block */
-    				for (uint8_t i=0; i<MEM_BYTES_PER_BLOCK; i++)
-    					Buffer[i] = 0;
+                    /* Prepare empty Block */
+                    for (uint8_t i=0; i<MEM_BYTES_PER_BLOCK; i++)
+                        Buffer[i] = 0;
 
-    				/* Allways copy the GPB */
-    				/* Key A can never be read! */
-    				/* Access conditions were already read during authentication! */
-    				Buffer[MEM_KEY_SIZE+MEM_ACC_GPB_SIZE-1] = AccessConditions[MEM_ACC_GPB_SIZE-1];
+                    /* Allways copy the GPB */
+                    /* Key A can never be read! */
+                    /* Access conditions were already read during authentication! */
+                    Buffer[MEM_KEY_SIZE+MEM_ACC_GPB_SIZE-1] = AccessConditions[MEM_ACC_GPB_SIZE-1];
 
-    				/* Access conditions are already known */
-    				if (Acc & ACC_TRAILOR_READ_ACC) {
-    					Buffer[MEM_KEY_SIZE]   = AccessConditions[0];
-    					Buffer[MEM_KEY_SIZE+1] = AccessConditions[1];
-    					Buffer[MEM_KEY_SIZE+2] = AccessConditions[2];
-    				}
-    				/* Key B is readable in some rare cases */
-    				if (Acc & ACC_TRAILOR_READ_KEYB) {
-    					MemoryReadBlock(Buffer + MEM_BYTES_PER_BLOCK - MEM_KEY_SIZE,
-    							(uint16_t)(CurrentAddress | 3) * MEM_BYTES_PER_BLOCK + MEM_BYTES_PER_BLOCK - MEM_KEY_SIZE,
-								MEM_KEY_SIZE);
-    				}
-    			} else {
-    				MemoryReadBlock(Buffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
-    			}
-    			ISO14443AAppendCRCA(Buffer, MEM_BYTES_PER_BLOCK);
+                    /* Access conditions are already known */
+                    if (Acc & ACC_TRAILOR_READ_ACC) {
+                        Buffer[MEM_KEY_SIZE]   = AccessConditions[0];
+                        Buffer[MEM_KEY_SIZE+1] = AccessConditions[1];
+                        Buffer[MEM_KEY_SIZE+2] = AccessConditions[2];
+                    }
+                    /* Key B is readable in some rare cases */
+                    if (Acc & ACC_TRAILOR_READ_KEYB) {
+                        MemoryReadBlock(Buffer + MEM_BYTES_PER_BLOCK - MEM_KEY_SIZE,
+                                (uint16_t)(CurrentAddress | 3) * MEM_BYTES_PER_BLOCK + MEM_BYTES_PER_BLOCK - MEM_KEY_SIZE,
+                                MEM_KEY_SIZE);
+                    }
+                } else {
+                    MemoryReadBlock(Buffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
+                }
+                ISO14443AAppendCRCA(Buffer, MEM_BYTES_PER_BLOCK);
 
-    			LogEntry(LOG_INFO_APP_CMD_READ, Buffer, MEM_BYTES_PER_BLOCK + ISO14443A_CRCA_SIZE);
+                LogEntry(LOG_INFO_APP_CMD_READ, Buffer, MEM_BYTES_PER_BLOCK + ISO14443A_CRCA_SIZE);
 
-    			/* Encrypt and calculate parity bits. */
-    			Crypto1ByteArrayWithParity(Buffer, ISO14443A_CRCA_SIZE + MEM_BYTES_PER_BLOCK);
+                /* Encrypt and calculate parity bits. */
+                Crypto1ByteArrayWithParity(Buffer, ISO14443A_CRCA_SIZE + MEM_BYTES_PER_BLOCK);
 
-    			return ( (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE )
-    					* BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
-    		} else {
-    			Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
+                return ( (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE )
+                        * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+            } else {
+                Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
 
-    			LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
+                LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
 
-    			return ACK_NAK_FRAME_SIZE;
-    		}
-    	} else if (Buffer[0] == CMD_WRITE) {
-    		if (ISO14443ACheckCRCA(Buffer, CMD_WRITE_FRAME_SIZE)) {
-    			/* Write command. Store the address and prepare for the upcoming data.
-    			 * Respond with ACK. */
-    			CurrentAddress = Buffer[1];
-    			State = STATE_WRITE;
-    			Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-    		} else {
-    			LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
-    			Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
-    		}
-    		return ACK_NAK_FRAME_SIZE;
-    	} else if (Buffer[0] == CMD_DECREMENT) {
-    		if (ISO14443ACheckCRCA(Buffer, CMD_DECREMENT_FRAME_SIZE)) {
-    			CurrentAddress = Buffer[1];
-    			State = STATE_DECREMENT;
-    			Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-    		} else {
-    			LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
-    			Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
-    		}
-    		return ACK_NAK_FRAME_SIZE;
-    	} else if (Buffer[0] == CMD_INCREMENT) {
-    		if (ISO14443ACheckCRCA(Buffer, CMD_DECREMENT_FRAME_SIZE)) {
-    			CurrentAddress = Buffer[1];
-    			State = STATE_INCREMENT;
-    			Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-    		} else {
-    			LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
-    			Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
-    		}
-    		return ACK_NAK_FRAME_SIZE;
-    	} else if (Buffer[0] == CMD_RESTORE) {
-    		if (ISO14443ACheckCRCA(Buffer, CMD_DECREMENT_FRAME_SIZE)) {
-    			CurrentAddress = Buffer[1];
-    			State = STATE_RESTORE;
-    			Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-    		} else {
-    			LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
-    			Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
-    		}
-    		return ACK_NAK_FRAME_SIZE;
-    	} else if (Buffer[0] == CMD_TRANSFER) {
-    		/* Write back the global block buffer to the desired block address */
-			if (ISO14443ACheckCRCA(Buffer, CMD_TRANSFER_FRAME_SIZE)) {
-				LogEntry(LOG_INFO_APP_CMD_TRANSFER, Buffer, 4);
+                return ACK_NAK_FRAME_SIZE;
+            }
+        } else if (Buffer[0] == CMD_WRITE) {
+            if (ISO14443ACheckCRCA(Buffer, CMD_WRITE_FRAME_SIZE)) {
+                /* Write command. Store the address and prepare for the upcoming data.
+                 * Respond with ACK. */
+                CurrentAddress = Buffer[1];
+                State = STATE_WRITE;
+                Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+            } else {
+                LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
+                Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
+            }
+            return ACK_NAK_FRAME_SIZE;
+        } else if (Buffer[0] == CMD_DECREMENT) {
+            if (ISO14443ACheckCRCA(Buffer, CMD_DECREMENT_FRAME_SIZE)) {
+                CurrentAddress = Buffer[1];
+                State = STATE_DECREMENT;
+                Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+            } else {
+                LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
+                Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
+            }
+            return ACK_NAK_FRAME_SIZE;
+        } else if (Buffer[0] == CMD_INCREMENT) {
+            if (ISO14443ACheckCRCA(Buffer, CMD_DECREMENT_FRAME_SIZE)) {
+                CurrentAddress = Buffer[1];
+                State = STATE_INCREMENT;
+                Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+            } else {
+                LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
+                Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
+            }
+            return ACK_NAK_FRAME_SIZE;
+        } else if (Buffer[0] == CMD_RESTORE) {
+            if (ISO14443ACheckCRCA(Buffer, CMD_DECREMENT_FRAME_SIZE)) {
+                CurrentAddress = Buffer[1];
+                State = STATE_RESTORE;
+                Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+            } else {
+                LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
+                Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
+            }
+            return ACK_NAK_FRAME_SIZE;
+        } else if (Buffer[0] == CMD_TRANSFER) {
+            /* Write back the global block buffer to the desired block address */
+            if (ISO14443ACheckCRCA(Buffer, CMD_TRANSFER_FRAME_SIZE)) {
+                LogEntry(LOG_INFO_APP_CMD_TRANSFER, Buffer, 4);
 
-				if (!ActiveConfiguration.ReadOnly) {
-					MemoryWriteBlock(BlockBuffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK );
-				} else {
-					/* In read only mode, silently ignore the write */
-				}
+                if (!ActiveConfiguration.ReadOnly) {
+                    MemoryWriteBlock(BlockBuffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK );
+                } else {
+                    /* In read only mode, silently ignore the write */
+                }
 
-				Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-			} else {
-				LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
-				Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
-			}
+                Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+            } else {
+                LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
+                Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
+            }
 
-			return ACK_NAK_FRAME_SIZE;
-    	} else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B) ) {
-    		if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE))
-    		{
-    			/* Nested authentication. */
-    			//uint16_t SectorAddress = Buffer[1] & MEM_SECTOR_ADDR_MASK;
-    			uint16_t KeyOffset = (Buffer[0] == CMD_AUTH_A ? MEM_KEY_A_OFFSET : MEM_KEY_B_OFFSET);
-    			uint16_t AccOffset = MEM_KEY_A_OFFSET + MEM_KEY_SIZE;
-    			uint16_t SectorStartAddress;
-    			uint8_t Key[6];
-    			uint8_t Uid[4];
-    			uint8_t CardNonce[8];
+            return ACK_NAK_FRAME_SIZE;
+        } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B) ) {
+            if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE))
+            {
+                /* Nested authentication. */
+                //uint16_t SectorAddress = Buffer[1] & MEM_SECTOR_ADDR_MASK;
+                uint16_t KeyOffset = (Buffer[0] == CMD_AUTH_A ? MEM_KEY_A_OFFSET : MEM_KEY_B_OFFSET);
+                uint16_t AccOffset = MEM_KEY_A_OFFSET + MEM_KEY_SIZE;
+                uint16_t SectorStartAddress;
+                uint8_t Key[6];
+                uint8_t Uid[4];
+                uint8_t CardNonce[8];
 
-    			/* Fix for MFClassic 4k cards */
-    			if(Buffer[1] >= 128) {
-    				SectorStartAddress = (Buffer[1] & MEM_BIGSECTOR_ADDR_MASK) * MEM_BYTES_PER_BLOCK ;
-    				KeyOffset += MEM_KEY_BIGSECTOR_OFFSET;
-    				AccOffset += MEM_KEY_BIGSECTOR_OFFSET;
-    			} else {
-    				SectorStartAddress = (Buffer[1] & MEM_SECTOR_ADDR_MASK) * MEM_BYTES_PER_BLOCK ;
-    			}
+                /* Fix for MFClassic 4k cards */
+                if(Buffer[1] >= 128) {
+                    SectorStartAddress = (Buffer[1] & MEM_BIGSECTOR_ADDR_MASK) * MEM_BYTES_PER_BLOCK ;
+                    KeyOffset += MEM_KEY_BIGSECTOR_OFFSET;
+                    AccOffset += MEM_KEY_BIGSECTOR_OFFSET;
+                } else {
+                    SectorStartAddress = (Buffer[1] & MEM_SECTOR_ADDR_MASK) * MEM_BYTES_PER_BLOCK ;
+                }
 
-    			LogEntry(LOG_INFO_APP_CMD_AUTH, Buffer, 2);
-    			/* set KeyInUse for global use to keep info about authentication */
-    			KeyInUse = Buffer[0] & 1;
-    			CurrentAddress = SectorStartAddress / MEM_BYTES_PER_BLOCK;
-    			if (CurrentAddress != AccessAddress) {
-    				/* Get access conditions from the sector trailor */
-    				MemoryReadBlock(AccessConditions, SectorStartAddress + AccOffset, MEM_ACC_GPB_SIZE);
-    				AccessAddress = CurrentAddress;
-    			}
+                LogEntry(LOG_INFO_APP_CMD_AUTH, Buffer, 2);
+                /* set KeyInUse for global use to keep info about authentication */
+                KeyInUse = Buffer[0] & 1;
+                CurrentAddress = SectorStartAddress / MEM_BYTES_PER_BLOCK;
+                if (CurrentAddress != AccessAddress) {
+                    /* Get access conditions from the sector trailor */
+                    MemoryReadBlock(AccessConditions, SectorStartAddress + AccOffset, MEM_ACC_GPB_SIZE);
+                    AccessAddress = CurrentAddress;
+                }
 
-    			/* Generate a random nonce and read UID and key from memory */
-    			RandomGetBuffer(CardNonce, sizeof(CardNonce));
-    			if (ActiveConfiguration.UidSize == 7)
-    				MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
-    			else
-    				MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
-    			MemoryReadBlock(Key, SectorStartAddress + KeyOffset, MEM_KEY_SIZE);
+                /* Generate a random nonce and read UID and key from memory */
+                RandomGetBuffer(CardNonce, sizeof(CardNonce));
+                if (ActiveConfiguration.UidSize == 7)
+                    MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
+                else
+                    MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
+                MemoryReadBlock(Key, SectorStartAddress + KeyOffset, MEM_KEY_SIZE);
 
-    			/* Precalculate the reader response from card-nonce */
-    			for (uint8_t i=0; i<sizeof(ReaderResponse); i++)
-    				ReaderResponse[i] = CardNonce[i];
+                /* Precalculate the reader response from card-nonce */
+                for (uint8_t i=0; i<sizeof(ReaderResponse); i++)
+                    ReaderResponse[i] = CardNonce[i];
 
-    			Crypto1PRNG(ReaderResponse, 64);
+                Crypto1PRNG(ReaderResponse, 64);
 
-    			/* Precalculate our response from the reader response */
-    			for (uint8_t i=0; i<sizeof(CardResponse); i++)
-    				CardResponse[i] = ReaderResponse[i];
+                /* Precalculate our response from the reader response */
+                for (uint8_t i=0; i<sizeof(CardResponse); i++)
+                    CardResponse[i] = ReaderResponse[i];
 
-    			Crypto1PRNG(CardResponse, 32);
+                Crypto1PRNG(CardResponse, 32);
 
-    			/* Setup crypto1 cipher. */
-    			Crypto1SetupNested(Key, Uid, CardNonce, false);
+                /* Setup crypto1 cipher. */
+                Crypto1SetupNested(Key, Uid, CardNonce, false);
 
-    			/* Respond with the encrypted random card nonce and expect further authentication
-    			 * form the reader in the next frame. */
-    			Buffer[0] = CardNonce[0];
-    			Buffer[1] = CardNonce[1];
-    			Buffer[2] = CardNonce[2];
-    			Buffer[3] = CardNonce[3];
-    			/* Encryption is on, so we have also to encrypt the pariy */
-    			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 0] =  CardNonce[4];
-    			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 1] =  CardNonce[5];
-    			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 2] =  CardNonce[6];
-    			Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 3] =  CardNonce[7];
-    			State = STATE_AUTHING;
+                /* Respond with the encrypted random card nonce and expect further authentication
+                 * form the reader in the next frame. */
+                Buffer[0] = CardNonce[0];
+                Buffer[1] = CardNonce[1];
+                Buffer[2] = CardNonce[2];
+                Buffer[3] = CardNonce[3];
+                /* Encryption is on, so we have also to encrypt the pariy */
+                Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 0] =  CardNonce[4];
+                Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 1] =  CardNonce[5];
+                Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 2] =  CardNonce[6];
+                Buffer[ ISO14443A_BUFFER_PARITY_OFFSET + 3] =  CardNonce[7];
+                State = STATE_AUTHING;
 
-    			return CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE | ISO14443A_APP_CUSTOM_PARITY;
-    		} else {
-    			Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
-    			return ACK_NAK_FRAME_SIZE;
-    		}
-    	} else if (Buffer[0] == CMD_HALT) {
-    		/* Halts the tag. According to the ISO14443, the second
-    		 * byte is supposed to be 0. */
-    		if (Buffer[1] == 0) {
-    			if (ISO14443ACheckCRCA(Buffer, CMD_HALT_FRAME_SIZE)) {
-    				/* According to ISO14443, we must not send anything
-    				 * in order to acknowledge the HALT command. */
-    				State = STATE_HALT;
-    				LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
-    				return ISO14443A_APP_NO_RESPONSE;
-    			} else {
-    				Buffer[0] = NAK_CRC_ERROR;
-    				return ACK_NAK_FRAME_SIZE;
-    			}
-    		} else {
-    			Buffer[0] = NAK_INVALID_ARG;
-    			return ACK_NAK_FRAME_SIZE;
-    		}
-    	} else {
-    		/* Unknown command. Enter HALT state */
-    		LogEntry(LOG_INFO_APP_CMD_UNKNOWN, Buffer, (BitCount+7)/8);
-    		State = STATE_IDLE;
-    	}
+                return CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE | ISO14443A_APP_CUSTOM_PARITY;
+            } else {
+                Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
+                return ACK_NAK_FRAME_SIZE;
+            }
+        } else if (Buffer[0] == CMD_HALT) {
+            /* Halts the tag. According to the ISO14443, the second
+             * byte is supposed to be 0. */
+            if (Buffer[1] == 0) {
+                if (ISO14443ACheckCRCA(Buffer, CMD_HALT_FRAME_SIZE)) {
+                    /* According to ISO14443, we must not send anything
+                     * in order to acknowledge the HALT command. */
+                    State = STATE_HALT;
+                    LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
+                    return ISO14443A_APP_NO_RESPONSE;
+                } else {
+                    Buffer[0] = NAK_CRC_ERROR;
+                    return ACK_NAK_FRAME_SIZE;
+                }
+            } else {
+                Buffer[0] = NAK_INVALID_ARG;
+                return ACK_NAK_FRAME_SIZE;
+            }
+        } else {
+            /* Unknown command. Enter HALT state */
+            LogEntry(LOG_INFO_APP_CMD_UNKNOWN, Buffer, (BitCount+7)/8);
+            State = STATE_IDLE;
+        }
 
-    	break;
+        break;
 
     case STATE_WRITE:
         /* The reader has issued a write command earlier and is now
@@ -981,7 +981,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         Crypto1ByteArray(Buffer, MEM_BYTES_PER_BLOCK + ISO14443A_CRCA_SIZE);
 
         if (ISO14443ACheckCRCA(Buffer, MEM_BYTES_PER_BLOCK)) {
-        	LogEntry(LOG_INFO_APP_CMD_WRITE, Buffer, MEM_BYTES_PER_BLOCK + ISO14443A_CRCA_SIZE);
+            LogEntry(LOG_INFO_APP_CMD_WRITE, Buffer, MEM_BYTES_PER_BLOCK + ISO14443A_CRCA_SIZE);
 
             if (!ActiveConfiguration.ReadOnly) {
                 MemoryWriteBlock(Buffer, CurrentAddress * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
@@ -991,7 +991,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
             Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
         } else {
-        	LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
+            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
             Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
         }
 
@@ -1020,13 +1020,13 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 ValueFromBlock(&BlockValue, BlockBuffer);
 
                 if (State == STATE_DECREMENT) {
-                	LogEntry(LOG_INFO_APP_CMD_DEC, Buffer, MEM_VALUE_SIZE + ISO14443A_CRCA_SIZE);
+                    LogEntry(LOG_INFO_APP_CMD_DEC, Buffer, MEM_VALUE_SIZE + ISO14443A_CRCA_SIZE);
                     BlockValue -= ParamValue;
                 } else if (State == STATE_INCREMENT) {
-                	LogEntry(LOG_INFO_APP_CMD_INC, Buffer, MEM_VALUE_SIZE + ISO14443A_CRCA_SIZE);
+                    LogEntry(LOG_INFO_APP_CMD_INC, Buffer, MEM_VALUE_SIZE + ISO14443A_CRCA_SIZE);
                     BlockValue += ParamValue;
                 } else if (State == STATE_RESTORE) {
-                	LogEntry(LOG_INFO_APP_CMD_RESTORE, Buffer, MEM_VALUE_SIZE + ISO14443A_CRCA_SIZE);
+                    LogEntry(LOG_INFO_APP_CMD_RESTORE, Buffer, MEM_VALUE_SIZE + ISO14443A_CRCA_SIZE);
                     /* Do nothing */
                 }
 
@@ -1041,7 +1041,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             }
         } else {
             /* CRC Error. */
-        	LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
+            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, 4);
             Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
         }
 
@@ -1061,25 +1061,25 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
 void MifareClassicGetUid(ConfigurationUidType Uid)
 {
-	if (ActiveConfiguration.UidSize == 7) {
-		//Uid[0]=0x88;
-		MemoryReadBlock(&Uid[0], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
-		MemoryReadBlock(&Uid[3], MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
-	}
-	else
-	MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
+    if (ActiveConfiguration.UidSize == 7) {
+        //Uid[0]=0x88;
+        MemoryReadBlock(&Uid[0], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
+        MemoryReadBlock(&Uid[3], MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
+    }
+    else
+    MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
 }
 
 void MifareClassicSetUid(ConfigurationUidType Uid)
 {
     if (ActiveConfiguration.UidSize == 7) {
-	    //Uid[0]=0x88;
-	    MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
+        //Uid[0]=0x88;
+        MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
     }
     else {
-	    uint8_t BCC =  Uid[0] ^ Uid[1] ^ Uid[2] ^ Uid[3];
+        uint8_t BCC =  Uid[0] ^ Uid[1] ^ Uid[2] ^ Uid[3];
 
-	    MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
-	    MemoryWriteBlock(&BCC, MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
+        MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
+        MemoryWriteBlock(&BCC, MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
     }
 }

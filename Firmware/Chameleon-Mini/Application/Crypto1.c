@@ -50,42 +50,42 @@
 /* Used for LFSR setup. */
 #define SPLIT_BYTE(__even, __odd, __byte) \
     __asm__ __volatile__ ( \
-		"lsr %2"             "\n\t"   \
-		"ror %0"             "\n\t"   \
-		"lsr %2"             "\n\t"   \
-		"ror %1"             "\n\t"   \
-		"lsr %2"             "\n\t"   \
-		"ror %0"             "\n\t"   \
-		"lsr %2"             "\n\t"   \
-		"ror %1"             "\n\t"   \
-		"lsr %2"             "\n\t"   \
-		"ror %0"             "\n\t"   \
-		"lsr %2"             "\n\t"   \
-		"ror %1"             "\n\t"   \
-		"lsr %2"             "\n\t"   \
-		"ror %0"             "\n\t"   \
-		"lsr %2"             "\n\t"   \
-		"ror %1"                      \
-		: "+r" (__even), 	      \
+        "lsr %2"             "\n\t"   \
+        "ror %0"             "\n\t"   \
+        "lsr %2"             "\n\t"   \
+        "ror %1"             "\n\t"   \
+        "lsr %2"             "\n\t"   \
+        "ror %0"             "\n\t"   \
+        "lsr %2"             "\n\t"   \
+        "ror %1"             "\n\t"   \
+        "lsr %2"             "\n\t"   \
+        "ror %0"             "\n\t"   \
+        "lsr %2"             "\n\t"   \
+        "ror %1"             "\n\t"   \
+        "lsr %2"             "\n\t"   \
+        "ror %0"             "\n\t"   \
+        "lsr %2"             "\n\t"   \
+        "ror %1"                      \
+        : "+r" (__even), 	      \
                   "+r" (__odd),               \
- 		  "+r" (__byte)	              \
+          "+r" (__byte)	              \
                 :                             \
-		: "r0" )		
+        : "r0" )		
 
 /* Shift half LFSR state stored in three registers */
 /* Input is bit 0 of __in */
 #define SHIFT24(__b0, __b1, __b2, __in) \
     __asm__ __volatile__ ( \
-		"lsr %3"    "\n\t"   \
-		"ror %2"             "\n\t"   \
-		"ror %1"             "\n\t"   \
-		"ror %0"  \
-		: "+r" (__b0), 	\
+        "lsr %3"    "\n\t"   \
+        "ror %2"             "\n\t"   \
+        "ror %1"             "\n\t"   \
+        "ror %0"  \
+        : "+r" (__b0), 	\
                   "+r" (__b1),  \
                   "+r" (__b2),   \
- 		  "+r" (__in)	\
+          "+r" (__in)	\
                 : \
-		:  )		
+        :  )		
 
 /* Shift half LFSR state stored in three registers    */
 /* Input is bit 0 of __in                             */
@@ -93,29 +93,29 @@
 #define SHIFT24_COND_DECRYPT(__b0, __b1, __b2, __in, __stream, __decrypt) \
     __asm__ __volatile__ ( \
                 "sbrc %5, 0"          "\n\t"   \
-		"eor  %3, %4" "\n\t"   \
+        "eor  %3, %4" "\n\t"   \
                 "lsr  %3"     "\n\t"   \
-		"ror  %2"              "\n\t"   \
-		"ror  %1"              "\n\t"   \
-		"ror  %0"  \
-		: "+r" (__b0), 	        \
+        "ror  %2"              "\n\t"   \
+        "ror  %1"              "\n\t"   \
+        "ror  %0"  \
+        : "+r" (__b0), 	        \
                   "+r" (__b1),          \
                   "+r" (__b2),           \
- 		  "+r"  (__in)  	        \
- 		: "r"  (__stream),	\
- 		  "r"  (__decrypt) 	\
-		: "r0" )		
+          "+r"  (__in)  	        \
+        : "r"  (__stream),	\
+          "r"  (__decrypt) 	\
+        : "r0" )		
 
 /* Shift a byte with input from an other byte  */
 /* Input is bit 0 of __in */
 #define SHIFT8(__byte, __in) \
-		__asm__ __volatile__ ( \
-		"lsr %1"    "\n\t"   \
-		"ror %0"  \
-		: "+r" (__byte), \
- 		  "+r"  (__in)	\
+        __asm__ __volatile__ ( \
+        "lsr %1"    "\n\t"   \
+        "ror %0"  \
+        : "+r" (__byte), \
+          "+r"  (__in)	\
                 : \
-		: "r0" )	
+        : "r0" )	
 /* End AVR specific */
 #else
 
@@ -142,14 +142,14 @@
 #define SHIFT8(__byte, __in)  __byte = (__byte>>1) | ((__in)<<7) 
 
 #define SPLIT_BYTE(__even, __odd, __byte) \
-	__even = (__even >> 1) | (__byte<<7); __byte>>=1; \
-	__odd  = (__odd  >> 1) | (__byte<<7); __byte>>=1; \
-	__even = (__even >> 1) | (__byte<<7); __byte>>=1; \
-	__odd  = (__odd  >> 1) | (__byte<<7); __byte>>=1; \
-	__even = (__even >> 1) | (__byte<<7); __byte>>=1; \
-	__odd  = (__odd  >> 1) | (__byte<<7); __byte>>=1; \
-	__even = (__even >> 1) | (__byte<<7); __byte>>=1; \
-	__odd  = (__odd  >> 1) | (__byte<<7)
+    __even = (__even >> 1) | (__byte<<7); __byte>>=1; \
+    __odd  = (__odd  >> 1) | (__byte<<7); __byte>>=1; \
+    __even = (__even >> 1) | (__byte<<7); __byte>>=1; \
+    __odd  = (__odd  >> 1) | (__byte<<7); __byte>>=1; \
+    __even = (__even >> 1) | (__byte<<7); __byte>>=1; \
+    __odd  = (__odd  >> 1) | (__byte<<7); __byte>>=1; \
+    __even = (__even >> 1) | (__byte<<7); __byte>>=1; \
+    __odd  = (__odd  >> 1) | (__byte<<7)
 
 
 /* Generate odd parity bit */
@@ -319,26 +319,26 @@ static const uint8_t TableC3[32] = {
 /* Filter Output Macros */
 /* Output at bit 7 for optimized byte processing */
 #define CRYPTO1_FILTER_OUTPUT_B7_24(__O0, __O1, __O2) TableC7[ abFilterTable[0][__O0] | \
-					abFilterTable[1][__O1] | \
-					abFilterTable[2][__O2]]
+                    abFilterTable[1][__O1] | \
+                    abFilterTable[2][__O2]]
 
 /* Output at bit 3 for optimized nibble processing */
 #define CRYPTO1_FILTER_OUTPUT_B3_24(__O0, __O1, __O2) TableC3[ abFilterTable[0][__O0] | \
-					abFilterTable[1][__O1] | \
-					abFilterTable[2][__O2]]
+                    abFilterTable[1][__O1] | \
+                    abFilterTable[2][__O2]]
 
 /* Output at bit 0 for general purpose */
 #define CRYPTO1_FILTER_OUTPUT_B0_24(__O0, __O1, __O2) TableC0[ abFilterTable[0][__O0] | \
-					abFilterTable[1][__O1] | \
-					abFilterTable[2][__O2]]
+                    abFilterTable[1][__O1] | \
+                    abFilterTable[2][__O2]]
 
 /* Split Crypto1 state into even and odd bits            */
 /* to speed up the output filter network                 */
 /* Put both into one struct to enable relative adressing */
 typedef struct
 {
-	uint8_t Even[LFSR_SIZE/2];
-	uint8_t Odd[LFSR_SIZE/2];
+    uint8_t Even[LFSR_SIZE/2];
+    uint8_t Odd[LFSR_SIZE/2];
 } Crypto1LfsrState_t;
 static Crypto1LfsrState_t State = {{0},{0}};
 
@@ -346,35 +346,35 @@ static Crypto1LfsrState_t State = {{0},{0}};
 /* Debug output of state */
 void Crypto1GetState(uint8_t* pEven, uint8_t* pOdd)
 {
-	if (pEven)
-	{
-		pEven[0] = State.Even[0];
-		pEven[1] = State.Even[1];
-		pEven[2] = State.Even[2];
-	}
-	if (pOdd)
-	{
-		pOdd[0] = State.Odd[0];
-		pOdd[1] = State.Odd[1];
-		pOdd[2] = State.Odd[2];
-	}
+    if (pEven)
+    {
+        pEven[0] = State.Even[0];
+        pEven[1] = State.Even[1];
+        pEven[2] = State.Even[2];
+    }
+    if (pOdd)
+    {
+        pOdd[0] = State.Odd[0];
+        pOdd[1] = State.Odd[1];
+        pOdd[2] = State.Odd[2];
+    }
 
 }
 
 /* Proceed LFSR by one clock cycle */
 /* Prototype to force inlining */
 static __inline__ uint8_t Crypto1LFSRbyteFeedback (uint8_t E0,
-							uint8_t E1,
-							uint8_t E2,
-							uint8_t O0,
-							uint8_t O1,
-							uint8_t O2) __attribute__((always_inline));
+                            uint8_t E1,
+                            uint8_t E2,
+                            uint8_t O0,
+                            uint8_t O1,
+                            uint8_t O2) __attribute__((always_inline));
 static uint8_t Crypto1LFSRbyteFeedback (uint8_t E0,
-							uint8_t E1,
-							uint8_t E2,
-							uint8_t O0,
-							uint8_t O1,
-							uint8_t O2) 
+                            uint8_t E1,
+                            uint8_t E2,
+                            uint8_t O0,
+                            uint8_t O1,
+                            uint8_t O2) 
 {
     uint8_t Feedback;
 
@@ -448,8 +448,8 @@ uint8_t Crypto1FilterOutput(void) {
 /* Setup LFSR split into odd and even states, feed in uid ^nonce */
 /* Version for first (not nested) authentication.                 */
 void Crypto1Setup(uint8_t Key[6], 
-		      uint8_t Uid[4], 
-		      uint8_t CardNonce[4])
+              uint8_t Uid[4], 
+              uint8_t CardNonce[4])
 {
     /* state registers */
     register uint8_t Even0, Even1, Even2;
@@ -1061,32 +1061,32 @@ void Crypto1PRNG(uint8_t State[4], uint8_t ClockCount)
 
 void Crypto1EncryptWithParity(uint8_t * Buffer, uint8_t BitCount)
 {
-	uint8_t i = 0;
-	while (i < BitCount)
-	{
-		Buffer[i/8] ^= 
-			    CRYPTO1_FILTER_OUTPUT_B0_24(State.Odd[0], State.Odd[1], State.Odd[2])
-  			       << (i % 8);
-		if (++i % 9 != 0) // only shift, if this was no parity bit
-			Crypto1LFSR(0);
-	}
+    uint8_t i = 0;
+    while (i < BitCount)
+    {
+        Buffer[i/8] ^= 
+                CRYPTO1_FILTER_OUTPUT_B0_24(State.Odd[0], State.Odd[1], State.Odd[2])
+                   << (i % 8);
+        if (++i % 9 != 0) // only shift, if this was no parity bit
+            Crypto1LFSR(0);
+    }
 }
 
 void Crypto1ReaderAuthWithParity(uint8_t PlainReaderAnswerWithParityBits[9])
 {
-	uint8_t i = 0, feedback;
-	while (i < 72)
-	{
-		feedback = PlainReaderAnswerWithParityBits[i/8] >> (i % 8);
-		PlainReaderAnswerWithParityBits[i/8] ^= 
-						    CRYPTO1_FILTER_OUTPUT_B0_24(State.Odd[0], State.Odd[1], State.Odd[2])
-			                        << (i % 8);
-		if (++i % 9 != 0) // only shift, if this was no parity bit
-		{
-			if (i <= 36)
-				Crypto1LFSR(feedback & 1);
-			else
-				Crypto1LFSR(0);
-		}
-	}
+    uint8_t i = 0, feedback;
+    while (i < 72)
+    {
+        feedback = PlainReaderAnswerWithParityBits[i/8] >> (i % 8);
+        PlainReaderAnswerWithParityBits[i/8] ^= 
+                            CRYPTO1_FILTER_OUTPUT_B0_24(State.Odd[0], State.Odd[1], State.Odd[2])
+                                    << (i % 8);
+        if (++i % 9 != 0) // only shift, if this was no parity bit
+        {
+            if (i <= 36)
+                Crypto1LFSR(feedback & 1);
+            else
+                Crypto1LFSR(0);
+        }
+    }
 }

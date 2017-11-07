@@ -24,13 +24,13 @@ bool checkParityBits(uint8_t * Buffer, uint16_t BitCount);
 uint16_t ISO14443_CRCA(uint8_t * Buffer, uint8_t ByteCount);
 
 typedef enum {
-	Reader14443_Do_Nothing,
-	Reader14443_Send,
-	Reader14443_Send_Raw,
-	Reader14443_Get_UID,
-	Reader14443_Autocalibrate,
-	Reader14443_Read_MF_Ultralight,
-	Reader14443_Identify
+    Reader14443_Do_Nothing,
+    Reader14443_Send,
+    Reader14443_Send_Raw,
+    Reader14443_Get_UID,
+    Reader14443_Autocalibrate,
+    Reader14443_Read_MF_Ultralight,
+    Reader14443_Identify
 } Reader14443Command;
 
 

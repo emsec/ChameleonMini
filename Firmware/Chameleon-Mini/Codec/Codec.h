@@ -98,8 +98,8 @@ extern uint16_t Reader_FWT;
 #define FWI2FWT(x)	((uint32_t)(256 * 16 * ((uint32_t)1 << (x))) / (CODEC_CARRIER_FREQ / 1000) + 1)
 
 typedef enum {
-	CODEC_SUBCARRIERMOD_OFF,
-	CODEC_SUBCARRIERMOD_OOK
+    CODEC_SUBCARRIERMOD_OFF,
+    CODEC_SUBCARRIERMOD_OOK
 } SubcarrierModType;
 
 extern uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
@@ -127,7 +127,7 @@ INLINE void CodecInitCommon(void)
 #else
 #error Option not supported
 #endif
-	CODEC_CARRIER_IN_PORT.DIRCLR = CODEC_CARRIER_IN_MASK;
+    CODEC_CARRIER_IN_PORT.DIRCLR = CODEC_CARRIER_IN_MASK;
     EVSYS.CH6MUX = CODEC_CARRIER_IN_EVMUX;
 
     /* Configure two DEMOD pins for input.
@@ -143,8 +143,8 @@ INLINE void CodecInitCommon(void)
     EVSYS.CH0MUX = CODEC_DEMOD_IN_EVMUX0;
     EVSYS.CH1MUX = CODEC_DEMOD_IN_EVMUX1;
 
-	/* Configure loadmod pin configuration and use a virtual port configuration
-	 * for single instruction cycle access */
+    /* Configure loadmod pin configuration and use a virtual port configuration
+     * for single instruction cycle access */
     CODEC_LOADMOD_PORT.DIRSET = CODEC_LOADMOD_MASK;
     CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
     PORTCFG.VPCTRLA &= ~PORTCFG_VP0MAP_gm;
@@ -188,21 +188,21 @@ INLINE void CodecInitCommon(void)
 
 INLINE void CodecSetSubcarrier(SubcarrierModType ModType, uint16_t Divider)
 {
-	if (ModType == CODEC_SUBCARRIERMOD_OFF) {
-		CODEC_SUBCARRIER_TIMER.CTRLA = TC_CLKSEL_OFF_gc;
-		CODEC_SUBCARRIER_TIMER.CTRLB = 0;
-	} else if (ModType == CODEC_SUBCARRIERMOD_OOK) {
-		/* Configure subcarrier generation with 50% DC output using OOK */
-		CODEC_SUBCARRIER_TIMER.CNT = 0;
-		CODEC_SUBCARRIER_TIMER.PER = Divider - 1;
-		CODEC_SUBCARRIER_TIMER.CODEC_SUBCARRIER_CC_OOK = Divider/2;
-		CODEC_SUBCARRIER_TIMER.CTRLB = CODEC_SUBCARRIER_CCEN_OOK | TC_WGMODE_SINGLESLOPE_gc;
-	}
+    if (ModType == CODEC_SUBCARRIERMOD_OFF) {
+        CODEC_SUBCARRIER_TIMER.CTRLA = TC_CLKSEL_OFF_gc;
+        CODEC_SUBCARRIER_TIMER.CTRLB = 0;
+    } else if (ModType == CODEC_SUBCARRIERMOD_OOK) {
+        /* Configure subcarrier generation with 50% DC output using OOK */
+        CODEC_SUBCARRIER_TIMER.CNT = 0;
+        CODEC_SUBCARRIER_TIMER.PER = Divider - 1;
+        CODEC_SUBCARRIER_TIMER.CODEC_SUBCARRIER_CC_OOK = Divider/2;
+        CODEC_SUBCARRIER_TIMER.CTRLB = CODEC_SUBCARRIER_CCEN_OOK | TC_WGMODE_SINGLESLOPE_gc;
+    }
 }
 
 INLINE void CodecStartSubcarrier(void)
 {
-	CODEC_SUBCARRIER_TIMER.CTRLA = CODEC_TIMER_CARRIER_CLKSEL;
+    CODEC_SUBCARRIER_TIMER.CTRLA = CODEC_TIMER_CARRIER_CLKSEL;
 }
 
 INLINE void CodecSetDemodPower(bool bOnOff)
@@ -215,36 +215,36 @@ INLINE void CodecSetDemodPower(bool bOnOff)
 }
 
 INLINE bool CodecGetLoadmodState(void) {
-	if (ACA.STATUS & AC_AC0STATE_bm) {
-		return true;
-	} else {
-		return false;
-	}
+    if (ACA.STATUS & AC_AC0STATE_bm) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 INLINE void CodecSetLoadmodState(bool bOnOff) {
-	if (bOnOff) {
-		VPORT0.OUT |= CODEC_LOADMOD_MASK;
-	} else {
-		VPORT0.OUT &= ~CODEC_LOADMOD_MASK;
-	}
+    if (bOnOff) {
+        VPORT0.OUT |= CODEC_LOADMOD_MASK;
+    } else {
+        VPORT0.OUT &= ~CODEC_LOADMOD_MASK;
+    }
 }
 
 INLINE void CodecSetReaderField(bool bOnOff) { // this is the function for turning on/off the reader field dumbly; before using this function, please consider to use CodecReaderField{Start,Stop}
 
-	if (bOnOff) {
-	    /* Start timer for field generation and unmask outputs */
-	    CODEC_READER_TIMER.CTRLA = TC_CLKSEL_DIV1_gc;
-		AWEXC.OUTOVEN = CODEC_READER_MASK;
-	} else {
-		/* Disable outputs of AWEX and stop field generation */
-		AWEXC.OUTOVEN = 0x00;
-		CODEC_READER_TIMER.CTRLA = TC_CLKSEL_OFF_gc;
-	}
+    if (bOnOff) {
+        /* Start timer for field generation and unmask outputs */
+        CODEC_READER_TIMER.CTRLA = TC_CLKSEL_DIV1_gc;
+        AWEXC.OUTOVEN = CODEC_READER_MASK;
+    } else {
+        /* Disable outputs of AWEX and stop field generation */
+        AWEXC.OUTOVEN = 0x00;
+        CODEC_READER_TIMER.CTRLA = TC_CLKSEL_OFF_gc;
+    }
 }
 
 INLINE bool CodecGetReaderField(void) {
-	return (CODEC_READER_TIMER.CTRLA == TC_CLKSEL_DIV1_gc) && (AWEXC.OUTOVEN == CODEC_READER_MASK);
+    return (CODEC_READER_TIMER.CTRLA == TC_CLKSEL_DIV1_gc) && (AWEXC.OUTOVEN == CODEC_READER_MASK);
 }
 
 void CodecReaderFieldStart(void);

@@ -16,16 +16,16 @@
 #define BATTERY_PORT_MASK		(BATTERY_STAT_PIN)
 
 INLINE void BatteryInit(void) {
-	BATTERY_PORT.DIRCLR = BATTERY_PORT_MASK;
-	BATTERY_PORT.BATTERY_STAT_PINCTRL = PORT_OPC_PULLUP_gc;
+    BATTERY_PORT.DIRCLR = BATTERY_PORT_MASK;
+    BATTERY_PORT.BATTERY_STAT_PINCTRL = PORT_OPC_PULLUP_gc;
 }
 
 INLINE bool BatteryIsCharging(void) {
-	if (!(BATTERY_PORT.IN & BATTERY_STAT_PIN)) {
-		return true;
-	} else {
-		return false;
-	}
+    if (!(BATTERY_PORT.IN & BATTERY_STAT_PIN)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 #endif /* BATTERY_H_ */

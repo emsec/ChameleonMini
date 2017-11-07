@@ -88,7 +88,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
     switch(State) {
     case STATE_IDLE:
     case STATE_HALT:
-    	FromHalt = State == STATE_HALT;
+        FromHalt = State == STATE_HALT;
         if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
             /* We received a REQA or WUPA command, so wake up. */
             State = STATE_READY1;

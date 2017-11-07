@@ -165,7 +165,7 @@ bool XModemProcessByte(uint8_t Byte)
             CurrentFrameNumber = FIRST_FRAME_NUMBER - 1;
             Byte = BYTE_ACK;
         } else if (Byte == BYTE_ESC) {
-        	State = STATE_OFF;
+            State = STATE_OFF;
         }
 
         /* Fallthrough */

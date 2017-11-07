@@ -38,31 +38,31 @@ uint16_t HexStringToBuffer(void* Buffer, uint16_t MaxBytes, const char* HexIn);
 
 INLINE uint8_t BitReverseByte(uint8_t Byte)
 {
-	extern const uint8_t PROGMEM BitReverseByteTable[];
+    extern const uint8_t PROGMEM BitReverseByteTable[];
 
-	return pgm_read_byte(&BitReverseByteTable[Byte]);
+    return pgm_read_byte(&BitReverseByteTable[Byte]);
 }
 
 INLINE uint8_t OddParityBit(uint8_t Byte)
 {
-	extern const uint8_t PROGMEM OddParityByteTable[];
+    extern const uint8_t PROGMEM OddParityByteTable[];
 
-	return pgm_read_byte(&OddParityByteTable[Byte]);
+    return pgm_read_byte(&OddParityByteTable[Byte]);
 }
 
 INLINE uint8_t StringLength(const char* Str, uint8_t MaxLen)
 {
-	uint8_t StrLen = 0;
+    uint8_t StrLen = 0;
 
-	while(MaxLen > 0) {
-		if (*Str++ == '\0')
-			break;
+    while(MaxLen > 0) {
+        if (*Str++ == '\0')
+            break;
 
-		MaxLen--;
-		StrLen++;
-	}
+        MaxLen--;
+        StrLen++;
+    }
 
-	return StrLen;
+    return StrLen;
 }
 
 #endif /* COMMON_H_ */
