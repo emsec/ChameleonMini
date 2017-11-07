@@ -142,20 +142,6 @@ uint16_t removeParityBits(uint8_t * Buffer, uint16_t BitCount)
     return BitCount/9*8;
 }
 
-uint16_t removeSOC(uint8_t * Buffer, uint16_t BitCount)
-{
-    if (BitCount == 0)
-        return 0;
-    uint16_t i;
-    Buffer[0] >>= 1;
-    for (i = 1; i < (BitCount + 7) / 8; i++)
-    {
-        Buffer[i-1] |= Buffer[i] << 7;
-        Buffer[i] >>= 1;
-    }
-    return BitCount - 1;
-}
-
 bool checkParityBits(uint8_t * Buffer, uint16_t BitCount)
 {
     if (BitCount == 7)
@@ -239,13 +225,12 @@ INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
         return 7;
 
     case STATE_READY:
-        if (BitCount < 19)
+        if (BitCount < 18)
         {
             ReaderState = STATE_IDLE;
             Reader14443ACodecStart();
             return 0;
         }
-        BitCount = removeSOC(Buffer, BitCount);
         if (!checkParityBits(Buffer, BitCount))
         {
             ReaderState = STATE_IDLE;
@@ -261,7 +246,6 @@ INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
         return addParityBits(Buffer, 16);
 
     case STATE_ACTIVE_CL1 ... STATE_ACTIVE_CL3:
-        BitCount = removeSOC(Buffer, BitCount);
         if (!checkParityBits(Buffer, BitCount) || BitCount < 8)
         {
             ReaderState = STATE_IDLE;
@@ -294,13 +278,12 @@ INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
         return addParityBits(Buffer, 72);
 
     case STATE_SAK_CL1 ... STATE_SAK_CL3:
-        if (BitCount < 9)
+        if (BitCount < 27)
         {
             ReaderState = STATE_IDLE;
             Reader14443ACodecStart();
             return 0;
         }
-        BitCount = removeSOC(Buffer, BitCount);
         if (!checkParityBits(Buffer, BitCount))
         {
             LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
@@ -337,7 +320,6 @@ INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
             Reader14443ACodecStart();
             return 0;
         }
-        BitCount = removeSOC(Buffer, BitCount);
         if (!checkParityBits(Buffer, BitCount))
         {
             LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
@@ -402,7 +384,6 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 return 0;
             }
             char tmpBuf[128];
-            BitCount = removeSOC(Buffer, BitCount);
             bool parity = checkParityBits(Buffer, BitCount);
             BitCount = removeParityBits(Buffer, BitCount);
             if ((2 * (BitCount + 7) / 8 + 2 + 4) > 128) // 2 = \r\n, 4 = size of bitcount in hex
@@ -564,7 +545,6 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
             {
                 if (MFURead_CurrentAdress != 0)
                 {
-                    BitCount = removeSOC(Buffer, BitCount);
                     if (BitCount == 0) // relaunch select protocol
                     {
                         MFURead_CurrentAdress = 0; // reset read address
@@ -658,7 +638,6 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     // if we don't have to send the RATS, we are finished for distinguishing with ISO 14443A
 
                 } else if (ReaderState == STATE_ATS) { // we have got the ATS
-                    BitCount = removeSOC(Buffer, BitCount);
                     if (!checkParityBits(Buffer, BitCount))
                     {
                         LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
@@ -726,7 +705,6 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                             CardCandidatesIdx = 0; // this will return that this card is unknown to us
                             break;
                         }
-                        BitCount = removeSOC(Buffer, BitCount);
                         if (!checkParityBits(Buffer, BitCount))
                         {
                             LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);

@@ -303,11 +303,11 @@ void Reader14443ACodecTask(void)
                 memcpy(TmpCodecBuffer, CodecBuffer, (BitCount + 7) / 8);
 
                 CodecBufferPtr = CodecBuffer;
-                uint16_t BitCountTmp = 0, TotalBitCount = BitCount;
+                uint16_t BitCountTmp = 2, TotalBitCount = BitCount;
                 BitCount = 0;
 
                 bool breakflag = false;
-
+                TmpCodecBuffer[0] >>= 2; // with this (and BitCountTmp = 2), the SOC is ignored and thus it's not neccessary to remove it later
                 while (!breakflag && BitCountTmp < TotalBitCount)
                 {
                     uint8_t Bit = TmpCodecBuffer[BitCountTmp / 8] & 0x03;
