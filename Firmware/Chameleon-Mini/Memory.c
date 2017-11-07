@@ -10,6 +10,7 @@
 #include "Common.h"
 #include "Settings.h"
 #include "LEDHook.h"
+#include "System.h"
 
 #define USE_DMA
 #define RECV_DMA DMA.CH0
@@ -395,6 +396,8 @@ void MemoryRecall(void)
 {
 	/* Recall memory from permanent flash */
 	FlashToFRAM((uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+
+    SystemTickClearFlag();
 }
 
 void MemoryStore(void)
@@ -404,6 +407,8 @@ void MemoryStore(void)
 
 	LEDHook(LED_MEMORY_CHANGED, LED_OFF);
 	LEDHook(LED_MEMORY_STORED, LED_PULSE);
+
+    SystemTickClearFlag();
 }
 
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)

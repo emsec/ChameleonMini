@@ -5,7 +5,7 @@
 #include "Terminal/CommandLine.h"
 #include "System.h"
 
-#define BLINK_PRESCALER	2 /* x LEDTick(); */
+#define BLINK_PRESCALER	1 /* x LEDTick(); */
 
 LEDActionEnum LEDGreenAction = LED_NO_ACTION;
 LEDActionEnum LEDRedAction = LED_NO_ACTION;

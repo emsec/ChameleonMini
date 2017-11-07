@@ -51,6 +51,14 @@ INLINE bool SystemTick100ms(void)
     return false;
 }
 
+INLINE void SystemTickClearFlag(void)
+{
+    while(RTC.STATUS & RTC_SYNCBUSY_bm)
+        ;
+
+    RTC.INTFLAGS = RTC_COMPIF_bm;
+}
+
 INLINE uint16_t SystemGetSysTick(void) {
 	return SYSTEM_TICK_REGISTER | RTC.CNT;
 }
