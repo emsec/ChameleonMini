@@ -41,6 +41,7 @@ extern SettingsType GlobalSettings;
 
 void SettingsLoad(void);
 void SettingsSave(void);
+void ActiveSettingNumberSave(void);
 
 void SettingsCycle(void);
 bool SettingsSetActiveById(uint8_t Setting);

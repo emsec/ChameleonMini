@@ -35,7 +35,14 @@ void SettingsLoad(void) {
 
 void SettingsSave(void) {
 #if ENABLE_EEPROM_SETTINGS
-	WriteEEPBlock((uint16_t) &StoredSettings, &GlobalSettings, sizeof(SettingsType));
+    WriteEEPBlock((uint16_t) &StoredSettings, &GlobalSettings, sizeof(SettingsType));
+#endif
+}
+
+void ActiveSettingNumberSave(void) {
+#if ENABLE_EEPROM_SETTINGS
+    eeprom_update_byte(&StoredSettings.ActiveSettingIdx, GlobalSettings.ActiveSettingIdx);
+    eeprom_update_word((uint16_t*)&StoredSettings.ActiveSettingPtr, (uint16_t)GlobalSettings.ActiveSettingPtr);
 #endif
 }
 
@@ -56,33 +63,36 @@ void SettingsCycle(void) {
 }
 
 bool SettingsSetActiveById(uint8_t Setting) {
-	if ( (Setting >= SETTINGS_FIRST) && (Setting <= SETTINGS_LAST) ) {
-		uint8_t SettingIdx = SETTING_TO_INDEX(Setting);
+    if ( (Setting >= SETTINGS_FIRST) && (Setting <= SETTINGS_LAST) ) {
+        uint8_t SettingIdx = SETTING_TO_INDEX(Setting);
 
-		/* Break potentially pending timeout task (manual timeout) */
-		CommandLinePendingTaskBreak();
+        /* Break potentially pending timeout task (manual timeout) */
+        CommandLinePendingTaskBreak();
 
-		/* Store current memory contents permanently */
-		MemoryStore();
+        /* Store current memory contents permanently */
+        MemoryStore();
 
-		GlobalSettings.ActiveSettingIdx = SettingIdx;
-		GlobalSettings.ActiveSettingPtr =
-				&GlobalSettings.Settings[SettingIdx];
+        GlobalSettings.ActiveSettingIdx = SettingIdx;
+        GlobalSettings.ActiveSettingPtr =
+                &GlobalSettings.Settings[SettingIdx];
 
-		/* Settings have changed. Progress changes through system */
-		ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
-		LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
+        /* Settings have changed. Progress changes through system */
+        ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
+        LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
 
-		/* Recall new memory contents */
-		MemoryRecall();
+        /* Recall new memory contents */
+        MemoryRecall();
 
-		/* Notify LED. blink according to current setting */
-		LEDHook(LED_SETTING_CHANGE, LED_BLINK + SettingIdx);
+        /* Store new setting number. */
+        ActiveSettingNumberSave();
 
-		return true;
-	} else {
-		return false;
-	}
+        /* Notify LED. blink according to current setting */
+        LEDHook(LED_SETTING_CHANGE, LED_BLINK + SettingIdx);
+
+        return true;
+    } else {
+        return false;
+    }
 }
 
 uint8_t SettingsGetActiveById(void) {

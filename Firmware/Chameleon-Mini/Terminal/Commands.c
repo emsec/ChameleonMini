@@ -357,7 +357,6 @@ CommandStatusIdType CommandGetSetting(char* OutParam)
 CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam)
 {
 	if (SettingsSetActiveByName(InParam)) {
-		SettingsSave();
 		return COMMAND_INFO_OK_ID;
 	} else {
 		return COMMAND_ERR_INVALID_PARAM_ID;
