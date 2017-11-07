@@ -55,9 +55,9 @@
 FlashReadWord:
     in	r19, RAMPZ      ; Save RAMPZ.
     out	RAMPZ, r24      ; Load RAMPZ with the MSB of the address.
-    movw	ZL, r22         ; Move the low bytes to the Z pointer
-    elpm	r24, Z+         ; Extended load byte from address pointed to by Z.
-    elpm	r25, Z          ; Extended load byte from address pointed to by Z.
+    movw	ZL, r22     ; Move the low bytes to the Z pointer
+    elpm	r24, Z+     ; Extended load byte from address pointed to by Z.
+    elpm	r25, Z      ; Extended load byte from address pointed to by Z.
     out	RAMPZ, r19      ; Restore RAMPZ register.
     ret
 
@@ -74,9 +74,9 @@ FlashReadWord:
 FlashEraseApplicationPage:
     in	r19, RAMPZ                      ; Save RAMPZ, which is restored in FlashCommonSPM.
     out	RAMPZ, r24                      ; Load RAMPZ with the MSB of the address.
-    movw    r24, r22                        ; Move low bytes for ZH:ZL to R25:R24
+    movw    r24, r22                    ; Move low bytes for ZH:ZL to R25:R24
     ldi	r20, NVM_CMD_ERASE_APP_PAGE_gc  ; Prepare NVM command in R20.
-    jmp	FlashCommonSPM                    ; Jump to common SPM code.
+    jmp	FlashCommonSPM                  ; Jump to common SPM code.
 
 ; This routine writes the word from R23:R22 into the Flash page buffer at
 ; address R25:R24.
@@ -91,9 +91,9 @@ FlashEraseApplicationPage:
 .global FlashLoadFlashWord
 FlashLoadFlashWord:
     in	r19, RAMPZ                         ; Save RAMPZ, which is restored in FlashCommonSPM.
-    movw	r0, r22                            ; Prepare flash word in R1:R0.
+    movw	r0, r22                        ; Prepare flash word in R1:R0.
     ldi	r20, NVM_CMD_LOAD_FLASH_BUFFER_gc  ; Prepare NVM command in R20.
-    jmp	FlashCommonSPM                       ; Jump to common SPM code.
+    jmp	FlashCommonSPM                     ; Jump to common SPM code.
 
 
 ; This routine erases first and then writes the page buffer to the
@@ -110,9 +110,9 @@ FlashLoadFlashWord:
 FlashEraseWriteApplicationPage:
     in	r19, RAMPZ                            ; Save RAMPZ, which is restored in FlashCommonSPM.
     out	RAMPZ, r24                            ; Load RAMPZ with the MSB of the address.
-    movw	r24, r22                              ; Move low bytes of address to ZH:ZL from R23:R22
+    movw	r24, r22                          ; Move low bytes of address to ZH:ZL from R23:R22
     ldi	r20, NVM_CMD_ERASE_WRITE_APP_PAGE_gc  ; Prepare NVM command in R20.
-    jmp	FlashCommonSPM                          ; Jump to common SPM code.
+    jmp	FlashCommonSPM                        ; Jump to common SPM code.
 
 ; This routine flushes the Flash page buffer.
 ;
@@ -126,7 +126,7 @@ FlashEraseWriteApplicationPage:
 FlashEraseFlashBuffer:
     in	r19, RAMPZ                          ; Save RAMPZ, which is restored in FlashCommonSPM.
     ldi	r20, NVM_CMD_ERASE_FLASH_BUFFER_gc  ; Prepare NVM command in R20.
-    ;jmp	FlashCommonSPM                        ; Jump to common SPM code.
+    ;jmp	FlashCommonSPM                  ; Jump to common SPM code.
     jmp	FlashCommonCMD
 
 ; This routine wait for the SPM to finish and clears the command register.
@@ -190,7 +190,7 @@ FlashCommonCMD:
 ;     R24     - Result from LPM operation.
 .section .text
 FlashCommonLPM:
-    movw	ZL, r24             ; Load index into Z.
+    movw	ZL, r24         ; Load index into Z.
     sts	NVM_CMD, r20        ; Load prepared command into NVM Command register.
     lpm	r24,Z
     ret
@@ -210,11 +210,11 @@ FlashCommonLPM:
 ;     Nothing.
 .section .spmhelper
 FlashCommonSPM:
-    movw	ZL, r24          ; Load R25:R24 into Z.
+    movw	ZL, r24      ; Load R25:R24 into Z.
     sts	NVM_CMD, r20     ; Load prepared command into NVM Command register.
     ldi	r18, CCP_SPM_gc  ; Prepare Protect SPM signature in R18
     sts	CCP, r18         ; Enable SPM operation (this disables interrupts for 4 cycles).
-    spm                      ; Self-program.
+    spm                  ; Self-program.
     clr	r1               ; Clear R1 for GCC _zero_reg_ to function properly.
     out	RAMPZ, r19       ; Restore RAMPZ register.
     ret

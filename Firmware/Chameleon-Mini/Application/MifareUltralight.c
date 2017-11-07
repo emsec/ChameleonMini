@@ -12,45 +12,45 @@
 #include "../LEDHook.h"
 
 
-#define ATQA_VALUE            0x0044
-#define SAK_CL1_VALUE        ISO14443A_SAK_INCOMPLETE
-#define SAK_CL2_VALUE        ISO14443A_SAK_COMPLETE_NOT_COMPLIANT
+#define ATQA_VALUE              0x0044
+#define SAK_CL1_VALUE           ISO14443A_SAK_INCOMPLETE
+#define SAK_CL2_VALUE           ISO14443A_SAK_COMPLETE_NOT_COMPLIANT
 
-#define ACK_VALUE            0x0A
-#define ACK_FRAME_SIZE        4 /* Bits */
-#define NAK_INVALID_ARG        0x00
-#define NAK_CRC_ERROR        0x01
-#define NAK_EEPROM_ERROR    0x05
-#define NAK_OTHER_ERROR        0x06
-#define NAK_FRAME_SIZE        4
+#define ACK_VALUE               0x0A
+#define ACK_FRAME_SIZE          4 /* Bits */
+#define NAK_INVALID_ARG         0x00
+#define NAK_CRC_ERROR           0x01
+#define NAK_EEPROM_ERROR        0x05
+#define NAK_OTHER_ERROR         0x06
+#define NAK_FRAME_SIZE          4
 
 #define CMD_READ                0x30
-#define CMD_READ_FRAME_SIZE        2 /* without CRC bytes */
-#define CMD_WRITE                0xA2
+#define CMD_READ_FRAME_SIZE     2 /* without CRC bytes */
+#define CMD_WRITE               0xA2
 #define CMD_WRITE_FRAME_SIZE    6 /* without CRC bytes */
 #define CMD_COMPAT_WRITE        0xA0
 #define CMD_COMPAT_WRITE_FRAME_SIZE 2
 #define CMD_HALT                0x50
 
-#define UID_CL1_ADDRESS        0x00    /* In Card Memory */
-#define UID_CL1_SIZE        3        /* In Bytes */
-#define UID_BCC1_ADDRESS    0x03
+#define UID_CL1_ADDRESS         0x00 /* In Card Memory */
+#define UID_CL1_SIZE            3    /* In Bytes */
+#define UID_BCC1_ADDRESS        0x03
 #define UID_CL2_ADDRESS        0x04
-#define UID_CL2_SIZE        4
-#define UID_BCC2_ADDRESS    0x08
+#define UID_CL2_SIZE            4
+#define UID_BCC2_ADDRESS        0x08
 
-#define BYTES_PER_PAGE        4
-#define PAGE_ADDRESS_MASK    0x0F
+#define BYTES_PER_PAGE          4
+#define PAGE_ADDRESS_MASK       0x0F
 
-#define BYTES_PER_READ        16
-#define PAGE_READ_MIN        0x00
-#define PAGE_READ_MAX        0x0F
+#define BYTES_PER_READ          16
+#define PAGE_READ_MIN           0x00
+#define PAGE_READ_MAX           0x0F
 
-#define BYTES_PER_WRITE        4
-#define PAGE_WRITE_MIN        0x02
-#define PAGE_WRITE_MAX        0x0F
+#define BYTES_PER_WRITE         4
+#define PAGE_WRITE_MIN          0x02
+#define PAGE_WRITE_MAX          0x0F
 
-#define BYTES_PER_COMPAT_WRITE 16
+#define BYTES_PER_COMPAT_WRITE  16
 
 static enum {
     STATE_HALT,

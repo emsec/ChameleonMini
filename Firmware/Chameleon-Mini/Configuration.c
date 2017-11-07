@@ -105,19 +105,19 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
     [CONFIG_MF_CLASSIC_1K_7B] = {
-    .CodecInitFunc = ISO14443ACodecInit,
-    .CodecDeInitFunc = ISO14443ACodecDeInit,
-    .CodecTaskFunc = ISO14443ACodecTask,
-    .ApplicationInitFunc = MifareClassicAppInit1K7B,
-    .ApplicationResetFunc = MifareClassicAppReset,
-    .ApplicationTaskFunc = MifareClassicAppTask,
-    .ApplicationTickFunc = ApplicationTickDummy,
-    .ApplicationProcessFunc = MifareClassicAppProcess,
-    .ApplicationGetUidFunc = MifareClassicGetUid,
-    .ApplicationSetUidFunc = MifareClassicSetUid,
-    .UidSize = ISO14443A_UID_SIZE_DOUBLE,
-    .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
-    .ReadOnly = false
+        .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
+        .CodecTaskFunc = ISO14443ACodecTask,
+        .ApplicationInitFunc = MifareClassicAppInit1K7B,
+        .ApplicationResetFunc = MifareClassicAppReset,
+        .ApplicationTaskFunc = MifareClassicAppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
+        .ApplicationProcessFunc = MifareClassicAppProcess,
+        .ApplicationGetUidFunc = MifareClassicGetUid,
+        .ApplicationSetUidFunc = MifareClassicSetUid,
+        .UidSize = ISO14443A_UID_SIZE_DOUBLE,
+        .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+        .ReadOnly = false
     },
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT

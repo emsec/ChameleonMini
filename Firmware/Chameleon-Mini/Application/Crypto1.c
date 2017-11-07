@@ -66,56 +66,56 @@
         "ror %0"             "\n\t"   \
         "lsr %2"             "\n\t"   \
         "ror %1"                      \
-        : "+r" (__even), 	      \
-                  "+r" (__odd),               \
+        : "+r" (__even), 	          \
+                  "+r" (__odd),       \
           "+r" (__byte)	              \
-                :                             \
+                :                     \
         : "r0" )		
 
 /* Shift half LFSR state stored in three registers */
 /* Input is bit 0 of __in */
 #define SHIFT24(__b0, __b1, __b2, __in) \
-    __asm__ __volatile__ ( \
-        "lsr %3"    "\n\t"   \
-        "ror %2"             "\n\t"   \
-        "ror %1"             "\n\t"   \
-        "ror %0"  \
-        : "+r" (__b0), 	\
-                  "+r" (__b1),  \
-                  "+r" (__b2),   \
-          "+r" (__in)	\
-                : \
-        :  )		
+    __asm__ __volatile__ (              \
+        "lsr %3"    "\n\t"              \
+        "ror %2"    "\n\t"              \
+        "ror %1"    "\n\t"              \
+        "ror %0"                        \
+        : "+r" (__b0),                  \
+          "+r" (__b1),                  \
+          "+r" (__b2),                  \
+          "+r" (__in)                   \
+        :                               \
+        :   )
 
 /* Shift half LFSR state stored in three registers    */
 /* Input is bit 0 of __in                             */
 /* decrypt with __stream if bit 0 of __decrypt is set */
 #define SHIFT24_COND_DECRYPT(__b0, __b1, __b2, __in, __stream, __decrypt) \
     __asm__ __volatile__ ( \
-                "sbrc %5, 0"          "\n\t"   \
-        "eor  %3, %4" "\n\t"   \
-                "lsr  %3"     "\n\t"   \
-        "ror  %2"              "\n\t"   \
-        "ror  %1"              "\n\t"   \
-        "ror  %0"  \
-        : "+r" (__b0), 	        \
-                  "+r" (__b1),          \
-                  "+r" (__b2),           \
-          "+r"  (__in)  	        \
-        : "r"  (__stream),	\
-          "r"  (__decrypt) 	\
+        "sbrc %5, 0"  "\n\t"    \
+        "eor  %3, %4" "\n\t"    \
+        "lsr  %3"     "\n\t"    \
+        "ror  %2"     "\n\t"    \
+        "ror  %1"     "\n\t"    \
+        "ror  %0"               \
+        : "+r" (__b0),          \
+          "+r" (__b1),          \
+          "+r" (__b2),          \
+          "+r" (__in)           \
+        : "r"  (__stream),      \
+          "r"  (__decrypt)      \
         : "r0" )		
 
 /* Shift a byte with input from an other byte  */
 /* Input is bit 0 of __in */
 #define SHIFT8(__byte, __in) \
-        __asm__ __volatile__ ( \
-        "lsr %1"    "\n\t"   \
-        "ror %0"  \
-        : "+r" (__byte), \
-          "+r"  (__in)	\
-                : \
-        : "r0" )	
+        __asm__ __volatile__ (  \
+        "lsr %1"    "\n\t"      \
+        "ror %0"                \
+        : "+r" (__byte),        \
+          "+r"  (__in)          \
+                :               \
+        : "r0" )
 /* End AVR specific */
 #else
 
