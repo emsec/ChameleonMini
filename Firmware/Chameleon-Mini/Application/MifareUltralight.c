@@ -9,8 +9,6 @@
 #include "ISO14443-3A.h"
 #include "../Codec/ISO14443-2A.h"
 #include "../Memory.h"
-#include "../LEDHook.h"
-#include "../Terminal/Terminal.h"
 
 
 #define ATQA_VALUE              0x0044
@@ -71,9 +69,6 @@
 #define CNT_SIZE                4
 #define CNT_MAX_VALUE           0x00FFFFFF
 
-#define BYTES_PER_PAGE          4
-#define PAGE_ADDRESS_MASK       0x0F
-
 #define BYTES_PER_READ          16
 #define PAGE_READ_MIN           0x00
 
@@ -129,7 +124,7 @@ void MifareUltralightAppInit(void)
 
 static void AppInitEV1Common(void)
 {
-    uint8_t ConfigAreaAddress = PageCount * BYTES_PER_PAGE - CONFIG_AREA_SIZE;
+    uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
     uint8_t Access;
 
     /* Set up the emulation flavor */
@@ -192,7 +187,7 @@ static void AuthCounterReset(void)
 static uint8_t AppWritePage(uint8_t PageAddress, uint8_t* const Buffer)
 {
     if (!ActiveConfiguration.ReadOnly) {
-        MemoryWriteBlock(Buffer, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
+        MemoryWriteBlock(Buffer, PageAddress * MIFARE_ULTRALIGHT_PAGE_SIZE, MIFARE_ULTRALIGHT_PAGE_SIZE);
     } else {
         /* If the chameleon is in read only mode, it silently
         * ignores any attempt to write data. */
@@ -233,7 +228,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             }
             /* Read out, emulating the wraparound */
             for (Offset = 0; Offset < BYTES_PER_READ; Offset += 4) {
-                MemoryReadBlock(&Buffer[Offset], PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
+                MemoryReadBlock(&Buffer[Offset], PageAddress * MIFARE_ULTRALIGHT_PAGE_SIZE, MIFARE_ULTRALIGHT_PAGE_SIZE);
                 PageAddress++;
                 if (PageAddress == PageLimit) {
                     PageAddress = 0;
@@ -330,14 +325,14 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     }
                 }
                 /* NOTE: With the current implementation, reading the password out is possible. */
-                ByteCount = (EndPageAddress - StartPageAddress + 1) * BYTES_PER_PAGE;
-                MemoryReadBlock(Buffer, StartPageAddress * BYTES_PER_PAGE, ByteCount);
+                ByteCount = (EndPageAddress - StartPageAddress + 1) * MIFARE_ULTRALIGHT_PAGE_SIZE;
+                MemoryReadBlock(Buffer, StartPageAddress * MIFARE_ULTRALIGHT_PAGE_SIZE, ByteCount);
                 ISO14443AAppendCRCA(Buffer, ByteCount);
                 return (ByteCount + ISO14443A_CRCA_SIZE) * 8;
             }
 
             case CMD_PWD_AUTH: {
-                uint8_t ConfigAreaAddress = PageCount * BYTES_PER_PAGE - CONFIG_AREA_SIZE;
+                uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
                 uint8_t Password[4];
 
                 /* Verify value and increment authentication attempt counter */
@@ -369,7 +364,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     return NAK_FRAME_SIZE;
                 }
                 /* Returned counter length is 3 bytes */
-                MemoryReadBlock(Buffer, (PageCount + CounterId) * BYTES_PER_PAGE, 3);
+                MemoryReadBlock(Buffer, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, 3);
                 ISO14443AAppendCRCA(Buffer, 3);
                 return (3 + ISO14443A_CRCA_SIZE) * 8;
             }
@@ -384,7 +379,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     return NAK_FRAME_SIZE;
                 }
                 /* Read the value out */
-                MemoryReadBlock(&Counter, (PageCount + CounterId) * BYTES_PER_PAGE, BYTES_PER_PAGE);
+                MemoryReadBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, MIFARE_ULTRALIGHT_PAGE_SIZE);
                 /* Add and check for overflow */
                 Counter += Addend;
                 if (Counter > CNT_MAX_VALUE) {
@@ -392,7 +387,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     return NAK_FRAME_SIZE;
                 }
                 /* Update memory */
-                MemoryWriteBlock(&Counter, (PageCount + CounterId) * BYTES_PER_PAGE, BYTES_PER_PAGE);
+                MemoryWriteBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, MIFARE_ULTRALIGHT_PAGE_SIZE);
                 Buffer[0] = ACK_VALUE;
                 return ACK_FRAME_SIZE;
             }
@@ -410,7 +405,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                 return (1 + ISO14443A_CRCA_SIZE) * 8;
 
             case CMD_VCSL: {
-                uint8_t ConfigAreaAddress = PageCount * BYTES_PER_PAGE - CONFIG_AREA_SIZE;
+                uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
                 /* Input is ignored completely */
                 /* Read out the value */
                 MemoryReadBlock(Buffer, ConfigAreaAddress + CONF_VCTID_OFFSET, 1);
