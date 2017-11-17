@@ -17,6 +17,7 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
     { .Id = CONFIG_MF_ULTRALIGHT, 	.Text = "MF_ULTRALIGHT" },
     { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,   .Text = "MF_ULTRALIGHT_EV1_80B" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,   .Text = "MF_ULTRALIGHT_EV1_164B" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_1K, 	.Text = "MF_CLASSIC_1K" },
@@ -98,7 +99,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationGetUidFunc = MifareUltralightGetUid,
         .ApplicationSetUidFunc = MifareUltralightSetUid,
         .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
-        .MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
+        .MemorySize = MIFARE_ULTRALIGHT_EV11_MEM_SIZE,
         .ReadOnly = false
     },
     [CONFIG_MF_ULTRALIGHT_EV1_164B] = {
@@ -113,7 +114,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationGetUidFunc = MifareUltralightGetUid,
         .ApplicationSetUidFunc = MifareUltralightSetUid,
         .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
-        .MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
+        .MemorySize = MIFARE_ULTRALIGHT_EV12_MEM_SIZE,
         .ReadOnly = false
     },
 #endif

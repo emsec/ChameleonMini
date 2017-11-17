@@ -24,7 +24,9 @@
 #define NAK_CTR_ERROR           0x04
 #define NAK_EEPROM_ERROR        0x05
 #define NAK_OTHER_ERROR         0x06
+/* NOTE: the spec is not crystal clear which error is returned */
 #define NAK_AUTH_REQUIRED       NAK_OTHER_ERROR
+#define NAK_AUTH_FAILED         NAK_OTHER_ERROR
 #define NAK_FRAME_SIZE          4
 
 /* ISO commands */
@@ -58,6 +60,7 @@
 #define CONFIG_AREA_SIZE        0x10
 #define CONF_AUTH0_OFFSET       0x03
 #define CONF_ACCESS_OFFSET      0x04
+#define CONF_VCTID_OFFSET       0x05
 #define CONF_PASSWORD_OFFSET    0x08
 #define CONF_PACK_OFFSET        0x0C
 
@@ -78,6 +81,9 @@
 #define PAGE_WRITE_MIN          0x02
 
 #define BYTES_PER_COMPAT_WRITE  16
+
+#define VERSION_INFO_LENGTH     8
+#define SIGNATURE_LENGTH        32
 
 static enum {
     UL_EV0,
@@ -111,8 +117,11 @@ static void AppInitCommon(void)
 
 void MifareUltralightAppInit(void)
 {
+    /* Set up the emulation flavor */
     Flavor = UL_EV0;
+    /* EV0 cards have fixed size */
     PageCount = MIFARE_ULTRALIGHT_PAGES;
+    /* Default values */
     FirstAuthenticatedPage = 0xFF;
     ReadAccessProtected = false;
     AppInitCommon();
@@ -122,7 +131,10 @@ static void AppInitEV1Common(void)
 {
     uint8_t ConfigAreaAddress = PageCount * BYTES_PER_PAGE - CONFIG_AREA_SIZE;
     uint8_t Access;
+
+    /* Set up the emulation flavor */
     Flavor = UL_EV1;
+    /* Fetch some of the configuration into RAM */
     MemoryReadBlock(&FirstAuthenticatedPage, ConfigAreaAddress + CONF_AUTH0_OFFSET, 1);
     MemoryReadBlock(&Access, ConfigAreaAddress + CONF_ACCESS_OFFSET, 1);
     ReadAccessProtected = !!(Access & CONF_ACCESS_PROT);
@@ -153,15 +165,27 @@ void MifareUltralightAppTask(void)
 
 static bool VerifyAuthentication(uint8_t PageAddress)
 {
-    /* No authentication for EV0 cards */
+    /* No authentication for EV0 cards; always pass */
     if (Flavor < UL_EV1) {
         return true;
     }
-    /* If authenticated; no verification needed */
+    /* If authenticated, no verification needed */
     if (Authenticated) {
         return true;
     }
+    /* Otherwise, verify the accessed page is below the limit */
     return PageAddress < FirstAuthenticatedPage;
+}
+
+static bool AuthCounterIncrement(void)
+{
+    /* Currently not implemented */
+    return true;
+}
+
+static void AuthCounterReset(void)
+{
+    /* Currently not implemented */
 }
 
 /* Perform access verification and commit data if passed */
@@ -181,12 +205,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
 {
     uint8_t Cmd = Buffer[0];
 
-    /* All commands here have CRCA appended; verify it right away */
-    if (!ISO14443ACheckCRCA(Buffer, ByteCount - 2)) {
-        Buffer[0] = NAK_CRC_ERROR;
-        return NAK_FRAME_SIZE;
-    }
-
+    /* Handle the compatibility write command */
     if (ArmedForCompatWrite) {
         ArmedForCompatWrite = false;
         AppWritePage(CompatWritePageAddress, &Buffer[2]);
@@ -291,8 +310,8 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                 Buffer[5] = 0x00;
                 Buffer[6] = PageCount == MIFARE_ULTRALIGHT_EV11_PAGES ? 0x0B : 0x0E;
                 Buffer[7] = 0x03;
-                ISO14443AAppendCRCA(Buffer, 8);
-                return (8 + ISO14443A_CRCA_SIZE) * 8;
+                ISO14443AAppendCRCA(Buffer, VERSION_INFO_LENGTH);
+                return (VERSION_INFO_LENGTH + ISO14443A_CRCA_SIZE) * 8;
             }
 
             case CMD_FAST_READ: {
@@ -320,12 +339,23 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             case CMD_PWD_AUTH: {
                 uint8_t ConfigAreaAddress = PageCount * BYTES_PER_PAGE - CONFIG_AREA_SIZE;
                 uint8_t Password[4];
-                MemoryReadBlock(Password, ConfigAreaAddress + CONF_PASSWORD_OFFSET, 4);
-                if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
-                    Buffer[0] = NAK_AUTH_REQUIRED;
+
+                /* Verify value and increment authentication attempt counter */
+                if (!AuthCounterIncrement()) {
+                    /* Too many failed attempts */
+                    Buffer[0] = NAK_AUTH_FAILED;
                     return NAK_FRAME_SIZE;
                 }
+                /* Read and compare the password */
+                MemoryReadBlock(Password, ConfigAreaAddress + CONF_PASSWORD_OFFSET, 4);
+                if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
+                    Buffer[0] = NAK_AUTH_FAILED;
+                    return NAK_FRAME_SIZE;
+                }
+                /* Authenticate the user */
+                AuthCounterReset();
                 Authenticated = 1;
+                /* Send the PACK value back */
                 MemoryReadBlock(Buffer, ConfigAreaAddress + CONF_PACK_OFFSET, 2);
                 ISO14443AAppendCRCA(Buffer, 2);
                 return (2 + ISO14443A_CRCA_SIZE) * 8;
@@ -338,9 +368,10 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     Buffer[0] = NAK_INVALID_ARG;
                     return NAK_FRAME_SIZE;
                 }
-                MemoryReadBlock(Buffer, (PageCount + CounterId) * BYTES_PER_PAGE, BYTES_PER_PAGE);
-                ISO14443AAppendCRCA(Buffer, BYTES_PER_PAGE);
-                return (BYTES_PER_PAGE + ISO14443A_CRCA_SIZE) * 8;
+                /* Returned counter length is 3 bytes */
+                MemoryReadBlock(Buffer, (PageCount + CounterId) * BYTES_PER_PAGE, 3);
+                ISO14443AAppendCRCA(Buffer, 3);
+                return (3 + ISO14443A_CRCA_SIZE) * 8;
             }
 
             case CMD_INCREMENT_CNT: {
@@ -352,12 +383,15 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     Buffer[0] = NAK_INVALID_ARG;
                     return NAK_FRAME_SIZE;
                 }
+                /* Read the value out */
                 MemoryReadBlock(&Counter, (PageCount + CounterId) * BYTES_PER_PAGE, BYTES_PER_PAGE);
+                /* Add and check for overflow */
                 Counter += Addend;
                 if (Counter > CNT_MAX_VALUE) {
                     Buffer[0] = NAK_CTR_ERROR;
                     return NAK_FRAME_SIZE;
                 }
+                /* Update memory */
                 MemoryWriteBlock(&Counter, (PageCount + CounterId) * BYTES_PER_PAGE, BYTES_PER_PAGE);
                 Buffer[0] = ACK_VALUE;
                 return ACK_FRAME_SIZE;
@@ -365,9 +399,9 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
 
             case CMD_READ_SIG:
                 /* Hardcoded response */
-                memset(Buffer, 0xCA, 32);
-                ISO14443AAppendCRCA(Buffer, 32);
-                return (32 + ISO14443A_CRCA_SIZE) * 8;
+                memset(Buffer, 0xCA, SIGNATURE_LENGTH);
+                ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
+                return (SIGNATURE_LENGTH + ISO14443A_CRCA_SIZE) * 8;
 
             case CMD_CHECK_TEARING_EVENT:
                 /* Hardcoded response */
@@ -375,11 +409,14 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                 ISO14443AAppendCRCA(Buffer, 1);
                 return (1 + ISO14443A_CRCA_SIZE) * 8;
 
-            case CMD_VCSL:
-                /* Hardcoded response */
-                Buffer[0] = 0x05;
+            case CMD_VCSL: {
+                uint8_t ConfigAreaAddress = PageCount * BYTES_PER_PAGE - CONFIG_AREA_SIZE;
+                /* Input is ignored completely */
+                /* Read out the value */
+                MemoryReadBlock(Buffer, ConfigAreaAddress + CONF_VCTID_OFFSET, 1);
                 ISO14443AAppendCRCA(Buffer, 1);
                 return (1 + ISO14443A_CRCA_SIZE) * 8;
+            }
 
             default:
                 break;
@@ -459,6 +496,17 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
             State = FromHalt ? STATE_HALT : STATE_IDLE;
             return ISO14443A_APP_NO_RESPONSE;
+        }
+        /* At the very least, there should be 3 bytes in the buffer. */
+        if (ByteCount < (1 + ISO14443A_CRCA_SIZE)) {
+            State = STATE_IDLE;
+            return ISO14443A_APP_NO_RESPONSE;
+        }
+        /* All commands here have CRCA appended; verify it right away */
+        ByteCount -= 2;
+        if (!ISO14443ACheckCRCA(Buffer, ByteCount)) {
+            Buffer[0] = NAK_CRC_ERROR;
+            return NAK_FRAME_SIZE;
         }
         return AppProcess(Buffer, ByteCount);
 
