@@ -16,6 +16,8 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
     { .Id = CONFIG_NONE, 			.Text = "NONE" },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
     { .Id = CONFIG_MF_ULTRALIGHT, 	.Text = "MF_ULTRALIGHT" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,   .Text = "MF_ULTRALIGHT_EV1_80B" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,   .Text = "MF_ULTRALIGHT_EV1_164B" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_1K, 	.Text = "MF_CLASSIC_1K" },
@@ -83,6 +85,36 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = MifareUltralightSetUid,
         .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
         .MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
+        .ReadOnly = false
+    },
+    [CONFIG_MF_ULTRALIGHT_EV1_80B] = {
+        .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
+        .CodecTaskFunc = ISO14443ACodecTask,
+        .ApplicationInitFunc = MifareUltralightEV11AppInit,
+        .ApplicationResetFunc = MifareUltralightAppReset,
+        .ApplicationTaskFunc = MifareUltralightAppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
+        .ApplicationProcessFunc = MifareUltralightAppProcess,
+        .ApplicationGetUidFunc = MifareUltralightGetUid,
+        .ApplicationSetUidFunc = MifareUltralightSetUid,
+        .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
+        .MemorySize = MIFARE_ULTRALIGHT_EV11_MEM_SIZE,
+        .ReadOnly = false
+    },
+    [CONFIG_MF_ULTRALIGHT_EV1_164B] = {
+        .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
+        .CodecTaskFunc = ISO14443ACodecTask,
+        .ApplicationInitFunc = MifareUltralightEV12AppInit,
+        .ApplicationResetFunc = MifareUltralightAppReset,
+        .ApplicationTaskFunc = MifareUltralightAppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
+        .ApplicationProcessFunc = MifareUltralightAppProcess,
+        .ApplicationGetUidFunc = MifareUltralightGetUid,
+        .ApplicationSetUidFunc = MifareUltralightSetUid,
+        .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
+        .MemorySize = MIFARE_ULTRALIGHT_EV12_MEM_SIZE,
         .ReadOnly = false
     },
 #endif
