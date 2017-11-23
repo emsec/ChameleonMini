@@ -7,8 +7,5 @@ Structure
 --------------------
 This part of the code repository contains
 
-* Doc: A doxygen documentation 
-* Drivers: Chameleon drivers for Windows and Linux
-* Dumps: Dumps of different smartcards
 * Hardware: The layout and schematics of the RevE-light - *NOT FUNCTIONAL*
 * Firmware: The RevE-light firmware - *NOT FUNCTIONAL*
