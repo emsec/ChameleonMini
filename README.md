@@ -34,3 +34,4 @@ The code repository contains
 * Firmware: The complete firmware including a modified Atmel DFU bootloader and LUFA
 * Software: Contains a python tool for an easy configuration (and more) of the ChameleonMini, Note that this is currently under construction
 * RevE: Contains the whole contents of the discontinued RevE repository.
+* RevE-light: Contains our development files for the RevE-light - **WARNING:** currently not supported / not functional
