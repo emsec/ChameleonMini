@@ -7,6 +7,7 @@
  * text-based command line interface, which can be accessed by using
  * simple terminal software like hyper-terminal or teraterm. The command line is optimized to cooperate with script languages such as Python or TCL. 
  *
+ * \note Before reading this page, you may also wish to have a look at the [Chameleon Android App](https://play.google.com/store/apps/details?id=com.maxieds.chameleonminilivedebugger), which is an external contribution to this project. Development and maintenance can be found [here](https://github.com/maxieds/ChameleonMiniLiveDebugger) (please also ask questions regarding the app there).
  *
  * Chameleon Command Structure
  * ===========================

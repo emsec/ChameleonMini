@@ -3,7 +3,7 @@
 /** @page Page_GettingStarted Getting Started
  * 
  * Finally, you hold your brand-new ChameleonMini RevG in your hands! What to do now?!
- * In the factory, a test firmware including a USB bootloader has been programmed into the microcontroller of the Chameleon. This page describes the next steps in order to upload the current firmware, as developed in this project, via the USB bootloader. 
+ * In the factory, a test firmware including a USB bootloader has been programmed into the microcontroller of the Chameleon. This page describes the next steps in order to upload the current firmware, as developed in this project, via the USB bootloader. After having done that, you may want to have a look at the \ref Page_CommandLine page or explore the [Chameleon Android App](https://play.google.com/store/apps/details?id=com.maxieds.chameleonminilivedebugger), which is an external contribution to this project. Development and maintenance can be found [here](https://github.com/maxieds/ChameleonMiniLiveDebugger) (please also ask questions regarding the app there).
  * 
  * Step 1: Trigger the USB Bootloader
  * =================================
