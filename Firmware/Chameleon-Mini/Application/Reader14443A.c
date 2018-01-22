@@ -10,6 +10,13 @@
 #define CHECK_BCC(B) ((B[0] ^ B[1] ^ B[2] ^ B[3]) == B[4])
 #define IS_CASCADE_BIT_SET(buf) (buf[0] & 0x04)
 #define IS_ISO14443A_4_COMPLIANT(buf) (buf[0] & 0x20)
+#define MF_CLASSIC_READER_NONCE	0x00000000
+
+#define TRYCOUNT_MAX    16
+
+#define FLAGS_MASK		0x03
+#define FLAGS_PARITY_OK	0x01
+#define FLAGS_NO_DATA	0x02
 
 // TODO replace remaining magic numbers
 
@@ -197,15 +204,13 @@ void Reader14443AAppTick(void)
 INLINE uint16_t Reader14443A_Deselect(uint8_t* Buffer) // deselects the card because of an error, so we will continue to select the card afterwards
 {
     Buffer[0] = 0xC2;
-    uint16_t crc = ISO14443_CRCA(Buffer, 1);
-    Buffer[1] = crc;
-    Buffer[2] = crc >> 8;
+    ISO14443AAppendCRCA(Buffer, 1);
     ReaderState = STATE_DESELECT;
     Selected = false;
     return addParityBits(Buffer, 24);
 }
 
-INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
+static uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
 {
     if (Selected)
     {
@@ -343,21 +348,17 @@ INLINE uint16_t Reader14443A_Halt(uint8_t* Buffer)
 {
     Buffer[0] = ISO14443A_CMD_HLTA;
     Buffer[1] = 0x00;
-    uint16_t crc = ISO14443_CRCA(Buffer, 2);
-    Buffer[2] = crc;
-    Buffer[3] = crc >> 8;
+    ISO14443AAppendCRCA(Buffer, 2);
     ReaderState = STATE_HALT;
     Selected = false;
-    return addParityBits(Buffer, 32);
+    return addParityBits(Buffer, 4 * BITS_PER_BYTE);
 }
 
 INLINE uint16_t Reader14443A_RATS(uint8_t* Buffer)
 {
     Buffer[0] = 0xE0; // RATS command
     Buffer[1] = 0x80;
-    uint16_t crc = ISO14443_CRCA(Buffer, 2);
-    Buffer[2] = crc;
-    Buffer[3] = crc >> 8;
+    ISO14443AAppendCRCA(Buffer, 2);
     ReaderState = STATE_ATS;
     return addParityBits(Buffer, 32);
 }
@@ -457,77 +458,143 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 RT_STATE_IDLE,
                 RT_STATE_SEARCHING
             } RTState = RT_STATE_IDLE;
-            static uint8_t ErrorCount = 0;
-            static uint8_t Thresholds[(CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] = {0}; // todo this could be improved by using the bits and not the whole bytes
+            static uint8_t TryCount = 0;
+            static uint8_t Thresholds[(CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] = {0};
 
             if (RTState == RT_STATE_IDLE)
             {
                 CodecThresholdSet(CODEC_THRESHOLD_CALIBRATE_MIN);
                 RTState = RT_STATE_SEARCHING;
-                ErrorCount = 0;
-            } else if (RTState == RT_STATE_SEARCHING && ReaderState <= STATE_HALT && ErrorCount++ == 8) {
-                if (CodecThresholdIncrement() >= CODEC_THRESHOLD_CALIBRATE_MAX)
+                TryCount = 0;
+            } else if (RTState == RT_STATE_SEARCHING && ReaderState <= STATE_HALT) {
+                if (++TryCount == TRYCOUNT_MAX)
                 {
-                    RTState = RT_STATE_IDLE;
-
-                    bool block = false;
-                    uint16_t min = 0;
-                    uint16_t max = 0;
-                    uint16_t maxdiff = 0;
-                    uint16_t maxdiffoffset = 0;
-
-                    CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, NULL);
-                    uint16_t i;
-                    for (i = 0; i < (CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS; i++)
+                    uint16_t tmp_th = CodecThresholdIncrement();
+                    if ((tmp_th >= CODEC_THRESHOLD_CALIBRATE_MID && (tmp_th - CODEC_THRESHOLD_CALIBRATE_STEPS) < CODEC_THRESHOLD_CALIBRATE_MID)
+                        ||
+                        tmp_th >= CODEC_THRESHOLD_CALIBRATE_MAX)
                     {
-                        char tmpBuf[10];
-                        snprintf(tmpBuf, 10, "%4" PRIu16 ": ", i*CODEC_THRESHOLD_CALIBRATE_STEPS + CODEC_THRESHOLD_CALIBRATE_MIN);
-                        TerminalSendString(tmpBuf);
-                        if (Thresholds[i])
+                        bool block = false, finished = false;
+                        uint16_t min = 0;
+                        uint16_t max = 0;
+                        uint16_t maxdiff = 0;
+                        uint16_t maxdiffoffset = 0;
+                        uint16_t numworked;
+                        uint16_t i;
+
+                        // first, search inside the usual search space
+                        if (tmp_th >= CODEC_THRESHOLD_CALIBRATE_MID && (tmp_th - CODEC_THRESHOLD_CALIBRATE_STEPS) < CODEC_THRESHOLD_CALIBRATE_MID)
                         {
-                            TerminalSendStringP(PSTR("+\r\n"));
-                            if (!block)
+                            for (i = 0; i < (CODEC_THRESHOLD_CALIBRATE_MID - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS; i++)
                             {
-                                block = true;
-                                min = i;
-                            }
-                        } else {
-                            TerminalSendStringP(PSTR("-\r\n"));
-                            if (block)
-                            {
-                                block = false;
-                                max = i;
-                                if ((max - min) > maxdiff)
+                                if (Thresholds[i] == TRYCOUNT_MAX)
                                 {
-                                    maxdiff = max - min;
-                                    maxdiffoffset = min;
+                                    if (!block)
+                                    {
+                                        block = true;
+                                        min = i;
+                                    }
+                                } else {
+                                    if (block)
+                                    {
+                                        block = false;
+                                        max = i;
+                                        if ((max - min) >= maxdiff)
+                                        {
+                                            maxdiff = max - min;
+                                            maxdiffoffset = min;
+                                        }
+                                    }
                                 }
                             }
+                            if (maxdiff >= 4) // if we have found something with at least 5 consecutive working thresholds (only if these thresholds have worked for evers attempt), we are done
+                            {
+                                finished = true;
+                            }
+                        } else { // we have searched the whole space
+                            for (numworked = TRYCOUNT_MAX; numworked > 0; numworked--)
+                            {
+                                for (i = 0; i < (CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS; i++)
+                                {
+                                    if (Thresholds[i] >= numworked)
+                                    {
+                                        if (!block)
+                                        {
+                                            block = true;
+                                            min = i;
+                                        }
+                                    } else {
+                                        if (block)
+                                        {
+                                            block = false;
+                                            max = i;
+                                            if ((max - min) >= maxdiff)
+                                            {
+                                                maxdiff = max - min;
+                                                maxdiffoffset = min;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (maxdiff > 0)
+                                {
+                                    break;
+                                }
+                            }
+
+                            finished = true;
                         }
-                        Thresholds[i] = 0; // reset the threshold so the next run won't show old results
+
+                        if (finished)
+                        {
+
+                            RTState = RT_STATE_IDLE;
+
+                            if (maxdiff != 0)
+                                CodecThresholdSet((maxdiffoffset + maxdiff / 2) * CODEC_THRESHOLD_CALIBRATE_STEPS + CODEC_THRESHOLD_CALIBRATE_MIN);
+                            else
+                                CodecThresholdReset();
+
+                            CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, NULL);
+                            uint16_t i_max = (CODEC_THRESHOLD_CALIBRATE_MID - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS;
+                            if (tmp_th >= CODEC_THRESHOLD_CALIBRATE_MAX)
+                                i_max = (CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS;
+                            for (i = 0; i < i_max; i++)
+                            {
+                                char tmpBuf[10];
+                                snprintf(tmpBuf, 10, "%4" PRIu16 ": ", i*CODEC_THRESHOLD_CALIBRATE_STEPS + CODEC_THRESHOLD_CALIBRATE_MIN);
+                                TerminalSendString(tmpBuf);
+                                if (Thresholds[i])
+                                {
+                                    snprintf(tmpBuf, 10, "%3" PRIu16, Thresholds[i]);
+                                    TerminalSendString(tmpBuf);
+                                } else {
+                                    TerminalSendChar('-');
+                                }
+                                TerminalSendStringP(PSTR("\r\n"));
+                                Thresholds[i] = 0; // reset the threshold so the next run won't show old results
+                            }
+
+
+                            Selected = false;
+                            Reader14443CurrentCommand = Reader14443_Do_Nothing;
+                            Reader14443ACodecReset();
+                            return 0;
+                        }
                     }
-
-                    if (maxdiff != 0)
-                        CodecThresholdSet((maxdiffoffset + maxdiff / 2) * CODEC_THRESHOLD_CALIBRATE_STEPS + CODEC_THRESHOLD_CALIBRATE_MIN);
-                    else
-                        CodecThresholdReset();
-
-                    Selected = false;
-                    Reader14443CurrentCommand = Reader14443_Do_Nothing;
-                    CodecReaderFieldStop();
-                    return 0;
+                    TryCount = 0;
                 }
-
-                Thresholds[(ReaderThreshold - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] = 0;
-                CodecThresholdIncrement();
-                ErrorCount = 0;
             }
 
             uint16_t rVal = Reader14443A_Select(Buffer, BitCount);
             if (Selected) // we are done finding the threshold
             {
-                Thresholds[(ReaderThreshold - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] = 1;
-                CodecThresholdIncrement();
+                Thresholds[(ReaderThreshold - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] += 1;
+                if (TryCount == TRYCOUNT_MAX)
+                {
+                    CodecThresholdIncrement();
+                    TryCount = 0;
+                }
                 ReaderState = STATE_IDLE;
                 Reader14443ACodecStart();
                 return Reader14443A_Halt(Buffer);
@@ -592,13 +659,11 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 }
                 Buffer[0] = 0x30; // MiFare Ultralight read command
                 Buffer[1] = MFURead_CurrentAdress;
-                uint16_t crc = ISO14443_CRCA(Buffer, 2);
-                Buffer[2] = crc;
-                Buffer[3] = crc >> 8;
+                ISO14443AAppendCRCA(Buffer, 2);
 
                 MFURead_CurrentAdress += 4;
 
-                return addParityBits(Buffer, 32);
+                return addParityBits(Buffer, 4 * BITS_PER_BYTE);
             }
             return rVal;
         }

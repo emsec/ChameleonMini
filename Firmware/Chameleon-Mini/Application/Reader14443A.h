@@ -19,7 +19,6 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount);
 
 uint16_t addParityBits(uint8_t * Buffer, uint16_t bits);
 uint16_t removeParityBits(uint8_t * Buffer, uint16_t BitCount);
-uint16_t removeSOC(uint8_t * Buffer, uint16_t BitCount);
 bool checkParityBits(uint8_t * Buffer, uint16_t BitCount);
 uint16_t ISO14443_CRCA(uint8_t * Buffer, uint8_t ByteCount);
 

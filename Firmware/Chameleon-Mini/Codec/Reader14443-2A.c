@@ -28,12 +28,8 @@ static volatile uint16_t RxPendingSince;
 
 static volatile enum {
     STATE_IDLE,
-    STATE_MILLER_SOF0,
-    STATE_MILLER_SOF1,
-    STATE_MILLER_TX0,
-    STATE_MILLER_TX1,
-    STATE_MILLER_EOF0,
-    STATE_MILLER_EOF1,
+    STATE_MILLER_SEND,
+    STATE_MILLER_EOF,
     STATE_FDT
 } State;
 
@@ -54,11 +50,13 @@ void Reader14443ACodecInit(void) {
     CodecInitCommon();
     CodecSetDemodPower(true);
 
-    CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES/2 - 1;
-    CODEC_TIMER_SAMPLING.CCB = 1;
+    CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;
+    CODEC_TIMER_SAMPLING.CCB = 0;
+    CODEC_TIMER_SAMPLING.CCC = 0;
     CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
     CODEC_TIMER_SAMPLING.INTCTRLA = 0;
-    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_HI_gc;
+    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_OFF_gc;
+    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_DIV1_gc;
 
     CODEC_TIMER_LOADMOD.CTRLA = 0;
     State = STATE_IDLE;
@@ -80,6 +78,22 @@ void Reader14443ACodecDeInit(void) {
     Flags.Start = false;
 }
 
+INLINE void Insert0(void)
+{
+    SampleRegister >>= 1;
+    if (++BitCount % 8)
+        return;
+    *CodecBufferPtr++ = SampleRegister;
+}
+
+INLINE void Insert1(void)
+{
+    SampleRegister = (SampleRegister >> 1) | 0x80;
+    if (++BitCount % 8)
+        return;
+    *CodecBufferPtr++ = SampleRegister;
+}
+
 INLINE void Reader14443A_EOC(void)
 {
     CODEC_TIMER_LOADMOD.INTCTRLB = 0;
@@ -87,6 +101,14 @@ INLINE void Reader14443A_EOC(void)
     CODEC_TIMER_TIMESTAMPS.INTCTRLB = 0;
     CODEC_TIMER_TIMESTAMPS.CTRLA = TC_CLKSEL_OFF_gc;
     ACA.AC1CTRL &= ~AC_ENABLE_bm;
+
+    if (BitCount & 1)
+    {
+        if (SampleRegister & 0x80)
+            Insert0();
+        else
+            Insert1();
+    }
 
     if (BitCount % 8) // copy the last byte, if there is an incomplete byte
         CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
@@ -104,138 +126,94 @@ INLINE void Reader14443A_EOC(void)
     State = STATE_FDT;
 }
 
-ISR(CODEC_TIMER_SAMPLING_CCB_VECT)
+INLINE void BufferToSequence(void)
 {
-    static void * JumpTable[] = {
-            [STATE_IDLE] = &&STATE_IDLE_LABEL,
-            [STATE_MILLER_SOF0] = &&STATE_MILLER_SOF0_LABEL,
-            [STATE_MILLER_SOF1] = &&STATE_MILLER_SOF1_LABEL,
-            [STATE_MILLER_TX0] = &&STATE_MILLER_TX0_LABEL,
-            [STATE_MILLER_TX1] = &&STATE_MILLER_TX1_LABEL,
-            [STATE_MILLER_EOF0] = &&STATE_MILLER_EOF0_LABEL,
-            [STATE_MILLER_EOF1] = &&STATE_MILLER_EOF1_LABEL,
-            [STATE_FDT] = &&STATE_FDT_LABEL
-    };
-
-    goto *JumpTable[State];
-
-    STATE_MILLER_SOF0_LABEL:
-        /* Output a SOF */
-        CodecSetReaderField(false);
-        _delay_us(2.5);
-        CodecSetReaderField(true);
-
-        CodecBufferIdx = 0;
-        SampleRegister = CodecBuffer[0];
-        BitCountUp = 0;
-
-        State = STATE_MILLER_SOF1;
+    uint16_t count = BitCount;
+    if (count > BITS_PER_BYTE * CODEC_BUFFER_SIZE / 2) // todo is this correct?
         return;
 
-    STATE_MILLER_SOF1_LABEL:
-        State = STATE_MILLER_TX0;
-        return;
+    BitCount = 0;
 
-    STATE_MILLER_TX0_LABEL:
-        /* First half of bit-slot */
-        if (SampleRegister & 0x01) {
-            /* Do Nothing */
+    memcpy(CodecBuffer + CODEC_BUFFER_SIZE / 2, CodecBuffer, (count + 7) / 8);
+    uint8_t * Buffer = CodecBuffer + CODEC_BUFFER_SIZE / 2;
+    CodecBufferPtr = CodecBuffer;
+
+    Insert1(); // SOC
+    Insert0();
+
+    uint16_t i;
+    uint8_t last = 0;
+    for (i = 1; i <= count; i++)
+    {
+        if ((*Buffer) & 1)
+        {
+            Insert0();
+            Insert1();
+            last = 1;
         } else {
-            if (LastBit == 0) {
-                CodecSetReaderField(false);
-                _delay_us(2.5);
-                CodecSetReaderField(true);
+            if (last)
+            {
+                Insert0();
+                Insert0();
             } else {
-                /* Do Nothing */
+                Insert1();
+                Insert0();
             }
+            last = 0;
         }
-
-        State = STATE_MILLER_TX1;
-        return;
-
-    STATE_MILLER_TX1_LABEL:
-        /* Second half of bit-slot */
-        if (SampleRegister & 0x01) {
-            CodecSetReaderField(false);
-            _delay_us(2.5);
-            CodecSetReaderField(true);
-            LastBit = 1;
-        } else {
-            /* No modulation pauses */
-            LastBit = 0;
-        }
-
-        SampleRegister >>= 1;
-        if (--BitCount == 0) {
-            State = STATE_MILLER_EOF0;
-        } else {
-            State = STATE_MILLER_TX0;
-        }
-
-        if ((++BitCountUp % 8) == 0)
-            SampleRegister = CodecBuffer[++CodecBufferIdx];
-        return;
-
-    STATE_MILLER_EOF0_LABEL:
-        if (LastBit == 0) {
-            CodecSetReaderField(false);
-            _delay_us(2.5);
-            CodecSetReaderField(true);
-        } else {
-            /* Do Nothing */
-        }
-
-        State = STATE_MILLER_EOF1;
-        return;
-
-        STATE_MILLER_EOF1_LABEL:
-            CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
-            _delay_us(50); // wait for DEMOD signal to stabilize
-
-            /* Enable the AC interrupt, which either finds the SOC and then starts the pause-finding timer,
-             * or it is triggered before the SOC, which mostly isn't bad at all, since the first pause
-             * needs to be found. */
-            ACA.STATUS = AC_AC1IF_bm;
-            ACA.AC1CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_BOTHEDGES_gc | AC_INTLVL_HI_gc | AC_ENABLE_bm;
-
-            CodecBufferPtr = CodecBuffer; // use GPIOR for faster access
-            BitCount = 1; // the first modulation of the SOC is "found" implicitly
-            SampleRegister = 0x80;
-
-            RxPendingSince = SystemGetSysTick();
-            Flags.RxPending = true;
-
-            // reset for future use
-            CodecBufferIdx = 0;
-            BitCountUp = 0;
-
-            State = STATE_IDLE;
-            return;
-
-        STATE_IDLE_LABEL:
-        STATE_FDT_LABEL:
-            return;
+        *Buffer >>= 1;
+        if ((i % 8) == 0)
+            Buffer++;
     }
+
+    if (last == 0) // EOC
+    {
+        Insert1();
+        Insert0();
+    }
+
+    if (BitCount % 8)
+        CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
+}
+
+ISR (TCD0_CCC_vect)
+{
+    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
+    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
+
+    /* Enable the AC interrupt, which either finds the SOC and then starts the pause-finding timer,
+     * or it is triggered before the SOC, which mostly isn't bad at all, since the first pause
+     * needs to be found. */
+    ACA.STATUS = AC_AC1IF_bm;
+    ACA.AC1CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_INTLVL_HI_gc | AC_ENABLE_bm;
+
+    CodecBufferPtr = CodecBuffer; // use GPIOR for faster access
+    BitCount = 1; // FALSCH todo the first modulation of the SOC is "found" implicitly
+    SampleRegister = 0x00;
+
+    RxPendingSince = SystemGetSysTick();
+    Flags.RxPending = true;
+
+    // reset for future use
+    CodecBufferIdx = 0;
+    BitCountUp = 0;
+
+    State = STATE_IDLE;
+    PORTE.OUTTGL = PIN3_bm;
+}
+
+void Reader14443AMillerEOC(void)
+{
+    CODEC_TIMER_SAMPLING.PER = 5*SAMPLE_RATE_SYSTEM_CYCLES - 1;
+    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCBIF_bm | TC0_CCCIF_bm;
+    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_OFF_gc | TC_CCCINTLVL_HI_gc;
+    CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES - 1;
+    PORTE.OUTTGL = PIN3_bm;
+}
 
 ISR(CODEC_TIMER_TIMESTAMPS_CCA_VECT) // EOC found
 {
     Reader14443A_EOC();
-}
-
-INLINE void Insert0(void)
-{
-    SampleRegister >>= 1;
-    if (++BitCount % 8)
-        return;
-    *CodecBufferPtr++ = SampleRegister;
-}
-
-INLINE void Insert1(void)
-{
-    SampleRegister = (SampleRegister >> 1) | 0x80;
-    if (++BitCount % 8)
-        return;
-    *CodecBufferPtr++ = SampleRegister;
 }
 
 ISR(ACA_AC1_vect) // this interrupt either finds the SOC or gets triggered before
@@ -253,26 +231,35 @@ ISR(CODEC_TIMER_LOADMOD_CCA_VECT) // pause found
 
     /* This needs to be done only on the first call,
      * but doing this only on a condition means wasting time, so we do it every time. */
-    CODEC_TIMER_TIMESTAMPS.CTRLA = TC_CLKSEL_DIV2_gc;
+    CODEC_TIMER_TIMESTAMPS.CTRLA = TC_CLKSEL_DIV4_gc;
 
     switch (tmp) // decide how many half bit periods have been modulations
     {
-    case 0 ... 96: // 64 ticks is one half of a bit period
-        Insert0();
-        // If one full bit period is over AND the last half bit period also was a pause,
-        // we have found the EOC.
-        if ((BitCount & 1) == 0 && (SampleRegister & 0x40) == 0)
-            Reader14443A_EOC();
+    case 0 ... 48: // 32 ticks is one half of a bit period
         return;
 
-    case 97 ... 160: // 128 ticks is a full bit period
+    case 49 ... 80: // 64 ticks are a full bit period
         Insert1();
         Insert0();
         return;
 
-    default: // every value over 128 + 32 (tolerance) is considered to be 3 half bit periods
+    case 81 ... 112: // 96 ticks are 3 half bit periods
+        if (BitCount & 1)
+        {
+            Insert1();
+            Insert1();
+            Insert0();
+        } else {
+            Insert1();
+            Insert0();
+            Insert0();
+        }
+        return;
+
+    default: // every value over 96 + 16 (tolerance) is considered to be 4 half bit periods
         Insert1();
         Insert1();
+        Insert0();
         Insert0();
         return;
     }
@@ -283,6 +270,7 @@ void Reader14443ACodecTask(void)
 {
     if (Flags.RxPending && SYSTICK_DIFF(RxPendingSince) > Reader_FWT + 1)
     {
+        Reader14443A_EOC();
         BitCount = 0;
         Flags.RxDone = true;
         Flags.RxPending = false;
@@ -307,7 +295,7 @@ void Reader14443ACodecTask(void)
                 BitCount = 0;
 
                 bool breakflag = false;
-                TmpCodecBuffer[0] >>= 2; // with this (and BitCountTmp = 2), the SOC is ignored and thus it's not neccessary to remove it later
+                TmpCodecBuffer[0] >>= 2; // with this (and BitCountTmp = 2), the SOC is ignored
                 while (!breakflag && BitCountTmp < TotalBitCount)
                 {
                     uint8_t Bit = TmpCodecBuffer[BitCountTmp / 8] & 0x03;
@@ -315,18 +303,14 @@ void Reader14443ACodecTask(void)
                     switch (Bit)
                     {
                     case 0b10:
-                        Insert0();
-                        break;
-
-                    case 0b01:
                         Insert1();
                         break;
 
+                    case 0b01:
+                        Insert0();
+                        break;
+
                     case 0b00: // EOC
-                        if (BitCount % 8) // copy the last byte, if there is an incomplete byte
-                            CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
-                        LEDHook(LED_CODEC_RX, LED_PULSE);
-                        LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
                         breakflag = true;
                         break;
 
@@ -336,6 +320,10 @@ void Reader14443ACodecTask(void)
                     }
                     BitCountTmp += 2;
                 }
+                if (BitCount % 8) // copy the last byte, if there is an incomplete byte
+                    CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
+                LEDHook(LED_CODEC_RX, LED_PULSE);
+                LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
             }
         }
         Flags.Start = false;
@@ -357,12 +345,12 @@ void Reader14443ACodecTask(void)
              */
 
             /* Configure and enable the analog comparator for finding pauses in the DEMOD signal. */
-            ACA.AC1CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_BOTHEDGES_gc | AC_ENABLE_bm;
+            ACA.AC1CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_ENABLE_bm;
 
             /* This timer will be used to detect the pauses between the modulation sequences. */
             CODEC_TIMER_LOADMOD.CTRLA = 0;
             CODEC_TIMER_LOADMOD.CNT = 0;
-            CODEC_TIMER_LOADMOD.PER = 127; // with 27.12 MHz this is exactly one half bit width
+            CODEC_TIMER_LOADMOD.PER = 0xFFFF; // with 27.12 MHz this is exactly one half bit width
             CODEC_TIMER_LOADMOD.CCA = 95; // with 27.12 MHz this is 3/4 of a half bit width
             CODEC_TIMER_LOADMOD.INTCTRLA = 0;
             CODEC_TIMER_LOADMOD.INTFLAGS = TC1_CCAIF_bm;
@@ -371,7 +359,7 @@ void Reader14443ACodecTask(void)
             /* This timer will be used to find out how many bit halfs since the last pause have been passed. */
             CODEC_TIMER_TIMESTAMPS.CNT = 0;
             CODEC_TIMER_TIMESTAMPS.PER = 0xFFFF;
-            CODEC_TIMER_TIMESTAMPS.CCA = 256;
+            CODEC_TIMER_TIMESTAMPS.CCA = 160;
             CODEC_TIMER_TIMESTAMPS.INTCTRLA = 0;
             CODEC_TIMER_TIMESTAMPS.INTFLAGS = TC1_CCAIF_bm;
             CODEC_TIMER_TIMESTAMPS.INTCTRLB = TC_CCAINTLVL_LO_gc;
@@ -387,10 +375,12 @@ void Reader14443ACodecTask(void)
             LogEntry(LOG_INFO_CODEC_TX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
 
             /* Set state and start timer for Miller encoding. */
-            State = STATE_MILLER_SOF0;
-            LastBit = 0;
-            CODEC_TIMER_SAMPLING.CNT = 0;
-            CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_DIV1_gc;
+            BufferToSequence();
+            State = STATE_MILLER_SEND;
+            CodecBufferPtr = CodecBuffer;
+            CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCBIF_bm;
+            CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_HI_gc;
+            _delay_loop_1(85);
         }
     }
 }
