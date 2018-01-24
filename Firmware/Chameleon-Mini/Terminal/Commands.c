@@ -639,3 +639,17 @@ CommandStatusIdType CommandExecAutocalibrate(char* OutMessage)
     CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
     return TIMEOUT_COMMAND;
 }
+
+CommandStatusIdType CommandExecClone(char *OutMessage)
+{
+    ConfigurationSetById(CONFIG_ISO14443A_READER);
+
+    ApplicationReset();
+
+    Reader14443CurrentCommand = Reader14443_Identify_Clone;
+    Reader14443AAppInit();
+    Reader14443ACodecStart();
+    CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
+
+    return TIMEOUT_COMMAND;
+}

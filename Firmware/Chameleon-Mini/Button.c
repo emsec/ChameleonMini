@@ -4,6 +4,7 @@
 #include "Settings.h"
 #include "Memory.h"
 #include "Map.h"
+#include "Terminal/CommandLine.h"
 #include "Application/Application.h"
 
 #define BUTTON_PORT     	PORTA
@@ -27,6 +28,7 @@ static const MapEntryType PROGMEM ButtonActionMap[] = {
     { .Id = BUTTON_ACTION_RECALL_MEM,			.Text = "RECALL_MEM" },
     { .Id = BUTTON_ACTION_TOGGLE_FIELD,			.Text = "TOGGLE_FIELD" },
     { .Id = BUTTON_ACTION_STORE_LOG,			.Text = "STORE_LOG" },
+    { .Id = BUTTON_ACTION_CLONE,			.Text = "CLONE" },
 };
 
 static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
@@ -180,6 +182,11 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
         break;
     }
 
+    case BUTTON_ACTION_CLONE:
+    {
+        CommandExecute("CLONE");
+        break;
+    }
 
     default:
         break;

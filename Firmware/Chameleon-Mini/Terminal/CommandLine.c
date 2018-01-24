@@ -309,6 +309,13 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = CommandSetField,
     .GetFunc    = CommandGetField
   },
+  {
+    .Command        = COMMAND_CLONE,
+    .ExecFunc       = CommandExecClone,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = NO_FUNCTION,
+    .GetFunc        = NO_FUNCTION
+  },
   { /* This has to be last element */
     .Command    = COMMAND_LIST_END,
     .ExecFunc   = NO_FUNCTION,
@@ -394,6 +401,20 @@ static CommandStatusIdType CallCommandFunc(
 
     /* This delimiter has not been registered with this command */
     return Status;
+}
+
+void CommandExecute(const char* command)
+{
+    uint8_t i;
+
+    for (i = 0; i < ARRAY_COUNT(CommandTable); i++) 
+    {
+        if (strcmp_P(command, CommandTable[i].Command) == 0)
+        {
+            CallCommandFunc(&CommandTable[i], CHAR_EXEC_MODE, NULL);
+            break;
+        }
+    }
 }
 
 static void DecodeCommand(void)

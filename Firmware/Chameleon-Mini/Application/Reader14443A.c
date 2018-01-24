@@ -13,6 +13,10 @@
 
 #define TRYCOUNT_MAX    16
 
+#define FLAGS_MASK		0x03
+#define FLAGS_PARITY_OK	0x01
+#define FLAGS_NO_DATA	0x02
+
 // TODO replace remaining magic numbers
 
 static bool Selected = false;
@@ -31,6 +35,8 @@ static enum {
     STATE_ATS,
     STATE_DESELECT,
     STATE_DESFIRE_INFO,
+    STATE_UL_C_AUTH,
+    STATE_UL_EV1_GETVERSION,
     STATE_END
 } ReaderState = STATE_IDLE;
 
@@ -51,6 +57,8 @@ typedef enum {
     CardType_NXP_MIFARE_Classic_1k,
     CardType_NXP_MIFARE_Classic_4k,
     CardType_NXP_MIFARE_Ultralight,
+	CardType_NXP_MIFARE_Ultralight_C,
+	CardType_NXP_MIFARE_Ultralight_EV1,
     CardType_NXP_MIFARE_DESFire,
     CardType_NXP_MIFARE_DESFire_EV1,
     CardType_IBM_JCOP31,
@@ -83,7 +91,9 @@ static const CardIdentificationType PROGMEM CardIdentificationList[] = {
         [CardType_NXP_MIFARE_Mini] 				= { .ATQA=0x0004, .ATQARelevant=true, .SAK=0x09, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Mini" },
         [CardType_NXP_MIFARE_Classic_1k] 		= { .ATQA=0x0004, .ATQARelevant=true, .SAK=0x08, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Classic 1k" },
         [CardType_NXP_MIFARE_Classic_4k] 		= { .ATQA=0x0002, .ATQARelevant=true, .SAK=0x18, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Classic 4k" },
-        [CardType_NXP_MIFARE_Ultralight] 		= { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight" },
+        [CardType_NXP_MIFARE_Ultralight]        = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight" },
+        [CardType_NXP_MIFARE_Ultralight_C]      = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight C" },
+        [CardType_NXP_MIFARE_Ultralight_EV1]    = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=false, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight EV1" },
         // for the following two, setting ATSRelevant to true would cause checking the ATS value, but the NXP paper for distinguishing cards does not recommend this
         [CardType_NXP_MIFARE_DESFire] 			= { .ATQA=0x0344, .ATQARelevant=true, .SAK=0x20, .SAKRelevant=true, .ATSRelevant=false, .ATSSize= 5, .ATS={0x75, 0x77, 0x81, 0x02, 0x80}, .Manufacturer="NXP", .Type="MIFARE DESFire" },
         [CardType_NXP_MIFARE_DESFire_EV1] 		= { .ATQA=0x0344, .ATQARelevant=true, .SAK=0x20, .SAKRelevant=true, .ATSRelevant=false, .ATSSize= 5, .ATS={0x75, 0x77, 0x81, 0x02, 0x80}, .Manufacturer="NXP", .Type="MIFARE DESFire EV1" },
@@ -196,7 +206,7 @@ void Reader14443AAppTick(void)
 
 }
 
-INLINE uint16_t Reader14443A_Deselect(uint8_t* Buffer) // deselects the card because of an error, so we will continue to select the card afterwards
+static uint16_t Reader14443A_Deselect(uint8_t* Buffer) // deselects the card because of an error, so we will continue to select the card afterwards
 {
     Buffer[0] = 0xC2;
     ISO14443AAppendCRCA(Buffer, 1);
@@ -214,47 +224,45 @@ static uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
         else
             Selected = false;
     }
+
+    // general frame handling:
+    uint8_t flags = 0;
+    if (BitCount > 0 && checkParityBits(Buffer, BitCount))
+    {
+        flags |= FLAGS_PARITY_OK;
+        BitCount = removeParityBits(Buffer, BitCount);
+    } else if (BitCount == 0) {
+        flags |= FLAGS_NO_DATA;
+    } else { // checkParityBits returned false
+        LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 7) / 8);
+    }
+
+
     switch (ReaderState)
     {
     case STATE_IDLE:
     case STATE_HALT:
-        Reader_FWT = ISO14443A_RX_PENDING_TIMEOUT;
+        Reader_FWT = 4;
         /* Send a REQA */
         Buffer[0] = ISO14443A_CMD_WUPA; // whenever REQA works, WUPA also works, so we choose WUPA always
         ReaderState = STATE_READY;
         return 7;
 
     case STATE_READY:
-        if (BitCount < 18)
+        if (BitCount != 16 || (flags & FLAGS_PARITY_OK) == 0)
         {
             ReaderState = STATE_IDLE;
             Reader14443ACodecStart();
             return 0;
         }
-        if (!checkParityBits(Buffer, BitCount))
-        {
-            ReaderState = STATE_IDLE;
-            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
-            Reader14443ACodecStart();
-            return 0;
-        }
-        BitCount = removeParityBits(Buffer, BitCount);
         CardCharacteristics.ATQA = Buffer[1] << 8 | Buffer[0]; // save ATQA for possible later use
         Buffer[0] = ISO14443A_CMD_SELECT_CL1;
         Buffer[1] = 0x20; // NVB = 16
         ReaderState = STATE_ACTIVE_CL1;
-        return addParityBits(Buffer, 16);
+        return addParityBits(Buffer, 2 * BITS_PER_BYTE);
 
     case STATE_ACTIVE_CL1 ... STATE_ACTIVE_CL3:
-        if (!checkParityBits(Buffer, BitCount) || BitCount < 8)
-        {
-            ReaderState = STATE_IDLE;
-            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
-            Reader14443ACodecStart();
-            return 0;
-        }
-        BitCount = removeParityBits(Buffer, BitCount);
-        if (!CHECK_BCC(Buffer))
+        if ((flags & FLAGS_PARITY_OK) == 0 || BitCount < (5 * BITS_PER_BYTE) || !CHECK_BCC(Buffer))
         {
             ReaderState = STATE_IDLE;
             Reader14443ACodecStart();
@@ -271,62 +279,40 @@ static uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
         memmove(Buffer+2, Buffer, 5);
         Buffer[0] = (ReaderState == STATE_ACTIVE_CL1) ? ISO14443A_CMD_SELECT_CL1 : (ReaderState == STATE_ACTIVE_CL2) ? ISO14443A_CMD_SELECT_CL2 : ISO14443A_CMD_SELECT_CL3;
         Buffer[1] = 0x70; // NVB = 56
-        uint16_t crc = ISO14443_CRCA(Buffer, 7);
-        Buffer[7] = crc & 0xFF;
-        Buffer[8] = crc >> 8;
+        ISO14443AAppendCRCA(Buffer, 7);
         ReaderState = ReaderState - STATE_ACTIVE_CL1 + STATE_SAK_CL1;
-        return addParityBits(Buffer, 72);
+        return addParityBits(Buffer, (7 + 2) * BITS_PER_BYTE);
 
     case STATE_SAK_CL1 ... STATE_SAK_CL3:
-        if (BitCount < 27)
+        if ((flags & FLAGS_PARITY_OK) == 0 || BitCount != (3 * BITS_PER_BYTE) || ISO14443_CRCA(Buffer, 3) != 0)
         {
             ReaderState = STATE_IDLE;
             Reader14443ACodecStart();
             return 0;
         }
-        if (!checkParityBits(Buffer, BitCount))
-        {
-            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
-            ReaderState = STATE_IDLE;
-            Reader14443ACodecStart();
-            return 0;
-        }
-        BitCount = removeParityBits(Buffer, BitCount);
-        if (ISO14443_CRCA(Buffer, 3))
-        {
-            ReaderState = STATE_IDLE;
-            Reader14443ACodecStart();
-            return 0;
-        }
+
         if (IS_CASCADE_BIT_SET(Buffer) && ReaderState != STATE_SAK_CL3)
         {
             Buffer[0] = (ReaderState == STATE_SAK_CL1) ? ISO14443A_CMD_SELECT_CL2 : ISO14443A_CMD_SELECT_CL3;
             Buffer[1] = 0x20; // NVB = 16 bit
             ReaderState = ReaderState - STATE_SAK_CL1 + STATE_ACTIVE_CL1 + 1;
-            return addParityBits(Buffer, 16);
+            return addParityBits(Buffer, 2 * BITS_PER_BYTE);
         } else if (IS_CASCADE_BIT_SET(Buffer) && ReaderState == STATE_SAK_CL3) {
             // TODO handle this very strange hopefully not happening error
         }
         Selected = true;
         CardCharacteristics.UIDSize = (ReaderState - STATE_SAK_CL1) * 3 + 4;
         CardCharacteristics.SAK = Buffer[0]; // save last SAK for possible later use
-
         return 0;
 
     case STATE_DESELECT:
-        if (BitCount == 0) // most likely the card already understood the deselect
+        if ((flags & FLAGS_NO_DATA) != 0) // most likely the card already understood the deselect
         {
             ReaderState = STATE_HALT;
             Reader14443ACodecStart();
             return 0;
         }
-        if (!checkParityBits(Buffer, BitCount))
-        {
-            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
-            return Reader14443A_Deselect(Buffer);
-        }
-        BitCount = removeParityBits(Buffer, BitCount);
-        if (ISO14443_CRCA(Buffer, 3))
+        if ((flags & FLAGS_PARITY_OK) == 0 || ISO14443_CRCA(Buffer, 3))
         {
             return Reader14443A_Deselect(Buffer);
         }
@@ -355,7 +341,183 @@ INLINE uint16_t Reader14443A_RATS(uint8_t* Buffer)
     Buffer[1] = 0x80;
     ISO14443AAppendCRCA(Buffer, 2);
     ReaderState = STATE_ATS;
-    return addParityBits(Buffer, 32);
+    return addParityBits(Buffer, 4 * BITS_PER_BYTE);
+}
+
+static bool Identify(uint8_t *Buffer, uint16_t *BitCount)
+{
+    uint16_t rVal = Reader14443A_Select(Buffer, *BitCount);
+    if (Selected)
+    {
+        if (ReaderState >= STATE_SAK_CL1 && ReaderState <= STATE_SAK_CL3)
+        {
+            bool ISO14443_4A_compliant = IS_ISO14443A_4_COMPLIANT(Buffer);
+            CardCandidatesIdx = 0;
+
+            uint8_t i;
+            for (i = 0; i < ARRAY_COUNT(CardIdentificationList); i++)
+            {
+                CardIdentificationType card;
+                memcpy_P(&card, &CardIdentificationList[i], sizeof(CardIdentificationType));
+                if (card.ATQARelevant && card.ATQA != CardCharacteristics.ATQA)
+                    continue;
+                if (card.SAKRelevant && card.SAK != CardCharacteristics.SAK)
+                    continue;
+                if (card.ATSRelevant && !ISO14443_4A_compliant)
+                    continue; // for this card type candidate, the ATS is relevant, but the card does not support ISO14443-4A
+                CardCandidates[CardCandidatesIdx++] = i;
+            }
+
+            if (ISO14443_4A_compliant)
+            {
+                // send RATS
+                *BitCount = Reader14443A_RATS(Buffer);
+                return false;
+            }
+            // if we don't have to send the RATS, we are finished for distinguishing with ISO 14443A
+
+        } else if (ReaderState == STATE_ATS) { // we have got the ATS
+            if (!checkParityBits(Buffer, *BitCount))
+            {
+                LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (*BitCount + 8) / 7);
+                *BitCount = Reader14443A_Deselect(Buffer);
+                return false;
+            }
+            *BitCount = removeParityBits(Buffer, *BitCount);
+
+            if (Buffer[0] != *BitCount / 8 - 2 || ISO14443_CRCA(Buffer, Buffer[0] + 2))
+            {
+                *BitCount = Reader14443A_Deselect(Buffer);
+                return false;
+            }
+
+            uint8_t i;
+            for (i = 0; i < CardCandidatesIdx; i++)
+            {
+                CardIdentificationType card;
+                memcpy_P(&card, &CardIdentificationList[CardCandidates[i]], sizeof(CardIdentificationType));
+                if (!card.ATSRelevant || (card.ATSRelevant && card.ATSSize == Buffer[0] - 1 && memcmp(card.ATS, Buffer + 1, card.ATSSize) == 0))
+                    /*
+                     * If for this candidate the ATS is not relevant, it remains being a candidate.
+                     * If the ATS is relevant and the size is correct and the ATS is the same as the reference value, this candidate remains a candidate.
+                     */
+                    continue;
+
+                // Else, we have to delete this candidate
+                uint8_t j;
+                for (j = i; j < CardCandidatesIdx - 1; j++)
+                    CardCandidates[j] = CardCandidates[j+1];
+                CardCandidatesIdx--;
+                i--;
+            }
+        }
+
+        /*
+         * If any cards are not distinguishable with ISO14443A commands only, this is the place to run some proprietary commands.
+         */
+
+        if ((ReaderState >= STATE_SAK_CL1 && ReaderState <= STATE_SAK_CL3) || ReaderState == STATE_ATS)
+        {
+            uint8_t i;
+            for (i = 0; i < CardCandidatesIdx; i++)
+            {
+                switch (CardCandidates[i])
+                {
+                case CardType_NXP_MIFARE_DESFire:
+                case CardType_NXP_MIFARE_DESFire_EV1:
+                    Buffer[0] = 0x02;
+                    Buffer[1] = 0x60;
+                    ISO14443AAppendCRCA(Buffer, 2);
+                    ReaderState = STATE_DESFIRE_INFO;
+                    *BitCount = addParityBits(Buffer, 4 * BITS_PER_BYTE);
+                    return false;
+#if 0
+                case CardType_NXP_MIFARE_Ultralight:
+                case CardType_NXP_MIFARE_Ultralight_C:
+                case CardType_NXP_MIFARE_Ultralight_EV1:
+                    Buffer[0] = 0x1A; // UL C Authenticate
+                    Buffer[1] = 0x00;
+                    ISO14443AAppendCRCA(Buffer, 2);
+                    ReaderState = STATE_UL_C_AUTH;
+                    *BitCount = addParityBits(Buffer, 4 * BITS_PER_BYTE);
+                    return false;
+#endif
+                default:
+                    break;
+                }
+            }
+        } else {
+            switch (ReaderState)
+            {
+            case STATE_DESFIRE_INFO:
+                if (*BitCount == 0)
+                {
+                    CardCandidatesIdx = 0; // this will return that this card is unknown to us
+                    break;
+                }
+                if (!checkParityBits(Buffer, *BitCount))
+                {
+                    LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (*BitCount + 8) / 7);
+                    CardCandidatesIdx = 0;
+                    *BitCount = Reader14443A_Deselect(Buffer);
+                    return false;
+                }
+                *BitCount = removeParityBits(Buffer, *BitCount);
+                if (ISO14443_CRCA(Buffer, *BitCount / 8))
+                {
+                    CardCandidatesIdx = 0;
+                    *BitCount = Reader14443A_Deselect(Buffer);
+                    return false;
+                }
+                switch (Buffer[5])
+                {
+                case 0x00:
+                    CardCandidatesIdx = 1;
+                    CardCandidates[0] = CardType_NXP_MIFARE_DESFire;
+                    break;
+
+                case 0x01:
+                    CardCandidatesIdx = 1;
+                    CardCandidates[0] = CardType_NXP_MIFARE_DESFire_EV1;
+                    break;
+
+                default:
+                    CardCandidatesIdx = 0;
+                }
+                break;
+
+            case STATE_UL_C_AUTH:
+                if (*BitCount == 0)
+                {
+                    Buffer[0] = 0x60; // Get Version command for UL EV1
+                    ISO14443AAppendCRCA(Buffer, 1);
+                    *BitCount = addParityBits(Buffer, 3 * BITS_PER_BYTE);
+                    ReaderState = STATE_UL_EV1_GETVERSION;
+                    return false;
+                }
+                CardCandidatesIdx = 1;
+                CardCandidates[0] = CardType_NXP_MIFARE_Ultralight_C;
+                break;
+
+            case STATE_UL_EV1_GETVERSION:
+                if (*BitCount == 0)
+                {
+                    CardCandidatesIdx = 1;
+                    CardCandidates[0] = CardType_NXP_MIFARE_Ultralight;
+                    return true;
+                }
+                CardCandidatesIdx = 1;
+                CardCandidates[0] = CardType_NXP_MIFARE_Ultralight_EV1;
+                break;
+
+            default:
+                break;
+            }
+        }
+        return true;
+    }
+    *BitCount = rVal;
+    return false;
 }
 
 uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
@@ -482,7 +644,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         {
                             for (i = 0; i < (CODEC_THRESHOLD_CALIBRATE_MID - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS; i++)
                             {
-                                if (Thresholds[i] == TRYCOUNT_MAX)
+                                if (Thresholds[i] == TRYCOUNT_MAX && i < ((CODEC_THRESHOLD_CALIBRATE_MID - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS - 1))
                                 {
                                     if (!block)
                                     {
@@ -549,6 +711,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                                 CodecThresholdSet((maxdiffoffset + maxdiff / 2) * CODEC_THRESHOLD_CALIBRATE_STEPS + CODEC_THRESHOLD_CALIBRATE_MIN);
                             else
                                 CodecThresholdReset();
+                            SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->ReaderThreshold);
 
                             CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, NULL);
                             uint16_t i_max = (CODEC_THRESHOLD_CALIBRATE_MID - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS;
@@ -668,137 +831,8 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
          ************************************/
         case Reader14443_Identify:
         {
-            uint16_t rVal = Reader14443A_Select(Buffer, BitCount);
-            if (Selected)
+            if (Identify(Buffer, &BitCount))
             {
-                if (ReaderState >= STATE_SAK_CL1 && ReaderState <= STATE_SAK_CL3)
-                {
-                    bool ISO14443_4A_compliant = IS_ISO14443A_4_COMPLIANT(Buffer);
-                    CardCandidatesIdx = 0;
-
-                    uint8_t i;
-                    for (i = 0; i < ARRAY_COUNT(CardIdentificationList); i++)
-                    {
-                        CardIdentificationType card;
-                        memcpy_P(&card, &CardIdentificationList[i], sizeof(CardIdentificationType));
-                        if (card.ATQARelevant && card.ATQA != CardCharacteristics.ATQA)
-                            continue;
-                        if (card.SAKRelevant && card.SAK != CardCharacteristics.SAK)
-                            continue;
-                        if (card.ATSRelevant && !ISO14443_4A_compliant)
-                            continue; // for this card type candidate, the ATS is relevant, but the card does not support ISO14443-4A
-                        CardCandidates[CardCandidatesIdx++] = i;
-                    }
-
-                    if (ISO14443_4A_compliant)
-                    {
-                        // send RATS
-                        return Reader14443A_RATS(Buffer);
-                    }
-                    // if we don't have to send the RATS, we are finished for distinguishing with ISO 14443A
-
-                } else if (ReaderState == STATE_ATS) { // we have got the ATS
-                    if (!checkParityBits(Buffer, BitCount))
-                    {
-                        LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
-                        return Reader14443A_Deselect(Buffer);
-                    }
-                    BitCount = removeParityBits(Buffer, BitCount);
-
-                    if (Buffer[0] != BitCount / 8 - 2 || ISO14443_CRCA(Buffer, Buffer[0] + 2))
-                    {
-                        return Reader14443A_Deselect(Buffer);
-                    }
-
-                    uint8_t i;
-                    for (i = 0; i < CardCandidatesIdx; i++)
-                    {
-                        CardIdentificationType card;
-                        memcpy_P(&card, &CardIdentificationList[CardCandidates[i]], sizeof(CardIdentificationType));
-                        if (!card.ATSRelevant || (card.ATSRelevant && card.ATSSize == Buffer[0] - 1 && memcmp(card.ATS, Buffer + 1, card.ATSSize) == 0))
-                            /*
-                             * If for this candidate the ATS is not relevant, it remains being a candidate.
-                             * If the ATS is relevant and the size is correct and the ATS is the same as the reference value, this candidate remains a candidate.
-                             */
-                            continue;
-
-                        // Else, we have to delete this candidate
-                        uint8_t j;
-                        for (j = i; j < CardCandidatesIdx - 1; j++)
-                            CardCandidates[j] = CardCandidates[j+1];
-                        CardCandidatesIdx--;
-                        i--;
-                    }
-                }
-
-                /*
-                 * If any cards are not distinguishable with ISO14443A commands only, this is the place to run some proprietary commands.
-                 */
-
-                if ((ReaderState >= STATE_SAK_CL1 && ReaderState <= STATE_SAK_CL3) || ReaderState == STATE_ATS)
-                {
-                    uint8_t i;
-                    for (i = 0; i < CardCandidatesIdx; i++)
-                    {
-                        switch (CardCandidates[i])
-                        {
-                        case CardType_NXP_MIFARE_DESFire:
-                        case CardType_NXP_MIFARE_DESFire_EV1:
-                            Buffer[0] = 0x02;
-                            Buffer[1] = 0x60;
-                            uint16_t crc = ISO14443_CRCA(Buffer, 2);
-                            Buffer[2] = crc;
-                            Buffer[3] = crc >> 8;
-                            ReaderState = STATE_DESFIRE_INFO;
-                            return addParityBits(Buffer, 32);
-
-                        default:
-                            break;
-                        }
-                    }
-                } else {
-                    switch (ReaderState)
-                    {
-                    case STATE_DESFIRE_INFO:
-                        if (BitCount == 0)
-                        {
-                            CardCandidatesIdx = 0; // this will return that this card is unknown to us
-                            break;
-                        }
-                        if (!checkParityBits(Buffer, BitCount))
-                        {
-                            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
-                            CardCandidatesIdx = 0;
-                            return Reader14443A_Deselect(Buffer);
-                        }
-                        BitCount = removeParityBits(Buffer, BitCount);
-                        if (ISO14443_CRCA(Buffer, BitCount / 8))
-                        {
-                            CardCandidatesIdx = 0;
-                            return Reader14443A_Deselect(Buffer);
-                        }
-                        switch (Buffer[5])
-                        {
-                        case 0x00:
-                            CardCandidatesIdx = 1;
-                            CardCandidates[0] = CardType_NXP_MIFARE_DESFire;
-                            break;
-
-                        case 0x01:
-                            CardCandidatesIdx = 1;
-                            CardCandidates[0] = CardType_NXP_MIFARE_DESFire_EV1;
-                            break;
-
-                        default:
-                            CardCandidatesIdx = 0;
-                        }
-                        break;
-
-                    default:
-                        break;
-                    }
-                }
-
                 if (CardCandidatesIdx == 0)
                 {
                     CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Unknown card type.");
@@ -848,8 +882,75 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 CodecReaderFieldStop();
                 Selected = false;
                 return 0;
+            } else {
+                return BitCount;
             }
-            return rVal;
+        }
+
+        case Reader14443_Identify_Clone:
+        {
+        	if (Identify(Buffer, &BitCount))
+        	{
+				if (CardCandidatesIdx == 1)
+				{
+					int cfgid = -1;
+					switch (CardCandidates[0])
+					{
+						case CardType_NXP_MIFARE_Ultralight:
+						{
+							cfgid = CONFIG_MF_ULTRALIGHT;
+							// TODO: enter MFU clone mdoe
+							break;
+						}
+						case CardType_NXP_MIFARE_Classic_1k:
+						case CardType_Infineon_MIFARE_Classic_1k:
+						{
+							if (CardCharacteristics.UIDSize == UIDSize_Single)
+							{
+								cfgid = CONFIG_MF_CLASSIC_1K;
+							} else if (CardCharacteristics.UIDSize == UIDSize_Double) {
+								cfgid = CONFIG_MF_CLASSIC_1K_7B;
+							}
+							break;
+						}
+						case CardType_NXP_MIFARE_Classic_4k:
+						case CardType_Nokia_MIFARE_Classic_4k_emulated_6212:
+						case CardType_Nokia_MIFARE_Classic_4k_emulated_6131:
+						{
+							if (CardCharacteristics.UIDSize == UIDSize_Single)
+							{
+								cfgid = CONFIG_MF_CLASSIC_4K;
+							} else if (CardCharacteristics.UIDSize == UIDSize_Double) {
+								cfgid = CONFIG_MF_CLASSIC_4K_7B;
+							}
+							break;
+						}
+						default:
+							cfgid = -1;
+					}
+
+					if (cfgid > -1)
+					{
+						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Cloned OK!");
+
+						ConfigurationSetById(cfgid);
+						ApplicationReset();
+						ApplicationSetUid(CardCharacteristics.UID);
+					} else {
+						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Clone unsupported!");
+					}
+				} else {
+					CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Multiple possibilities, not clonable!");
+				}
+				Reader14443CurrentCommand = Reader14443_Do_Nothing;
+				CardCandidatesIdx = 0;
+				CodecReaderFieldStop();
+				Selected = false;
+				return 0;
+			} else {
+				return BitCount;
+			}
+        	return 0;
         }
 
         default: // e.g. Do_Nothing

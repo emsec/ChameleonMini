@@ -29,7 +29,8 @@ typedef enum {
     Reader14443_Get_UID,
     Reader14443_Autocalibrate,
     Reader14443_Read_MF_Ultralight,
-    Reader14443_Identify
+    Reader14443_Identify,
+	Reader14443_Identify_Clone
 } Reader14443Command;
 
 
