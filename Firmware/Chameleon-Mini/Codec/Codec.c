@@ -23,7 +23,6 @@ static volatile struct {
 } ReaderFieldFlags = { false };
 
 uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
-uint16_t ReaderThreshold = 400; // standard value
 
 // the following three functions prevent sending data directly after turning on the reader field
 void CodecReaderFieldStart(void) // DO NOT CALL THIS FUNCTION INSIDE APPLICATION!
@@ -82,22 +81,22 @@ bool CodecIsReaderToBeRestarted(void)
     return false;
 }
 
-void CodecThresholdSet(uint16_t th)
+void CodecThresholdSet(uint16_t th) // threshold has to be saved back to eeprom by the caller, if wanted
 {
-    ReaderThreshold = th;
+    GlobalSettings.ActiveSettingPtr->ReaderThreshold = th;
     DACB.CH0DATA = th;
 }
 
-uint16_t CodecThresholdIncrement(void)
+uint16_t CodecThresholdIncrement(void) // threshold has to be saved back to eeprom by the caller, if wanted
 {
-    ReaderThreshold += CODEC_THRESHOLD_CALIBRATE_STEPS;
-    DACB.CH0DATA = ReaderThreshold;
-    return ReaderThreshold;
+    GlobalSettings.ActiveSettingPtr->ReaderThreshold += CODEC_THRESHOLD_CALIBRATE_STEPS;
+    DACB.CH0DATA = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
+    return GlobalSettings.ActiveSettingPtr->ReaderThreshold;
 }
 
-void CodecThresholdReset(void)
+void CodecThresholdReset(void) // threshold has to be saved back to eeprom by the caller, if wanted
 {
-    ReaderThreshold = 400;
-    DACB.CH0DATA = ReaderThreshold;
+    GlobalSettings.ActiveSettingPtr->ReaderThreshold = DEFAULT_READER_THRESHOLD;
+    DACB.CH0DATA = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
 }
 

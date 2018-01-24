@@ -10,13 +10,8 @@
 #define CHECK_BCC(B) ((B[0] ^ B[1] ^ B[2] ^ B[3]) == B[4])
 #define IS_CASCADE_BIT_SET(buf) (buf[0] & 0x04)
 #define IS_ISO14443A_4_COMPLIANT(buf) (buf[0] & 0x20)
-#define MF_CLASSIC_READER_NONCE	0x00000000
 
 #define TRYCOUNT_MAX    16
-
-#define FLAGS_MASK		0x03
-#define FLAGS_PARITY_OK	0x01
-#define FLAGS_NO_DATA	0x02
 
 // TODO replace remaining magic numbers
 
@@ -589,7 +584,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
             uint16_t rVal = Reader14443A_Select(Buffer, BitCount);
             if (Selected) // we are done finding the threshold
             {
-                Thresholds[(ReaderThreshold - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] += 1;
+                Thresholds[(GlobalSettings.ActiveSettingPtr->ReaderThreshold - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] += 1;
                 if (TryCount == TRYCOUNT_MAX)
                 {
                     CodecThresholdIncrement();

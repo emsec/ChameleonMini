@@ -42,7 +42,7 @@ CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam)
         ConfigurationGetList(OutMessage, TERMINAL_BUFFER_SIZE);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
     } else if (ConfigurationSetByName(InParam)) {
-        SettingsSave();
+        SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->Configuration);
         return COMMAND_INFO_OK_ID;
     } else {
         return COMMAND_ERR_INVALID_PARAM_ID;
@@ -572,12 +572,13 @@ CommandStatusIdType CommandSetTimeout(char* OutMessage, const char* InParam)
     if (!sscanf_P(InParam, PSTR("%5d"), &tmp) || tmp > 600)
         return COMMAND_ERR_INVALID_PARAM_ID;
     GlobalSettings.ActiveSettingPtr->PendingTaskTimeout = tmp;
+    SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->PendingTaskTimeout);
     return COMMAND_INFO_OK_ID;
 }
 
 CommandStatusIdType CommandGetThreshold(char* OutParam)
 {
-    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ReaderThreshold);
+    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), GlobalSettings.ActiveSettingPtr->ReaderThreshold);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
@@ -592,7 +593,8 @@ CommandStatusIdType CommandSetThreshold(char* OutMessage, const char* InParam)
     if (!sscanf_P(InParam, PSTR("%5d"), &tmp) || tmp > CODEC_MAXIMUM_THRESHOLD)
         return COMMAND_ERR_INVALID_PARAM_ID;
     DACB.CH0DATA = tmp;
-    ReaderThreshold = tmp;
+    GlobalSettings.ActiveSettingPtr->ReaderThreshold = tmp;
+    SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->ReaderThreshold);
     return COMMAND_INFO_OK_ID;
 }
 
