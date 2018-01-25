@@ -932,10 +932,11 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 					if (cfgid > -1)
 					{
 						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Cloned OK!");
-
 						ConfigurationSetById(cfgid);
 						ApplicationReset();
 						ApplicationSetUid(CardCharacteristics.UID);
+						MemoryStore();
+						SettingsSave();
 					} else {
 						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Clone unsupported!");
 					}
