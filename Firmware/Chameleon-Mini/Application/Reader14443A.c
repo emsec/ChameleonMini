@@ -57,8 +57,8 @@ typedef enum {
     CardType_NXP_MIFARE_Classic_1k,
     CardType_NXP_MIFARE_Classic_4k,
     CardType_NXP_MIFARE_Ultralight,
-	CardType_NXP_MIFARE_Ultralight_C,
-	CardType_NXP_MIFARE_Ultralight_EV1,
+//	CardType_NXP_MIFARE_Ultralight_C,
+//	CardType_NXP_MIFARE_Ultralight_EV1,
     CardType_NXP_MIFARE_DESFire,
     CardType_NXP_MIFARE_DESFire_EV1,
     CardType_IBM_JCOP31,
@@ -92,8 +92,8 @@ static const CardIdentificationType PROGMEM CardIdentificationList[] = {
         [CardType_NXP_MIFARE_Classic_1k] 		= { .ATQA=0x0004, .ATQARelevant=true, .SAK=0x08, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Classic 1k" },
         [CardType_NXP_MIFARE_Classic_4k] 		= { .ATQA=0x0002, .ATQARelevant=true, .SAK=0x18, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Classic 4k" },
         [CardType_NXP_MIFARE_Ultralight]        = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight" },
-        [CardType_NXP_MIFARE_Ultralight_C]      = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight C" },
-        [CardType_NXP_MIFARE_Ultralight_EV1]    = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=false, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight EV1" },
+//        [CardType_NXP_MIFARE_Ultralight_C]      = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight C" },
+//        [CardType_NXP_MIFARE_Ultralight_EV1]    = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=false, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight EV1" },
         // for the following two, setting ATSRelevant to true would cause checking the ATS value, but the NXP paper for distinguishing cards does not recommend this
         [CardType_NXP_MIFARE_DESFire] 			= { .ATQA=0x0344, .ATQARelevant=true, .SAK=0x20, .SAKRelevant=true, .ATSRelevant=false, .ATSSize= 5, .ATS={0x75, 0x77, 0x81, 0x02, 0x80}, .Manufacturer="NXP", .Type="MIFARE DESFire" },
         [CardType_NXP_MIFARE_DESFire_EV1] 		= { .ATQA=0x0344, .ATQARelevant=true, .SAK=0x20, .SAKRelevant=true, .ATSRelevant=false, .ATSSize= 5, .ATS={0x75, 0x77, 0x81, 0x02, 0x80}, .Manufacturer="NXP", .Type="MIFARE DESFire EV1" },
@@ -485,7 +485,7 @@ static bool Identify(uint8_t *Buffer, uint16_t *BitCount)
                     CardCandidatesIdx = 0;
                 }
                 break;
-
+#if 0
             case STATE_UL_C_AUTH:
                 if (*BitCount == 0)
                 {
@@ -509,7 +509,7 @@ static bool Identify(uint8_t *Buffer, uint16_t *BitCount)
                 CardCandidatesIdx = 1;
                 CardCandidates[0] = CardType_NXP_MIFARE_Ultralight_EV1;
                 break;
-
+#endif
             default:
                 break;
             }
