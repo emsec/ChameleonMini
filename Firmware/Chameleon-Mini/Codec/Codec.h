@@ -17,6 +17,7 @@
 
 #include "ISO14443-2A.h"
 #include "Reader14443-2A.h"
+#include "SniffISO14443-2A.h"
 
 /* Timing definitions for ISO14443A */
 #define ISO14443A_SUBCARRIER_DIVIDER    16
@@ -231,6 +232,7 @@ INLINE void CodecSetLoadmodState(bool bOnOff) {
     }
 }
 
+// Turn on and off the codec Reader field
 INLINE void CodecSetReaderField(bool bOnOff) { // this is the function for turning on/off the reader field dumbly; before using this function, please consider to use CodecReaderField{Start,Stop}
 
     if (bOnOff) {
@@ -244,6 +246,7 @@ INLINE void CodecSetReaderField(bool bOnOff) { // this is the function for turni
     }
 }
 
+// Get the status of the reader field
 INLINE bool CodecGetReaderField(void) {
     return (CODEC_READER_TIMER.CTRLA == TC_CLKSEL_DIV1_gc) && (AWEXC.OUTOVEN == CODEC_READER_MASK);
 }
