@@ -66,8 +66,8 @@ static void StartDemod(void) {
     StateRegister = DEMOD_DATA_BIT;
 
     /* Configure sampling-timer free running and sync to first modulation-pause. */
-    CODEC_TIMER_SAMPLING.CNT = 0;
-    CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;
+    CODEC_TIMER_SAMPLING.CNT = 0;                               // Reset the timer count
+    CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;   // Set Period regisiter
     CODEC_TIMER_SAMPLING.CCA = 0xFFFF; /* CCA Interrupt is not active! */
     CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_DIV1_gc;
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
@@ -79,6 +79,7 @@ static void StartDemod(void) {
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
 }
 
+// Find first pause and start sampling
 ISR(CODEC_DEMOD_IN_INT0_VECT) {
     /* This is the first edge of the first modulation-pause after StartDemod.
      * Now we have time to start
@@ -112,6 +113,7 @@ ISR(CODEC_DEMOD_IN_INT0_VECT) {
     CODEC_DEMOD_IN_PORT.INT0MASK = 0;
 }
 
+// Sampling with timer and demod
 ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
     /* This interrupt gets called twice for every bit to sample it. */
     uint8_t SamplePin = CODEC_DEMOD_IN_PORT.IN & CODEC_DEMOD_IN_MASK;
@@ -220,6 +222,7 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
 }
 
+// Enumulate as a card to send card responds
 ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
     /* Bit rate timer. Output a half bit on the output. */
 
@@ -418,6 +421,7 @@ void ISO14443ACodecTask(void) {
         uint16_t AnswerBitCount = ISO14443A_APP_NO_RESPONSE;
 
         if (DemodBitCount >= ISO14443A_MIN_BITS_PER_FRAME) {
+            // For logging data
             LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
             LEDHook(LED_CODEC_RX, LED_PULSE);
 

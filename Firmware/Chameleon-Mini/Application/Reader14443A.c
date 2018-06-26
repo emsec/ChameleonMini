@@ -141,6 +141,7 @@ uint16_t addParityBits(uint8_t * Buffer, uint16_t BitCount)
 
 uint16_t removeParityBits(uint8_t * Buffer, uint16_t BitCount)
 {
+    // Short frame, no parity bit is added
     if (BitCount == 7)
         return 7;
 
