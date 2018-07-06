@@ -13,13 +13,16 @@
 #include <util/delay.h>
 
 
-void Sniff14443ACodecInit(void){
+void Sniff14443ACodecInit(void)
+{
 
 }
 
-void Sniff14443ACodecDeInit(void) {
-
+void Sniff14443ACodecDeInit(void)
+{
+    Reader14443ACodecDeInit();
 }
 void Sniff14443ACodecTask(void)
 {
+    Reader14443ACodecTask();
 }
