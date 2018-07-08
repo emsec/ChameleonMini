@@ -425,6 +425,18 @@ void ISO14443ACodecTask(void) {
             LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
             LEDHook(LED_CODEC_RX, LED_PULSE);
 
+
+            if(SniffEnable == true){
+                // TODO: Start interrupt for finding Card -> Reader direction traffic
+
+                ISO14443ACodecDeInit();
+
+                TrafficSource = TRAFFIC_CARD;
+                TestSniff14443ACodecInit();
+                return;
+
+            }
+
             /* Call application if we received data */
             AnswerBitCount = ApplicationProcess(CodecBuffer, DemodBitCount);
 
@@ -437,6 +449,7 @@ void ISO14443ACodecTask(void) {
                 /* We have to generate the parity bits ourself */
                 ParityBufferPtr = 0;
             }
+
         }
 
         if (AnswerBitCount != ISO14443A_APP_NO_RESPONSE) {

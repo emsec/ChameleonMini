@@ -130,6 +130,8 @@ INLINE void Reader14443A_EOC(void)
     CODEC_TIMER_LOADMOD.CTRLA = ISO14443A_PICC_TO_PCD_FDT_PRESCALER;
 
     State = STATE_FDT;
+
+
 }
 
 INLINE void BufferToSequence(void)
@@ -292,7 +294,6 @@ ISR(CODEC_TIMER_LOADMOD_CCA_VECT) // pause found
 }
 
 static void StartDemod(void){
-    LED_PORT.OUTCLR = LED_RED;
 
 
     /*
@@ -401,6 +402,17 @@ void Reader14443ACodecTask(void)
                 LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
 
                 Flags.RxPending=true;
+
+
+                if (SniffEnable)
+                {
+
+                    Reader14443ACodecDeInit();
+                    ISO14443ACodecInit();
+                    TrafficSource = TRAFFIC_CARD;
+
+                    return;
+                }
             }
 
         }
@@ -431,8 +443,8 @@ void Reader14443ACodecTask(void)
 
         }else{              // No data need to be send or in SNIFFING mode
             // TODO: add another sniff flag, in case of no Application data need to be send (Non sniffing mode)
-            StartDemod();
-            Reader14443AMillerEOC();
+//            StartDemod();
+//            Reader14443AMillerEOC();
 
             // Sniffing mode, enable sampling interrupt only
         }
@@ -487,10 +499,38 @@ void TestSniff14443ACodecInit(void){
     ///////////////////////////
 
     Flags.Start = true;
-//    Flags.RxPending = true;
+
+    StartDemod();
+
+    // CODEC_TIMER_SAMPLING_CCC_vect
+    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
+    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
+
+
+    /* Enable the AC interrupt, which either finds the SOC and then starts the pause-finding timer,
+     * or it is triggered before the SOC, which mostly isn't bad at all, since the first pause
+     * needs to be found. */
+    ACA.STATUS = AC_AC1IF_bm;
+    ACA.AC1CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_INTLVL_HI_gc | AC_ENABLE_bm;
+
+    CodecBufferPtr = CodecBuffer; // use GPIOR for faster access
+    BitCount = 1; // FALSCH todo the first modulation of the SOC is "found" implicitly
+    SampleRegister = 0x00;
+
+    RxPendingSince = SystemGetSysTick();
+
+    Flags.RxPending = true;
+
+    // reset for future use
+    CodecBufferIdx = 0;
+    BitCountUp = 0;
+
+    State = STATE_IDLE;
+    PORTE.OUTTGL = PIN3_bm;
+
+    //Flags.RxPending = true;
 
     //LogEntry(LOG_INFO_CODEC_TX_DATA_W_PARITY, "Codec Sniff Start", 18);
     //Reader14443A_EOC();
-
 
 }
