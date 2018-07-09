@@ -70,7 +70,7 @@ void Reader14443ACodecInit(void) {
 
 
 void Reader14443ACodecDeInit(void) {
-    CodecSetDemodPower(false);
+//    CodecSetDemodPower(false);
     // CodecReaderFieldStop();
     CODEC_TIMER_SAMPLING.CTRLA = 0;
     CODEC_TIMER_SAMPLING.INTCTRLB = 0;
@@ -399,6 +399,9 @@ void Reader14443ACodecTask(void)
                 }
                 if (BitCount % 8) // copy the last byte, if there is an incomplete byte
                     CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
+
+//                BitCount = removeParityBits(CodecBuffer, BitCount);
+
                 LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
 
                 Flags.RxPending=true;
@@ -407,9 +410,10 @@ void Reader14443ACodecTask(void)
                 if (SniffEnable)
                 {
 
+                    LED_PORT.OUTCLR = LED_RED;
                     Reader14443ACodecDeInit();
                     ISO14443ACodecInit();
-                    TrafficSource = TRAFFIC_CARD;
+                    TrafficSource = TRAFFIC_READER;
 
                     return;
                 }
@@ -477,9 +481,9 @@ void TestSniff14443ACodecInit(void){
  * for incoming data. */
 
 
-    CodecInitCommon();
+//    CodecInitCommon();
 
-    CodecSetDemodPower(true);
+//    CodecSetDemodPower(true);
 
     CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;
     CODEC_TIMER_SAMPLING.CCB = 0;
@@ -493,8 +497,8 @@ void TestSniff14443ACodecInit(void){
     State = STATE_IDLE;
 
     BitCount = 0;
-    Flags.Start = false;
-    Flags.RxPending = false;
+//    Flags.Start = false;
+//    Flags.RxPending = false;
     Flags.RxDone = false;
     ///////////////////////////
 
@@ -502,9 +506,13 @@ void TestSniff14443ACodecInit(void){
 
     StartDemod();
 
+//    CODEC_TIMER_SAMPLING.PER = 5*SAMPLE_RATE_SYSTEM_CYCLES - 1;
+//    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
+//    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
+//    CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES - 1;
+    PORTE.OUTTGL = PIN3_bm;
+
     // CODEC_TIMER_SAMPLING_CCC_vect
-    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
-    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
 
 
     /* Enable the AC interrupt, which either finds the SOC and then starts the pause-finding timer,
@@ -525,8 +533,8 @@ void TestSniff14443ACodecInit(void){
     CodecBufferIdx = 0;
     BitCountUp = 0;
 
-    State = STATE_IDLE;
-    PORTE.OUTTGL = PIN3_bm;
+//    State = STATE_IDLE;
+//    PORTE.OUTTGL = PIN3_bm;
 
     //Flags.RxPending = true;
 

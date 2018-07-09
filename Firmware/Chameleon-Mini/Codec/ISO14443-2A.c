@@ -408,7 +408,9 @@ void ISO14443ACodecDeInit(void)
     CODEC_TIMER_LOADMOD.INTFLAGS = TC0_OVFIF_bm;
 
     CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OFF, 0);
-    CodecSetDemodPower(false);
+    if (!SniffEnable) {
+        CodecSetDemodPower(false);
+    }
     CodecSetLoadmodState(false);
 
 }
@@ -431,8 +433,8 @@ void ISO14443ACodecTask(void) {
 
                 ISO14443ACodecDeInit();
 
-                TrafficSource = TRAFFIC_CARD;
                 TestSniff14443ACodecInit();
+                TrafficSource = TRAFFIC_CARD;
                 return;
 
             }
