@@ -16,6 +16,29 @@
 bool SniffEnable;
 enum RCTraffic TrafficSource;
 
+// Card->Reader Direction Traffic
+INLINE void CardSniffInit(void)
+{
+
+}
+
+INLINE void CardSniffDeinit(void)
+{
+    Reader14443ACodecDeInit();
+}
+
+// Reader->Card Direction Traffic
+INLINE void ReaderSniffInit(void)
+{
+    ISO14443ACodecInit();
+}
+
+INLINE void ReaderSniffDeInit(void)
+{
+    ISO14443ACodecDeInit();
+}
+
+
 void Sniff14443ACodecInit(void)
 {
     SniffEnable = true;
@@ -24,7 +47,7 @@ void Sniff14443ACodecInit(void)
     // Card -> Reader traffic sniffing interrupt will be enbaled
     // when Reader-> Card direction sniffing finished
     // See ISO14443-2A.c ISO14443ACodecTask()
-    ISO14443ACodecInit();
+    ReaderSniffInit();
 
     // Also configure Interrupt settings for Reader function
 //    Reader14443ACodecInit();
@@ -33,8 +56,9 @@ void Sniff14443ACodecInit(void)
 void Sniff14443ACodecDeInit(void)
 {
     SniffEnable = false;
-    ISO14443ACodecDeInit();
-    Reader14443ACodecDeInit();
+    CardSniffDeinit();
+    ReaderSniffDeInit();
+
 }
 void Sniff14443ACodecTask(void)
 {
@@ -46,3 +70,5 @@ void Sniff14443ACodecTask(void)
 //    ISO14443ACodecDeInit();
 //    Reader14443ACodecTask();
 }
+
+
