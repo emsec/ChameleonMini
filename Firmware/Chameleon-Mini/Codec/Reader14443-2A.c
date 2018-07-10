@@ -496,13 +496,22 @@ void TestSniff14443ACodecInit(void){
     CODEC_TIMER_LOADMOD.CTRLA = 0;
     State = STATE_IDLE;
 
-    BitCount = 0;
+//    BitCount = 0;
+    CodecBufferPtr = CodecBuffer; // use GPIOR for faster access
+    BitCount = 1; // FALSCH todo the first modulation of the SOC is "found" implicitly
+    SampleRegister = 0x00;
+
 //    Flags.Start = false;
 //    Flags.RxPending = false;
     Flags.RxDone = false;
     ///////////////////////////
 
     Flags.Start = true;
+    // reset for future use
+//    CodecBufferIdx = 0;
+//    BitCountUp = 0;
+
+    Flags.RxPending = true;
 
     StartDemod();
 
@@ -510,7 +519,7 @@ void TestSniff14443ACodecInit(void){
 //    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
 //    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
 //    CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES - 1;
-    PORTE.OUTTGL = PIN3_bm;
+//    PORTE.OUTTGL = PIN3_bm;
 
     // CODEC_TIMER_SAMPLING_CCC_vect
 
@@ -521,17 +530,8 @@ void TestSniff14443ACodecInit(void){
     ACA.STATUS = AC_AC1IF_bm;
     ACA.AC1CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_INTLVL_HI_gc | AC_ENABLE_bm;
 
-    CodecBufferPtr = CodecBuffer; // use GPIOR for faster access
-    BitCount = 1; // FALSCH todo the first modulation of the SOC is "found" implicitly
-    SampleRegister = 0x00;
-
     RxPendingSince = SystemGetSysTick();
 
-    Flags.RxPending = true;
-
-    // reset for future use
-    CodecBufferIdx = 0;
-    BitCountUp = 0;
 
 //    State = STATE_IDLE;
 //    PORTE.OUTTGL = PIN3_bm;

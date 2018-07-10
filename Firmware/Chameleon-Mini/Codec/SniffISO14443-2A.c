@@ -28,12 +28,11 @@ void Sniff14443ACodecInit(void)
 
     // Also configure Interrupt settings for Reader function
 //    Reader14443ACodecInit();
-
-
 }
 
 void Sniff14443ACodecDeInit(void)
 {
+    SniffEnable = false;
     ISO14443ACodecDeInit();
     Reader14443ACodecDeInit();
 }
