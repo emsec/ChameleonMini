@@ -75,7 +75,7 @@ static void StartDemod(void) {
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCAINTLVL_HI_gc;
 
     /* Start looking out for modulation pause via interrupt. */
-    CODEC_DEMOD_IN_PORT.INTFLAGS = 0x03;
+    CODEC_DEMOD_IN_PORT.INTFLAGS = PORT_INT0IF_bm;
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
 }
 
@@ -408,9 +408,7 @@ void ISO14443ACodecDeInit(void)
     CODEC_TIMER_LOADMOD.INTFLAGS = TC0_OVFIF_bm;
 
     CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OFF, 0);
-    if (!SniffEnable) {
-        CodecSetDemodPower(false);
-    }
+    CodecSetDemodPower(false);
     CodecSetLoadmodState(false);
 
 }
@@ -427,18 +425,6 @@ void ISO14443ACodecTask(void) {
             LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
             LEDHook(LED_CODEC_RX, LED_PULSE);
 
-
-            if(SniffEnable == true){
-                // TODO: Start interrupt for finding Card -> Reader direction traffic
-
-                ISO14443ACodecDeInit();
-
-                TestSniff14443ACodecInit();
-                TrafficSource = TRAFFIC_CARD;
-                return;
-
-            }
-
             /* Call application if we received data */
             AnswerBitCount = ApplicationProcess(CodecBuffer, DemodBitCount);
 
@@ -451,7 +437,6 @@ void ISO14443ACodecTask(void) {
                 /* We have to generate the parity bits ourself */
                 ParityBufferPtr = 0;
             }
-
         }
 
         if (AnswerBitCount != ISO14443A_APP_NO_RESPONSE) {

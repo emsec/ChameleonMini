@@ -412,7 +412,8 @@ void Reader14443ACodecTask(void)
 
                     LED_PORT.OUTCLR = LED_RED;
                     Reader14443ACodecDeInit();
-                    ISO14443ACodecInit();
+                    Sniff14443ACodecInit();
+//                    ISO14443ACodecInit();
                     TrafficSource = TRAFFIC_READER;
 
                     return;
