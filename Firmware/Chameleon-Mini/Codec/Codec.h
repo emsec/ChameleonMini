@@ -146,6 +146,9 @@ INLINE void CodecInitCommon(void)
     EVSYS.CH0MUX = CODEC_DEMOD_IN_EVMUX0;
     EVSYS.CH1MUX = CODEC_DEMOD_IN_EVMUX1;
 
+    EVSYS.CH2MUX = CODEC_DEMOD_IN_EVMUX0;
+
+
     /* Configure loadmod pin configuration and use a virtual port configuration
      * for single instruction cycle access */
     CODEC_LOADMOD_PORT.DIRSET = CODEC_LOADMOD_MASK;
@@ -187,6 +190,8 @@ INLINE void CodecInitCommon(void)
     /* Configure Analog Comparator 1 to detect SOC */
     ACA.AC1MUXCTRL = AC_MUXPOS_DAC_gc | AC_MUXNEG_PIN7_gc;
     ACA.AC1CTRL = CODEC_AC_DEMOD_SETTINGS;
+
+
 }
 
 INLINE void CodecSetSubcarrier(SubcarrierModType ModType, uint16_t Divider)

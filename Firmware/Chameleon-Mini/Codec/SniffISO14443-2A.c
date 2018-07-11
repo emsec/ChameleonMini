@@ -76,6 +76,22 @@ static volatile enum {
 
 void ReaderSniffInit(void)
 {
+
+    // Common Codec Register settings
+//    CodecInitCommon();
+
+
+    // Configure interrupt for demod
+    // This was disabled in CardSniffInit()
+    CODEC_DEMOD_IN_PORT.INTCTRL = PORT_INT1LVL_HI_gc;
+
+
+    // Enable demodulator power
+//    CodecSetDemodPower(true);
+
+
+    TrafficSource = TRAFFIC_READER;
+
     /* Initialize some global vars and start looking out for reader commands */
     Flags.DemodFinished = 0;
 
@@ -408,6 +424,7 @@ ISR(TCD1_CCB_vect) // EOC found
 
 INLINE void CardSniffInit(void)
 {
+    TrafficSource = TRAFFIC_CARD;
 
     ////////////////////////////
     // Same as reader init
@@ -530,6 +547,7 @@ INLINE void CardSniffDeinit(void)
 
     EVSYS.CH2MUX = 0; // on every ACA_AC1 INT
     EVSYS.CH2CTRL = 0;
+    ACA.AC0MUXCTRL = AC_MUXPOS_DAC_gc | AC_MUXNEG_PIN7_gc;
     ACA.AC0CTRL = CODEC_AC_DEMOD_SETTINGS;
 
 
@@ -548,10 +566,9 @@ INLINE void CardSniffDeinit(void)
 
 void Sniff14443ACodecInit(void)
 {
-    Flags.DemodFinished = 0;
+//    Flags.DemodFinished = 0;
 
-    SniffEnable = true;
-    TrafficSource = TRAFFIC_READER;
+//    SniffEnable = true;
 
     // Common Codec Register settings
     CodecInitCommon();
@@ -570,9 +587,10 @@ void Sniff14443ACodecInit(void)
 
 void Sniff14443ACodecDeInit(void)
 {
-    SniffEnable = false;
+//    SniffEnable = false;
     CardSniffDeinit();
     ReaderSniffDeInit();
+    CodecSetDemodPower(false);
 }
 
 
@@ -590,18 +608,17 @@ void Sniff14443ACodecTask(void)
                 LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
                 LEDHook(LED_CODEC_RX, LED_PULSE);
 
-                if(SniffEnable == true){
-                    // TODO: Start interrupt for finding Card -> Reader direction traffic
+//                if(SniffEnable == true){
+                // TODO: Start interrupt for finding Card -> Reader direction traffic
 
-                    ReaderSniffDeInit();
-                    CardSniffInit();
+                ReaderSniffDeInit();
+                CardSniffInit();
 
 //                    ISO14443ACodecDeInit();
 
 //                    TestSniff14443ACodecInit();
-                    TrafficSource = TRAFFIC_CARD;
-                    return;
-                }
+                return;
+//                }
             }
 //
 //                /* No data to be processed. Disable loadmodding and start listening again */
@@ -691,10 +708,12 @@ void Sniff14443ACodecTask(void)
 
 //                    LED_PORT.OUTCLR = LED_RED;
                     CardSniffDeinit();
+//                    TrafficSource = TRAFFIC_READER;
                     ReaderSniffInit();
+//                    Sniff14443ACodecInit();
+//                    ReaderSniffInit();
 //                    Reader14443ACodecDeInit();
 //                    ISO14443ACodecInit();
-                    TrafficSource = TRAFFIC_READER;
 
                     return;
 //                }
