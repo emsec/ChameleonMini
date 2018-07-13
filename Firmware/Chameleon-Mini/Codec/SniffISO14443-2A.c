@@ -40,7 +40,6 @@
 #define BitCountUp		GPIOR7
 #define CodecBufferIdx	GPIOR8
 
-bool SniffEnable;
 enum RCTraffic TrafficSource;
 
 static volatile struct {

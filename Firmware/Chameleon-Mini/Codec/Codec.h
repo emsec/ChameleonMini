@@ -190,8 +190,6 @@ INLINE void CodecInitCommon(void)
     /* Configure Analog Comparator 1 to detect SOC */
     ACA.AC1MUXCTRL = AC_MUXPOS_DAC_gc | AC_MUXNEG_PIN7_gc;
     ACA.AC1CTRL = CODEC_AC_DEMOD_SETTINGS;
-
-
 }
 
 INLINE void CodecSetSubcarrier(SubcarrierModType ModType, uint16_t Divider)

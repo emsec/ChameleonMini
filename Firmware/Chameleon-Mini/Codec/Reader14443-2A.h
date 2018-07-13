@@ -15,7 +15,6 @@
 void Reader14443ACodecInit(void);
 void Reader14443ACodecDeInit(void);
 void Reader14443ACodecTask(void);
-void TestSniff14443ACodecInit(void);
 
 /* Application Interface */
 void Reader14443ACodecStart(void);
