@@ -4,6 +4,7 @@
 // modified form ISO14443-2A.c and Reader14443-2A.c
 //
 
+// TODO: implement pending since to automatically reset the sniffing after a period of no traffic
 #include "SniffISO14443-2A.h"
 
 #include "Reader14443-2A.h"
@@ -76,25 +77,14 @@ static volatile enum {
 void ReaderSniffInit(void)
 {
 
-    // Common Codec Register settings
-//    CodecInitCommon();
-
-
     // Configure interrupt for demod
     // This was disabled in CardSniffInit()
     CODEC_DEMOD_IN_PORT.INTCTRL = PORT_INT1LVL_HI_gc;
-
-
-    // Enable demodulator power
-//    CodecSetDemodPower(true);
-
 
     TrafficSource = TRAFFIC_READER;
 
     /* Initialize some global vars and start looking out for reader commands */
     Flags.DemodFinished = 0;
-
-//    ReaderStartDemod();
 
     CodecBufferPtr = CodecBuffer;
     ParityBufferPtr = &CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET];
@@ -124,7 +114,6 @@ void ReaderSniffInit(void)
 
 // Find first pause and start sampling
 ISR(PORTB_INT1_vect) {
-//    LED_PORT.OUTSET = LED_RED;
     /* This is the first edge of the first modulation-pause after StartDemod.
      * Now we have time to start
      * demodulating beginning from one bit-width after this edge. */
@@ -140,22 +129,6 @@ ISR(PORTB_INT1_vect) {
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
     CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES/2 - 1; /* Half bit width */
     CODEC_TIMER_SAMPLING.CCDBUF = SAMPLE_RATE_SYSTEM_CYCLES/8 - 14 - 1; /* Compensate for DIGFILT and ISR prolog */
-
-    /* Setup Frame Delay Timer and wire to EVSYS. Frame delay time is
-     * measured from last change in RF field, therefore we use
-     * the event channel 1 (end of modulation pause) as the restart event.
-     * The preliminary frame delay time chosen here is irrelevant, because
-     * the correct FDT gets set automatically after demodulation. */
-
-//    CODEC_TIMER_LOADMOD.CNT = 0;
-//    CODEC_TIMER_LOADMOD.PER = 0xFFFF;
-////    CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODEND_EVSEL;
-////    CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_OFF_gc;
-////    CODEC_TIMER_LOADMOD.INTFLAGS = TC0_OVFIF_bm;
-////    CODEC_TIMER_LOADMOD.CTRLA = CODEC_TIMER_CARRIER_CLKSEL;
-//
-//    CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
-//    CODEC_TIMER_LOADMOD.INTCTRLA = 0;
 
     /* Disable this interrupt */
     CODEC_DEMOD_IN_PORT.INT1MASK = 0;
@@ -177,25 +150,9 @@ ISR(TCD0_CCD_vect) {
             CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
             CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCDIF_bm;
 
-            /* By this time, the FDT timer is aligned to the last modulation
-             * edge of the reader. So we disable the auto-synchronization and
-             * let it count the frame delay time in the background, and generate
-             * an interrupt once it has reached the FDT. */
-            // Do not activate loadmod
-//            CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_OFF_gc;
-//            CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
-//            CODEC_TIMER_LOADMOD.INTCTRLA = 0;
-
-//            if (SampleRegister & 0x08) {
-//                CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV1 - 40; /* compensate for ISR prolog */
-//            } else {
-//                CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV0 - 40; /* compensate for ISR prolog */
-//            }
+            // FDT timer (CODEC_TIMER_LOADMOD) is diabled
 
             StateRegister = LOADMOD_FDT;
-
-//            CODEC_TIMER_LOADMOD.INTFLAGS = TC0_OVFIF_bm;
-//            CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_HI_gc;
 
             /* Determine if we did not receive a multiple of 8 bits.
              * If this is the case, right-align the remaining data and
@@ -287,16 +244,7 @@ INLINE void ReaderSniffDeInit(void)
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCDINTLVL_OFF_gc;
     CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCDIF_bm;
-
-
-//    CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
-//    CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_OFF_gc;
-//    CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_OFF_gc;
-//    CODEC_TIMER_LOADMOD.INTFLAGS = TC0_OVFIF_bm;
-
 }
-
-
 
 
 
@@ -337,8 +285,6 @@ ISR(ACA_AC0_vect) // this interrupt either finds the SOC or gets triggered befor
 // if the half bit duration is not modulated, then add 0 to buffer
 ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
 {
-
-
     uint8_t tmp = CODEC_TIMER_TIMESTAMPS.CNTL;
     CODEC_TIMER_TIMESTAMPS.CNT = 0;
 
@@ -376,13 +322,10 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
             Insert0();
             return;
     }
-    return;
 }
 // EOC of Card->Reader found
 ISR(TCD1_CCB_vect) // EOC found
 {
-//    Reader14443A_EOC();
-
     CODEC_TIMER_LOADMOD.INTCTRLB = 0;
     CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
     CODEC_TIMER_TIMESTAMPS.INTCTRLB = 0;
@@ -413,58 +356,35 @@ ISR(TCD1_CCB_vect) // EOC found
     State = STATE_FDT;
 
 }
-//// End of Card-> reader communication and enter frame delay time
-//void Reader14443A_EOC(void)
-//{
-//
-//
-//}
 
 
 INLINE void CardSniffInit(void)
 {
     TrafficSource = TRAFFIC_CARD;
 
-    ////////////////////////////
-    // Same as reader init
     /* Initialize common peripherals and start listening
- * for incoming data. */
+     * for incoming data. */
 
 
-//    CodecInitCommon();
-
-
-//    CodecSetDemodPower(true);
-
-//    CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;
-//    CODEC_TIMER_SAMPLING.CCB = 0;
-//    CODEC_TIMER_SAMPLING.CCC = 0;
+    // No need to implement FDT, timer disabled
     CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
     CODEC_TIMER_SAMPLING.INTCTRLA = 0;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_OFF_gc;
-//    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_DIV1_gc;
 
     CODEC_TIMER_LOADMOD.CTRLA = 0;
     State = STATE_IDLE;
 
-//    BitCount = 0;
     CodecBufferPtr = CodecBuffer; // use GPIOR for faster access
     BitCount = 1; // FALSCH todo the first modulation of the SOC is "found" implicitly
     SampleRegister = 0x00;
 
-//    Flags.Start = false;
-//    Flags.RxPending = false;
     Flags.RxDone = false;
-    ///////////////////////////
-
     Flags.Start = true;
     // reset for future use
 //    CodecBufferIdx = 0;
 //    BitCountUp = 0;
 
     Flags.RxPending = true;
-
-//    StartDemod();
 
     /*
           * Prepare for Manchester decoding.
@@ -503,16 +423,6 @@ INLINE void CardSniffInit(void)
 
     CODEC_DEMOD_IN_PORT.INTCTRL = 0;
 
-
-//    CODEC_TIMER_SAMPLING.PER = 5*SAMPLE_RATE_SYSTEM_CYCLES - 1;
-//    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
-//    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
-//    CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES - 1;
-//    PORTE.OUTTGL = PIN3_bm;
-
-    // CODEC_TIMER_SAMPLING_CCC_vect
-
-
     /* Enable the AC interrupt, which either finds the SOC and then starts the pause-finding timer,
      * or it is triggered before the SOC, which mostly isn't bad at all, since the first pause
      * needs to be found. */
@@ -521,16 +431,6 @@ INLINE void CardSniffInit(void)
     ACA.AC0CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_INTLVL_HI_gc | AC_ENABLE_bm;
 
 //    RxPendingSince = SystemGetSysTick();
-
-
-//    State = STATE_IDLE;
-//    PORTE.OUTTGL = PIN3_bm;
-
-    //Flags.RxPending = true;
-
-    //LogEntry(LOG_INFO_CODEC_TX_DATA_W_PARITY, "Codec Sniff Start", 18);
-    //Reader14443A_EOC();
-
 }
 
 INLINE void CardSniffDeinit(void)
@@ -565,23 +465,14 @@ INLINE void CardSniffDeinit(void)
 
 void Sniff14443ACodecInit(void)
 {
-//    Flags.DemodFinished = 0;
-
-//    SniffEnable = true;
-
     // Common Codec Register settings
     CodecInitCommon();
     // Enable demodulator power
     CodecSetDemodPower(true);
 
     // Start with sniffing Reader->Card direction traffic
-    // Card -> Reader traffic sniffing interrupt will be enbaled
-    // when Reader-> Card direction sniffing finished
-    // See ISO14443-2A.c ISO14443ACodecTask()
     ReaderSniffInit();
 
-    // Also configure Interrupt settings for Reader function
-//    Reader14443ACodecInit();
 }
 
 void Sniff14443ACodecDeInit(void)
@@ -607,24 +498,13 @@ void Sniff14443ACodecTask(void)
                 LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
                 LEDHook(LED_CODEC_RX, LED_PULSE);
 
-//                if(SniffEnable == true){
-                // TODO: Start interrupt for finding Card -> Reader direction traffic
-
                 ReaderSniffDeInit();
                 CardSniffInit();
 
-//                    ISO14443ACodecDeInit();
-
-//                    TestSniff14443ACodecInit();
                 return;
-//                }
             }
-//
-//                /* No data to be processed. Disable loadmodding and start listening again */
-//                CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
-//                CODEC_TIMER_LOADMOD.INTCTRLA = 0;
-
-                ReaderSniffInit();
+            // Get nothing, Start sniff again
+            ReaderSniffInit();
         }
 
 
@@ -701,21 +581,11 @@ void Sniff14443ACodecTask(void)
 
                     Flags.RxPending=true;
 
-
-//                if (SniffEnable)
-//                {
-
-//                    LED_PORT.OUTCLR = LED_RED;
+                    // Disable card sniffing and enable reader sniffing
                     CardSniffDeinit();
-//                    TrafficSource = TRAFFIC_READER;
                     ReaderSniffInit();
-//                    Sniff14443ACodecInit();
-//                    ReaderSniffInit();
-//                    Reader14443ACodecDeInit();
-//                    ISO14443ACodecInit();
 
                     return;
-//                }
                 }
 
             }
@@ -725,38 +595,8 @@ void Sniff14443ACodecTask(void)
             /* Call application with received data */
             BitCount = ApplicationProcess(CodecBuffer, BitCount);
 
-            // Application have data to be sent
-//        if (false)//BitCount > 0)
-//        {
-
-//            StartDemod();
-//
-//            LEDHook(LED_CODEC_TX, LED_PULSE);
-//            LogEntry(LOG_INFO_CODEC_TX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
-//
-//            /* Set state and start timer for Miller encoding. */
-//            // Send bits to card using TCD0_CCB interrupt (See Reader14443-ISR.S)
-//            BufferToSequence();
-//            State = STATE_MILLER_SEND;
-//            CodecBufferPtr = CodecBuffer;
-//            CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCBIF_bm;
-//            CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_HI_gc;
-//            _delay_loop_1(85);  // Wait for sending to finish
-
-
-//        }else{              // No data need to be send or in SNIFFING mode
-            // TODO: add another sniff flag, in case of no Application data need to be send (Non sniffing mode)
-//            StartDemod();
-//            Reader14443AMillerEOC();
-
-            // Sniffing mode, enable sampling interrupt only
-//        }
         }
-//            Reader14443ACodecTask();
-
     }
-//    ISO14443ACodecDeInit();
-//    Reader14443ACodecTask();
 }
 
 
