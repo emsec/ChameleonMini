@@ -45,11 +45,7 @@ enum RCTraffic TrafficSource;
 
 static volatile struct {
     volatile bool DemodFinished;
-//    volatile bool LoadmodFinished;
-    volatile bool Start;
     volatile bool RxDone;
-    volatile bool RxPending;
-
 } Flags = { 0 };
 static volatile uint16_t RxPendingSince;
 
@@ -77,6 +73,7 @@ static volatile enum {
 void ReaderSniffInit(void)
 {
 
+    LED_PORT.OUTCLR = LED_RED;
     // Configure interrupt for demod
     // This was disabled in CardSniffInit()
     CODEC_DEMOD_IN_PORT.INTCTRL = PORT_INT1LVL_HI_gc;
@@ -172,7 +169,8 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
 
             /* Signal, that we have finished sampling */
             Flags.DemodFinished = 1;
-        } else {
+        }
+        else {
             /* Otherwise, we check the two sample bits from the bit before. */
             uint8_t BitSample = SampleRegister & 0xC;
             uint8_t Bit = 0;
@@ -182,7 +180,8 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
                 if (BitSample & (0x1 << 2)) {
                     /* 01 sequence or 11 sequence -> This is a zero bit */
                     Bit = 0;
-                } else {
+                }
+                else {
                     /* 10 sequence -> This is a one bit */
                     Bit = 1;
                 }
@@ -206,19 +205,23 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
                         StateRegister = DEMOD_PARITY_BIT;
                     }
 
-                } else if (StateRegister == DEMOD_PARITY_BIT) {
+                }
+                else if (StateRegister == DEMOD_PARITY_BIT) {
                     /* This is a parity bit. Store it */
                     *ParityBufferPtr++ = Bit;
                     StateRegister = DEMOD_DATA_BIT;
-                } else {
+                }
+                else {
                     /* Should never Happen (TM) */
                 }
-            } else {
+            }
+            else {
                 /* 00 sequence. -> No valid data yet. This also occurs if we just started
                  * sampling and have sampled less than 2 bits yet. Thus ignore. */
             }
         }
-    } else {
+    }
+    else {
         /* On odd sample position just sample. */
         SampleIdxRegister = ~SampleIdxRegister;
     }
@@ -271,8 +274,6 @@ INLINE void Insert1(void)
 // This interrupt find Card -> Reader SOC
 ISR(ACA_AC0_vect) // this interrupt either finds the SOC or gets triggered before
 {
-//    LED_PORT.OUTSET=LED_RED;
-
     ACA.AC0CTRL &= ~AC_INTLVL_HI_gc; // disable this interrupt
     // enable the pause-finding timer
     CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH2_gc;
@@ -303,8 +304,7 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
             return;
 
         case 81 ... 112: // 96 ticks are 3 half bit periods
-            if (BitCount & 1)
-            {
+            if (BitCount & 1) {
                 Insert1();
                 Insert1();
                 Insert0();
@@ -332,8 +332,7 @@ ISR(CODEC_TIMER_TIMESTAMPS_CCB_VECT) // EOC found
     CODEC_TIMER_TIMESTAMPS.CTRLA = TC_CLKSEL_OFF_gc;
     ACA.AC0CTRL &= ~AC_ENABLE_bm;
 
-    if (BitCount & 1)
-    {
+    if (BitCount & 1) {
         if (SampleRegister & 0x80)
             Insert0();
         else
@@ -343,7 +342,6 @@ ISR(CODEC_TIMER_TIMESTAMPS_CCB_VECT) // EOC found
     if (BitCount % 8) // copy the last byte, if there is an incomplete byte
         CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
     Flags.RxDone = true;
-    Flags.RxPending = false;
 
     // set up timer that forces the minimum frame delay time from PICC to PCD
     CODEC_TIMER_LOADMOD.PER = 0xFFFF;
@@ -379,12 +377,9 @@ INLINE void CardSniffInit(void)
     SampleRegister = 0x00;
 
     Flags.RxDone = false;
-    Flags.Start = true;
     // reset for future use
 //    CodecBufferIdx = 0;
 //    BitCountUp = 0;
-
-    Flags.RxPending = true;
 
     /*
           * Prepare for Manchester decoding.
@@ -418,7 +413,7 @@ INLINE void CardSniffInit(void)
     CODEC_TIMER_TIMESTAMPS.INTCTRLB = TC_CCBINTLVL_LO_gc;
 
     /* Use the event system for resetting the pause-detecting timer. */
-    EVSYS.CH2MUX = EVSYS_CHMUX_ACA_CH0_gc; // on every ACA_AC1 INT
+    EVSYS.CH2MUX = EVSYS_CHMUX_ACA_CH0_gc; // on every ACA_AC0 INT
     EVSYS.CH2CTRL = EVSYS_DIGFILT_1SAMPLE_gc;
 
     CODEC_DEMOD_IN_PORT.INTCTRL = 0;
@@ -430,13 +425,12 @@ INLINE void CardSniffInit(void)
     ACA.STATUS = AC_AC0IF_bm;
     ACA.AC0CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_INTLVL_HI_gc | AC_ENABLE_bm;
 
-//    RxPendingSince = SystemGetSysTick();
+    RxPendingSince = SystemGetSysTick();
 }
 
 INLINE void CardSniffDeinit(void)
 {
-    //    CodecSetDemodPower(false);
-    // CodecReaderFieldStop();
+
     CODEC_TIMER_SAMPLING.CTRLA = 0;
     CODEC_TIMER_SAMPLING.INTCTRLB = 0;
     CODEC_TIMER_LOADMOD.CTRLA = 0;
@@ -444,18 +438,14 @@ INLINE void CardSniffDeinit(void)
 
 
 
-    EVSYS.CH2MUX = 0; // on every ACA_AC1 INT
+    EVSYS.CH2MUX = 0; // on every ACA_AC0 INT
     EVSYS.CH2CTRL = 0;
     ACA.AC0MUXCTRL = AC_MUXPOS_DAC_gc | AC_MUXNEG_PIN7_gc;
     ACA.AC0CTRL = CODEC_AC_DEMOD_SETTINGS;
 
-
-
     Flags.RxDone = false;
-    Flags.RxPending = false;
-    Flags.Start = false;
-
-//    Reader14443ACodecDeInit();
+//    Flags.RxPending = false;
+//    Flags.Start = false;
 }
 
 
@@ -486,8 +476,8 @@ void Sniff14443ACodecDeInit(void)
 
 void Sniff14443ACodecTask(void)
 {
-
-    if (TrafficSource == TRAFFIC_READER){
+    // Reader->Card Task
+    if (TrafficSource == TRAFFIC_READER) {
         if (Flags.DemodFinished) {
             Flags.DemodFinished = 0;
             /* Reception finished. Process the received bytes */
@@ -506,26 +496,14 @@ void Sniff14443ACodecTask(void)
             // Get nothing, Start sniff again
             ReaderSniffInit();
         }
-
-
     }
-
-    else    // Card->Reader Task
+    // Card->Reader Task
+    else
     {
-
-        // Waiting for response time out
-//    if (Flags.RxPending && SYSTICK_DIFF(RxPendingSince) > Reader_FWT + 1)
-//    {
-//        Reader14443A_EOC();
-//        BitCount = 0;
-//        Flags.RxDone = true;
-//        Flags.RxPending = false;
-//    }
 //    if (CodecIsReaderToBeRestarted() || !CodecIsReaderFieldReady())
 //        return;
-        if (!Flags.RxPending && (Flags.Start || Flags.RxDone))
-        {
-
+        // Receive finished
+        if (Flags.RxDone) {
 //        if (State == STATE_FDT && CODEC_TIMER_LOADMOD.CNT < ISO14443A_PICC_TO_PCD_MIN_FDT) { // we are in frame delay time, so we can return later
 //            return;
 //        }
@@ -533,10 +511,10 @@ void Sniff14443ACodecTask(void)
             if (Flags.RxDone && BitCount > 0) // decode the raw received data
             {
 
-                if (BitCount < ISO14443A_RX_MINIMUM_BITCOUNT * 2)
-                {
+                if (BitCount < ISO14443A_RX_MINIMUM_BITCOUNT * 2) {
                     BitCount = 0;
-                } else {
+                }
+                else {
                     uint8_t TmpCodecBuffer[CODEC_BUFFER_SIZE];
                     memcpy(TmpCodecBuffer, CodecBuffer, (BitCount + 7) / 8);
 
@@ -548,12 +526,10 @@ void Sniff14443ACodecTask(void)
                     TmpCodecBuffer[0] >>= 2; // with this (and BitCountTmp = 2), the SOC is ignored
 
                     // Manchester Code ISO14443-2 8.2.5
-                    while (!breakflag && BitCountTmp < TotalBitCount)
-                    {
+                    while (!breakflag && BitCountTmp < TotalBitCount) {
                         uint8_t Bit = TmpCodecBuffer[BitCountTmp / 8] & 0x03;
                         TmpCodecBuffer[BitCountTmp / 8] >>= 2;
-                        switch (Bit)
-                        {
+                        switch (Bit) {
                             case 0b10:
                                 Insert1();
                                 break;
@@ -579,22 +555,28 @@ void Sniff14443ACodecTask(void)
 
                     LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
 
-                    Flags.RxPending=true;
-
                     // Disable card sniffing and enable reader sniffing
                     CardSniffDeinit();
                     ReaderSniffInit();
 
                     return;
                 }
-
             }
-            Flags.Start = false;
             Flags.RxDone = false;
 
             /* Call application with received data */
             BitCount = ApplicationProcess(CodecBuffer, BitCount);
-
+        }
+        else    // Receive not finished yet, Continue waiting
+        {
+            // If Waiting for response time out
+            // Reset to reader sniffing
+            if ((SYSTICK_DIFF(RxPendingSince) > Reader_FWT + 1) ) {
+                Flags.RxDone = true;
+                // Disable card sniffing and enable reader sniffing
+                CardSniffDeinit();
+                ReaderSniffInit();
+            }
         }
     }
 }
