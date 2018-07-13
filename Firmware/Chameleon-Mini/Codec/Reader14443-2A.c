@@ -179,7 +179,7 @@ INLINE void BufferToSequence(void)
         CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
 }
 // Frame Delay Time PCD to PICC ends
-ISR (TCD0_CCC_vect)
+ISR (CODEC_TIMER_SAMPLING_CCC_VECT)
 {
     CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;

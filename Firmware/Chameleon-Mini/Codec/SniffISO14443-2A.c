@@ -113,7 +113,7 @@ void ReaderSniffInit(void)
 
 
 // Find first pause and start sampling
-ISR(PORTB_INT1_vect) {
+ISR(CODEC_DEMOD_IN_INT1_VECT) {
     /* This is the first edge of the first modulation-pause after StartDemod.
      * Now we have time to start
      * demodulating beginning from one bit-width after this edge. */
@@ -135,7 +135,7 @@ ISR(PORTB_INT1_vect) {
 }
 
 // Sampling with timer and demod
-ISR(TCD0_CCD_vect) {
+ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
     /* This interrupt gets called twice for every bit to sample it. */
     uint8_t SamplePin = CODEC_DEMOD_IN_PORT.IN & CODEC_DEMOD_IN_MASK;
 
@@ -324,7 +324,7 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
     }
 }
 // EOC of Card->Reader found
-ISR(TCD1_CCB_vect) // EOC found
+ISR(CODEC_TIMER_TIMESTAMPS_CCB_VECT) // EOC found
 {
     CODEC_TIMER_LOADMOD.INTCTRLB = 0;
     CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
