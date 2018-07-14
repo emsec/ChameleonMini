@@ -30,16 +30,20 @@
 #define DataRegister	Codec8Reg0
 #define StateRegister	Codec8Reg1
 #define ParityRegister	Codec8Reg2
-#define SampleIdxRegister Codec8Reg2
+
+#define SampleIdxRegister GPIO4
 #define SampleRegister	Codec8Reg3
-#define BitSent			CodecCount16Register1
+#define SampleRegister2  GPIO5
+//#define BitSent			CodecCount16Register1
 #define BitCount		CodecCount16Register2
 #define CodecBufferPtr	CodecPtrRegister1
 #define ParityBufferPtr	CodecPtrRegister2
+#define CodecBufferPtr2 CodecPtrRegister3
 
 
-#define BitCountUp		GPIOR7
-#define CodecBufferIdx	GPIOR8
+
+//#define BitCountUp		GPIOR7
+//#define CodecBufferIdx	GPIOR8
 
 enum RCTraffic TrafficSource;
 
@@ -65,20 +69,18 @@ static volatile enum {
     STATE_MILLER_EOF,
     STATE_FDT
 } State;
-
+uint16_t DemodBitCount;
 /////////////////////////////////////////////////
 // Reader->Card Direction Traffic
 /////////////////////////////////////////////////
 
-void ReaderSniffInit(void)
+INLINE void ReaderSniffInit(void)
 {
 
     LED_PORT.OUTCLR = LED_RED;
     // Configure interrupt for demod
     // This was disabled in CardSniffInit()
     CODEC_DEMOD_IN_PORT.INTCTRL = PORT_INT1LVL_HI_gc;
-
-    TrafficSource = TRAFFIC_READER;
 
     /* Initialize some global vars and start looking out for reader commands */
     Flags.DemodFinished = 0;
@@ -107,6 +109,116 @@ void ReaderSniffInit(void)
 
 //    ISO14443ACodecInit();
 }
+INLINE void ReaderSniffDeInit(void)
+{
+    /* Gracefully shutdown codec */
+    CODEC_DEMOD_IN_PORT.INT1MASK = 0;
+
+    Flags.DemodFinished = 0;
+
+    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
+    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
+    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCDINTLVL_OFF_gc;
+    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCDIF_bm;
+}
+
+INLINE void CardSniffInit(void)
+{
+    /* Initialize common peripherals and start listening
+     * for incoming data. */
+
+
+    // No need to implement FDT, timer disabled
+    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
+    CODEC_TIMER_SAMPLING.INTCTRLA = 0;
+    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_OFF_gc;
+
+    CODEC_TIMER_LOADMOD.CTRLA = 0;
+    State = STATE_IDLE;
+
+    CodecBufferPtr2 = CodecBuffer2; // use GPIOR for faster access
+    BitCount = 1; // FALSCH todo the first modulation of the SOC is "found" implicitly
+    SampleRegister2 = 0x00;
+
+    Flags.RxDone = false;
+    // reset for future use
+//    CodecBufferIdx = 0;
+//    BitCountUp = 0;
+
+    /*
+          * Prepare for Manchester decoding.
+          * The basic idea is to use two timers. The first one will be reset everytime the DEMOD signal
+          * passes a (configurable) threshold. This is realized with the event system and an analog
+          * comparator.
+          * Once this timer reaches 3/4 of a bit half (this means it has not been reset this long), we
+          * assume there is a pause. Now we read the second timers count value and can decide how many
+          * bit halves had modulations since the last pause.
+          */
+
+    // Comparator ADC
+    /* Configure and enable the analog comparator for finding pauses in the DEMOD signal. */
+    ACA.AC0CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_ENABLE_bm;
+
+    /* This timer will be used to detect the pauses between the modulation sequences. */
+    CODEC_TIMER_LOADMOD.CTRLA = 0;
+    CODEC_TIMER_LOADMOD.CNT = 0;
+    CODEC_TIMER_LOADMOD.PER = 0xFFFF; // with 27.12 MHz this is exactly one half bit width
+    CODEC_TIMER_LOADMOD.CCB = 95; // with 27.12 MHz this is 3/4 of a half bit width
+    CODEC_TIMER_LOADMOD.INTCTRLA = 0;
+    CODEC_TIMER_LOADMOD.INTFLAGS = TC1_CCBIF_bm;
+    CODEC_TIMER_LOADMOD.INTCTRLB = TC_CCBINTLVL_HI_gc;
+
+    /* This timer will be used to find out how many bit halfs since the last pause have been passed. */
+    CODEC_TIMER_TIMESTAMPS.CNT = 0;                         // Reset timer
+    CODEC_TIMER_TIMESTAMPS.PER = 0xFFFF;
+    CODEC_TIMER_TIMESTAMPS.CCB = 160;
+    CODEC_TIMER_TIMESTAMPS.INTCTRLA = 0;
+    CODEC_TIMER_TIMESTAMPS.INTFLAGS = TC1_CCBIF_bm;         // Clear interrupt flag
+    CODEC_TIMER_TIMESTAMPS.INTCTRLB = TC_CCBINTLVL_LO_gc;
+
+    /* Use the event system for resetting the pause-detecting timer. */
+    EVSYS.CH2MUX = EVSYS_CHMUX_ACA_CH0_gc; // on every ACA_AC0 INT
+    EVSYS.CH2CTRL = EVSYS_DIGFILT_1SAMPLE_gc;
+
+    CODEC_DEMOD_IN_PORT.INTCTRL = 0;
+
+    /* Enable the AC interrupt, which either finds the SOC and then starts the pause-finding timer,
+     * or it is triggered before the SOC, which mostly isn't bad at all, since the first pause
+     * needs to be found. */
+    ACA.AC1CTRL = 0;
+    ACA.STATUS = AC_AC0IF_bm;
+    ACA.AC0CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_INTLVL_HI_gc | AC_ENABLE_bm;
+
+    RxPendingSince = SystemGetSysTick();
+    PORTE.OUTSET = PIN3_bm;
+
+
+}
+
+INLINE void CardSniffDeinit(void)
+{
+    PORTE.OUTCLR = PIN3_bm;
+
+
+    CODEC_TIMER_SAMPLING.CTRLA = 0;
+    CODEC_TIMER_SAMPLING.INTCTRLB = 0;
+    CODEC_TIMER_LOADMOD.CTRLA = 0;
+    CODEC_TIMER_LOADMOD.INTCTRLB = 0;
+
+
+
+    EVSYS.CH2MUX = 0; // on every ACA_AC0 INT
+    EVSYS.CH2CTRL = 0;
+    ACA.AC0MUXCTRL = AC_MUXPOS_DAC_gc | AC_MUXNEG_PIN7_gc;
+    ACA.AC0CTRL = CODEC_AC_DEMOD_SETTINGS;
+
+    Flags.RxDone = false;
+//    Flags.RxPending = false;
+//    Flags.Start = false;
+
+
+}
+
 
 
 // Find first pause and start sampling
@@ -169,6 +281,23 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
 
             /* Signal, that we have finished sampling */
             Flags.DemodFinished = 1;
+            DemodBitCount = BitCount;
+
+            /* Gracefully shutdown codec */
+            CODEC_DEMOD_IN_PORT.INT1MASK = 0;
+
+//            Flags.DemodFinished = 0;
+
+            CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
+            CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
+            CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCDINTLVL_OFF_gc;
+            CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCDIF_bm;
+
+
+//            ReaderSniffDeInit();
+            CardSniffInit();
+            return;
+
         }
         else {
             /* Otherwise, we check the two sample bits from the bit before. */
@@ -236,18 +365,7 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
 
 
 
-INLINE void ReaderSniffDeInit(void)
-{
-    /* Gracefully shutdown codec */
-    CODEC_DEMOD_IN_PORT.INT1MASK = 0;
 
-    Flags.DemodFinished = 0;
-
-    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
-    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
-    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCDINTLVL_OFF_gc;
-    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCDIF_bm;
-}
 
 
 
@@ -257,18 +375,18 @@ INLINE void ReaderSniffDeInit(void)
 
 INLINE void Insert0(void)
 {
-    SampleRegister >>= 1;
+    SampleRegister2 >>= 1;
     if (++BitCount % 8)
         return;
-    *CodecBufferPtr++ = SampleRegister;
+    *CodecBufferPtr2++ = SampleRegister2;
 }
 
 INLINE void Insert1(void)
 {
-    SampleRegister = (SampleRegister >> 1) | 0x80;
+    SampleRegister2 = (SampleRegister2 >> 1) | 0x80;
     if (++BitCount % 8)
         return;
-    *CodecBufferPtr++ = SampleRegister;
+    *CodecBufferPtr2++ = SampleRegister2;
 }
 
 // This interrupt find Card -> Reader SOC
@@ -333,14 +451,14 @@ ISR(CODEC_TIMER_TIMESTAMPS_CCB_VECT) // EOC found
     ACA.AC0CTRL &= ~AC_ENABLE_bm;
 
     if (BitCount & 1) {
-        if (SampleRegister & 0x80)
+        if (SampleRegister2 & 0x80)
             Insert0();
         else
             Insert1();
     }
 
     if (BitCount % 8) // copy the last byte, if there is an incomplete byte
-        CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
+        CodecBuffer2[BitCount / 8] = SampleRegister2 >> (8 - (BitCount % 8));
     Flags.RxDone = true;
 
     // set up timer that forces the minimum frame delay time from PICC to PCD
@@ -356,97 +474,6 @@ ISR(CODEC_TIMER_TIMESTAMPS_CCB_VECT) // EOC found
 }
 
 
-INLINE void CardSniffInit(void)
-{
-    TrafficSource = TRAFFIC_CARD;
-
-    /* Initialize common peripherals and start listening
-     * for incoming data. */
-
-
-    // No need to implement FDT, timer disabled
-    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
-    CODEC_TIMER_SAMPLING.INTCTRLA = 0;
-    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_OFF_gc;
-
-    CODEC_TIMER_LOADMOD.CTRLA = 0;
-    State = STATE_IDLE;
-
-    CodecBufferPtr = CodecBuffer; // use GPIOR for faster access
-    BitCount = 1; // FALSCH todo the first modulation of the SOC is "found" implicitly
-    SampleRegister = 0x00;
-
-    Flags.RxDone = false;
-    // reset for future use
-//    CodecBufferIdx = 0;
-//    BitCountUp = 0;
-
-    /*
-          * Prepare for Manchester decoding.
-          * The basic idea is to use two timers. The first one will be reset everytime the DEMOD signal
-          * passes a (configurable) threshold. This is realized with the event system and an analog
-          * comparator.
-          * Once this timer reaches 3/4 of a bit half (this means it has not been reset this long), we
-          * assume there is a pause. Now we read the second timers count value and can decide how many
-          * bit halves had modulations since the last pause.
-          */
-
-    // Comparator ADC
-    /* Configure and enable the analog comparator for finding pauses in the DEMOD signal. */
-    ACA.AC0CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_ENABLE_bm;
-
-    /* This timer will be used to detect the pauses between the modulation sequences. */
-    CODEC_TIMER_LOADMOD.CTRLA = 0;
-    CODEC_TIMER_LOADMOD.CNT = 0;
-    CODEC_TIMER_LOADMOD.PER = 0xFFFF; // with 27.12 MHz this is exactly one half bit width
-    CODEC_TIMER_LOADMOD.CCB = 95; // with 27.12 MHz this is 3/4 of a half bit width
-    CODEC_TIMER_LOADMOD.INTCTRLA = 0;
-    CODEC_TIMER_LOADMOD.INTFLAGS = TC1_CCBIF_bm;
-    CODEC_TIMER_LOADMOD.INTCTRLB = TC_CCBINTLVL_HI_gc;
-
-    /* This timer will be used to find out how many bit halfs since the last pause have been passed. */
-    CODEC_TIMER_TIMESTAMPS.CNT = 0;                         // Reset timer
-    CODEC_TIMER_TIMESTAMPS.PER = 0xFFFF;
-    CODEC_TIMER_TIMESTAMPS.CCB = 160;
-    CODEC_TIMER_TIMESTAMPS.INTCTRLA = 0;
-    CODEC_TIMER_TIMESTAMPS.INTFLAGS = TC1_CCBIF_bm;         // Clear interrupt flag
-    CODEC_TIMER_TIMESTAMPS.INTCTRLB = TC_CCBINTLVL_LO_gc;
-
-    /* Use the event system for resetting the pause-detecting timer. */
-    EVSYS.CH2MUX = EVSYS_CHMUX_ACA_CH0_gc; // on every ACA_AC0 INT
-    EVSYS.CH2CTRL = EVSYS_DIGFILT_1SAMPLE_gc;
-
-    CODEC_DEMOD_IN_PORT.INTCTRL = 0;
-
-    /* Enable the AC interrupt, which either finds the SOC and then starts the pause-finding timer,
-     * or it is triggered before the SOC, which mostly isn't bad at all, since the first pause
-     * needs to be found. */
-    ACA.AC1CTRL = 0;
-    ACA.STATUS = AC_AC0IF_bm;
-    ACA.AC0CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_INTLVL_HI_gc | AC_ENABLE_bm;
-
-    RxPendingSince = SystemGetSysTick();
-}
-
-INLINE void CardSniffDeinit(void)
-{
-
-    CODEC_TIMER_SAMPLING.CTRLA = 0;
-    CODEC_TIMER_SAMPLING.INTCTRLB = 0;
-    CODEC_TIMER_LOADMOD.CTRLA = 0;
-    CODEC_TIMER_LOADMOD.INTCTRLB = 0;
-
-
-
-    EVSYS.CH2MUX = 0; // on every ACA_AC0 INT
-    EVSYS.CH2CTRL = 0;
-    ACA.AC0MUXCTRL = AC_MUXPOS_DAC_gc | AC_MUXNEG_PIN7_gc;
-    ACA.AC0CTRL = CODEC_AC_DEMOD_SETTINGS;
-
-    Flags.RxDone = false;
-//    Flags.RxPending = false;
-//    Flags.Start = false;
-}
 
 
 /////////////////////////////////////////////////
@@ -455,12 +482,14 @@ INLINE void CardSniffDeinit(void)
 
 void Sniff14443ACodecInit(void)
 {
+    PORTE.DIRSET= PIN3_bm;
     // Common Codec Register settings
     CodecInitCommon();
     // Enable demodulator power
     CodecSetDemodPower(true);
 
     // Start with sniffing Reader->Card direction traffic
+    TrafficSource = TRAFFIC_READER;
     ReaderSniffInit();
 
 }
@@ -476,24 +505,25 @@ void Sniff14443ACodecDeInit(void)
 
 void Sniff14443ACodecTask(void)
 {
+
     // Reader->Card Task
     if (TrafficSource == TRAFFIC_READER) {
         if (Flags.DemodFinished) {
             Flags.DemodFinished = 0;
             /* Reception finished. Process the received bytes */
-            uint16_t DemodBitCount = BitCount;
+//            uint16_t DemodBitCount = BitCount;
 
             if (DemodBitCount >= ISO14443A_MIN_BITS_PER_FRAME) {
                 // For logging data
                 LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
                 LEDHook(LED_CODEC_RX, LED_PULSE);
 
-                ReaderSniffDeInit();
-                CardSniffInit();
+                TrafficSource = TRAFFIC_CARD;
 
                 return;
             }
             // Get nothing, Start sniff again
+            TrafficSource = TRAFFIC_READER;
             ReaderSniffInit();
         }
     }
@@ -503,7 +533,7 @@ void Sniff14443ACodecTask(void)
 //    if (CodecIsReaderToBeRestarted() || !CodecIsReaderFieldReady())
 //        return;
         // Receive finished
-        if (Flags.RxDone) {
+        if (Flags.RxDone ) {
 //        if (State == STATE_FDT && CODEC_TIMER_LOADMOD.CNT < ISO14443A_PICC_TO_PCD_MIN_FDT) { // we are in frame delay time, so we can return later
 //            return;
 //        }
@@ -516,9 +546,9 @@ void Sniff14443ACodecTask(void)
                 }
                 else {
                     uint8_t TmpCodecBuffer[CODEC_BUFFER_SIZE];
-                    memcpy(TmpCodecBuffer, CodecBuffer, (BitCount + 7) / 8);
+                    memcpy(TmpCodecBuffer, CodecBuffer2, (BitCount + 7) / 8);
 
-                    CodecBufferPtr = CodecBuffer;
+                    CodecBufferPtr2 = CodecBuffer2;
                     uint16_t BitCountTmp = 2, TotalBitCount = BitCount;
                     BitCount = 0;
 
@@ -549,14 +579,15 @@ void Sniff14443ACodecTask(void)
                         BitCountTmp += 2;
                     }
                     if (BitCount % 8) // copy the last byte, if there is an incomplete byte
-                        CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
+                        CodecBuffer2[BitCount / 8] = SampleRegister2 >> (8 - (BitCount % 8));
 
 //                BitCount = removeParityBits(CodecBuffer, BitCount);
 
-                    LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
+                    LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer2, (BitCount + 7) / 8);
 
                     // Disable card sniffing and enable reader sniffing
                     CardSniffDeinit();
+                    TrafficSource = TRAFFIC_READER;
                     ReaderSniffInit();
 
                     return;
@@ -565,7 +596,7 @@ void Sniff14443ACodecTask(void)
             Flags.RxDone = false;
 
             /* Call application with received data */
-            BitCount = ApplicationProcess(CodecBuffer, BitCount);
+            BitCount = ApplicationProcess(CodecBuffer2, BitCount);
         }
         else    // Receive not finished yet, Continue waiting
         {
@@ -575,10 +606,12 @@ void Sniff14443ACodecTask(void)
                 Flags.RxDone = true;
                 // Disable card sniffing and enable reader sniffing
                 CardSniffDeinit();
+                TrafficSource = TRAFFIC_READER;
                 ReaderSniffInit();
             }
         }
     }
+
 }
 
 

@@ -99,6 +99,8 @@
 #define CodecCount16Register2		(*((volatile uint16_t*) &GPIOR6)) /* GPIOR4 & GPIOR5 */
 #define CodecPtrRegister1			(*((volatile uint8_t**) &GPIOR8))
 #define CodecPtrRegister2			(*((volatile uint8_t**) &GPIORA))
+#define CodecPtrRegister3			(*((volatile uint8_t**) &GPIORC))
+
 
 extern uint16_t Reader_FWT;
 
@@ -110,6 +112,7 @@ typedef enum {
 } SubcarrierModType;
 
 extern uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
+extern uint8_t CodecBuffer2[CODEC_BUFFER_SIZE];
 
 INLINE void CodecInit(void) {
     ActiveConfiguration.CodecInitFunc();
