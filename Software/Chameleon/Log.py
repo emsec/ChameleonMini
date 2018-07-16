@@ -25,6 +25,12 @@ eventTypes = {
     0x42: { 'name': 'CODEC RX W/PARITY', 'decoder': binaryDecoder },
     0x43: { 'name': 'CODEC TX W/PARITY', 'decoder': binaryDecoder },
 
+    0x44: { 'name': 'CODEC RX SNI READER',          'decoder': binaryDecoder },
+    0x45: { 'name': 'CODEC RX SNI READER W/PARITY', 'decoder': binaryDecoder },
+    0x46: { 'name': 'CODEC RX SNI CARD',            'decoder': binaryDecoder },
+    0x47: { 'name': 'CODEC RX SNI CARD W/PARITY',   'decoder': binaryDecoder },
+   
+
     0x80: { 'name': 'APP READ',       'decoder': binaryDecoder },
     0x81: { 'name': 'APP WRITE',      'decoder': binaryDecoder },
     0x84: { 'name': 'APP INC',        'decoder': binaryDecoder },

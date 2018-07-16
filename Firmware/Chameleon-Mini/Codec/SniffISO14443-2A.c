@@ -454,7 +454,7 @@ void Sniff14443ACodecTask(void)
 
             if (DemodBitCount >= ISO14443A_MIN_BITS_PER_FRAME) {
                 // For logging data
-                LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
+                LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, (DemodBitCount+7)/8);
                 LEDHook(LED_CODEC_RX, LED_PULSE);
 
                 TrafficSource = TRAFFIC_CARD;
@@ -515,8 +515,8 @@ void Sniff14443ACodecTask(void)
                         CodecBuffer2[BitCount / 8] = CardSampleR >> (8 - (BitCount % 8));
 
 //                BitCount = removeParityBits(CodecBuffer, BitCount);
-
-                    LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer2, (BitCount + 7) / 8);
+                    LEDHook(LED_CODEC_RX, LED_PULSE);
+                    LogEntry(LOG_INFO_CODEC_SNI_CARD_DATA_W_PARITY, CodecBuffer2, (BitCount + 7) / 8);
 
                     // Disable card sniffing and enable reader sniffing
                     CardSniffDeinit();
