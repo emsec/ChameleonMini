@@ -43,6 +43,7 @@ enum RCTraffic TrafficSource;
 static volatile struct {
     volatile bool DemodFinished;
     volatile bool RxDone;
+
 } Flags = { 0 };
 static volatile uint16_t RxPendingSince;
 
@@ -453,12 +454,9 @@ void Sniff14443ACodecTask(void)
             /* Reception finished. Process the received bytes */
 
             if (DemodBitCount >= ISO14443A_MIN_BITS_PER_FRAME) {
-                // For logging data
-                LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, (DemodBitCount+7)/8);
                 LEDHook(LED_CODEC_RX, LED_PULSE);
 
                 TrafficSource = TRAFFIC_CARD;
-
                 return;
             }
             // Get nothing, Start sniff again
@@ -516,6 +514,10 @@ void Sniff14443ACodecTask(void)
 
 //                BitCount = removeParityBits(CodecBuffer, BitCount);
                     LEDHook(LED_CODEC_RX, LED_PULSE);
+                    // Print log after a round finished
+                    // Otherwise it will take too much cpu cycles
+                    // then the card traffic sniffing may not start in time
+                    LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, (DemodBitCount+7)/8);
                     LogEntry(LOG_INFO_CODEC_SNI_CARD_DATA_W_PARITY, CodecBuffer2, (BitCount + 7) / 8);
 
                     // Disable card sniffing and enable reader sniffing
@@ -537,6 +539,10 @@ void Sniff14443ACodecTask(void)
             // Reset to reader sniffing
             if ((SYSTICK_DIFF(RxPendingSince) > Reader_FWT + 1) ) {
                 Flags.RxDone = true;
+
+                // If Card sniffing started but no data get
+                // Then the codec must have sniffed some reader raffic
+                LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, (DemodBitCount+7)/8);
                 // Disable card sniffing and enable reader sniffing
                 CardSniffDeinit();
                 TrafficSource = TRAFFIC_READER;
