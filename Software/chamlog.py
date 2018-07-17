@@ -58,6 +58,7 @@ def main():
     else:
         verboseFunc = None
 
+    print("\nNote: If parityBit check failed, '!' is appended to the decoded data and raw data with parity bit is displayed.\n")
     if (args.live):
         # Live logging mode
         if (args.port is not None):
