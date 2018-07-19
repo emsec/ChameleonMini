@@ -19,10 +19,11 @@ def verboseLog(text):
 	
 def formatText(log):
     formatString  = '{timestamp:0>5d} ms <{deltaTimestamp:>+6d} ms>:'
-    formatString += '{eventName:<16} ({dataLength:<3} bytes) [{data}]\n'
+    formatString += '{eventName:<28} ({dataLength:<3} bytes)\t[{data:<20}]\t{note}\n'
     text = ''
     
     for logEntry in log:
+
         text += formatString.format(**logEntry)
 
     return text
@@ -46,6 +47,7 @@ def main():
     
     argParser.add_argument("-t", "--type", choices=outputTypes.keys(), default='text',
                             help="specifies output type")
+    argParser.add_argument("-d", "--decode", dest="decode", action='store_true', default=False)
     argParser.add_argument("-l", "--live", dest="live", action='store_true', help="Use live logging capabilities of Chameleon")
     argParser.add_argument("-c", "--clear", dest="clear", action='store_true', help="Clear Chameleon's log memory when using -p")
     argParser.add_argument("-m", "--mode", dest="mode", metavar="LOGMODE", help="Additionally set Chameleon's log mode after reading it's memory")
@@ -69,7 +71,7 @@ def main():
 
                 while True:
                     stream = io.BytesIO(chameleon.read())
-                    log = Chameleon.Log.parseBinary(stream)
+                    log = Chameleon.Log.parseBinary(stream, args.decode)
                     if (len(log) > 0):
                         print(outputTypes[args.type](log))
       
@@ -95,7 +97,7 @@ def main():
                 sys.exit(2)
                 
         # Parse actual logfile
-        log = Chameleon.Log.parseBinary(handle)
+        log = Chameleon.Log.parseBinary(handle, args.decode)
 
         # Print to console using chosen output type
         print(outputTypes[args.type](log))

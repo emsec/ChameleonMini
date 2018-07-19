@@ -3,6 +3,7 @@
 import struct
 import binascii
 import math
+import Chameleon.ISO14443 as iso14443_3
 
 def checkParityBit(data):
     byteCount = len(data)
@@ -96,7 +97,7 @@ eventTypes = {
 TIMESTAMP_MAX = 65536
 eventTypes = { i : ({'name': 'UNKNOWN', 'decoder': binaryDecoder} if i not in eventTypes.keys() else eventTypes[i]) for i in range(256) }
 
-def parseBinary(binaryStream):
+def parseBinary(binaryStream, decode=False):
     log = []
     
     # Completely read file contents and process them byte by byte
@@ -135,13 +136,20 @@ def parseBinary(binaryStream):
         if (deltaTimestamp < 0):
             deltaTimestamp += TIMESTAMP_MAX;
 
+        note = ""
+        # If we need to decode the data
+        if (decode):
+            # Decode the data from Reader
+            if(event == 0x44 or event == 0x45):
+                note = iso14443_3.parseReader(binascii.a2b_hex(logData))
         # Create log entry as dict and append it to event list
         logEntry = {
             'eventName': eventTypes[event]['name'],
             'dataLength': dataLength,
             'timestamp': timestamp,
             'deltaTimestamp': deltaTimestamp,
-            'data': logData
+            'data': logData,
+            'note': note
         }
         
         log.append(logEntry)
