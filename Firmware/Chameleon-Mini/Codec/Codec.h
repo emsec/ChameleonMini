@@ -96,7 +96,7 @@
 #define Codec8Reg2			GPIOR2
 #define Codec8Reg3			GPIOR3
 #define CodecCount16Register1		(*((volatile uint16_t*) &GPIOR4)) /* GPIOR4 & GPIOR5 */
-#define CodecCount16Register2		(*((volatile uint16_t*) &GPIOR6)) /* GPIOR4 & GPIOR5 */
+#define CodecCount16Register2		(*((volatile uint16_t*) &GPIOR6)) /* GPIOR6 & GPIOR7 */
 #define CodecPtrRegister1			(*((volatile uint8_t**) &GPIOR8))
 #define CodecPtrRegister2			(*((volatile uint8_t**) &GPIORA))
 #define CodecPtrRegister3			(*((volatile uint8_t**) &GPIORC))
