@@ -119,7 +119,21 @@ def cmdRedLED(chameleon, arg):
             return "Red LED function has been set to {}".format(chameleon.cmdRedLED()['response'])
         else:
             return "Setting red LED function to {} failed: {}".format(arg, result['statusText'])
-        
+
+def cmdThreshold(chameleon, arg):
+    result = chameleon.cmdThreshold(arg)
+
+    if (arg is None):
+        return "Current threshold is: {}".format(result['response'])
+    else:
+        if (result['statusCode'] in chameleon.STATUS_CODES_SUCCESS):
+            return "Threshold have been set to {}".format(arg)
+        else:
+            return "Setting threshold faled: {}".format(arg, result['statusText'])
+
+def cmdUpgrade(chameleon, arg):
+    result = chameleon.cmdUpgrade()
+    return ""
 # Custom class for argparse
 class CmdListAction(argparse.Action):
     def __init__(self, option_strings, dest, default=False, required=False,
@@ -154,6 +168,9 @@ def main():
     cmdArgGroup.add_argument("-rb",  "--rbutton",    dest="rbutton",     action=CmdListAction, metavar="ACTION", nargs='?', help="retrieve or set the current right button action")
     cmdArgGroup.add_argument("-gl",  "--gled",       dest="gled",        action=CmdListAction, metavar="FUNCTION", nargs='?', help="retrieve or set the current green led function")
     cmdArgGroup.add_argument("-rl",  "--rled",       dest="rled",        action=CmdListAction, metavar="FUNCTION", nargs='?', help="retrieve or set the current red led function")
+    cmdArgGroup.add_argument("-th",  "--threshold",  dest="threshold",   action=CmdListAction, nargs='?', help="retrieve or set the threshold")
+    cmdArgGroup.add_argument("-ug",  "--upgrade",    dest="upgrade",     action=CmdListAction, nargs=0,   help="set the micro Controller to upgrade mode")
+
     args = argParser.parse_args()
     
     if (args.verbose):
@@ -179,6 +196,8 @@ def main():
                 "rbutton"   : cmdRButton,
                 "gled"      : cmdGreenLED,
                 "rled"      : cmdRedLED,
+                "threshold" : cmdThreshold,
+                "upgrade"   : cmdUpgrade,
             }
 
             if hasattr(args, "cmdList"):

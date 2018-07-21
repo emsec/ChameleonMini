@@ -21,7 +21,10 @@ class Device:
     COMMAND_RBUTTON = "RBUTTON"
     COMMAND_GREEN_LED = "LEDGREEN"
     COMMAND_RED_LED = "LEDRED"
-    
+    COMMAND_THRESHOLD = "THRESHOLD"
+    COMMAND_UPGRADE = "upgrade"
+
+
     STATUS_CODE_OK = 100
     STATUS_CODE_OK_WITH_TEXT = 101
     STATUS_CODE_WAITING_FOR_XMODEM = 110
@@ -240,3 +243,12 @@ class Device:
             return self.getCmdSuggestions(self.COMMAND_RED_LED)
         else:
             return self.getSetCmd(self.COMMAND_RED_LED, newFunction)
+
+    def cmdThreshold(self, value):
+        if(value == self.SUGGEST_CHAR):
+            return self.getCmdSuggestions(self.COMMAND_THRESHOLD)
+        else:
+            return self.getSetCmd(self.COMMAND_THRESHOLD, value)
+
+    def cmdUpgrade(self):
+        return self.execCmd(self.COMMAND_UPGRADE)
