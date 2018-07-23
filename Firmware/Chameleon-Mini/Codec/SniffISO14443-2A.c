@@ -37,15 +37,9 @@
 #define ParityBufferPtr	CodecPtrRegister2
 #define CardBufferPtr   CodecPtrRegister3
 
-
-enum RCTraffic TrafficSource;
-
 static volatile struct {
     volatile bool ReaderDataAvaliable;
     volatile bool CardDataAvaliable;
-//    volatile bool DemodFinished;
-//    volatile bool RxDone;
-//    volatile bool CardStarted;          // If card have send the first bit
 
 } Flags = { 0 };
 static volatile uint16_t RxPendingSince;
@@ -60,6 +54,7 @@ typedef enum {
 
 static volatile uint16_t ReaderBitCount;
 static volatile uint16_t CardBitCount;
+static volatile uint16_t rawBitCount;
 
 INLINE void CardSniffInit(void);
 INLINE void CardSniffDeinit(void);
@@ -273,7 +268,8 @@ INLINE void CardSniffInit(void)
      * for incoming data. */
 
     CardBufferPtr = CodecBuffer2; // use GPIOR for faster access
-    BitCount = 1; // FALSCH todo the first modulation of the SOC is "found" implicitly
+    rawBitCount = 1; // FALSCH todo the first modulation of the SOC is "found" implicitly
+    BitCount = 0;
     CardSampleR = 0x00;
 
 
@@ -363,22 +359,6 @@ INLINE void Insert1(void)
     *CardBufferPtr++ = CardSampleR;
 }
 
-INLINE void TaskInsert0(void)
-{
-    CardSampleR >>= 1;
-    if (++CardBitCount % 8)
-        return;
-    *CardBufferPtr++ = CardSampleR;
-}
-
-INLINE void TaskInsert1(void)
-{
-    CardSampleR = (CardSampleR >> 1) | 0x80;
-    if (++CardBitCount % 8)
-        return;
-    *CardBufferPtr++ = CardSampleR;
-}
-
 // This interrupt find Card -> Reader SOC
 ISR(ACA_AC0_vect) // this interrupt either finds the SOC or gets triggered before
 {
@@ -402,34 +382,68 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
      * but doing this only on a condition means wasting time, so we do it every time. */
     CODEC_TIMER_TIMESTAMPS.CTRLA = TC_CLKSEL_DIV4_gc;
 
+    // Remember, LSB is send first
+    // If current raw bit count is odd, then the previous raw bit must be 0
     switch (tmp) // decide how many half bit periods have been modulations
     {
         case 0 ... 48: // 32 ticks is one half of a bit period
             return;
 
         case 49 ... 80: // 64 ticks are a full bit period
-            // Insert 0
-            Insert1();
-            Insert0();
+            // Got 01
+            if(rawBitCount & 1){
+                // 01 + 0 -> 0 10
+                // 10 -> 1, last 0 is ignored
+                if(rawBitCount > 1) {
+                    // Ignore SOC
+                    Insert1();
+                }
+            } else{
+                // Current sampled bit count is even, decode directly
+                // 01 -> 0
+                Insert0();
+            }
+            rawBitCount += 2;
             return;
 
         case 81 ... 112: // 96 ticks are 3 half bit periods
-            if (BitCount & 1) {
-                Insert1();
-                Insert1();
+            if (rawBitCount & 1) {
+                // Current sampled bit count is odd
+                // Got 011
+                // 011 + 0 -> 01 10 -> 01
+                if(rawBitCount > 1) {
+                    // Ignore SOC
+                    Insert1();
+                }
                 Insert0();
             } else {
-                Insert1();
-                Insert0();
+                // Even bit count
+                // Got 001
+                // 001 -> 0 01, The last 0 is ignored
+                // 01 -> 0
                 Insert0();
             }
+            rawBitCount += 3;
+
             return;
 
         default: // every value over 96 + 16 (tolerance) is considered to be 4 half bit periods
-            Insert1();
-            Insert1();
-            Insert0();
-            Insert0();
+            // Got 00 11
+            if(rawBitCount & 1){
+                // 00 11 + 0 -> 0 01 10
+                // 01 -> 0, 10 -> 1, Ignore last 0
+                if(rawBitCount > 1) {
+                    // Ignore SOC
+                    Insert1();
+                }
+                Insert0();
+            } else {
+                // Should not happen
+                // If modulation is correct,
+                // there should not be a full bit period modulation in even bit count
+            }
+            rawBitCount += 4;
+
             return;
     }
 }
@@ -446,19 +460,21 @@ ISR(CODEC_TIMER_TIMESTAMPS_CCB_VECT) // EOC found
     CODEC_TIMER_TIMESTAMPS.CTRLA = TC_CLKSEL_OFF_gc;
     ACA.AC0CTRL &= ~AC_ENABLE_bm;
 
-    if (BitCount & 1) {
-        if (CardSampleR & 0x80)
-            Insert0();
-        else
-            Insert1();
+    // If finished in odd sample count
+    // There must been an incomplete decoded bit
+    // Since only EOC is no modulation in full bit period, and previous raw bit must be 0
+    // so the last not modulated bit must be 1
+    if (rawBitCount & 1) {
+        // The previous raw bit must be 0
+        // 1 + 0 -> 10 -> 1
+        Insert1();
     }
-
 
     if (BitCount % 8) // copy the last byte, if there is an incomplete byte
         CodecBuffer2[BitCount / 8] = CardSampleR >> (8 - (BitCount % 8));
 
     CardBitCount = BitCount;
-    if (BitCount >= ISO14443A_RX_MINIMUM_BITCOUNT * 2) {
+    if (BitCount >= ISO14443A_RX_MINIMUM_BITCOUNT) {
         Flags.CardDataAvaliable = true;
     }
 
@@ -481,11 +497,10 @@ void Sniff14443ACodecInit(void)
     CodecSetDemodPower(true);
 
     // Start with sniffing Reader->Card direction traffic
-    TrafficSource = TRAFFIC_READER;
-    ReaderSniffInit();
     Flags.ReaderDataAvaliable = false;
     Flags.CardDataAvaliable = false;
 
+    ReaderSniffInit();
 }
 
 void Sniff14443ACodecDeInit(void)
@@ -503,56 +518,18 @@ void Sniff14443ACodecTask(void)
     if(Flags.ReaderDataAvaliable){
         Flags.ReaderDataAvaliable = false;
         LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, (ReaderBitCount+7)/8);
-        ReaderBitCount = 0;
+//        ReaderBitCount = 0;
     }
+
 
     if (Flags.CardDataAvaliable){
         Flags.CardDataAvaliable = false;
 
-        uint8_t TmpCodecBuffer[CODEC_BUFFER_SIZE];
-        memcpy(TmpCodecBuffer, CodecBuffer2, (CardBitCount + 7) / 8);
+//        CardBitCount = removeParityBits(CodecBuffer2,CardBitCount );
+//        LEDHook(LED_CODEC_RX, LED_PULSE);
 
-        CardBufferPtr = CodecBuffer2;
-        uint16_t BitCountTmp = 2, TotalBitCount = CardBitCount;
-        CardBitCount = 0;
-
-        bool breakflag = false;
-        TmpCodecBuffer[0] >>= 2; // with this (and BitCountTmp = 2), the SOC is ignored
-
-        // Manchester Code ISO14443-2 8.2.5
-        while (!breakflag && BitCountTmp < TotalBitCount) {
-            uint8_t Bit = TmpCodecBuffer[BitCountTmp / 8] & 0x03;
-            TmpCodecBuffer[BitCountTmp / 8] >>= 2;
-            switch (Bit) {
-                case 0b10:
-                    TaskInsert1();
-                    break;
-
-                case 0b01:
-                    TaskInsert0();
-                    break;
-
-                case 0b00: // EOC
-                    breakflag = true;
-                    break;
-
-                default:
-                    // error, should not happen, TODO handle this
-                    break;
-            }
-            BitCountTmp += 2;
-        }
-        if (CardBitCount % 8) // copy the last byte, if there is an incomplete byte
-            CodecBuffer2[CardBitCount / 8] = CardSampleR >> (8 - (CardBitCount % 8));
-
-//                BitCount = removeParityBits(CodecBuffer, CardBitCount);
-//                    LEDHook(LED_CODEC_RX, LED_PULSE);
-        // Print log after a round finished
-        // Otherwise it will take too much cpu cycles
-        // then the card traffic sniffing may not start in time
         LogEntry(LOG_INFO_CODEC_SNI_CARD_DATA_W_PARITY, CodecBuffer2, (CardBitCount + 7) / 8);
 
-//                    return;
     }
 
 
