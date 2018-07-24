@@ -1,4 +1,10 @@
 import binascii
+import crcmod
+
+# Parameters for CRC_A
+CRC_INIT = 0x6363
+POLY = 0x11021
+CRC_A_func = crcmod.mkCrcFun(POLY, initCrc=CRC_INIT, xorOut=0)
 
 ReaderTrafficTypes = {
     "SEL":{
@@ -31,6 +37,22 @@ ReaderTrafficTypes = {
 CardTrafficTypes = {
 
 }
+
+def CRC_A(data):
+    return CRC_A_func(data)
+
+def CRC_A_check(data):
+    datalen = len(data)
+    # Short frame or no space for CRC skip check
+    if(datalen < 4 ):
+        return
+
+    crc = CRC_A(bytearray(data[0:datalen-2])).to_bytes(2,'little')
+    if (data[datalen-2:datalen] == crc):
+        return True
+    else:
+        return False
+
 def parseReader(data):
     byteCount = len(data)
     note = ""
@@ -51,8 +73,11 @@ def parseReader(data):
         note += "SELECT - "
         note += ReaderTrafficTypes["SEL"][data[0]]
         note += "UID_CLn:" + binascii.hexlify(data[2:7]).decode() + " "
+        # Check CRC for SELECT
+        if(not CRC_A_check(data)):
+            note+=" WRONG CRC "
         # note += "7bytes + 0bits "
-        # note += "CRC_A:"+data[8]
+        # note += "CRC_A:"+data[7:9]
     # HALT Command
     elif (byteCount == 4 and data[0] == 0x50 and data[1] == 0x00):
         note += "HALT"
@@ -61,6 +86,8 @@ def parseReader(data):
         note += "RATS - "
         note += ReaderTrafficTypes["FSDI"][data[1]>>8]
         note += "CID:" + str(data[1]&0x0f) + " "
+        if(not CRC_A_check(data)):
+            note+=" WRONG CRC "
     # PPS Protocol and parameter selection request
     # PSS0 only
     elif (byteCount == 4 and (data[0]&0xf0 == 0xd0) and (data[1] == 0x01)):
