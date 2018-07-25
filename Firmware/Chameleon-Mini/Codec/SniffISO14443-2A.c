@@ -261,8 +261,6 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
 
 INLINE void CardSniffInit(void)
 {
-    LED_PORT.OUTSET = LED_RED;
-
 
     /* Initialize common peripherals and start listening
      * for incoming data. */
@@ -326,8 +324,6 @@ INLINE void CardSniffInit(void)
 
 INLINE void CardSniffDeinit(void)
 {
-    LED_PORT.OUTCLR = LED_RED;
-
 
     CODEC_TIMER_LOADMOD.CTRLA = 0;
     CODEC_TIMER_LOADMOD.INTCTRLB = 0;
@@ -518,18 +514,17 @@ void Sniff14443ACodecTask(void)
     if(Flags.ReaderDataAvaliable){
         Flags.ReaderDataAvaliable = false;
         LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, (ReaderBitCount+7)/8);
-//        ReaderBitCount = 0;
+        ApplicationProcess(CodecBuffer, (ReaderBitCount+7)/8);
+        LEDHook(LED_CODEC_RX, LED_PULSE);
     }
 
 
     if (Flags.CardDataAvaliable){
         Flags.CardDataAvaliable = false;
-
 //        CardBitCount = removeParityBits(CodecBuffer2,CardBitCount );
-//        LEDHook(LED_CODEC_RX, LED_PULSE);
-
         LogEntry(LOG_INFO_CODEC_SNI_CARD_DATA_W_PARITY, CodecBuffer2, (CardBitCount + 7) / 8);
-
+        LEDHook(LED_CODEC_RX, LED_PULSE);
+        ApplicationProcess(CodecBuffer2, (CardBitCount+7)/8);
     }
 
 
