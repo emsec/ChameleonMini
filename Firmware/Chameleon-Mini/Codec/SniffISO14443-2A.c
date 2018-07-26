@@ -513,18 +513,26 @@ void Sniff14443ACodecTask(void)
     PORTE.OUTSET = PIN3_bm;
     if(Flags.ReaderDataAvaliable){
         Flags.ReaderDataAvaliable = false;
+
         LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, (ReaderBitCount+7)/8);
-        ApplicationProcess(CodecBuffer, (ReaderBitCount+7)/8);
+        // Let the Application layer know where this data comes from
         LEDHook(LED_CODEC_RX, LED_PULSE);
+
+        TrafficSource = TRAFFIC_READER;
+        ApplicationProcess(CodecBuffer, ReaderBitCount);
     }
 
 
     if (Flags.CardDataAvaliable){
         Flags.CardDataAvaliable = false;
+
 //        CardBitCount = removeParityBits(CodecBuffer2,CardBitCount );
         LogEntry(LOG_INFO_CODEC_SNI_CARD_DATA_W_PARITY, CodecBuffer2, (CardBitCount + 7) / 8);
         LEDHook(LED_CODEC_RX, LED_PULSE);
-        ApplicationProcess(CodecBuffer2, (CardBitCount+7)/8);
+
+        // Let the Application layer know where this data comes from
+        TrafficSource = TRAFFIC_CARD;
+        ApplicationProcess(CodecBuffer2, CardBitCount);
     }
 
 
