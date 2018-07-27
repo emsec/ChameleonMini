@@ -28,9 +28,8 @@ static uint8_t Thresholds[(CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIB
 
 void Sniff14443AAppInit(void){
     SniffState = STATE_REQA;
-
-    tmp_th = CODEC_THRESHOLD_CALIBRATE_MIN;
-    CodecThresholdSet(tmp_th);
+    // Get current threshold and continue searching from here
+    tmp_th = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
 }
 
 void Sniff14443AAppReset(void){
@@ -56,6 +55,7 @@ INLINE void reset2REQA(void){
         tmp_th = CodecThresholdIncrement();
     } else{
         // mark finish
+        CommandLinePendingTaskFinished(COMMAND_INFO_FALSE, NULL);
     }
 }
 uint16_t Sniff14443AAppProcess(uint8_t* Buffer, uint16_t BitCount){
@@ -145,9 +145,13 @@ uint16_t Sniff14443AAppProcess(uint8_t* Buffer, uint16_t BitCount){
                             LED_PORT.OUTSET = LED_RED;
                             Thresholds[(tmp_th - CODEC_THRESHOLD_CALIBRATE_MIN) / CODEC_THRESHOLD_CALIBRATE_STEPS] += 1;
                             CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, NULL);
+                            // Send this threshold to terminal
                             char tmpBuf[10];
                             snprintf(tmpBuf, 10, "%4" PRIu16 ": ", tmp_th);
                             TerminalSendString(tmpBuf);
+
+                            // Save value to EEPROM
+                            SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->ReaderThreshold);
 
                             Sniff14443AAppReset();
                         } else {
