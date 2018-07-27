@@ -281,8 +281,6 @@ INLINE void CardSniffInit(void)
      * bit halves had modulations since the last pause.
      */
 
-    DACB.CH0DATA = GlobalSettings.ActiveSettingPtr->ReaderThreshold; // real threshold voltage can be calculated with ch0data * Vref / 0xFFF
-
     // Comparator ADC
     /* Configure and enable the analog comparator for finding pauses in the DEMOD signal. */
     ACA.AC0CTRL = AC_HSMODE_bm | AC_HYSMODE_NO_gc | AC_INTMODE_FALLING_gc | AC_ENABLE_bm;
