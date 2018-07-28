@@ -32,10 +32,15 @@ ReaderTrafficTypes = {
         0x7: "FSD:128 ",
         0x8: "FSD:256 "
     },
+
 }
 
 CardTrafficTypes = {
-
+    "SAK":{
+        0x04: "UID NOT Complete ",
+        0x20: "UID complete, PICC compliant with 14443-4 ",
+        0x00: "UID complete, PICC NOT compliant with 14443-4"
+    }
 }
 
 def CRC_A(data):
@@ -43,9 +48,9 @@ def CRC_A(data):
 
 def CRC_A_check(data):
     datalen = len(data)
-    # Short frame or no space for CRC skip check
-    if(datalen < 4 ):
-        return
+    # Short frame/SAK or no space for CRC skip check
+    if(datalen < 3 ):
+        return True
 
     crc = CRC_A(bytearray(data[0:datalen-2])).to_bytes(2,'little')
     if (data[datalen-2:datalen] == crc):
@@ -70,9 +75,10 @@ def parseReader(data):
 
     # SELECT Command
     elif (byteCount== 9 and data[0] in ReaderTrafficTypes["SEL"] and data[1] == 0x70):
+        # TODO: distinguish CT+uid012+BCC and uid0123+BCC
         note += "SELECT - "
         note += ReaderTrafficTypes["SEL"][data[0]]
-        note += "UID_CLn:" + binascii.hexlify(data[2:7]).decode() + " "
+        note += "UID_CLn:" + binascii.hexlify(data[2:6]).decode() + " "
         # Check CRC for SELECT
         if(not CRC_A_check(data)):
             note+=" WRONG CRC "
@@ -111,4 +117,24 @@ def parseReader(data):
     return note
 
 def parseCard(data):
+
+    byteCount = len(data)
+    note = ""
+
+    # ATQA: RRRR XXXX  XXRX XXXX
+    if(byteCount == 2 and (data[0] & 0x20 == 0x00) and (data[1] & 0xf0 == 0x00)):
+        note += "ATQA - "
+        note += binascii.hexlify(data).decode()
+    # SAK
+    elif (byteCount == 3 and (data[0] & (~0x24)) == 0x00):
+        note += "SAK - "
+        note += CardTrafficTypes["SAK"][(data[2] & 0x24)]
+        if not CRC_A_check(data):
+            note += " WRONG CRC "
+    # UID
+    elif (byteCount == 5 and (data[0] ^ data[1] ^ data[2] ^ data[3]) == data[4] ):
+        note += "UID Resp - CLn "
+
+    return note
+
     pass

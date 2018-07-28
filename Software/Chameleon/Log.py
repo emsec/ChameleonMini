@@ -142,6 +142,8 @@ def parseBinary(binaryStream, decode=False):
             # Decode the data from Reader
             if(event == 0x44 or event == 0x45):
                 note = iso14443_3.parseReader(binascii.a2b_hex(logData))
+            elif (event == 0x46 or event == 0x47):
+                note = iso14443_3.parseCard(binascii.a2b_hex(logData))
         # Create log entry as dict and append it to event list
         logEntry = {
             'eventName': eventTypes[event]['name'],
