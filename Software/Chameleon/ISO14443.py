@@ -1,6 +1,10 @@
 import binascii
 import crcmod
 from enum import Enum
+
+from Chameleon.MFDESFire import MFDESFireDecode
+from Chameleon.utils import TrafficSource
+
 # Parameters for CRC_A
 CRC_INIT = 0x6363
 POLY = 0x11021
@@ -11,6 +15,76 @@ class ReaderCMD(Enum):
     NONE = 0
     RATS = 1
     PPS  = 2
+
+
+
+class BlockData:
+    @staticmethod
+    def isBlockData(byteCount, data):
+        if(byteCount >= 3 and (data[0]& 0xE6) in ReaderTrafficTypes["PCB"]):
+            return True
+        else:
+            return False
+
+    def __init__(self, byteCount, data, source):
+        self.byteCount = byteCount
+        self.data = data
+        self.PCB = data[0]
+        self.type = ReaderTrafficTypes["PCB"][self.PCB & 0xE6]
+        self.CID = None
+        self.NAD = None
+        self.INF = None
+        self.source = source
+        self.CRCChecked = CRC_A_check(data)
+        self.CardApplicationDecoder = MFDESFireDecode
+
+        if self.CRCChecked:
+
+            hasCID = self.PCB & 0x08  # PCB b4 indicate CID
+            hasNAD = 0
+
+            if (self.type == "IBlock"):
+                hasNAD = self.PCB & 0x04  # IBlock PCB b2 indicate NAD
+
+            byteNext = 1
+            # CID
+            if (hasCID):
+                self.CID = self.data[byteNext]
+                byteNext += 1
+
+            # NAD
+            if (hasNAD):
+                self.NAD = self.data[byteNext]
+                byteNext += 1
+
+            # INF field not empty
+            if(byteNext < byteCount -2):
+                self.INF = self.data[byteNext: byteCount-2]
+
+
+    def decode(self):
+        note = ""
+        # Prologue
+        # PCB
+        note += self.type + " "
+
+        # CID
+        if (self.CID != None):
+            note += "CID:" + hex(self.CID) + " "
+
+        # NAD
+        if (self.NAD != None):
+            note += "NAD:" + hex(self.NAD) + " "
+
+        # INF
+        if (self.INF != None):
+            note += self.CardApplicationDecoder(self.INF, self.source)
+        # EDC CRC check
+        if not self.CRCChecked:
+            note += " WRONG CRC "
+
+
+        return note
 
 readerCMD = ReaderCMD.NONE
 
@@ -40,7 +114,16 @@ ReaderTrafficTypes = {
         0x7: "FSD:128 ",
         0x8: "FSD:256 "
     },
-
+    "PCB":{
+        # IBlock 000X XX1X
+        0x02: "IBlock",         # 000X X01X
+        0x08: "IBlock",         # 000X X11X
+        # RBlock 101X X01X
+        0xA2: "RBlock",         # 101X X01X
+        # SBlock 11XX X010
+        0xC2: "SBlock",         # 110X X010
+        0xE2: "SBlock"          # 111X X010
+    }
 }
 
 CardTrafficTypes = {
@@ -119,7 +202,7 @@ def parseReader_4(data):
             (data[1] & 0xf0 >> 8) in ReaderTrafficTypes["FSDI"])):
         note += "RATS - "
         note += ReaderTrafficTypes["FSDI"][data[1] >> 8]
-        note += "CID:" + str(data[1] & 0x0f) + " "
+        note += "CID:" + hex(data[1] & 0x0f) + " "
         if (not CRC_A_check(data)):
             note += " WRONG CRC "
         else:
@@ -137,14 +220,12 @@ def parseReader_4(data):
         note += "CID:" + str(data[1] & 0x0f) + " "
         note += "DSI:" + str(pow(2, (data[2] >> 2) & 0x03)) + " "
         note += "DRI:" + str(pow(2, data[2] & 0x03)) + " "
-    # BLOCK S-block PCB DESELECT
-    # Without CID
-    elif (byteCount == 3 and data[0] == 0xc2):
-        note += "DESEL"
-    # With CID
-    elif (byteCount == 4 and data[0] == 0xca and data[1] & 0x30 == 0x00):
-        note += "DESEL - "
-        note += "CID:" + str(data[1] & 0x0f) + " "
+
+    # Half-duplex block transmission
+    # PCB bit mask: 0b11100110
+    elif (BlockData.isBlockData(byteCount, data)):
+        blockData = BlockData(byteCount,data, TrafficSource.Reader)
+        note = blockData.decode()
 
     return note
 
@@ -209,9 +290,12 @@ def parseCard_4(data):
         # Check CRC_A
         if not CRC_A_check(data):
             note += " WRONG CRC "
+    # Application Data
+    elif (BlockData.isBlockData(byteCount, data)):
+        blockData = BlockData(byteCount,data, TrafficSource.Card)
+        note = blockData.decode()
 
-    elif ():
-        pass
+
     return note
 
 def parseReader(data):
