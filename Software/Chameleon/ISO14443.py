@@ -68,6 +68,28 @@ class BlockData:
         # PCB
         note += self.type + " "
 
+        # Block number
+        if ((self.type == "IBlock" or self.type == "RBlock") and self.PCB & 0x01):
+            note += "BlkNo:1 "
+
+        # Chaining?
+        if (self.type == "IBlock" and self.PCB & 0x10):
+            note += "Chaining "
+
+        # ACK/NAK? for R-Block
+        if (self.type == "RBlock"):
+            if (self.PCB & 0x10):
+                note += "NAK "
+            else:
+                note += "ACK "
+
+        # DESEL/WTX for SBlock
+        if (self.type == "SBlock"):
+            if (self.PCB & 0x30 == 0x00):
+                note += "DESEL "
+            elif (self.PCB & 0x30 == 0x30):
+                note += "WTX"
+
         # CID
         if (self.CID != None):
             note += "CID:" + hex(self.CID) + " "
