@@ -13,9 +13,12 @@ CRC_A_func = crcmod.mkCrcFun(POLY, initCrc=CRC_INIT, xorOut=0)
 
 class ReaderCMD(Enum):
     NONE = 0
-    RATS = 1
-    PPS  = 2
+    SELECT = 1
+    RATS = 2
+    PPS  = 3
 
+
+readerCMD = ReaderCMD.NONE
 
 
 class BlockData:
@@ -108,7 +111,6 @@ class BlockData:
 
         return note
 
-readerCMD = ReaderCMD.NONE
 
 ReaderTrafficTypes = {
     "SEL":{
@@ -156,7 +158,7 @@ CardTrafficTypes = {
         0x00: "UID complete, PICC NOT compliant with 14443-4"
     },
     "FSCI": {
-        0x0: "FSCC:16 ",
+        0x0: "FSC:16 ",
         0x1: "FSC:24 ",
         0x2: "FSC:32 ",
         0x3: "FSC:40 ",
@@ -184,6 +186,7 @@ def CRC_A_check(data):
         return False
 
 def parseReader_3(data):
+    global readerCMD
     byteCount = len(data)
     note = ""
 
@@ -201,6 +204,7 @@ def parseReader_3(data):
     # SELECT Command
     elif (byteCount == 9 and data[0] in ReaderTrafficTypes["SEL"] and data[1] == 0x70):
         # TODO: distinguish CT+uid012+BCC and uid0123+BCC
+        readerCMD = ReaderCMD.SELECT
         note += "SELECT - "
         note += ReaderTrafficTypes["SEL"][data[0]]
         note += "UID_CLn:" + binascii.hexlify(data[2:6]).decode() + " "
@@ -216,6 +220,7 @@ def parseReader_3(data):
     return note
 
 def parseReader_4(data):
+    global readerCMD
     byteCount = len(data)
     note = ""
 
@@ -260,7 +265,7 @@ def parseCard_3(data):
         note += "ATQA - "
         note += binascii.hexlify(data).decode()
     # SAK
-    elif (byteCount == 3 and ((data[0] & (0x24)) in CardTrafficTypes["SAK"])):
+    elif (byteCount == 3 and readerCMD == ReaderCMD.SELECT and ((data[0] & (0x24)) in CardTrafficTypes["SAK"])):
         note += "SAK - "
         note += CardTrafficTypes["SAK"][(data[2] & 0x24)]
         if not CRC_A_check(data):
@@ -272,6 +277,7 @@ def parseCard_3(data):
     return note
 
 def parseCard_4(data):
+    global readerCMD
     byteCount = len(data)
     note = ""
 
@@ -279,12 +285,13 @@ def parseCard_4(data):
     # TL + T0 + TA + TB + TC + T1 ... + CRC
     # TL: length without CRC
     # ATS without data
-    if(byteCount == 3 and data[0] == (byteCount-2)):
+    if(byteCount == 3 and readerCMD == ReaderCMD.RATS and data[0] == (byteCount-2)):
         note += "ATS - NO DATA"
     # ATS with data mush have T0, T0 b8=0
-    elif (byteCount > 3 and data[0] == (byteCount-2)
+    elif (byteCount > 3 and readerCMD == ReaderCMD.RATS and data[0] == (byteCount-2)
             and data[1] & 0x80 == 0x00
             and data[1] & 0x0f in CardTrafficTypes["FSCI"]):
+        note += "ATS - "
         # Decode T0
         hasTA = data[1] & 0x10
         hasTB = data[1] & 0x20
@@ -317,6 +324,7 @@ def parseCard_4(data):
         blockData = BlockData(byteCount,data, TrafficSource.Card)
         note = blockData.decode()
 
+    readerCMD = ReaderCMD.NONE
 
     return note
 
