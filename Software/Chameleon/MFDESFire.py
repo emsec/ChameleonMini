@@ -2,7 +2,7 @@ from Chameleon.utils import TrafficSource
 from binascii import hexlify
 
 lastCMD = 0x00
-
+strFail = "Decode Fail"
 StatusCode = {
     0x00 : "OPERATION_OK",
     0x0C : "NO_CHANGES",
@@ -33,13 +33,14 @@ def decodeSelectAPP(data):
     if len(data) == 4:
         return "AID: 0x"+ hexlify(data[1:4]).decode()
     else:
-        return "Decode Fail"
+        return strFail
 
+# Get APP ID CMD
 def decodeGetAPPID(data):
     if len(data) == 1:
         return ""
     else:
-        return "Decode Fail"
+        return strFail
 
 def decodeRespGetAPPID (data):
     note = "APPIDs: |"
@@ -49,18 +50,89 @@ def decodeRespGetAPPID (data):
         note += "0x"+hexlify(data[3*i: 3*(i+1)]).decode()+"|"
 
     return note
-
-
+##############################
+# Security Related Commands
+##############################
+# Authenticate AES CMD
 def decodeAuthAES(data):
     if len(data) == 2:
         return "KeyNo:"+hex(data[1])
     else:
-        return "Decode Fail"
+        return strFail
 
 def decodeRespAuthAES(data):
-    return ""
+    if len(data) == 17:
+        return "ekNo(RndB):0x" + hexlify(data[1:]).decode()
+    else:
+        return strFail
 
+def decodeAuthAESAF (data):
+    if len(data) == 33:
+        return "ekNo(RndA+RndB'):0x" + hexlify(data[1:]).decode()
+    else:
+        return strFail
 
+def decodeCardAuthAESAF (data):
+    if len(data) == 17:
+        return "ekNo(RndA'):0x" + hexlify(data[1:]).decode()
+    else:
+        return strFail
+
+# Authenticate 3DES CMD
+def decodeAuth3DES(data):
+    if len(data) == 2:
+        return "KeyNo:"+hex(data[1])
+    else:
+        return strFail
+
+def decodeRespAuth3DES(data):
+    if len(data) == 9:
+        return "ekNo(RndB):0x" + hexlify(data[1:]).decode()
+    else:
+        return strFail
+
+def decodeAuth3DESAF(data):
+    if len(data) == 17:
+        return "dkNo(RndA+RndB'):0x" + hexlify(data[1:]).decode()
+    else:
+        return strFail
+
+def decodeCardAuth3DESAF (data):
+    if len(data) == 9:
+        return "ekNo(RndA'):0x" + hexlify(data[1:]).decode()
+    else:
+        return strFail
+
+# ChangeKeySettings CMD
+def decodeChangeKeySettings(data):
+    if len(data) == 9:
+        return "KeySettings:0x" + hexlify(data[1:]).decode()
+    else:
+        return strFail
+# GetKeySettings CMD
+def decodeRespGetKeySettings(data):
+    if len(data) == 3:
+        return "KeySettings:" + hex(data[1]) + " MaxNoKeys:" + hex(data[2])
+    else:
+        return strFail
+
+# ChangeKey CMD
+def decodeChangeKey(data):
+    if len(data) == 26:
+        return "KeyNo:" + hex(data[1]) + " decipheredKeyData:0x"+hexlify(data[2:]).decode()
+    else:
+        return strFail
+
+# GetKeyVersion CMD
+def decodeGetKeyVersion(data):
+    if len(data) == 2:
+        return "KeyNo:" + hex(data[1])
+    else:
+        return strFail
+def decodeRespGetKeyVersion(data):
+    return "KeyVersion" + hex(data[1]) if len(data) == 2 else strFail
+
+# Read Data
 def decodeReadData(data):
     if len(data) == 8:
         fileNo = data[1]
@@ -68,28 +140,43 @@ def decodeReadData(data):
         length = data[5:8]
         return "FileNo:"+hex(fileNo) + " OffSet:0x"+hexlify(offSet).decode() + " len:0x"+hexlify(length).decode()
     else:
-        return "Decode Fail"
+        return strFail
 
 def decodeRespReadData(data):
-    return "Data:0x"+hexlify(data[1:]).decode()
+    return "Data:0x"+hexlify(data[1:]).decode() if len(data) >1 else strFail
 
 def decodeAdiFrame(data):
-    return ""
+    return "Data:0x"+hexlify(data[1:]).decode() if len(data) >1 else strFail
 
 def decodeRespAdiFrame(data):
-    return ""
+    return "Data:0x"+hexlify(data[1:]).decode() if len(data) >1 else strFail
 
 def decodeDummy(data):
     return ""
 
+
+
 MFDESFireCMDTypes = {
     0x5A : {"name": "SelectApp ",       "CMDdecoder":decodeSelectAPP,       "RespDecoder":   decodeDummy},
     0x6A : {"name": "GetAPPID ",        "CMDdecoder":decodeGetAPPID,        "RespDecoder":   decodeRespGetAPPID},
-    0xAA : {"name": "AuthAES ",         "CMDdecoder":decodeAuthAES,         "RespDecoder":   decodeRespAuthAES},
     0xBD : {"name": "ReadData ",        "CMDdecoder":decodeReadData,        "RespDecoder":   decodeRespReadData},
-    0xAF : {"name": "AdditionalFrame",  "CMDdecoder":decodeAdiFrame,        "RespDecoder":   decodeRespAdiFrame}
+    0xAF : {"name": "AdditionalFrame ", "CMDdecoder":decodeAdiFrame,        "RespDecoder":   decodeRespAdiFrame},
+    # Security Related CMD
+    0xAA : {"name": "AuthAES ",         "CMDdecoder": decodeAuthAES, "RespDecoder": decodeRespAuthAES},
+    0x0A : {"name": "Auth3DES",         "CMDdecoder": decodeAuth3DES, "RespDecoder": decodeRespAuth3DES},
+    0x54 : {"name": "ChangeKeySettings ","CMDdecoder":decodeChangeKeySettings,"respDecoder": decodeDummy},
+    0x45 : {"name": "GetKeySettings ",  "CMDdecoder":decodeDummy,           "RespDecoder":   decodeRespGetKeySettings},
+    0xC4 : {"name": "ChangeKey ",       "CMDdecoder":decodeChangeKey,       "RespDecoder":   decodeDummy},
+    0x64 : {"name": "GetKeyVersion ",   "CMDdecoder":decodeGetKeyVersion,   "RespDecoder":   decodeRespGetKeyVersion}
+
 }
 
+# Commands need to use additional frame
+MFDESFireAFCMD = {
+    0xAA : {"name": "AuthAES",          "AFReaderDecoder":decodeAuthAESAF,  "AFCardDecoder": decodeCardAuthAESAF},
+    0x0A : {"name": "Auth3DES",         "AFReaderDecoder":decodeAuth3DESAF,  "AFCardDecoder": decodeCardAuth3DESAF},
+
+}
 
 def MFDESFireDecode(data, source):
     note = ""
@@ -97,9 +184,17 @@ def MFDESFireDecode(data, source):
     if (source == TrafficSource.Reader):
         cmd = data[0]
         if cmd in MFDESFireCMDTypes :
-            lastCMD = cmd
-            note += "CMD:" + MFDESFireCMDTypes[cmd]["name"]
-            note += MFDESFireCMDTypes[cmd]["CMDdecoder"](data)
+            # If current frame is Additional Frame
+            # And the previous cmd need Additional Frame
+            if lastCMD in MFDESFireAFCMD and cmd == 0xAF:
+                note += "CMD:AdditionalFrame "
+                note += MFDESFireAFCMD[lastCMD]["AFReaderDecoder"](data)
+            # Current command not need Additional Frame
+            # or last cmd doesn't need AF
+            else:
+                lastCMD = cmd
+                note += "CMD:" + MFDESFireCMDTypes[cmd]["name"]
+                note += MFDESFireCMDTypes[cmd]["CMDdecoder"](data)
 
     elif (source == TrafficSource.Card):
         status = data[0]
@@ -107,7 +202,11 @@ def MFDESFireDecode(data, source):
         if status in StatusCode:
             note += StatusCode[status] + " "
         # If status Ok, decode data
-        if status == 0x00 and lastCMD in MFDESFireCMDTypes:
-            note += MFDESFireCMDTypes[lastCMD]["RespDecoder"](data)
+        if (status == 0x00 or status == 0xAF) and lastCMD in MFDESFireCMDTypes:
+            # If last cmd need additional frame and this is the last frame
+            if status == 0x00 and lastCMD in MFDESFireAFCMD:
+                note += MFDESFireAFCMD[lastCMD]["AFCardDecoder"](data)
+            else:
+                note += MFDESFireCMDTypes[lastCMD]["RespDecoder"](data)
 
     return note
