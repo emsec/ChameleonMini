@@ -27,11 +27,26 @@ StatusCode = {
     0xF0 : "FILE_NOT_FOUND",
     0xF1 : "ERR_FILE_INTEGRITY"
 }
+# Create APP CMD
+def decodeCreateAPP(data):
+    note = ""
+    if len(data) == 6:
+        note += "AID:0x"+hexlify(data[1:4]).decode() + " "
+        note += "KeySett:"+hex(data[4]) + " "
+        note += "NumOfKeys:"+hex(data[5]) + " "
+    else:
+        note += strFail
+    return note
 
+def decodeDelAPP(data):
+    if len(data) == 4:
+         return "AID:0x"+hexlify(data[1:]).decode()
+    else:
+        return strFail
 
 def decodeSelectAPP(data):
     if len(data) == 4:
-        return "AID: 0x"+ hexlify(data[1:4]).decode()
+        return "AID:0x"+ hexlify(data[1:4]).decode()
     else:
         return strFail
 
@@ -157,17 +172,25 @@ def decodeDummy(data):
 
 
 MFDESFireCMDTypes = {
+    # PICC Level Commands, GetVersion not decoded, please refer to datasheet for the meaning of resp
+    0xCA : {"name": "CreateApp",        "CMDdecoder":decodeCreateAPP,       "RespDecoder":   decodeDummy},
+    0xDA : {"name": "DelApp",           "CMDdecoder":decodeDelAPP,          "RespDecoder":   decodeDummy},
     0x5A : {"name": "SelectApp ",       "CMDdecoder":decodeSelectAPP,       "RespDecoder":   decodeDummy},
     0x6A : {"name": "GetAPPID ",        "CMDdecoder":decodeGetAPPID,        "RespDecoder":   decodeRespGetAPPID},
+    0xFC : {"name": "FormatPICC",       "CMDdecoder":decodeDummy,           "RespDecoder":   decodeDummy},
+    0x60 : {"name": "GetVersion",       "CMDdecoder":decodeDummy,           "RespDecoder":   decodeDummy},
+    # Data Manipulation Commands
     0xBD : {"name": "ReadData ",        "CMDdecoder":decodeReadData,        "RespDecoder":   decodeRespReadData},
-    0xAF : {"name": "AdditionalFrame ", "CMDdecoder":decodeAdiFrame,        "RespDecoder":   decodeRespAdiFrame},
     # Security Related CMD
     0xAA : {"name": "AuthAES ",         "CMDdecoder": decodeAuthAES, "RespDecoder": decodeRespAuthAES},
     0x0A : {"name": "Auth3DES",         "CMDdecoder": decodeAuth3DES, "RespDecoder": decodeRespAuth3DES},
     0x54 : {"name": "ChangeKeySettings ","CMDdecoder":decodeChangeKeySettings,"respDecoder": decodeDummy},
     0x45 : {"name": "GetKeySettings ",  "CMDdecoder":decodeDummy,           "RespDecoder":   decodeRespGetKeySettings},
     0xC4 : {"name": "ChangeKey ",       "CMDdecoder":decodeChangeKey,       "RespDecoder":   decodeDummy},
-    0x64 : {"name": "GetKeyVersion ",   "CMDdecoder":decodeGetKeyVersion,   "RespDecoder":   decodeRespGetKeyVersion}
+    0x64 : {"name": "GetKeyVersion ",   "CMDdecoder":decodeGetKeyVersion,   "RespDecoder":   decodeRespGetKeyVersion},
+
+    # Additional Frame
+    0xAF: {"name": "AdditionalFrame ", "CMDdecoder": decodeAdiFrame, "RespDecoder": decodeRespAdiFrame},
 
 }
 
