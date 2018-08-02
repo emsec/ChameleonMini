@@ -203,7 +203,6 @@ def parseReader_3(data):
 
     # SELECT Command
     elif (byteCount == 9 and data[0] in ReaderTrafficTypes["SEL"] and data[1] == 0x70):
-        # TODO: distinguish CT+uid012+BCC and uid0123+BCC
         readerCMD = ReaderCMD.SELECT
         note += "SELECT - "
         note += ReaderTrafficTypes["SEL"][data[0]]
@@ -313,8 +312,6 @@ def parseCard_4(data):
         if (hasTC and data[byteNext] & 0xFC == 0x00):
             note += "TC:" + hex(data[byteNext]) + " "
             byteNext += 1
-
-        # TODO: decode historical bytes
 
         # Check CRC_A
         if not CRC_A_check(data):

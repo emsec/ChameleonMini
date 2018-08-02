@@ -190,6 +190,84 @@ def decodeFileNoData(data):
 def decodeData(data):
     return "Data:0x"+hexlify(data[1:]).decode() if len(data) >1 else strFail
 
+###########################
+# Application Level Commands
+###########################
+def decodeRespGetFileIDs(data):
+    if len(data) == 4:
+        return "FIDs:0x"+hexlify(data[1:]).decode()
+    else:
+        return strFail
+
+def decodeRespGetFileSettings(data):
+    lenData = len(data)
+    note = ""
+    if lenData >5:
+        note += "FileType:"+hex(data[1])+" ComSett:"+hex(data[2]) + "AccessRight:0x"+hexlify(data[3:5]).decode() + " "
+        if lenData == 8:
+            note += "FileSize:0x"+hexlify(data[5:]).decode()
+        elif lenData == 18:
+            note += "LowLimit:0x"+hexlify(data[5:9]).decode() + " "
+            note += "UpLimit:0x" + hexlify(data[9:13]).decode() + " "
+            note += "LimitedCreditVal:0x"+hexlify(data[13:17]).decode() + " "
+            note += "LimitedCreditEn:" + hex(data[17])
+        elif lenData == 14:
+            note += "RecordSize:0x"+ hexlify(data[5:8]).decode() + " "
+            note += "MaxNumRecords:0x"+hexlify(data[8:11]).decode() + " "
+            note += "CurrentNumRecords:0x"+hexlify(data[11:]).decode()
+        return note
+    else:
+        return strFail
+
+def decodeFNComSetAccessRightsFileSize(data):
+    if len(data) == 8:
+        note = "FileNo:" + hex(data[1]) + " ComSet:" + hex(data[2]) + "AccessRight:0x" + hexlify(
+            data[3:5]).decode() + " "
+        note += "FileSize:0x" + hexlify(data[5:]).decode()
+        return note
+    else:
+        return strFail
+
+def decodeChangeFileSettings(data):
+    lenData = len(data)
+    note =""
+    if lenData > 2:
+        note += "FileNo:"+hex(data[1]) + " "
+        if lenData == 5:
+            note += "ComSet:"+hex(data[2]) + " "
+            note += "AccessRights:0x"+hexlify(data[3:]).decode()
+        elif lenData == 10:
+            note += "NewSettings:0x"+hexlify(data[2:]).decode()
+        return note
+    else:
+        return strFail
+
+def decodeCreateValueFile(data):
+    if len(data) == 18:
+        note = "FileNo:"+hex(data[1])+" ComSet:"+hex(data[2]) + "AccessRight:0x"+hexlify(data[3:5]).decode() + " "
+        note += "LowLimit:0x"+hexlify(data[5:9]).decode() + " "
+        note += "UpLimit:0x" + hexlify(data[9:13]).decode() + " "
+        note += "Val:0x"+hexlify(data[13:17]).decode() + " "
+        note += "LimitedCreditEn:" + hex(data[17])
+        return note
+    else:
+        return strFail
+
+def decodeCreateRecordFile(data):
+    if len(data) == 11:
+        note = "FileNo:"+hex(data[1])+" ComSet:"+hex(data[2]) + "AccessRight:0x"+hexlify(data[3:5]).decode() + " "
+        note += "RecordSize:0x"+hexlify(data[5:8]).decode()+" "
+        note += "MaxNumRecords:0x"+hexlify(data[8:]).decode()
+        return note
+    else:
+        return strFail
+
+def decodeDelFile(data):
+    if len(data) == 2:
+        return "FileNo:"+hex(data[1])
+    else:
+        return strFail
+
 def decodeAdiFrame(data):
     return "Data:0x"+hexlify(data[1:]).decode() if len(data) >1 else strFail
 
@@ -201,7 +279,20 @@ def decodeDummy(data):
 
 
 
+
+
 MFDESFireCMDTypes = {
+    # Application Level Commands
+    0x6F : {"name": "GetFileIDs",           "CMDdecoder":decodeDummy,                       "RespDecoder": decodeRespGetFileIDs},
+    0xF5 : {"name": "GetFileSettings",      "CMDdecoder":decodeFileNo,                      "RespDecoder": decodeRespGetFileSettings},
+    0x5F : {"name": "ChangeFileSettings",   "CMDdecoder":decodeChangeFileSettings,          "RespDecoder": decodeDummy},
+    0xCD : {"name": "CreateStdDataFile",    "CMDdecoder":decodeFNComSetAccessRightsFileSize,"RespDecoder": decodeDummy},
+    0xCB : {"name": "CreateBackupDataFile", "CMDdecoder":decodeFNComSetAccessRightsFileSize,"RespDecoder": decodeDummy},
+    0xCC : {"name": "CreateValueFile",      "CMDdecoder":decodeCreateValueFile,             "RespDecoder": decodeDummy},
+    0xC1 : {"name": "CreateLinearRecordFile","CMDdecoder":decodeCreateRecordFile,           "RespDecoder": decodeDummy},
+    0xC0 : {"name": "CreateCyclicRecordFile","CMDdecoder":decodeCreateRecordFile,           "RespDecoder": decodeDummy},
+    0xDF: {"name": "DelFile",               "CMDdecoder":decodeDelFile,                     "RespDecoder": decodeDummy},
+
     # PICC Level Commands, GetVersion not decoded, please refer to datasheet for the meaning of resp
     0xCA : {"name": "CreateApp ",       "CMDdecoder":decodeCreateAPP,       "RespDecoder":   decodeDummy},
     0xDA : {"name": "DelApp ",          "CMDdecoder":decodeDelAPP,          "RespDecoder":   decodeDummy},
@@ -222,8 +313,8 @@ MFDESFireCMDTypes = {
     0xC7 : {"name": "CommitTransaction ","CMDdecoder":decodeDummy,          "RespDecoder":   decodeDummy},
     0xA7 : {"name": "AbortTransaction ","CMDdecoder":decodeDummy,           "RespDecoder":   decodeDummy},
     # Security Related CMD
-    0xAA : {"name": "AuthAES ",         "CMDdecoder": decodeAuthAES,        "RespDecoder": decodeRespAuthAES},
-    0x0A : {"name": "Auth3DES ",        "CMDdecoder": decodeAuth3DES,       "RespDecoder": decodeRespAuth3DES},
+    0xAA : {"name": "AuthAES ",         "CMDdecoder": decodeAuthAES,        "RespDecoder":   decodeRespAuthAES},
+    0x0A : {"name": "Auth3DES ",        "CMDdecoder": decodeAuth3DES,       "RespDecoder":   decodeRespAuth3DES},
     0x54 : {"name": "ChangeKeySettings ","CMDdecoder":decodeChangeKeySettings,"RespDecoder": decodeDummy},
     0x45 : {"name": "GetKeySettings ",  "CMDdecoder":decodeDummy,           "RespDecoder":   decodeRespGetKeySettings},
     0xC4 : {"name": "ChangeKey ",       "CMDdecoder":decodeChangeKey,       "RespDecoder":   decodeDummy},
