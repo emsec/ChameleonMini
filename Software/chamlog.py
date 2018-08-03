@@ -11,6 +11,7 @@ import json
 import Chameleon
 import io
 import datetime
+from Chameleon.ISO14443 import CardTypesMap
 
 def verboseLog(text):
     formatString = "[{}] {}"
@@ -48,7 +49,7 @@ def main():
     
     argParser.add_argument("-t", "--type", choices=outputTypes.keys(), default='text',
                             help="specifies output type")
-    argParser.add_argument("-d", "--decode", dest="decode", action='store_true', default=False)
+    argParser.add_argument("-d", "--decode", dest="decode", choices=CardTypesMap.keys(), default=None, help="Decode the sniffed traffic and application data with a decoder")
     argParser.add_argument("-l", "--live", dest="live", action='store_true', help="Use live logging capabilities of Chameleon")
     argParser.add_argument("-c", "--clear", dest="clear", action='store_true', help="Clear Chameleon's log memory when using -p")
     argParser.add_argument("-m", "--mode", dest="mode", metavar="LOGMODE", help="Additionally set Chameleon's log mode after reading it's memory")

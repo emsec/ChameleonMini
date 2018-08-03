@@ -97,7 +97,7 @@ eventTypes = {
 TIMESTAMP_MAX = 65536
 eventTypes = { i : ({'name': 'UNKNOWN', 'decoder': binaryDecoder} if i not in eventTypes.keys() else eventTypes[i]) for i in range(256) }
 
-def parseBinary(binaryStream, decode=False):
+def parseBinary(binaryStream, decoder=None):
     log = []
     
     # Completely read file contents and process them byte by byte
@@ -138,12 +138,12 @@ def parseBinary(binaryStream, decode=False):
 
         note = ""
         # If we need to decode the data and paritybit check success
-        if (decode and logData[-1] != '!'):
+        if (decoder!=None and logData[-1] != '!'):
             # Decode the data from Reader
             if(event == 0x44 or event == 0x45):
-                note = iso14443_3.parseReader(binascii.a2b_hex(logData))
+                note = iso14443_3.parseReader(binascii.a2b_hex(logData), decoder)
             elif (event == 0x46 or event == 0x47):
-                note = iso14443_3.parseCard(binascii.a2b_hex(logData))
+                note = iso14443_3.parseCard(binascii.a2b_hex(logData), decoder)
 
         # Create log entry as dict and append it to event list
         logEntry = {

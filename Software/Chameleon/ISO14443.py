@@ -20,6 +20,16 @@ class ReaderCMD(Enum):
 
 readerCMD = ReaderCMD.NONE
 
+# Map card types string to decoder
+def DummyCardDecoder(data, source):
+    return ""
+
+CardTypesMap = {
+    "None":      {"ApplicationDecoder": DummyCardDecoder},
+    "MFDESFire": {"ApplicationDecoder": MFDESFireDecode},
+
+}
+
 
 class BlockData:
     @staticmethod
@@ -29,7 +39,8 @@ class BlockData:
         else:
             return False
 
-    def __init__(self, byteCount, data, source):
+
+    def __init__(self, byteCount, data, source, Cardtype):
         self.byteCount = byteCount
         self.data = data
         self.PCB = data[0]
@@ -39,7 +50,7 @@ class BlockData:
         self.INF = None
         self.source = source
         self.CRCChecked = CRC_A_check(data)
-        self.CardApplicationDecoder = MFDESFireDecode
+        self.CardApplicationDecoder = CardTypesMap[Cardtype]["ApplicationDecoder"]
 
         if self.CRCChecked:
 
@@ -218,7 +229,7 @@ def parseReader_3(data):
 
     return note
 
-def parseReader_4(data):
+def parseReader_4(data, Cardtype):
     global readerCMD
     byteCount = len(data)
     note = ""
@@ -250,7 +261,7 @@ def parseReader_4(data):
     # Half-duplex block transmission
     # PCB bit mask: 0b11100110
     elif (BlockData.isBlockData(byteCount, data)):
-        blockData = BlockData(byteCount,data, TrafficSource.Reader)
+        blockData = BlockData(byteCount,data, TrafficSource.Reader, Cardtype)
         note = blockData.decode()
 
     return note
@@ -275,7 +286,7 @@ def parseCard_3(data):
 
     return note
 
-def parseCard_4(data):
+def parseCard_4(data, Cardtype):
     global readerCMD
     byteCount = len(data)
     note = ""
@@ -318,15 +329,15 @@ def parseCard_4(data):
             note += " WRONG CRC "
     # Application Data
     elif (BlockData.isBlockData(byteCount, data)):
-        blockData = BlockData(byteCount,data, TrafficSource.Card)
+        blockData = BlockData(byteCount,data, TrafficSource.Card, Cardtype)
         note = blockData.decode()
 
     readerCMD = ReaderCMD.NONE
 
     return note
 
-def parseReader(data):
-    return parseReader_3(data) + parseReader_4(data)
+def parseReader(data, Cardtype):
+    return parseReader_3(data) + parseReader_4(data, Cardtype)
 
-def parseCard(data):
-    return parseCard_3(data) + parseCard_4(data)
+def parseCard(data, Cardtype):
+    return parseCard_3(data) + parseCard_4(data, Cardtype)
