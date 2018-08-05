@@ -194,7 +194,7 @@ def decodeData(data):
 # Application Level Commands
 ###########################
 def decodeRespGetFileIDs(data):
-    if len(data) == 4:
+    if len(data) > 0:
         return "FIDs:0x"+hexlify(data[1:]).decode()
     else:
         return strFail
