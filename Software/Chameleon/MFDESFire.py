@@ -65,7 +65,7 @@ def decodeRespGetAPPID (data):
     dataLen = len(data)
 
     for i in range (0,int((dataLen-1)/3)):
-        note += "0x"+hexlify(data[3*i: 3*(i+1)]).decode()+"|"
+        note += "0x"+hexlify(data[1+3*i: 1+3*(i+1)]).decode()+"|"
 
     return note
 ##############################

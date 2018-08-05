@@ -138,7 +138,7 @@ def parseBinary(binaryStream, decoder=None):
 
         note = ""
         # If we need to decode the data and paritybit check success
-        if (decoder!=None and logData[-1] != '!'):
+        if (decoder!=None and len(logData) >0 and logData[-1] != '!'):
             # Decode the data from Reader
             if(event == 0x44 or event == 0x45):
                 note = iso14443_3.parseReader(binascii.a2b_hex(logData), decoder)
