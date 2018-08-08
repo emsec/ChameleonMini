@@ -143,8 +143,10 @@ def cmdThreshold(chameleon, arg):
             return "Setting threshold failed: {}".format(arg, result['statusText'])
 
 def cmdUpgrade(chameleon, arg):
-    result = chameleon.cmdUpgrade()
-    return ""
+    if(chameleon.cmdUpgrade() == 0):
+        print ("Device changed into Upgrade Mode")
+    exit(0)
+
 # Custom class for argparse
 class CmdListAction(argparse.Action):
     def __init__(self, option_strings, dest, default=False, required=False,

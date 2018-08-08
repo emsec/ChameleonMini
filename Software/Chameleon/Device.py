@@ -251,4 +251,7 @@ class Device:
             return self.getSetCmd(self.COMMAND_THRESHOLD, value)
 
     def cmdUpgrade(self):
-        return self.execCmd(self.COMMAND_UPGRADE)
+        # Execute command
+        cmdLine = self.COMMAND_UPGRADE + self.LINE_ENDING
+        self.serial.write(cmdLine.encode('ascii'))
+        return 0
