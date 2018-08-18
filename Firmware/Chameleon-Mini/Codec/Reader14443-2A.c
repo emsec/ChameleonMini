@@ -48,6 +48,7 @@ void Reader14443ACodecInit(void) {
     /* Initialize common peripherals and start listening
      * for incoming data. */
     CodecInitCommon();
+    isr_func_TCD0_CCC_vect = &isr_Reader14443_2A_TCD0_CCC_vect;
     CodecSetDemodPower(true);
 
     CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;
@@ -177,6 +178,12 @@ INLINE void BufferToSequence(void)
 }
 
 ISR (TCD0_CCC_vect)
+{
+  isr_func_TCD0_CCC_vect();
+}
+
+// ISR (TCD0_CCC_vect)
+void isr_Reader14443_2A_TCD0_CCC_vect(void)  
 {
     CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;

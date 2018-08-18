@@ -82,7 +82,9 @@ static volatile uint16_t ReadCommandFromReader = 0;
 #ifdef CONFIG_VICINITY_SUPPORT
 
 // Started when a single pulse has been detected
-ISR(CODEC_DEMOD_IN_INT0_VECT) {
+// ISR(CODEC_DEMOD_IN_INT0_VECT) 
+void isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void)
+{
     // Start sample timer
     CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_HI_gc;
@@ -115,7 +117,8 @@ INLINE void ISO15693_EOC(void)
     CODEC_TIMER_SAMPLING.INTCTRLB = 0;
 }
 
-ISR(CODEC_TIMER_SAMPLING_CCC_VECT) // Reading data sent from the reader
+// ISR(CODEC_TIMER_SAMPLING_CCC_VECT) // Reading data sent from the reader
+void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void)  
 {
     /* Shift demod data */
     SampleRegister = (SampleRegister << 1) | (!(CODEC_DEMOD_IN_PORT.IN & CODEC_DEMOD_IN_MASK) ? 0x01 : 0x00);
@@ -482,6 +485,8 @@ void StartISO15693Demod(void) {
 void ISO15693CodecInit(void) 
 {
     CodecInitCommon();
+    isr_func_TCD0_CCC_vect = &isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT;
+    isr_func_CODEC_DEMOD_IN_INT0_VECT = &isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT;
     StartISO15693Demod();
 }
 

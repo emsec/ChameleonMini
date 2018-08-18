@@ -57,14 +57,14 @@ bool ISO15693CheckCRC(void* FrameBuf, uint16_t FrameBufSize);
 INLINE
 bool ISO15693CompareUid(uint8_t* Uid1, uint8_t* Uid2)
 {
-    if (    (Uid1[0] == Uid2[0])
-        &&  (Uid1[1] == Uid2[1])
-        &&  (Uid1[2] == Uid2[2])
-        &&  (Uid1[3] == Uid2[3])
-        &&  (Uid1[4] == Uid2[4])
-        &&  (Uid1[5] == Uid2[5])
-        &&  (Uid1[6] == Uid2[6])
-        &&  (Uid1[7] == Uid2[7]) ) {
+    if (    (Uid1[0] == Uid2[7])
+        &&  (Uid1[1] == Uid2[6])
+        &&  (Uid1[2] == Uid2[5])
+        &&  (Uid1[3] == Uid2[4])
+        &&  (Uid1[4] == Uid2[3])
+        &&  (Uid1[5] == Uid2[2])
+        &&  (Uid1[6] == Uid2[1])
+        &&  (Uid1[7] == Uid2[0]) ) {
         return true;
     } else {
         return false;
@@ -74,14 +74,14 @@ bool ISO15693CompareUid(uint8_t* Uid1, uint8_t* Uid2)
 INLINE
 void ISO15693CopyUid(uint8_t* DstUid, uint8_t* SrcUid)
 {
-    DstUid[0] = SrcUid[0];
-    DstUid[1] = SrcUid[1];
-    DstUid[2] = SrcUid[2];
-    DstUid[3] = SrcUid[3];
-    DstUid[4] = SrcUid[4];
-    DstUid[5] = SrcUid[5];
-    DstUid[6] = SrcUid[6];
-    DstUid[7] = SrcUid[7];
+    DstUid[0] = SrcUid[7];
+    DstUid[1] = SrcUid[6];
+    DstUid[2] = SrcUid[5];
+    DstUid[3] = SrcUid[4];
+    DstUid[4] = SrcUid[3];
+    DstUid[5] = SrcUid[2];
+    DstUid[6] = SrcUid[1];
+    DstUid[7] = SrcUid[0];
 }
 
 INLINE

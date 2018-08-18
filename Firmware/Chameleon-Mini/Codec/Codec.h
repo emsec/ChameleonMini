@@ -108,6 +108,13 @@ typedef enum {
 
 extern uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
 
+volatile void (*isr_func_TCD0_CCC_vect)(void);
+void isr_Reader14443_2A_TCD0_CCC_vect(void);
+void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void);
+volatile void (*isr_func_CODEC_DEMOD_IN_INT0_VECT)(void);
+void isr_ISO14443_2A_TCD0_CCC_vect(void);
+void isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void);
+
 INLINE void CodecInit(void) {
     ActiveConfiguration.CodecInitFunc();
 }

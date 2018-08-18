@@ -13,16 +13,13 @@
 #include "../Random.h"
 #include "ISO15693-A.h"
 
+#define MEM_UID_ADDRESS         0x00
 
 static enum {
     STATE_READY,
     STATE_SELECTED,
     STATE_QUIET
 } State;
-
-ISO15693UidType MyUid = {0x60, 0x0B, 0x88, 0x77, 0x06, 0x44, 0x02, 0xE1};
-
-
 
 void VicinityAppInit(void)
 {
@@ -46,13 +43,6 @@ void VicinityAppTick(void)
     
 }
 
-void sendIntToTermina(uint8_t val)
-{
-    char buf[16];
-    snprintf(buf,16, "%d,",val);
-    TerminalSendString(buf);
-}
-
 uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     if (FrameBytes >= ISO15693_MIN_FRAME_SIZE) {
@@ -60,24 +50,25 @@ uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             // At this point, we have a valid ISO15693 frame
             uint8_t Command = FrameBuf[1];
             uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
-            
+            uint8_t Uid[8];
+            MemoryReadBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
             
             switch(State) {
             case STATE_READY:
                 if (Command == ISO15693_CMD_INVENTORY) {
                     FrameBuf[0] = 0x00; /* Flags */
                     FrameBuf[1] = 0x00; /* DSFID */
-                    ISO15693CopyUid(&FrameBuf[2], MyUid);
+                    ISO15693CopyUid(&FrameBuf[2], Uid);
                     ResponseByteCount = 10;
                 } else if (Command == ISO15693_CMD_STAY_QUIET) {
-                    if (ISO15693Addressed(FrameBuf, MyUid)) {
+                    if (ISO15693Addressed(FrameBuf, Uid)) {
                         State = STATE_QUIET;
                     }
                 } else if (Command == ISO15693_CMD_GET_SYS_INFO) {
-                    if (ISO15693Addressed(FrameBuf, MyUid)) {
+                    if (ISO15693Addressed(FrameBuf, Uid)) {
                         FrameBuf[0] = 0; /* Flags */
                         FrameBuf[1] = 0; /* InfoFlags */
-                        ISO15693CopyUid(&FrameBuf[2], MyUid);
+                        ISO15693CopyUid(&FrameBuf[2], Uid);
                         ResponseByteCount = 10;
                     }
                 }
@@ -89,7 +80,8 @@ uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
             case STATE_QUIET:
                 if (Command == ISO15693_CMD_RESET_TO_READY) {
-                    if (ISO15693Addressed(FrameBuf, MyUid)) {
+                    MemoryReadBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
+                    if (ISO15693Addressed(FrameBuf, Uid)) {
                         FrameBuf[0] = 0;
                         ResponseByteCount = 1;
                         State = STATE_READY;
@@ -120,12 +112,12 @@ uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
 void VicinityGetUid(ConfigurationUidType Uid)
 {
-    memcpy(Uid, MyUid, sizeof(ConfigurationUidType));
+    MemoryReadBlock(&Uid[0], MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
 }
 
 void VicinitySetUid(ConfigurationUidType Uid)
 {
-    memcpy(MyUid, Uid, sizeof(ConfigurationUidType));
+    MemoryWriteBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
 }
 
 
