@@ -327,6 +327,7 @@ MFDESFireCMDTypes = {
 
 # Commands need to use additional frame
 MFDESFireAFCMD = {
+    0xBD : {"name": "ReadData ",         "AFReaderDecoder": decodeDummy,         "AFCardDecoder": decodeData},
     0xAA : {"name": "AuthAES ",          "AFReaderDecoder":decodeAuthAESAF,     "AFCardDecoder": decodeCardAuthAESAF},
     0x0A : {"name": "Auth3DES ",         "AFReaderDecoder":decodeAuth3DESAF,    "AFCardDecoder": decodeCardAuth3DESAF},
 
