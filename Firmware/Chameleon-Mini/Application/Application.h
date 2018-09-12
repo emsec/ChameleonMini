@@ -16,6 +16,7 @@
 #include "MifareUltralight.h"
 #include "MifareClassic.h"
 #include "Reader14443A.h"
+#include "Sniff14443A.h"
 
 /* Function wrappers */
 INLINE void ApplicationInit(void) {

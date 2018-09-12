@@ -23,6 +23,14 @@ typedef enum {
     LOG_INFO_CODEC_RX_DATA_W_PARITY		= 0x42, ///< Currently active codec received data.
     LOG_INFO_CODEC_TX_DATA_W_PARITY		= 0x43, ///< Currently active codec sent data.
 
+    LOG_INFO_CODEC_SNI_READER_DATA               = 0x44, //< Sniffing codec receive data from reader
+    LOG_INFO_CODEC_SNI_READER_DATA_W_PARITY      = 0x45, //< Sniffing codec receive data from reader
+
+    LOG_INFO_CODEC_SNI_CARD_DATA                 = 0x46, //< Sniffing codec receive data from card
+    LOG_INFO_CODEC_SNI_CARD_DATA_W_PARITY        = 0x47, //< Sniffing codec receive data from card
+
+
+
     /* App */
     LOG_INFO_APP_CMD_READ		= 0x80, ///< Application processed read command.
     LOG_INFO_APP_CMD_WRITE		= 0x81, ///< Application processed write command.

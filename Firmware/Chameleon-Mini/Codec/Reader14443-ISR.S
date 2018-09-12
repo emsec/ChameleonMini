@@ -15,6 +15,7 @@
 #define AWEXC__OUTOVEN              0x088C
 #define CODEC_READER_TIMER__CTRLA   0x0800
 
+; For sending reader bits to cards
 .global TCD0_CCB_vect, Reader14443AMillerEOC
 TCD0_CCB_vect:
 push Zero                                                   ; 1
