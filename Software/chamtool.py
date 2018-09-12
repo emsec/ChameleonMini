@@ -68,6 +68,17 @@ def cmdLog(chameleon, arg):
         bytesReceived = chameleon.cmdDownloadLog(fileHandle)
         return "{} Bytes successfully written to {}".format(bytesReceived, arg)
 
+def cmdLogMode(chameleon, arg):
+    result = chameleon.cmdLogMode(arg)
+
+    if (arg is None):
+        return "Current logmode is: {}".format(result['response'])
+    else:
+        if (result['statusCode'] in chameleon.STATUS_CODES_SUCCESS):
+            return "logmode have been set to {}".format(arg)
+        else:
+            return "Setting logmode failed: {}".format(arg, result['statusText'])
+
 def cmdLButton(chameleon, arg):
     result = chameleon.cmdLButton(arg)
     
@@ -119,7 +130,23 @@ def cmdRedLED(chameleon, arg):
             return "Red LED function has been set to {}".format(chameleon.cmdRedLED()['response'])
         else:
             return "Setting red LED function to {} failed: {}".format(arg, result['statusText'])
-        
+
+def cmdThreshold(chameleon, arg):
+    result = chameleon.cmdThreshold(arg)
+
+    if (arg is None):
+        return "Current threshold is: {}".format(result['response'])
+    else:
+        if (result['statusCode'] in chameleon.STATUS_CODES_SUCCESS):
+            return "Threshold have been set to {}".format(arg)
+        else:
+            return "Setting threshold failed: {}".format(arg, result['statusText'])
+
+def cmdUpgrade(chameleon, arg):
+    if(chameleon.cmdUpgrade() == 0):
+        print ("Device changed into Upgrade Mode")
+    exit(0)
+
 # Custom class for argparse
 class CmdListAction(argparse.Action):
     def __init__(self, option_strings, dest, default=False, required=False,
@@ -150,10 +177,14 @@ def main():
     cmdArgGroup.add_argument("-s",  "--setting",     dest="setting",     action=CmdListAction, nargs='?', type=int, choices=Chameleon.VALID_SETTINGS, help="retrieve or set the current setting")
     cmdArgGroup.add_argument("-U",  "--uid",         dest="uid",         action=CmdListAction, nargs='?',            help="retrieve or set the current UID")
     cmdArgGroup.add_argument("-c",  "--config",      dest="config",      action=CmdListAction, metavar="CFGNAME", nargs='?', help="retrieve or set the current configuration")
+    cmdArgGroup.add_argument("-lm",  "--logmode",    dest="logmode",     action=CmdListAction, metavar="LOGMODE", nargs='?', help="retrieve or set the current log mode")
     cmdArgGroup.add_argument("-lb",  "--lbutton",    dest="lbutton",     action=CmdListAction, metavar="ACTION", nargs='?', help="retrieve or set the current left button action")
     cmdArgGroup.add_argument("-rb",  "--rbutton",    dest="rbutton",     action=CmdListAction, metavar="ACTION", nargs='?', help="retrieve or set the current right button action")
     cmdArgGroup.add_argument("-gl",  "--gled",       dest="gled",        action=CmdListAction, metavar="FUNCTION", nargs='?', help="retrieve or set the current green led function")
     cmdArgGroup.add_argument("-rl",  "--rled",       dest="rled",        action=CmdListAction, metavar="FUNCTION", nargs='?', help="retrieve or set the current red led function")
+    cmdArgGroup.add_argument("-th",  "--threshold",  dest="threshold",   action=CmdListAction, nargs='?', help="retrieve or set the threshold")
+    cmdArgGroup.add_argument("-ug",  "--upgrade",    dest="upgrade",     action=CmdListAction, nargs=0,   help="set the micro Controller to upgrade mode")
+
     args = argParser.parse_args()
     
     if (args.verbose):
@@ -175,10 +206,13 @@ def main():
                 "upload"    : cmdUpload,
                 "download"  : cmdDownload,
                 "log"       : cmdLog,
+                "logmode"   : cmdLogMode,
                 "lbutton"   : cmdLButton,
                 "rbutton"   : cmdRButton,
                 "gled"      : cmdGreenLED,
                 "rled"      : cmdRedLED,
+                "threshold" : cmdThreshold,
+                "upgrade"   : cmdUpgrade,
             }
 
             if hasattr(args, "cmdList"):
