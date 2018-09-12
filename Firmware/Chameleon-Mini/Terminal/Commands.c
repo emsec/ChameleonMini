@@ -2,6 +2,7 @@
 #include "Commands.h"
 #include <stdio.h>
 #include <avr/pgmspace.h>
+#include <Settings.h>
 #include "XModem.h"
 #include "../Settings.h"
 #include "../Chameleon-Mini.h"
@@ -16,6 +17,7 @@
 #include "../Codec/Codec.h"
 
 extern Reader14443Command Reader14443CurrentCommand;
+extern Sniff14443Command Sniff14443CurrentCommand;
 
 extern const PROGMEM CommandEntryType CommandTable[];
 
@@ -629,15 +631,27 @@ CommandStatusIdType CommandGetField(char* OutMessage)
 
 CommandStatusIdType CommandExecAutocalibrate(char* OutMessage)
 {
-    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
-        return COMMAND_ERR_INVALID_USAGE_ID;
-    ApplicationReset();
+    if (GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO14443A_READER){
+        ApplicationReset();
 
-    Reader14443CurrentCommand = Reader14443_Autocalibrate;
-    Reader14443AAppInit();
-    Reader14443ACodecStart();
-    CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
-    return TIMEOUT_COMMAND;
+        Reader14443CurrentCommand = Reader14443_Autocalibrate;
+        Reader14443AAppInit();
+        Reader14443ACodecStart();
+        CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
+        return TIMEOUT_COMMAND;
+    }
+    else if (GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO14443A_SNIFF){
+        ApplicationReset();
+
+        Sniff14443CurrentCommand = Sniff14443_Autocalibrate;
+        Sniff14443AAppInit();
+        CommandLinePendingTaskTimeout = &Sniff14443AAppTimeout;
+        return TIMEOUT_COMMAND;
+    }
+    else {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
 }
 
 CommandStatusIdType CommandExecClone(char *OutMessage)

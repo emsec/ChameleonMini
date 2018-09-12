@@ -19,7 +19,7 @@ def verboseLog(text):
 	
 def formatText(log):
     formatString  = '{timestamp:0>5d} ms <{deltaTimestamp:>+6d} ms>:'
-    formatString += '{eventName:<16} ({dataLength:<3} bytes) [{data}]\n'
+    formatString += '{eventName:<28} ({dataLength:<3} bytes)\t[{data}]\n'
     text = ''
     
     for logEntry in log:

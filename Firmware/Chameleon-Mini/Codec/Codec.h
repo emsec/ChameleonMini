@@ -17,6 +17,7 @@
 
 #include "ISO14443-2A.h"
 #include "Reader14443-2A.h"
+#include "SniffISO14443-2A.h"
 
 /* Timing definitions for ISO14443A */
 #define ISO14443A_SUBCARRIER_DIVIDER    16
@@ -24,7 +25,7 @@
 #define ISO14443A_BIT_RATE_CYCLES       128
 #define ISO14443A_FRAME_DELAY_PREV1     1236
 #define ISO14443A_FRAME_DELAY_PREV0     1172
-#define ISO14443A_RX_PENDING_TIMEOUT	1 // ms
+#define ISO14443A_RX_PENDING_TIMEOUT	4 // ms
 
 /* Peripheral definitions */
 #define CODEC_DEMOD_POWER_PORT      PORTB
@@ -38,6 +39,7 @@
 #define CODEC_DEMOD_IN_EVMUX0       EVSYS_CHMUX_PORTB_PIN1_gc
 #define CODEC_DEMOD_IN_EVMUX1       EVSYS_CHMUX_PORTB_PIN2_gc
 #define CODEC_DEMOD_IN_INT0_VECT	PORTB_INT0_vect
+#define CODEC_DEMOD_IN_INT1_VECT    PORTB_INT1_vect
 #define CODEC_LOADMOD_PORT			PORTC
 #define CODEC_LOADMOD_MASK			PIN6_bm
 #define CODEC_CARRIER_IN_PORT		PORTC
@@ -57,6 +59,8 @@
 #define CODEC_TIMER_SAMPLING		TCD0
 #define CODEC_TIMER_SAMPLING_CCA_VECT	TCD0_CCA_vect
 #define CODEC_TIMER_SAMPLING_CCB_VECT	TCD0_CCB_vect
+#define CODEC_TIMER_SAMPLING_CCC_VECT   TCD0_CCC_vect
+#define CODEC_TIMER_SAMPLING_CCD_VECT   TCD0_CCD_vect
 #define CODEC_TIMER_LOADMOD       	TCE0
 #define CODEC_TIMER_LOADMOD_OVF_VECT	TCE0_OVF_vect
 #define CODEC_TIMER_LOADMOD_CCA_VECT	TCE0_CCA_vect
@@ -80,6 +84,8 @@
 #define CODEC_THRESHOLD_CALIBRATE_STEPS 16
 #define CODEC_TIMER_TIMESTAMPS		TCD1
 #define CODEC_TIMER_TIMESTAMPS_CCA_VECT	TCD1_CCA_vect
+#define CODEC_TIMER_TIMESTAMPS_CCB_VECT	TCD1_CCB_vect
+
 
 #define CODEC_BUFFER_SIZE           256
 
@@ -90,9 +96,11 @@
 #define Codec8Reg2			GPIOR2
 #define Codec8Reg3			GPIOR3
 #define CodecCount16Register1		(*((volatile uint16_t*) &GPIOR4)) /* GPIOR4 & GPIOR5 */
-#define CodecCount16Register2		(*((volatile uint16_t*) &GPIOR6)) /* GPIOR4 & GPIOR5 */
+#define CodecCount16Register2		(*((volatile uint16_t*) &GPIOR6)) /* GPIOR6 & GPIOR7 */
 #define CodecPtrRegister1			(*((volatile uint8_t**) &GPIOR8))
 #define CodecPtrRegister2			(*((volatile uint8_t**) &GPIORA))
+#define CodecPtrRegister3			(*((volatile uint8_t**) &GPIORC))
+
 
 extern uint16_t Reader_FWT;
 
@@ -104,6 +112,7 @@ typedef enum {
 } SubcarrierModType;
 
 extern uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
+extern uint8_t CodecBuffer2[CODEC_BUFFER_SIZE];
 
 INLINE void CodecInit(void) {
     ActiveConfiguration.CodecInitFunc();
@@ -140,9 +149,13 @@ INLINE void CodecInitCommon(void)
     CODEC_DEMOD_IN_PORT.CODEC_DEMOD_IN_PINCTRL0 = PORT_ISC_RISING_gc;
     CODEC_DEMOD_IN_PORT.CODEC_DEMOD_IN_PINCTRL1 = PORT_ISC_FALLING_gc;
     CODEC_DEMOD_IN_PORT.INT0MASK = 0;
-    CODEC_DEMOD_IN_PORT.INTCTRL = PORT_INT0LVL_HI_gc;
+    CODEC_DEMOD_IN_PORT.INT1MASK = 0;
+    CODEC_DEMOD_IN_PORT.INTCTRL = PORT_INT0LVL_HI_gc | PORT_INT1LVL_HI_gc;
     EVSYS.CH0MUX = CODEC_DEMOD_IN_EVMUX0;
     EVSYS.CH1MUX = CODEC_DEMOD_IN_EVMUX1;
+
+    EVSYS.CH2MUX = CODEC_DEMOD_IN_EVMUX0;
+
 
     /* Configure loadmod pin configuration and use a virtual port configuration
      * for single instruction cycle access */
@@ -231,6 +244,7 @@ INLINE void CodecSetLoadmodState(bool bOnOff) {
     }
 }
 
+// Turn on and off the codec Reader field
 INLINE void CodecSetReaderField(bool bOnOff) { // this is the function for turning on/off the reader field dumbly; before using this function, please consider to use CodecReaderField{Start,Stop}
 
     if (bOnOff) {
@@ -244,6 +258,7 @@ INLINE void CodecSetReaderField(bool bOnOff) { // this is the function for turni
     }
 }
 
+// Get the status of the reader field
 INLINE bool CodecGetReaderField(void) {
     return (CODEC_READER_TIMER.CTRLA == TC_CLKSEL_DIV1_gc) && (AWEXC.OUTOVEN == CODEC_READER_MASK);
 }
