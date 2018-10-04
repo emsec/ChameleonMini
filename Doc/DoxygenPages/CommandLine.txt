@@ -7,6 +7,7 @@
  * text-based command line interface, which can be accessed by using
  * simple terminal software like hyper-terminal or teraterm. The command line is optimized to cooperate with script languages such as Python or TCL. 
  *
+ * \note Before reading this page, you may also wish to have a look at the [Chameleon Android App](https://play.google.com/store/apps/details?id=com.maxieds.chameleonminilivedebugger), which is an external contribution to this project. Development and maintenance can be found [here](https://github.com/maxieds/ChameleonMiniLiveDebugger) (please also ask questions regarding the app there).
  *
  * Chameleon Command Structure
  * ===========================
@@ -110,10 +111,11 @@
  * `SEND_RAW <BYTEVALUE>`| Does NOT add parity bits, sends the given byte string <BYTEVALUE> and returns the cards answer
  * `GETUID`              | Obtains the UID of a card that is in the range of the antenna and returns it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
  * `DUMP_MFU`            | Reads the whole content of a Mifare Ultralight card that is in the range of the antenna and returns it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
- * `IDENTIFY`            | Identifies the type of a card in the range of the antenna and returns it.
+ * `IDENTIFY`            | Identifies the type of a card in the range of the antenna and returns it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
  * `THRESHOLD=?`         | Returns the possible number range for the reader threshold.
  * `THRESHOLD=<NUMBER>`  | Globally sets the reader threshold. The <NUMBER> influences the reader function and range. Setting a wrong value may result in malfunctioning of the reader. DEFAULT: 400
  * `THRESHOLD?`          | Returns the current reader threshold.
+ * `AUTOCALIBRATE`       | Automatically finds a good threshold for communicating with the card that currently is on top of the Chameleon. This command is a \ref Anchor_TimeoutCommands "Timeout command".
  * `FIELD?`              | Returns whether (1) or not (0) the reader field is active.
  * `FIELD=[0;1]`         | Enables/disables the reader field.
  * 

@@ -15,13 +15,13 @@
 
 ISR(BADISR_vect)
 {
-	//LED_PORT.OUTSET = LED_RED;
+    //LED_PORT.OUTSET = LED_RED;
     while(1);
 }
 
 ISR(RTC_OVF_vect)
 {
-	SYSTEM_TICK_REGISTER += SYSTEM_TICK_PERIOD;
+    SYSTEM_TICK_REGISTER += SYSTEM_TICK_PERIOD;
 }
 
 void SystemInit(void)
@@ -46,14 +46,14 @@ void SystemInit(void)
     OSC.PLLCTRL = OSC_PLLSRC_XOSC_gc | (2 << OSC_PLLFAC_gp);
     OSC.CTRL |= OSC_PLLEN_bm;
 
-	while(!(OSC.STATUS & OSC_PLLRDY_bm))
-		;
+    while(!(OSC.STATUS & OSC_PLLRDY_bm))
+        ;
 
-	/* Set PLL as main clock */
-	CCP = CCP_IOREG_gc;
-	CLK.CTRL = CLK_SCLKSEL_PLL_gc;
+    /* Set PLL as main clock */
+    CCP = CCP_IOREG_gc;
+    CLK.CTRL = CLK_SCLKSEL_PLL_gc;
 
-	SYSTEM_TICK_REGISTER = 0;
+    SYSTEM_TICK_REGISTER = 0;
 
     /* Enable RTC with roughly 1kHz clock for system tick
      * and to wake up while sleeping. */
@@ -67,7 +67,7 @@ void SystemInit(void)
     //NVM.CTRLB |= NVM_EEMAPEN_bm;
 
     /* Enable DMA */
-	DMA.CTRL = DMA_ENABLE_bm | DMA_DBUFMODE_DISABLED_gc | DMA_PRIMODE_RR0123_gc;
+    DMA.CTRL = DMA_ENABLE_bm | DMA_DBUFMODE_DISABLED_gc | DMA_PRIMODE_RR0123_gc;
 
 }
 
@@ -87,7 +87,7 @@ void SystemEnterBootloader(void)
 
 void SystemStartUSBClock(void)
 {
-	//SystemSleepDisable();
+    //SystemSleepDisable();
 #if 0
     /* 48MHz USB Clock using 12MHz XTAL */
     OSC.XOSCCTRL = OSC_FRQRANGE_12TO16_gc | OSC_XOSCSEL_XTAL_16KCLK_gc;
@@ -127,7 +127,7 @@ void SystemStartUSBClock(void)
 
 void SystemStopUSBClock(void)
 {
-	//SystemSleepEnable();
+    //SystemSleepEnable();
 
 #if 0
     /* Disable USB Clock to minimize power consumption */

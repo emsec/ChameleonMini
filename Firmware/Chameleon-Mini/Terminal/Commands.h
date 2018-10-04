@@ -177,9 +177,15 @@ CommandStatusIdType	CommandSetTimeout(char* OutMessage, const char* InParam);
 CommandStatusIdType CommandGetThreshold(char* OutParam);
 CommandStatusIdType CommandSetThreshold(char* OutMessage, const char* InParam);
 
+#define COMMAND_AUTOCALIBRATE   "AUTOCALIBRATE"
+CommandStatusIdType CommandExecAutocalibrate(char* OutMessage);
+
 #define COMMAND_FIELD	"FIELD"
 CommandStatusIdType CommandSetField(char* OutMessage, const char* InParam);
 CommandStatusIdType CommandGetField(char* OutMessage);
+
+#define COMMAND_CLONE  "CLONE"
+CommandStatusIdType CommandExecClone(char* OutMessage);
 
 #define COMMAND_LIST_END    ""
 /* Defines the end of command list. This is no actual command */

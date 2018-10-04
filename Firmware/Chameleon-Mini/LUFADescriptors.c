@@ -58,8 +58,8 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
     .Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
 
-		.VendorID 							= 0x16D0, // MCS Electronics (http://www.mcselec.com)
- 		.ProductID 							= 0x04B2, // darksimpson's PID #2 granted to Chameleon-Mini
+        .VendorID 							= 0x16D0, // MCS Electronics (http://www.mcselec.com)
+        .ProductID 							= 0x04B2, // darksimpson's PID #2 granted to Chameleon-Mini
 #if LUFA_VERSION_INTEGER >= 0x140928
     .ReleaseNumber          = VERSION_BCD(0,0,1),
 #else

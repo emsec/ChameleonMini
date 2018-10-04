@@ -11,13 +11,13 @@
 #include "Common.h"
 
 typedef enum {
-	BUTTON_R_PRESS_SHORT = 0,
-	BUTTON_R_PRESS_LONG,
-	BUTTON_L_PRESS_SHORT,
-	BUTTON_L_PRESS_LONG,
+    BUTTON_R_PRESS_SHORT = 0,
+    BUTTON_R_PRESS_LONG,
+    BUTTON_L_PRESS_SHORT,
+    BUTTON_L_PRESS_LONG,
 
-	/* Must be last element */
-	BUTTON_TYPE_COUNT
+    /* Must be last element */
+    BUTTON_TYPE_COUNT
 } ButtonTypeEnum;
 
 typedef enum {
@@ -30,8 +30,9 @@ typedef enum {
     BUTTON_ACTION_CYCLE_SETTINGS,
     BUTTON_ACTION_STORE_MEM,
     BUTTON_ACTION_RECALL_MEM,
-	BUTTON_ACTION_TOGGLE_FIELD,
-	BUTTON_ACTION_STORE_LOG,
+    BUTTON_ACTION_TOGGLE_FIELD,
+    BUTTON_ACTION_STORE_LOG,
+    BUTTON_ACTION_CLONE,
 
     /* This has to be last element */
     BUTTON_ACTION_COUNT

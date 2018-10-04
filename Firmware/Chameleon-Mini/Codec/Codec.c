@@ -9,34 +9,46 @@
 #include "../System.h"
 #include "../LEDHook.h"
 
+uint16_t Reader_FWT = ISO14443A_RX_PENDING_TIMEOUT;
+
 #define READER_FIELD_MINIMUM_WAITING_TIME	70 // ms
 
 static uint16_t ReaderFieldStartTimestamp = 0;
+static uint16_t ReaderFieldRestartTimestamp = 0;
+static uint16_t ReaderFieldRestartDelay = 0;
 static volatile struct {
-	bool Started;
-	bool Ready;
+    bool Started;
+    bool Ready;
+    bool ToBeRestarted;
 } ReaderFieldFlags = { false };
 
 uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
-uint16_t ReaderThreshold = 400; // standard value
-
+uint8_t CodecBuffer2[CODEC_BUFFER_SIZE];
 // the following three functions prevent sending data directly after turning on the reader field
 void CodecReaderFieldStart(void) // DO NOT CALL THIS FUNCTION INSIDE APPLICATION!
 {
-	if (!CodecGetReaderField())
-	{
-		CodecSetReaderField(true);
-		ReaderFieldFlags.Started = true;
-		ReaderFieldFlags.Ready = false;
-		ReaderFieldStartTimestamp = SystemGetSysTick();
-	}
+    if (!CodecGetReaderField() && !ReaderFieldFlags.ToBeRestarted)
+    {
+        CodecSetReaderField(true);
+        ReaderFieldFlags.Started = true;
+        ReaderFieldFlags.Ready = false;
+        ReaderFieldStartTimestamp = SystemGetSysTick();
+    }
 }
 
 void CodecReaderFieldStop(void)
 {
-	CodecSetReaderField(false);
-	ReaderFieldFlags.Started = false;
-	ReaderFieldFlags.Ready = false;
+    CodecSetReaderField(false);
+    ReaderFieldFlags.Started = false;
+    ReaderFieldFlags.Ready = false;
+}
+
+void CodecReaderFieldRestart(uint16_t delay)
+{
+    ReaderFieldFlags.ToBeRestarted = true;
+    ReaderFieldRestartTimestamp = SystemGetSysTick();
+    ReaderFieldRestartDelay = delay;
+    CodecReaderFieldStop();
 }
 
 /*
@@ -45,12 +57,46 @@ void CodecReaderFieldStop(void)
  */
 bool CodecIsReaderFieldReady(void)
 {
-	if (!ReaderFieldFlags.Started)
-		return true;
-	if (ReaderFieldFlags.Ready || (ReaderFieldFlags.Started && SYSTICK_DIFF(ReaderFieldStartTimestamp) >= READER_FIELD_MINIMUM_WAITING_TIME))
-	{
-		ReaderFieldFlags.Ready = true;
-		return true;
-	}
-	return false;
+    if (!ReaderFieldFlags.Started)
+        return true;
+    if (ReaderFieldFlags.Ready || (ReaderFieldFlags.Started && SYSTICK_DIFF(ReaderFieldStartTimestamp) >= READER_FIELD_MINIMUM_WAITING_TIME))
+    {
+        ReaderFieldFlags.Ready = true;
+        return true;
+    }
+    return false;
 }
+
+bool CodecIsReaderToBeRestarted(void)
+{
+    if (ReaderFieldFlags.ToBeRestarted)
+    {
+        if (SYSTICK_DIFF(ReaderFieldRestartTimestamp) >= ReaderFieldRestartDelay)
+        {
+            ReaderFieldFlags.ToBeRestarted = false;
+            CodecReaderFieldStart();
+        }
+        return true;
+    }
+    return false;
+}
+
+void CodecThresholdSet(uint16_t th) // threshold has to be saved back to eeprom by the caller, if wanted
+{
+    GlobalSettings.ActiveSettingPtr->ReaderThreshold = th;
+    DACB.CH0DATA = th;
+}
+
+uint16_t CodecThresholdIncrement(void) // threshold has to be saved back to eeprom by the caller, if wanted
+{
+    GlobalSettings.ActiveSettingPtr->ReaderThreshold += CODEC_THRESHOLD_CALIBRATE_STEPS;
+    DACB.CH0DATA = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
+    return GlobalSettings.ActiveSettingPtr->ReaderThreshold;
+}
+
+void CodecThresholdReset(void) // threshold has to be saved back to eeprom by the caller, if wanted
+{
+    GlobalSettings.ActiveSettingPtr->ReaderThreshold = DEFAULT_READER_THRESHOLD;
+    DACB.CH0DATA = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
+}
+

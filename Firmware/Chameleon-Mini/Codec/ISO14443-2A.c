@@ -24,11 +24,11 @@ static volatile struct {
 } Flags = { 0 };
 
 typedef enum {
-	/* Demod */
-	DEMOD_DATA_BIT,
-	DEMOD_PARITY_BIT,
+    /* Demod */
+    DEMOD_DATA_BIT,
+    DEMOD_PARITY_BIT,
 
-	/* Loadmod */
+    /* Loadmod */
     LOADMOD_FDT,
     LOADMOD_START,
     LOADMOD_START_BIT0,
@@ -66,8 +66,8 @@ static void StartDemod(void) {
     StateRegister = DEMOD_DATA_BIT;
 
     /* Configure sampling-timer free running and sync to first modulation-pause. */
-    CODEC_TIMER_SAMPLING.CNT = 0;
-    CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;
+    CODEC_TIMER_SAMPLING.CNT = 0;                               // Reset the timer count
+    CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;   // Set Period regisiter
     CODEC_TIMER_SAMPLING.CCA = 0xFFFF; /* CCA Interrupt is not active! */
     CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_DIV1_gc;
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
@@ -75,10 +75,11 @@ static void StartDemod(void) {
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCAINTLVL_HI_gc;
 
     /* Start looking out for modulation pause via interrupt. */
-    CODEC_DEMOD_IN_PORT.INTFLAGS = 0x03;
+    CODEC_DEMOD_IN_PORT.INTFLAGS = PORT_INT0IF_bm;
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
 }
 
+// Find first pause and start sampling
 ISR(CODEC_DEMOD_IN_INT0_VECT) {
     /* This is the first edge of the first modulation-pause after StartDemod.
      * Now we have time to start
@@ -112,6 +113,7 @@ ISR(CODEC_DEMOD_IN_INT0_VECT) {
     CODEC_DEMOD_IN_PORT.INT0MASK = 0;
 }
 
+// Sampling with timer and demod
 ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
     /* This interrupt gets called twice for every bit to sample it. */
     uint8_t SamplePin = CODEC_DEMOD_IN_PORT.IN & CODEC_DEMOD_IN_MASK;
@@ -120,7 +122,7 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
     SampleRegister = (SampleRegister << 1) | (!SamplePin ? 0x01 : 0x00);
 
     if (SampleIdxRegister) {
-    	SampleIdxRegister = 0;
+        SampleIdxRegister = 0;
         /* Analyze the sampling register after 2 samples. */
         if ((SampleRegister & 0x07) == 0x07) {
             /* No carrier modulation for 3 sample points. EOC! */
@@ -201,7 +203,7 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
                     *ParityBufferPtr++ = Bit;
                     StateRegister = DEMOD_DATA_BIT;
                 } else {
-                	/* Should never Happen (TM) */
+                    /* Should never Happen (TM) */
                 }
             } else {
                 /* 00 sequence. -> No valid data yet. This also occurs if we just started
@@ -210,37 +212,38 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
         }
     } else {
         /* On odd sample position just sample. */
-    	SampleIdxRegister = ~SampleIdxRegister;
+        SampleIdxRegister = ~SampleIdxRegister;
     }
 
     /* Make sure the sampling timer gets automatically aligned to the
      * modulation pauses by using the RESTART event.
      * This can be understood as a "poor mans PLL" and makes sure that we are
      * never too far out the bit-grid while sampling. */
-    //CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
+    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
 }
 
+// Enumulate as a card to send card responds
 ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
     /* Bit rate timer. Output a half bit on the output. */
 
     static void* JumpTable[] = {
-    	[LOADMOD_FDT] = &&LOADMOD_FDT_LABEL,
-    	[LOADMOD_START] = &&LOADMOD_START_LABEL,
-    	[LOADMOD_START_BIT0] = &&LOADMOD_START_BIT0_LABEL,
-    	[LOADMOD_START_BIT1] = &&LOADMOD_START_BIT1_LABEL,
-    	[LOADMOD_DATA0] = &&LOADMOD_DATA0_LABEL,
-    	[LOADMOD_DATA1] = &&LOADMOD_DATA1_LABEL,
-    	[LOADMOD_PARITY0] = &&LOADMOD_PARITY0_LABEL,
-    	[LOADMOD_PARITY1] = &&LOADMOD_PARITY1_LABEL,
-    	[LOADMOD_STOP_BIT0] = &&LOADMOD_STOP_BIT0_LABEL,
-    	[LOADMOD_STOP_BIT1] = &&LOADMOD_STOP_BIT1_LABEL,
-    	[LOADMOD_FINISHED] = &&LOADMOD_FINISHED_LABEL
+        [LOADMOD_FDT] = &&LOADMOD_FDT_LABEL,
+        [LOADMOD_START] = &&LOADMOD_START_LABEL,
+        [LOADMOD_START_BIT0] = &&LOADMOD_START_BIT0_LABEL,
+        [LOADMOD_START_BIT1] = &&LOADMOD_START_BIT1_LABEL,
+        [LOADMOD_DATA0] = &&LOADMOD_DATA0_LABEL,
+        [LOADMOD_DATA1] = &&LOADMOD_DATA1_LABEL,
+        [LOADMOD_PARITY0] = &&LOADMOD_PARITY0_LABEL,
+        [LOADMOD_PARITY1] = &&LOADMOD_PARITY1_LABEL,
+        [LOADMOD_STOP_BIT0] = &&LOADMOD_STOP_BIT0_LABEL,
+        [LOADMOD_STOP_BIT1] = &&LOADMOD_STOP_BIT1_LABEL,
+        [LOADMOD_FINISHED] = &&LOADMOD_FINISHED_LABEL
     };
 
     if ( (StateRegister >= LOADMOD_FDT) && (StateRegister <= LOADMOD_FINISHED) ) {
-    	goto *JumpTable[StateRegister];
+        goto *JumpTable[StateRegister];
     } else {
-    	return;
+        return;
     }
 
     LOADMOD_FDT_LABEL:
@@ -253,17 +256,17 @@ ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
         /* Fallthrough to first bit */
 
     LOADMOD_START_BIT0_LABEL:
-    	/* Start subcarrier generation, output startbit and align to bitrate. */
-    	CodecSetLoadmodState(true);
-    	CodecStartSubcarrier();
+        /* Start subcarrier generation, output startbit and align to bitrate. */
+        CodecSetLoadmodState(true);
+        CodecStartSubcarrier();
 
-    	CODEC_TIMER_LOADMOD.PER = ISO14443A_BIT_RATE_CYCLES / 2 - 1;
+        CODEC_TIMER_LOADMOD.PER = ISO14443A_BIT_RATE_CYCLES / 2 - 1;
         StateRegister = LOADMOD_START_BIT1;
         return;
 
 
     LOADMOD_START_BIT1_LABEL:
-    	CodecSetLoadmodState(false);
+        CodecSetLoadmodState(false);
         StateRegister = LOADMOD_DATA0;
         ParityRegister = ~0;
         BitSent = 0;
@@ -272,12 +275,12 @@ ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
         DataRegister = *CodecBufferPtr;
         return;
 
-	LOADMOD_DATA0_LABEL:
+    LOADMOD_DATA0_LABEL:
         if (DataRegister & 1) {
-        	CodecSetLoadmodState(true);
-        	ParityRegister = ~ParityRegister;
+            CodecSetLoadmodState(true);
+            ParityRegister = ~ParityRegister;
         } else {
-        	CodecSetLoadmodState(false);
+            CodecSetLoadmodState(false);
         }
 
         StateRegister = LOADMOD_DATA1;
@@ -285,9 +288,9 @@ ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
 
     LOADMOD_DATA1_LABEL:
         if (DataRegister & 1) {
-        	CodecSetLoadmodState(false);
+            CodecSetLoadmodState(false);
         } else {
-        	CodecSetLoadmodState(true);
+            CodecSetLoadmodState(true);
         }
 
         DataRegister = DataRegister >> 1;
@@ -300,47 +303,47 @@ ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
             /* End of transmission without byte boundary. Don't send parity. */
             StateRegister = LOADMOD_STOP_BIT0;
         } else {
-        	/* Next bit is data */
-        	StateRegister = LOADMOD_DATA0;
+            /* Next bit is data */
+            StateRegister = LOADMOD_DATA0;
         }
 
         return;
 
     LOADMOD_PARITY0_LABEL:
-		if (ParityBufferPtr != NULL) {
-			if (*ParityBufferPtr) {
-				CodecSetLoadmodState(true);
-			} else {
-				CodecSetLoadmodState(false);
-			}
-		} else {
-			if (ParityRegister) {
-				CodecSetLoadmodState(true);
-			} else {
-				CodecSetLoadmodState(false);
-			}
-		}
+        if (ParityBufferPtr != NULL) {
+            if (*ParityBufferPtr) {
+                CodecSetLoadmodState(true);
+            } else {
+                CodecSetLoadmodState(false);
+            }
+        } else {
+            if (ParityRegister) {
+                CodecSetLoadmodState(true);
+            } else {
+                CodecSetLoadmodState(false);
+            }
+        }
         StateRegister = LOADMOD_PARITY1;
         return;
 
     LOADMOD_PARITY1_LABEL:
-		if (ParityBufferPtr != NULL) {
-			if (*ParityBufferPtr) {
-				CodecSetLoadmodState(false);
-			} else {
-				CodecSetLoadmodState(true);
-			}
+        if (ParityBufferPtr != NULL) {
+            if (*ParityBufferPtr) {
+                CodecSetLoadmodState(false);
+            } else {
+                CodecSetLoadmodState(true);
+            }
 
             ParityBufferPtr++;
-		} else {
-			if (ParityRegister) {
-				CodecSetLoadmodState(false);
-			} else {
-				CodecSetLoadmodState(true);
-			}
+        } else {
+            if (ParityRegister) {
+                CodecSetLoadmodState(false);
+            } else {
+                CodecSetLoadmodState(true);
+            }
 
-			ParityRegister = ~0;
-		}
+            ParityRegister = ~0;
+        }
 
         if (BitSent == BitCount) {
             /* No data left */
@@ -354,12 +357,12 @@ ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
         return;
 
     LOADMOD_STOP_BIT0_LABEL:
-    	CodecSetLoadmodState(false);
+        CodecSetLoadmodState(false);
         StateRegister = LOADMOD_STOP_BIT1;
         return;
 
     LOADMOD_STOP_BIT1_LABEL:
-    	CodecSetLoadmodState(false);
+        CodecSetLoadmodState(false);
         StateRegister = LOADMOD_FINISHED;
         return;
 
@@ -378,25 +381,25 @@ ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
 
 void ISO14443ACodecInit(void) {
     /* Initialize some global vars and start looking out for reader commands */
-	Flags.DemodFinished = 0;
-	Flags.LoadmodFinished = 0;
+    Flags.DemodFinished = 0;
+    Flags.LoadmodFinished = 0;
 
-	CodecInitCommon();
+    CodecInitCommon();
     StartDemod();
 }
 
 void ISO14443ACodecDeInit(void)
 {
-	/* Gracefully shutdown codec */
-	CODEC_DEMOD_IN_PORT.INT0MASK = 0;
+    /* Gracefully shutdown codec */
+    CODEC_DEMOD_IN_PORT.INT0MASK = 0;
 
-	Flags.DemodFinished = 0;
-	Flags.LoadmodFinished = 0;
+    Flags.DemodFinished = 0;
+    Flags.LoadmodFinished = 0;
 
     CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
-	CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
+    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCAINTLVL_OFF_gc;
-	CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCAIF_bm;
+    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCAIF_bm;
 
 
     CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
@@ -418,6 +421,7 @@ void ISO14443ACodecTask(void) {
         uint16_t AnswerBitCount = ISO14443A_APP_NO_RESPONSE;
 
         if (DemodBitCount >= ISO14443A_MIN_BITS_PER_FRAME) {
+            // For logging data
             LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
             LEDHook(LED_CODEC_RX, LED_PULSE);
 
@@ -431,7 +435,7 @@ void ISO14443ACodecTask(void) {
                 ParityBufferPtr = &CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET];
             } else {
                 /* We have to generate the parity bits ourself */
-            	ParityBufferPtr = 0;
+                ParityBufferPtr = 0;
             }
         }
 

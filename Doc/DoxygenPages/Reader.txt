@@ -96,4 +96,14 @@
  * -# Return code `101:OK WITH TEXT`, the card type and ATQA value, UID value and SAK value of the highest cascade level.
  * -# Return code `101:OK WITH TEXT`, the information that this card type is unknown to the ChameleonMini ("Unknown card.") and ATQA value, UID value and SAK value of the highest cascade level.
  * -# Timeout (no matter if on setting/configuration change or on real timeout).
+ * 
+ * `AUTOCALIBRATE`
+ * ---------------
+ * This is a \ref Anchor_TimeoutCommands "timeout command". Tries to select to a card with every threshold within a range with a specific step size and chooses the best threshold.
+ * 
+ * If this command is called within the reader configuration, it ends in one of the following ways:
+ * -# Return code `101:OK WITH TEXT` and a list of the tested thresholds with a `+` for every threshold where the select protocol was successful and a `-` if the select protocol was not successfully finished.
+ * -# Timeout (no matter if on setting/configuration change or on real timeout).
+ * 
+ * \note If no working threshold was found, the threshold is reset to the standard threshold.
  */

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['settings',['Settings',['../Page_Settings.html',1,'index']]]
+  ['settings',['Settings',['../_page__settings.html',1,'index']]]
 ];

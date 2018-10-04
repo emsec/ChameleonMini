@@ -191,32 +191,32 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .GetFunc    = NO_FUNCTION
   },
   {
-	.Command	= COMMAND_SETTING,
-	.ExecFunc	= NO_FUNCTION,
+    .Command	= COMMAND_SETTING,
+    .ExecFunc	= NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc	= CommandSetSetting,
-	.GetFunc	= CommandGetSetting
+    .SetFunc	= CommandSetSetting,
+    .GetFunc	= CommandGetSetting
   },
   {
-	.Command	= COMMAND_CLEAR,
-	.ExecFunc	= CommandExecClear,
+    .Command	= COMMAND_CLEAR,
+    .ExecFunc	= CommandExecClear,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc	= NO_FUNCTION,
-	.GetFunc	= NO_FUNCTION
+    .SetFunc	= NO_FUNCTION,
+    .GetFunc	= NO_FUNCTION
   },
   {
-	.Command	= COMMAND_STORE,
-	.ExecFunc	= CommandExecStore,
+    .Command	= COMMAND_STORE,
+    .ExecFunc	= CommandExecStore,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc	= NO_FUNCTION,
-	.GetFunc	= NO_FUNCTION
+    .SetFunc	= NO_FUNCTION,
+    .GetFunc	= NO_FUNCTION
   },
   {
-	.Command	= COMMAND_RECALL,
-	.ExecFunc	= CommandExecRecall,
+    .Command	= COMMAND_RECALL,
+    .ExecFunc	= CommandExecRecall,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc	= NO_FUNCTION,
-	.GetFunc	= NO_FUNCTION
+    .SetFunc	= NO_FUNCTION,
+    .GetFunc	= NO_FUNCTION
   },
   {
     .Command    = COMMAND_CHARGING,
@@ -233,74 +233,88 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .GetFunc    = NO_FUNCTION
   },
   {
-	.Command	= COMMAND_RSSI,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command	= COMMAND_RSSI,
+    .ExecFunc 	= NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= NO_FUNCTION,
-	.GetFunc 	= CommandGetRssi
+    .SetFunc 	= NO_FUNCTION,
+    .GetFunc 	= CommandGetRssi
   },
   {
-	.Command	= COMMAND_SYSTICK,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command	= COMMAND_SYSTICK,
+    .ExecFunc 	= NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= NO_FUNCTION,
-	.GetFunc 	= CommandGetSysTick
+    .SetFunc 	= NO_FUNCTION,
+    .GetFunc 	= CommandGetSysTick
   },
   {
-	.Command	= COMMAND_SEND_RAW,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command	= COMMAND_SEND_RAW,
+    .ExecFunc 	= NO_FUNCTION,
     .ExecParamFunc = CommandExecParamSendRaw,
-	.SetFunc 	= NO_FUNCTION,
-	.GetFunc 	= NO_FUNCTION
+    .SetFunc 	= NO_FUNCTION,
+    .GetFunc 	= NO_FUNCTION
   },
   {
-	.Command	= COMMAND_SEND,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command	= COMMAND_SEND,
+    .ExecFunc 	= NO_FUNCTION,
     .ExecParamFunc = CommandExecParamSend,
-	.SetFunc 	= NO_FUNCTION,
-	.GetFunc 	= NO_FUNCTION
+    .SetFunc 	= NO_FUNCTION,
+    .GetFunc 	= NO_FUNCTION
   },
   {
-	.Command	= COMMAND_GETUID,
-	.ExecFunc 	= CommandExecGetUid,
+    .Command	= COMMAND_GETUID,
+    .ExecFunc 	= CommandExecGetUid,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= NO_FUNCTION,
-	.GetFunc 	= NO_FUNCTION
+    .SetFunc 	= NO_FUNCTION,
+    .GetFunc 	= NO_FUNCTION
   },
   {
-	.Command	= COMMAND_DUMP_MFU,
-	.ExecFunc 	= CommandExecDumpMFU,
+    .Command	= COMMAND_DUMP_MFU,
+    .ExecFunc 	= CommandExecDumpMFU,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= NO_FUNCTION,
-	.GetFunc 	= NO_FUNCTION
+    .SetFunc 	= NO_FUNCTION,
+    .GetFunc 	= NO_FUNCTION
   },
   {
-	.Command	= COMMAND_IDENTIFY_CARD,
-	.ExecFunc 	= CommandExecIdentifyCard,
+    .Command	= COMMAND_IDENTIFY_CARD,
+    .ExecFunc 	= CommandExecIdentifyCard,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= NO_FUNCTION,
-	.GetFunc 	= NO_FUNCTION
+    .SetFunc 	= NO_FUNCTION,
+    .GetFunc 	= NO_FUNCTION
   },
   {
-	.Command	= COMMAND_TIMEOUT,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command	= COMMAND_TIMEOUT,
+    .ExecFunc 	= NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= CommandSetTimeout,
-	.GetFunc 	= CommandGetTimeout
+    .SetFunc 	= CommandSetTimeout,
+    .GetFunc 	= CommandGetTimeout
   },
   {
-	.Command	= COMMAND_THRESHOLD,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command	= COMMAND_THRESHOLD,
+    .ExecFunc 	= NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= CommandSetThreshold,
-	.GetFunc 	= CommandGetThreshold
+    .SetFunc 	= CommandSetThreshold,
+    .GetFunc 	= CommandGetThreshold
   },
   {
-	.Command	= COMMAND_FIELD,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command    = COMMAND_AUTOCALIBRATE,
+    .ExecFunc   = CommandExecAutocalibrate,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= CommandSetField,
-	.GetFunc 	= CommandGetField
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
+  },
+  {
+    .Command    = COMMAND_FIELD,
+    .ExecFunc   = NO_FUNCTION,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = CommandSetField,
+    .GetFunc    = CommandGetField
+  },
+  {
+    .Command        = COMMAND_CLONE,
+    .ExecFunc       = CommandExecClone,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = NO_FUNCTION,
+    .GetFunc        = NO_FUNCTION
   },
   { /* This has to be last element */
     .Command    = COMMAND_LIST_END,
@@ -354,39 +368,53 @@ static CommandStatusIdType CallCommandFunc(
   char* pTerminalBuffer = (char*) TerminalBuffer;
   CommandStatusIdType Status = COMMAND_ERR_INVALID_USAGE_ID;
 
-	/* Call appropriate function depending on CommandDelimiter */
-	if (CommandDelimiter == CHAR_GET_MODE) {
-		CommandGetFuncType GetFunc = pgm_read_ptr(&CommandEntry->GetFunc);
-		if (GetFunc != NO_FUNCTION) {
-			Status = GetFunc(pTerminalBuffer);
-		}
-	} else if (CommandDelimiter == CHAR_SET_MODE) {
-		CommandSetFuncType SetFunc = pgm_read_ptr(&CommandEntry->SetFunc);
-		if (SetFunc != NO_FUNCTION) {
-			Status = SetFunc(pTerminalBuffer, pParam);
-		}
-	} else if (CommandDelimiter == CHAR_EXEC_MODE) {
-		CommandExecFuncType ExecFunc = pgm_read_ptr(&CommandEntry->ExecFunc);
-		if (ExecFunc != NO_FUNCTION) {
-			Status = ExecFunc(pTerminalBuffer);
-		}
-	} else if (CommandDelimiter == CHAR_EXEC_MODE_PARAM) {
-		CommandExecParamFuncType ExecParamFunc = pgm_read_ptr(&CommandEntry->ExecParamFunc);
-		if (ExecParamFunc != NO_FUNCTION) {
-			Status = ExecParamFunc(pTerminalBuffer, pParam);
-		}
-	} else {
-		/* This should not happen (TM) */
-	}
+    /* Call appropriate function depending on CommandDelimiter */
+    if (CommandDelimiter == CHAR_GET_MODE) {
+        CommandGetFuncType GetFunc = pgm_read_ptr(&CommandEntry->GetFunc);
+        if (GetFunc != NO_FUNCTION) {
+            Status = GetFunc(pTerminalBuffer);
+        }
+    } else if (CommandDelimiter == CHAR_SET_MODE) {
+        CommandSetFuncType SetFunc = pgm_read_ptr(&CommandEntry->SetFunc);
+        if (SetFunc != NO_FUNCTION) {
+            Status = SetFunc(pTerminalBuffer, pParam);
+        }
+    } else if (CommandDelimiter == CHAR_EXEC_MODE) {
+        CommandExecFuncType ExecFunc = pgm_read_ptr(&CommandEntry->ExecFunc);
+        if (ExecFunc != NO_FUNCTION) {
+            Status = ExecFunc(pTerminalBuffer);
+        }
+    } else if (CommandDelimiter == CHAR_EXEC_MODE_PARAM) {
+        CommandExecParamFuncType ExecParamFunc = pgm_read_ptr(&CommandEntry->ExecParamFunc);
+        if (ExecParamFunc != NO_FUNCTION) {
+            Status = ExecParamFunc(pTerminalBuffer, pParam);
+        }
+    } else {
+        /* This should not happen (TM) */
+    }
 
-	if (Status == TIMEOUT_COMMAND)
-	{
-		TaskPending = true;
-		TaskPendingSince = SystemGetSysTick();
-	}
+    if (Status == TIMEOUT_COMMAND)
+    {
+        TaskPending = true;
+        TaskPendingSince = SystemGetSysTick();
+    }
 
-	/* This delimiter has not been registered with this command */
-	return Status;
+    /* This delimiter has not been registered with this command */
+    return Status;
+}
+
+void CommandExecute(const char* command)
+{
+    uint8_t i;
+
+    for (i = 0; i < ARRAY_COUNT(CommandTable); i++) 
+    {
+        if (strcmp_P(command, CommandTable[i].Command) == 0)
+        {
+            CallCommandFunc(&CommandTable[i], CHAR_EXEC_MODE, NULL);
+            break;
+        }
+    }
 }
 
 static void DecodeCommand(void)
@@ -425,7 +453,7 @@ static void DecodeCommand(void)
   }
 
   if (StatusId == TIMEOUT_COMMAND) // it is a timeout command, so we return
-	  return;
+      return;
 
   /* Send command status message */
   TerminalSendStringP(GetStatusMessageP(StatusId));
@@ -444,83 +472,83 @@ void CommandLineInit(void)
 }
 
 bool CommandLineProcessByte(uint8_t Byte) {
-	if (IS_CHARACTER(Byte)) {
-		/* Store uppercase character */
-		if (IS_LOWERCASE(Byte)) {
-			Byte = TO_UPPERCASE(Byte);
-		}
+    if (IS_CHARACTER(Byte)) {
+        /* Store uppercase character */
+        if (IS_LOWERCASE(Byte)) {
+            Byte = TO_UPPERCASE(Byte);
+        }
 
-		/* Prevent buffer overflow and account for '\0' */
-		if (BufferIdx < TERMINAL_BUFFER_SIZE - 1) {
-			TerminalBuffer[BufferIdx++] = Byte;
-		}
-	} else if (Byte == '\r') {
-		/* Process on \r. Terminate string and decode. */
-		TerminalBuffer[BufferIdx] = '\0';
-		BufferIdx = 0;
+        /* Prevent buffer overflow and account for '\0' */
+        if (BufferIdx < TERMINAL_BUFFER_SIZE - 1) {
+            TerminalBuffer[BufferIdx++] = Byte;
+        }
+    } else if (Byte == '\r') {
+        /* Process on \r. Terminate string and decode. */
+        TerminalBuffer[BufferIdx] = '\0';
+        BufferIdx = 0;
 
-		if (!TaskPending)
-			DecodeCommand();
-	} else if (Byte == '\b') {
-		/* Backspace. Delete last character in buffer. */
-		if (BufferIdx > 0) {
-			BufferIdx--;
-		}
-	} else if (Byte == 0x1B) {
-		/* Drop buffer on escape */
-		BufferIdx = 0;
-	} else {
-		/* Ignore other chars */
-	}
+        if (!TaskPending)
+            DecodeCommand();
+    } else if (Byte == '\b') {
+        /* Backspace. Delete last character in buffer. */
+        if (BufferIdx > 0) {
+            BufferIdx--;
+        }
+    } else if (Byte == 0x1B) {
+        /* Drop buffer on escape */
+        BufferIdx = 0;
+    } else {
+        /* Ignore other chars */
+    }
 
-	return true;
+    return true;
 }
 
 INLINE void Timeout(void)
 {
-	TaskPending = false;
-	TerminalSendStringP(GetStatusMessageP(COMMAND_ERR_TIMEOUT_ID));
-	TerminalSendStringP(PSTR(STATUS_MESSAGE_TRAILER));
+    TaskPending = false;
+    TerminalSendStringP(GetStatusMessageP(COMMAND_ERR_TIMEOUT_ID));
+    TerminalSendStringP(PSTR(STATUS_MESSAGE_TRAILER));
 
-	if (CommandLinePendingTaskTimeout != NO_FUNCTION)
-	{
-		CommandLinePendingTaskTimeout(); // call the function that ends the task
-		CommandLinePendingTaskTimeout = NO_FUNCTION;
-	}
+    if (CommandLinePendingTaskTimeout != NO_FUNCTION)
+    {
+        CommandLinePendingTaskTimeout(); // call the function that ends the task
+        CommandLinePendingTaskTimeout = NO_FUNCTION;
+    }
 }
 
 void CommandLineTick(void)
 {
-	if (TaskPending &&
-			GlobalSettings.ActiveSettingPtr->PendingTaskTimeout != 0 && // 0 means no timeout
-			SYSTICK_DIFF_100MS(TaskPendingSince) >= GlobalSettings.ActiveSettingPtr->PendingTaskTimeout) // timeout expired
-	{
-		Timeout();
-	}
+    if (TaskPending &&
+            GlobalSettings.ActiveSettingPtr->PendingTaskTimeout != 0 && // 0 means no timeout
+            SYSTICK_DIFF_100MS(TaskPendingSince) >= GlobalSettings.ActiveSettingPtr->PendingTaskTimeout) // timeout expired
+    {
+        Timeout();
+    }
 }
 
 void CommandLinePendingTaskBreak(void)
 {
-	if (!TaskPending)
-		return;
+    if (!TaskPending)
+        return;
 
-	Timeout();
+    Timeout();
 }
 
 void CommandLinePendingTaskFinished(CommandStatusIdType ReturnStatusID, char const * const OutMessage)
 {
-	if (!TaskPending) // if no task is pending, no task can be finished
-		return;
-	TaskPending = false;
+    if (!TaskPending) // if no task is pending, no task can be finished
+        return;
+    TaskPending = false;
 
-	TerminalSendStringP(GetStatusMessageP(ReturnStatusID));
-	TerminalSendStringP(PSTR(STATUS_MESSAGE_TRAILER));
+    TerminalSendStringP(GetStatusMessageP(ReturnStatusID));
+    TerminalSendStringP(PSTR(STATUS_MESSAGE_TRAILER));
 
-	if (OutMessage != NULL)
-	{
-		TerminalSendString(OutMessage);
-	    TerminalSendStringP(PSTR(OPTIONAL_ANSWER_TRAILER));
-	}
+    if (OutMessage != NULL)
+    {
+        TerminalSendString(OutMessage);
+        TerminalSendStringP(PSTR(OPTIONAL_ANSWER_TRAILER));
+    }
 }
 
 void CommandLineAppendData(void const * const Buffer, uint16_t Bytes)
@@ -529,7 +557,7 @@ void CommandLineAppendData(void const * const Buffer, uint16_t Bytes)
 
     uint16_t tmpBytes = Bytes;
     if (Bytes > (TERMINAL_BUFFER_SIZE / 2))
-    	tmpBytes = TERMINAL_BUFFER_SIZE / 2;
+        tmpBytes = TERMINAL_BUFFER_SIZE / 2;
     Bytes -= tmpBytes;
 
     BufferToHexString(pTerminalBuffer, TERMINAL_BUFFER_SIZE, Buffer, tmpBytes);
@@ -538,10 +566,10 @@ void CommandLineAppendData(void const * const Buffer, uint16_t Bytes)
     uint8_t i = 1;
     while (Bytes > (TERMINAL_BUFFER_SIZE / 2))
     {
-    	Bytes -= TERMINAL_BUFFER_SIZE / 2;
+        Bytes -= TERMINAL_BUFFER_SIZE / 2;
         BufferToHexString(pTerminalBuffer, TERMINAL_BUFFER_SIZE, Buffer + i * TERMINAL_BUFFER_SIZE / 2, TERMINAL_BUFFER_SIZE);
         TerminalSendString(pTerminalBuffer);
-    	i++;
+        i++;
     }
 
     if (Bytes > 0)

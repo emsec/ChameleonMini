@@ -32,7 +32,7 @@ TerminalStateEnum TerminalState = TERMINAL_UNINITIALIZED;
 static uint8_t TerminalInitDelay = INIT_DELAY;
 
 void TerminalSendString(const char* s) {
-	CDC_Device_SendString(&TerminalHandle, s);
+    CDC_Device_SendString(&TerminalHandle, s);
 }
 
 void TerminalSendStringP(const char* s) {
@@ -67,7 +67,7 @@ static void ProcessByte(void) {
 
     if (Byte >= 0) {
         /* Byte received */
-    	LEDHook(LED_TERMINAL_RXTX, LED_PULSE);
+        LEDHook(LED_TERMINAL_RXTX, LED_PULSE);
 
         if (XModemProcessByte(Byte)) {
             /* XModem handled the byte */
@@ -81,39 +81,39 @@ static void SenseVBus(void)
 {
     switch(TerminalState) {
     case TERMINAL_UNINITIALIZED:
-    	if (TERMINAL_VBUS_PORT.IN & TERMINAL_VBUS_MASK) {
-    		/* Not initialized and VBUS sense high */
-    		TerminalInitDelay = INIT_DELAY;
-    		TerminalState = TERMINAL_INITIALIZING;
-    	}
+        if (TERMINAL_VBUS_PORT.IN & TERMINAL_VBUS_MASK) {
+            /* Not initialized and VBUS sense high */
+            TerminalInitDelay = INIT_DELAY;
+            TerminalState = TERMINAL_INITIALIZING;
+        }
     break;
 
     case TERMINAL_INITIALIZING:
-    	if (--TerminalInitDelay == 0) {
+        if (--TerminalInitDelay == 0) {
             SystemStartUSBClock();
             USB_Init();
             TerminalState = TERMINAL_INITIALIZED;
-    	}
-    	break;
+        }
+        break;
 
     case TERMINAL_INITIALIZED:
-    	if (!(TERMINAL_VBUS_PORT.IN & TERMINAL_VBUS_MASK)) {
-    		/* Initialized and VBUS sense low */
-    		TerminalInitDelay = INIT_DELAY;
-    		TerminalState = TERMINAL_UNITIALIZING;
-    	}
-    	break;
+        if (!(TERMINAL_VBUS_PORT.IN & TERMINAL_VBUS_MASK)) {
+            /* Initialized and VBUS sense low */
+            TerminalInitDelay = INIT_DELAY;
+            TerminalState = TERMINAL_UNITIALIZING;
+        }
+        break;
 
     case TERMINAL_UNITIALIZING:
-    	if (--TerminalInitDelay == 0) {
-        	USB_Disable();
-        	SystemStopUSBClock();
-        	TerminalState = TERMINAL_UNINITIALIZED;
-    	}
-    	break;
+        if (--TerminalInitDelay == 0) {
+            USB_Disable();
+            SystemStopUSBClock();
+            TerminalState = TERMINAL_UNINITIALIZED;
+        }
+        break;
 
     default:
-    	break;
+        break;
     }
 }
 
@@ -124,34 +124,34 @@ void TerminalInit(void)
 
 void TerminalTask(void)
 {
-	if (TerminalState == TERMINAL_INITIALIZED) {
-		CDC_Device_USBTask(&TerminalHandle);
-		USB_USBTask();
+    if (TerminalState == TERMINAL_INITIALIZED) {
+        CDC_Device_USBTask(&TerminalHandle);
+        USB_USBTask();
 
-		ProcessByte();
-	}
+        ProcessByte();
+    }
 }
 
 void TerminalTick(void)
 {
-	SenseVBus();
+    SenseVBus();
 
-	if (TerminalState == TERMINAL_INITIALIZED) {
-		XModemTick();
-		CommandLineTick();
-	}
+    if (TerminalState == TERMINAL_INITIALIZED) {
+        XModemTick();
+        CommandLineTick();
+    }
 }
 
 /** Event handler for the library USB Connection event. */
 void EVENT_USB_Device_Connect(void)
 {
-	LEDHook(LED_TERMINAL_CONN, LED_ON);
+    LEDHook(LED_TERMINAL_CONN, LED_ON);
 }
 
 /** Event handler for the library USB Disconnection event. */
 void EVENT_USB_Device_Disconnect(void)
 {
-	LEDHook(LED_TERMINAL_CONN, LED_OFF);
+    LEDHook(LED_TERMINAL_CONN, LED_OFF);
 }
 
 

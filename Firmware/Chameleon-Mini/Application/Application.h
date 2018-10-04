@@ -16,6 +16,7 @@
 #include "MifareUltralight.h"
 #include "MifareClassic.h"
 #include "Reader14443A.h"
+#include "Sniff14443A.h"
 
 /* Function wrappers */
 INLINE void ApplicationInit(void) {
@@ -23,11 +24,11 @@ INLINE void ApplicationInit(void) {
 }
 
 INLINE void ApplicationTask(void) {
-	ActiveConfiguration.ApplicationTaskFunc();
+    ActiveConfiguration.ApplicationTaskFunc();
 }
 
 INLINE void ApplicationTick(void) {
-	ActiveConfiguration.ApplicationTickFunc();
+    ActiveConfiguration.ApplicationTickFunc();
 }
 
 INLINE uint16_t ApplicationProcess(uint8_t* ByteBuffer, uint16_t ByteCount) {

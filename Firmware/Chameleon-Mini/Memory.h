@@ -28,6 +28,10 @@ void MemoryStore(void);
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 
+/* EEPROM functions */
+uint16_t WriteEEPBlock(uint16_t Address, const void *SrcPtr, uint16_t ByteCount);
+uint16_t ReadEEPBlock(uint16_t Address, void *DestPtr, uint16_t ByteCount);
+
 #endif /* __ASSEMBLER__ */
 
 #endif /* MEMORY_H_ */

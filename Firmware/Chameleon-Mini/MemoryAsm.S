@@ -53,13 +53,13 @@
 .section .text
 .global FlashReadWord
 FlashReadWord:
-	in	r19, RAMPZ      ; Save RAMPZ.
-	out	RAMPZ, r24      ; Load RAMPZ with the MSB of the address.
-	movw	ZL, r22         ; Move the low bytes to the Z pointer
-	elpm	r24, Z+         ; Extended load byte from address pointed to by Z.
-	elpm	r25, Z          ; Extended load byte from address pointed to by Z.
-	out	RAMPZ, r19      ; Restore RAMPZ register.
-	ret
+    in	r19, RAMPZ      ; Save RAMPZ.
+    out	RAMPZ, r24      ; Load RAMPZ with the MSB of the address.
+    movw	ZL, r22     ; Move the low bytes to the Z pointer
+    elpm	r24, Z+     ; Extended load byte from address pointed to by Z.
+    elpm	r25, Z      ; Extended load byte from address pointed to by Z.
+    out	RAMPZ, r19      ; Restore RAMPZ register.
+    ret
 
 ; This routine erases the page at address R25:R24:R23:R22 in the application
 ; section. The address can point anywhere inside the page.
@@ -72,11 +72,11 @@ FlashReadWord:
 .section .text
 .global FlashEraseApplicationPage
 FlashEraseApplicationPage:
-	in	r19, RAMPZ                      ; Save RAMPZ, which is restored in FlashCommonSPM.
-	out	RAMPZ, r24                      ; Load RAMPZ with the MSB of the address.
-	movw    r24, r22                        ; Move low bytes for ZH:ZL to R25:R24
-	ldi	r20, NVM_CMD_ERASE_APP_PAGE_gc  ; Prepare NVM command in R20.
-	jmp	FlashCommonSPM                    ; Jump to common SPM code.
+    in	r19, RAMPZ                      ; Save RAMPZ, which is restored in FlashCommonSPM.
+    out	RAMPZ, r24                      ; Load RAMPZ with the MSB of the address.
+    movw    r24, r22                    ; Move low bytes for ZH:ZL to R25:R24
+    ldi	r20, NVM_CMD_ERASE_APP_PAGE_gc  ; Prepare NVM command in R20.
+    jmp	FlashCommonSPM                  ; Jump to common SPM code.
 
 ; This routine writes the word from R23:R22 into the Flash page buffer at
 ; address R25:R24.
@@ -90,10 +90,10 @@ FlashEraseApplicationPage:
 .section .text
 .global FlashLoadFlashWord
 FlashLoadFlashWord:
-	in	r19, RAMPZ                         ; Save RAMPZ, which is restored in FlashCommonSPM.
-	movw	r0, r22                            ; Prepare flash word in R1:R0.
-	ldi	r20, NVM_CMD_LOAD_FLASH_BUFFER_gc  ; Prepare NVM command in R20.
-	jmp	FlashCommonSPM                       ; Jump to common SPM code.
+    in	r19, RAMPZ                         ; Save RAMPZ, which is restored in FlashCommonSPM.
+    movw	r0, r22                        ; Prepare flash word in R1:R0.
+    ldi	r20, NVM_CMD_LOAD_FLASH_BUFFER_gc  ; Prepare NVM command in R20.
+    jmp	FlashCommonSPM                     ; Jump to common SPM code.
 
 
 ; This routine erases first and then writes the page buffer to the
@@ -108,11 +108,11 @@ FlashLoadFlashWord:
 .section .text
 .global FlashEraseWriteApplicationPage
 FlashEraseWriteApplicationPage:
-	in	r19, RAMPZ                            ; Save RAMPZ, which is restored in FlashCommonSPM.
-	out	RAMPZ, r24                            ; Load RAMPZ with the MSB of the address.
-	movw	r24, r22                              ; Move low bytes of address to ZH:ZL from R23:R22
-	ldi	r20, NVM_CMD_ERASE_WRITE_APP_PAGE_gc  ; Prepare NVM command in R20.
-	jmp	FlashCommonSPM                          ; Jump to common SPM code.
+    in	r19, RAMPZ                            ; Save RAMPZ, which is restored in FlashCommonSPM.
+    out	RAMPZ, r24                            ; Load RAMPZ with the MSB of the address.
+    movw	r24, r22                          ; Move low bytes of address to ZH:ZL from R23:R22
+    ldi	r20, NVM_CMD_ERASE_WRITE_APP_PAGE_gc  ; Prepare NVM command in R20.
+    jmp	FlashCommonSPM                        ; Jump to common SPM code.
 
 ; This routine flushes the Flash page buffer.
 ;
@@ -124,10 +124,10 @@ FlashEraseWriteApplicationPage:
 .section .text
 .global FlashEraseFlashBuffer
 FlashEraseFlashBuffer:
-	in	r19, RAMPZ                          ; Save RAMPZ, which is restored in FlashCommonSPM.
-	ldi	r20, NVM_CMD_ERASE_FLASH_BUFFER_gc  ; Prepare NVM command in R20.
-	;jmp	FlashCommonSPM                        ; Jump to common SPM code.
-	jmp	FlashCommonCMD
+    in	r19, RAMPZ                          ; Save RAMPZ, which is restored in FlashCommonSPM.
+    ldi	r20, NVM_CMD_ERASE_FLASH_BUFFER_gc  ; Prepare NVM command in R20.
+    ;jmp	FlashCommonSPM                  ; Jump to common SPM code.
+    jmp	FlashCommonCMD
 
 ; This routine wait for the SPM to finish and clears the command register.
 ;
@@ -142,12 +142,12 @@ FlashEraseFlashBuffer:
 .section .text
 .global FlashWaitForSPM
 FlashWaitForSPM:
-	lds	r18, NVM_STATUS     ; Load the NVM Status register.
-	sbrc	r18, NVM_NVMBUSY_bp ; Check if bit is cleared.
-	rjmp	FlashWaitForSPM       ; Repeat check if bit is not cleared.
-	clr	r18
-	sts	NVM_CMD, r18        ; Clear up command register to NO_OPERATION.
-	ret
+    lds	r18, NVM_STATUS     ; Load the NVM Status register.
+    sbrc	r18, NVM_NVMBUSY_bp ; Check if bit is cleared.
+    rjmp	FlashWaitForSPM       ; Repeat check if bit is not cleared.
+    clr	r18
+    sts	NVM_CMD, r18        ; Clear up command register to NO_OPERATION.
+    ret
 
 ; This routine is called by several other routines, and contains common code
 ; for executing an NVM command, including the return statement itself.
@@ -165,16 +165,16 @@ FlashWaitForSPM:
 ;     R25:R24:R23:R22 - 32-bit result from NVM operation.
 .section .text
 FlashCommonCMD:
-	sts	NVM_CMD, r20        ; Load command into NVM Command register.
-	ldi	r18, CCP_IOREG_gc   ; Prepare Protect IO-register signature in R18.
-	ldi	r19, NVM_CMDEX_bm   ; Prepare bitmask for setting NVM Command Execute bit into R19.
-	sts	CCP, r18            ; Enable IO-register operation (this disables interrupts for 4 cycles).
-	sts	NVM_CTRLA, r19      ; Load bitmask into NVM Control Register A, which executes the command.
-	lds	r22, NVM_DATA0      ; Load NVM Data Register 0 into R22.
-	lds	r23, NVM_DATA1      ; Load NVM Data Register 1 into R23.
-	lds	r24, NVM_DATA2      ; Load NVM Data Register 2 into R24.
-	clr	r25                 ; Clear R25 in order to return a clean 32-bit value.
-	ret
+    sts	NVM_CMD, r20        ; Load command into NVM Command register.
+    ldi	r18, CCP_IOREG_gc   ; Prepare Protect IO-register signature in R18.
+    ldi	r19, NVM_CMDEX_bm   ; Prepare bitmask for setting NVM Command Execute bit into R19.
+    sts	CCP, r18            ; Enable IO-register operation (this disables interrupts for 4 cycles).
+    sts	NVM_CTRLA, r19      ; Load bitmask into NVM Control Register A, which executes the command.
+    lds	r22, NVM_DATA0      ; Load NVM Data Register 0 into R22.
+    lds	r23, NVM_DATA1      ; Load NVM Data Register 1 into R23.
+    lds	r24, NVM_DATA2      ; Load NVM Data Register 2 into R24.
+    clr	r25                 ; Clear R25 in order to return a clean 32-bit value.
+    ret
 
 ; This routine is called by several other routines, and contains common code
 ; for executing an LPM command, including the return statement itself.
@@ -190,10 +190,10 @@ FlashCommonCMD:
 ;     R24     - Result from LPM operation.
 .section .text
 FlashCommonLPM:
-	movw	ZL, r24             ; Load index into Z.
-	sts	NVM_CMD, r20        ; Load prepared command into NVM Command register.
-	lpm	r24,Z
-	ret
+    movw	ZL, r24         ; Load index into Z.
+    sts	NVM_CMD, r20        ; Load prepared command into NVM Command register.
+    lpm	r24,Z
+    ret
 
 ; This routine is called by several other routines, and contains common code
 ; for executing an SPM command, including the return statement itself.
@@ -210,14 +210,14 @@ FlashCommonLPM:
 ;     Nothing.
 .section .spmhelper
 FlashCommonSPM:
-	movw	ZL, r24          ; Load R25:R24 into Z.
-	sts	NVM_CMD, r20     ; Load prepared command into NVM Command register.
-	ldi	r18, CCP_SPM_gc  ; Prepare Protect SPM signature in R18
-	sts	CCP, r18         ; Enable SPM operation (this disables interrupts for 4 cycles).
-	spm                      ; Self-program.
-	clr	r1               ; Clear R1 for GCC _zero_reg_ to function properly.
-	out	RAMPZ, r19       ; Restore RAMPZ register.
-	ret
+    movw	ZL, r24      ; Load R25:R24 into Z.
+    sts	NVM_CMD, r20     ; Load prepared command into NVM Command register.
+    ldi	r18, CCP_SPM_gc  ; Prepare Protect SPM signature in R18
+    sts	CCP, r18         ; Enable SPM operation (this disables interrupts for 4 cycles).
+    spm                  ; Self-program.
+    clr	r1               ; Clear R1 for GCC _zero_reg_ to function properly.
+    out	RAMPZ, r19       ; Restore RAMPZ register.
+    ret
 
 /* Reserve memory for data */
 .section .flashdata

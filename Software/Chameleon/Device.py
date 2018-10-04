@@ -26,6 +26,8 @@ class Device:
     COMMAND_RBUTTONLONG = "RBUTTON_LONG"
     COMMAND_GREEN_LED = "LEDGREEN"
     COMMAND_RED_LED = "LEDRED"
+    COMMAND_THRESHOLD = "THRESHOLD"
+    COMMAND_UPGRADE = "upgrade"
 
     STATUS_CODE_OK = 100
     STATUS_CODE_OK_WITH_TEXT = 101
@@ -268,3 +270,15 @@ class Device:
             return self.getCmdSuggestions(self.COMMAND_RED_LED)
         else:
             return self.getSetCmd(self.COMMAND_RED_LED, newFunction)
+
+    def cmdThreshold(self, value):
+        if(value == self.SUGGEST_CHAR):
+            return self.getCmdSuggestions(self.COMMAND_THRESHOLD)
+        else:
+            return self.getSetCmd(self.COMMAND_THRESHOLD, value)
+
+    def cmdUpgrade(self):
+        # Execute command
+        cmdLine = self.COMMAND_UPGRADE + self.LINE_ENDING
+        self.serial.write(cmdLine.encode('ascii'))
+        return 0

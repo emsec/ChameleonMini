@@ -22,6 +22,8 @@ typedef enum  {
 
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
     CONFIG_MF_ULTRALIGHT,
+    CONFIG_MF_ULTRALIGHT_EV1_80B,
+    CONFIG_MF_ULTRALIGHT_EV1_164B,
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
     CONFIG_MF_CLASSIC_1K,
@@ -39,7 +41,7 @@ typedef enum  {
     CONFIG_ISO14443A_SNIFF,
 #endif
 #ifdef CONFIG_ISO14443A_READER_SUPPORT
-	CONFIG_ISO14443A_READER,
+    CONFIG_ISO14443A_READER,
 #endif
     /* This HAS to be the last element */
     CONFIG_COUNT
@@ -53,7 +55,7 @@ typedef struct {
      * Codec related methods.
      * @{
      */
-	/** Function that initializes the codec. */
+    /** Function that initializes the codec. */
     void (*CodecInitFunc) (void);
     /** Function that deinitializes the codec. */
     void (*CodecDeInitFunc) (void);
@@ -79,17 +81,17 @@ typedef struct {
     void (*ApplicationTaskFunc) (void);
     /** Function that is called roughly every 100ms. This can be used for parallel tasks of the application, that is independent of the codec module. */
     void (*ApplicationTickFunc) (void);
-	/** This function does two important things. It gets called by the codec.
-	 *  The first task is to deliver data that have been received by the codec module to
-	 *  the application module. The application then can decide how to answer to these data and return
-	 *  the response to the codec module, which will process it according to the configured codec.
-	 *
-	 * \param ByteBuffer	Pointer to the start of the buffer, where the received data are and where the
-	 * 						application can put the response data.
-	 * \param BitCount		Number of bits that have been received.
-	 *
-	 * \return				Number of bits of the response.
-	 */
+    /** This function does two important things. It gets called by the codec.
+     *  The first task is to deliver data that have been received by the codec module to
+     *  the application module. The application then can decide how to answer to these data and return
+     *  the response to the codec module, which will process it according to the configured codec.
+     *
+     * \param ByteBuffer	Pointer to the start of the buffer, where the received data are and where the
+     * 						application can put the response data.
+     * \param BitCount		Number of bits that have been received.
+     *
+     * \return				Number of bits of the response.
+     */
     uint16_t (*ApplicationProcessFunc) (uint8_t* ByteBuffer, uint16_t BitCount);
     /**
      * Writes the UID for the current configuration to the given buffer.
@@ -105,12 +107,12 @@ typedef struct {
      * @}
      */
 
-	/**
-	 * Defines how many space the configuration needs. For emulating configurations this is the memory space of
-	 * the emulated card.
-	 *
-	 * \note For reader or sniff configurations this is set to zero.
-	 */
+    /**
+     * Defines how many space the configuration needs. For emulating configurations this is the memory space of
+     * the emulated card.
+     *
+     * \note For reader or sniff configurations this is set to zero.
+     */
     uint16_t MemorySize;
     /**
      * Defines the size of the UID for emulating configurations.

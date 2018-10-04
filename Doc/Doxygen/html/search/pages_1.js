@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['configurations',['Configurations',['../Page_Configurations.html',1,'index']]]
+  ['configurations',['Configurations',['../_page__configurations.html',1,'index']]]
 ];
