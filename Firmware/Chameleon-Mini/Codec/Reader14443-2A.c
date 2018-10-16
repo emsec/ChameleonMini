@@ -95,6 +95,8 @@ INLINE void Insert1(void)
     *CodecBufferPtr++ = SampleRegister;
 }
 
+
+// End of Card-> reader communication and enter frame delay time
 INLINE void Reader14443A_EOC(void)
 {
     CODEC_TIMER_LOADMOD.INTCTRLB = 0;
@@ -139,6 +141,7 @@ INLINE void BufferToSequence(void)
     uint8_t * Buffer = CodecBuffer + CODEC_BUFFER_SIZE / 2;
     CodecBufferPtr = CodecBuffer;
 
+    // Modified Miller Coding ISO14443-2 8.1.3
     Insert1(); // SOC
     Insert0();
 
@@ -176,8 +179,8 @@ INLINE void BufferToSequence(void)
     if (BitCount % 8)
         CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
 }
-
-ISR (TCD0_CCC_vect)
+// Frame Delay Time PCD to PICC ends
+ISR (CODEC_TIMER_SAMPLING_CCC_VECT)
 {
   isr_func_TCD0_CCC_vect();
 }
@@ -209,6 +212,8 @@ void isr_Reader14443_2A_TCD0_CCC_vect(void)
     PORTE.OUTTGL = PIN3_bm;
 }
 
+// Reader -> card send bits finished
+// Start Frame delay time PCD to PICC
 void Reader14443AMillerEOC(void)
 {
     CODEC_TIMER_SAMPLING.PER = 5*SAMPLE_RATE_SYSTEM_CYCLES - 1;
@@ -218,11 +223,13 @@ void Reader14443AMillerEOC(void)
     PORTE.OUTTGL = PIN3_bm;
 }
 
+// EOC of Card->Reader found
 ISR(CODEC_TIMER_TIMESTAMPS_CCA_VECT) // EOC found
 {
     Reader14443A_EOC();
 }
 
+// This interrupt find Card -> Reader SOC
 ISR(ACA_AC1_vect) // this interrupt either finds the SOC or gets triggered before
 {
     ACA.AC1CTRL &= ~AC_INTLVL_HI_gc; // disable this interrupt
@@ -231,6 +238,10 @@ ISR(ACA_AC1_vect) // this interrupt either finds the SOC or gets triggered befor
     CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_DIV1_gc;
 }
 
+// Decode the Card -> Reader signal
+// according to the pause and modulated period
+// if the half bit duration is modulated, then add 1 to buffer
+// if the half bit duration is not modulated, then add 0 to buffer
 ISR(CODEC_TIMER_LOADMOD_CCA_VECT) // pause found
 {
     uint8_t tmp = CODEC_TIMER_TIMESTAMPS.CNTL;
@@ -303,6 +314,8 @@ void Reader14443ACodecTask(void)
 
                 bool breakflag = false;
                 TmpCodecBuffer[0] >>= 2; // with this (and BitCountTmp = 2), the SOC is ignored
+
+                // Manchester Code ISO14443-2 8.2.5
                 while (!breakflag && BitCountTmp < TotalBitCount)
                 {
                     uint8_t Bit = TmpCodecBuffer[BitCountTmp / 8] & 0x03;
@@ -382,6 +395,7 @@ void Reader14443ACodecTask(void)
             LogEntry(LOG_INFO_CODEC_TX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
 
             /* Set state and start timer for Miller encoding. */
+            // Send bits to card using TCD0_CCB interrupt (See Reader14443-ISR.S)
             BufferToSequence();
             State = STATE_MILLER_SEND;
             CodecBufferPtr = CodecBuffer;

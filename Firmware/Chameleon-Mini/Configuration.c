@@ -197,14 +197,14 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #endif
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
     [CONFIG_ISO14443A_SNIFF] = {
-        .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
-        .CodecTaskFunc = ISO14443ACodecTask,
-        .ApplicationInitFunc = ApplicationInitDummy,
-        .ApplicationResetFunc = ApplicationResetDummy,
-        .ApplicationTaskFunc = ApplicationTaskDummy,
-        .ApplicationTickFunc = ApplicationTickDummy,
-        .ApplicationProcessFunc = ApplicationProcessDummy,
+        .CodecInitFunc = Sniff14443ACodecInit,
+        .CodecDeInitFunc = Sniff14443ACodecDeInit,
+        .CodecTaskFunc = Sniff14443ACodecTask,
+        .ApplicationInitFunc = Sniff14443AAppInit,
+        .ApplicationResetFunc = Sniff14443AAppReset,
+        .ApplicationTaskFunc = Sniff14443AAppTask,
+        .ApplicationTickFunc = Sniff14443AAppTick,
+        .ApplicationProcessFunc = Sniff14443AAppProcess,
         .ApplicationGetUidFunc = ApplicationGetUidDummy,
         .ApplicationSetUidFunc = ApplicationSetUidDummy,
         .UidSize = 0,

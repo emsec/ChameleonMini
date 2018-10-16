@@ -2,6 +2,41 @@
 
 import struct
 import binascii
+import math
+import Chameleon.ISO14443 as iso14443_3
+
+def checkParityBit(data):
+    byteCount = len(data)
+    # Short frame, no parityBit
+    if (byteCount == 1):
+        return (True, data)
+
+    # 9 bit is a group, validate bit count is calculated below
+    bitCount = int((byteCount*8)/9) * 9
+    parsedData = bytearray(int(bitCount/9))
+
+    oneCounter = 0            # Counter for count ones in a byte
+    for i in range(0, bitCount):
+        # Get bit i in data
+        byteIndex = math.floor(i/8)
+        bitIndex = i % 8
+        bit = (data[byteIndex] >> bitIndex) & 0x01
+
+        # Check parityBit
+        # Current bit is parityBit
+        if(i % 9 == 8):
+            # Even number of ones in current byte
+            if(oneCounter % 2 and bit == 1):
+                return (False, data)
+            # Odd number of ones in current byte
+            elif((not oneCounter % 2) and bit == 0):
+                return (False, data)
+            oneCounter = 0
+        # Current bit is normal bit
+        else:
+            oneCounter += bit
+            parsedData[int(i/9)] |= bit << (i%9)
+    return (True, parsedData)
 
 def noDecoder(data):
     return ""
@@ -11,6 +46,13 @@ def textDecoder(data):
 
 def binaryDecoder(data):
     return binascii.hexlify(data).decode()
+
+def binaryParityDecoder(data):
+    isValid, checkedData = checkParityBit(data)
+    if(isValid):
+        return binascii.hexlify(checkedData).decode()
+    else:
+        return binascii.hexlify(checkedData).decode()+"!"
 
 eventTypes = {
     0x00: { 'name': 'EMPTY',          'decoder': noDecoder },
@@ -24,6 +66,12 @@ eventTypes = {
     0x41: { 'name': 'CODEC TX',       'decoder': binaryDecoder },
     0x42: { 'name': 'CODEC RX W/PARITY', 'decoder': binaryDecoder },
     0x43: { 'name': 'CODEC TX W/PARITY', 'decoder': binaryDecoder },
+
+    0x44: { 'name': 'CODEC RX SNI READER',          'decoder': binaryDecoder },
+    0x45: { 'name': 'CODEC RX SNI READER W/PARITY', 'decoder': binaryParityDecoder },
+    0x46: { 'name': 'CODEC RX SNI CARD',            'decoder': binaryDecoder },
+    0x47: { 'name': 'CODEC RX SNI CARD W/PARITY',   'decoder': binaryParityDecoder },
+   
 
     0x80: { 'name': 'APP READ',       'decoder': binaryDecoder },
     0x81: { 'name': 'APP WRITE',      'decoder': binaryDecoder },
@@ -49,7 +97,7 @@ eventTypes = {
 TIMESTAMP_MAX = 65536
 eventTypes = { i : ({'name': 'UNKNOWN', 'decoder': binaryDecoder} if i not in eventTypes.keys() else eventTypes[i]) for i in range(256) }
 
-def parseBinary(binaryStream):
+def parseBinary(binaryStream, decoder=None):
     log = []
     
     # Completely read file contents and process them byte by byte
@@ -88,13 +136,23 @@ def parseBinary(binaryStream):
         if (deltaTimestamp < 0):
             deltaTimestamp += TIMESTAMP_MAX;
 
+        note = ""
+        # If we need to decode the data and paritybit check success
+        if (decoder!=None and len(logData) >0 and logData[-1] != '!'):
+            # Decode the data from Reader
+            if(event == 0x44 or event == 0x45):
+                note = iso14443_3.parseReader(binascii.a2b_hex(logData), decoder)
+            elif (event == 0x46 or event == 0x47):
+                note = iso14443_3.parseCard(binascii.a2b_hex(logData), decoder)
+
         # Create log entry as dict and append it to event list
         logEntry = {
             'eventName': eventTypes[event]['name'],
             'dataLength': dataLength,
             'timestamp': timestamp,
             'deltaTimestamp': deltaTimestamp,
-            'data': logData
+            'data': logData,
+            'note': note
         }
         
         log.append(logEntry)

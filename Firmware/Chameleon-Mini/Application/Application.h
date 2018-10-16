@@ -18,7 +18,7 @@
 #include "Reader14443A.h"
 #include "Vicinity.h"
 #include "Sl2s2002.h"
-
+#include "Sniff14443A.h"
 
 /* Function wrappers */
 INLINE void ApplicationInit(void) {
