@@ -26,8 +26,8 @@
 #define SUBCARRIER_1            32
 #define SUBCARRIER_2            28
 #define SUBCARRIER_OFF          0
-#define SOF_PATTERN             0x1D
-#define EOF_PATTERN             0xB8
+#define SOF_PATTERN             0x1D // 0001 1101 
+#define EOF_PATTERN             0xB8 // 1011 1000
 
 // These registers provide quick access but are limited
 // so global vars will be necessary
@@ -277,7 +277,6 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
     return;
     
     LOADMOD_BIT0_SINGLE_LABEL: //Manchester encoding
-
         if (ShiftRegister & 0x01) {
             /* Deactivate carrier */
             CodecSetLoadmodState(false);
@@ -314,7 +313,6 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
     return;
     
     LOADMOD_EOF_SINGLE_LABEL: //End of Manchester encoding
-    
         /* Output EOF */
         if (ShiftRegister & 0x80) {
             CodecSetLoadmodState(true);
@@ -332,14 +330,10 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
             StateRegister = LOADMOD_EOF_SINGLE;
         }
     return;
-    
 
-
-
-
-
-
-    LOADMOD_START_DUAL_LABEL:
+   // ------------------------------------------------------------- 
+   
+   LOADMOD_START_DUAL_LABEL:
         CodecStartSubcarrier();
         ShiftRegister = SOF_PATTERN;
         BitSent = 0;
@@ -362,12 +356,23 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
             StateRegister = LOADMOD_BIT0_DUAL;
             ShiftRegister = (*CodecBufferPtr++);
         } else {
-            StateRegister = LOADMOD_BIT0_DUAL;
+            StateRegister = LOADMOD_SOF_DUAL;
         }
     return;
 
     LOADMOD_BIT0_DUAL_LABEL: //Manchester encoding
+        if (ShiftRegister & 0x01) {
+            CodecChangeDivider(SUBCARRIER_2);
+            CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
+        } else {
+            CodecChangeDivider(SUBCARRIER_1);
+            CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
+        }
 
+        StateRegister = LOADMOD_BIT1_DUAL;
+    return;
+
+    LOADMOD_BIT1_DUAL_LABEL: //Manchester encoding
         if (ShiftRegister & 0x01) {
             /* fc / 32 */
             CodecChangeDivider(SUBCARRIER_1);
@@ -376,18 +381,6 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
             /* fc / 28 */
             CodecChangeDivider(SUBCARRIER_2);
             CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
-        }
-
-        StateRegister = LOADMOD_BIT1_DUAL;
-    return;
-
-    LOADMOD_BIT1_DUAL_LABEL: //Manchester encoding
-        if (ShiftRegister & 0x01) {
-            CodecChangeDivider(SUBCARRIER_2);
-            CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
-        } else {
-            CodecChangeDivider(SUBCARRIER_1);
-            CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
         }
 
         ShiftRegister >>= 1;
@@ -408,7 +401,6 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
     return;
 
     LOADMOD_EOF_DUAL_LABEL: //End of Manchester encoding
-
         /* Output EOF */
         if (ShiftRegister & 0x80) {
             CodecChangeDivider(SUBCARRIER_1);
@@ -429,14 +421,7 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
         }
     return;
 
-
-
-
-
-
-
     LOADMOD_FINISHED_LABEL:
-    
         CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
         CODEC_TIMER_LOADMOD.INTCTRLB = 0;
         CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OFF, SUBCARRIER_1);
