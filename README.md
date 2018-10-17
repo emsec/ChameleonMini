@@ -23,6 +23,9 @@ Questions
 ---------
 If you have any questions, please visit the [Issues page](https://github.com/emsec/ChameleonMini/issues) and ask your questions there so everyone benefits from the answer.
 
+External Contributions
+----------------------
+We appreciate every contribution to the project. Have a look at the [External Contributions page](https://github.com/emsec/ChameleonMini/wiki/External-Contributions).
 
 Repository Structure
 --------------------
