@@ -363,6 +363,12 @@ ISR(ACA_AC0_vect) // this interrupt either finds the SOC or gets triggered befor
     CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_DIV1_gc;
     StateRegister = PICC_FRAME;
 }
+
+ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
+{
+    isr_func_CODEC_TIMER_LOADMOD_CCB_VECT();
+}
+
 // Decode the Card -> Reader signal
 // according to the pause and modulated period
 // if the half bit duration is modulated, then add 1 to buffer
