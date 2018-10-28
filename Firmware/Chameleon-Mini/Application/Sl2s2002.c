@@ -78,12 +78,20 @@ uint16_t Sl2s2002AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                         ResponseByteCount = 15;
                     }
                 } else if (Command == ISO15693_CMD_READ_SINGLE) {
-                    if (ISO15693Addressed(FrameBuf, Uid)) {
-                        uint8_t PageAddress = FrameBuf[10];
-                        FrameBuf[0] = 0; /* Flags */
-                        MemoryReadBlock(FrameBuf + 1, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
-                        ResponseByteCount = 5;
-                    }
+                      if (ISO15693Addressed(FrameBuf, Uid)) {
+                          uint8_t PageAddress = FrameBuf[10];
+                          if (FrameBuf[0] & ISO15693_REQ_FLAG_OPTION)
+                          {
+                              FrameBuf[0] = 0x00; /* Flags */
+                              FrameBuf[1] = 0x00; /* security dummy to 0 */
+                              MemoryReadBlock(FrameBuf + 2, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
+                              ResponseByteCount = 6;
+                          } else {
+                              FrameBuf[0] = 0x00; /* Flags */
+                              MemoryReadBlock(FrameBuf + 1, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
+                              ResponseByteCount = 5;
+                          }
+                      }
                 } else if (Command == ISO15693_CMD_READ_MULTIPLE) {
                     if (ISO15693Addressed(FrameBuf, Uid)) {
                         uint16_t PageAddress = FrameBuf[10];
