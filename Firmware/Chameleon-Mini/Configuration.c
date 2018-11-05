@@ -46,6 +46,10 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_SL2S2002_SUPPORT
 	{ .Id = CONFIG_SL2S2002,	.Text = "SL2S2002" },
 #endif
+
+#ifdef CONFIG_TITAGITSTANDARD_SUPPORT
+	{ .Id = CONFIG_TITAGITSTANDARD,	.Text = "TITAGITSTANDARD" },
+#endif
 };
 
 /* Include all Codecs and Applications */
@@ -275,6 +279,24 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ApplicationProcessFunc = Sl2s2002AppProcess,
 		.ApplicationGetUidFunc = Sl2s2002GetUid,
 		.ApplicationSetUidFunc = Sl2s2002SetUid,
+		.UidSize = ISO15693_GENERIC_UID_SIZE,
+		.MemorySize = ISO15693_GENERIC_MEM_SIZE,
+		.ReadOnly = false
+    },
+#endif
+
+#ifdef CONFIG_TITAGITSTANDARD_SUPPORT
+    [CONFIG_TITAGITSTANDARD] = {
+    	.CodecInitFunc = ISO15693CodecInit,
+    	.CodecDeInitFunc = ISO15693CodecDeInit,
+		.CodecTaskFunc = ISO15693CodecTask,
+		.ApplicationInitFunc = TITagitstandardAppInit,
+		.ApplicationResetFunc = TITagitstandardAppReset,
+		.ApplicationTaskFunc = TITagitstandardAppTask,
+		.ApplicationTickFunc = TITagitstandardAppTick,
+		.ApplicationProcessFunc = TITagitstandardAppProcess,
+		.ApplicationGetUidFunc = TITagitstandardGetUid,
+		.ApplicationSetUidFunc = TITagitstandardSetUid,
 		.UidSize = ISO15693_GENERIC_UID_SIZE,
 		.MemorySize = ISO15693_GENERIC_MEM_SIZE,
 		.ReadOnly = false

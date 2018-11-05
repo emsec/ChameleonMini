@@ -52,6 +52,9 @@ typedef enum  {
 #ifdef CONFIG_SL2S2002_SUPPORT
 	CONFIG_SL2S2002,
 #endif
+#ifdef CONFIG_TITAGITSTANDARD_SUPPORT
+	CONFIG_TITAGITSTANDARD,
+#endif
     /* This HAS to be the last element */
     CONFIG_COUNT
 } ConfigurationEnum;
