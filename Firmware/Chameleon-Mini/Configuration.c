@@ -297,8 +297,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 		.ApplicationProcessFunc = TITagitstandardAppProcess,
 		.ApplicationGetUidFunc = TITagitstandardGetUid,
 		.ApplicationSetUidFunc = TITagitstandardSetUid,
-		.UidSize = ISO15693_GENERIC_UID_SIZE,
-		.MemorySize = ISO15693_GENERIC_MEM_SIZE,
+		.UidSize = TITAGIT_STD_UID_SIZE,
+		.MemorySize = TITAGIT_STD_MEM_SIZE,
 		.ReadOnly = false
     },
 #endif

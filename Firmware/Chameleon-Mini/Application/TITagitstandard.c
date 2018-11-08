@@ -69,7 +69,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             uint8_t Uid[8];
 
 	        //MemoryReadBlock(actualTagIt, 0, 44); // read the whole tag from FRAM
-            MemoryReadBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
+            TITagitstandardGetUid(Uid);
 
             //for (j==0 ; j < ActiveConfiguration.UidSize; j++) Uid[j] = actualTagIt[MEM_UID_ADDRESS + j] ;
 
@@ -174,9 +174,25 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 void TITagitstandardGetUid(ConfigurationUidType Uid)
 {
     MemoryReadBlock(&Uid[0], MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
+    
+    // Reverse UID after reading it
+    uint8_t* UidTemp = calloc(ActiveConfiguration.UidSize, sizeof(UidTemp));
+    int i;
+    for (i = 0; i < ActiveConfiguration.UidSize; i++)
+        UidTemp[i] = Uid[i];
+    for (i = 0; i < ActiveConfiguration.UidSize; i++)
+        Uid[i] = UidTemp[ActiveConfiguration.UidSize - i - 1];
 }
 
 void TITagitstandardSetUid(ConfigurationUidType Uid)
 {
+    // Reverse UID before writing it
+    uint8_t* UidTemp = calloc(ActiveConfiguration.UidSize, sizeof(UidTemp));
+    int i;
+    for (i = 0; i < ActiveConfiguration.UidSize; i++)
+        UidTemp[i] = Uid[i];
+    for (i = 0; i < ActiveConfiguration.UidSize; i++)
+        Uid[i] = UidTemp[ActiveConfiguration.UidSize - i - 1];
+    
     MemoryWriteBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
 }
