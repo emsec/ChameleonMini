@@ -16,7 +16,7 @@
 #include "ISO15693-A.h"
 
 #define BYTES_PER_PAGE        4
-#define NUMBER_OF_SECTORS     ( ISO15693_GENERIC_MEM_SIZE / BYTES_PER_PAGE )
+#define NUMBER_OF_SECTORS     ( TITAGIT_STD_MEM_SIZE / BYTES_PER_PAGE )
 #define MEM_UID_ADDRESS       0x20
 
 static enum {
