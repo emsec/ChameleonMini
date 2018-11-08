@@ -98,9 +98,9 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 		            else
 			            PageAddress = FrameBuf[2];
 					
-					if (PageAddress > NUMBER_OF_SECTORS) { /* the reader is requesting a sector out of bound */
+					if (PageAddress >= NUMBER_OF_SECTORS) { /* the reader is requesting a sector out of bound */
 						FrameBuf[0] = ISO15693_RES_FLAG_ERROR;
-						FrameBuf[1] = ISO15693_RES_ERR_BLK_NOT_AVL; // Is this enough?
+						FrameBuf[1] = ISO15693_RES_ERR_BLK_NOT_AVL; /* real TiTag standard reply with this error */
 						ResponseByteCount = 2;
 						break;
 					}
