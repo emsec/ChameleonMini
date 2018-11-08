@@ -111,4 +111,6 @@ bool ISO15693Addressed(uint8_t* Buffer, uint8_t* MyUid) {
     }
 }
 
+// (FrameBuf[0] & ISO15693_REQ_FLAG_ADDRESS) && ISO15693CompareUid(&FrameBuf[2], Uid)
+
 #endif /* ISO15693_3_H_ */

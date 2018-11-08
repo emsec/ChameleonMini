@@ -90,10 +90,10 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                     }
 
                 } else if (Command == ISO15693_CMD_READ_SINGLE) {
-		            uint8_t *FramePtr ;
-                    uint8_t PageAddress ;
+		            uint8_t *FramePtr;
+                    uint8_t PageAddress;
 
-                    if ((FrameBuf[0] & ISO15693_REQ_FLAG_ADDRESS) && ISO15693CompareUid(&FrameBuf[2], Uid) )
+                    if (ISO15693Addressed(FrameBuf,Uid))
 			            PageAddress = FrameBuf[10]; /* when receiving an addressed request pick block number from the 10th byte in the request*/
 		            else
 			            PageAddress = FrameBuf[2];
@@ -112,27 +112,27 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                         ResponseByteCount = 6;
                     } else { /* request with option flag not set*/
                         FrameBuf[0] = 0x00; /* Flags */
-			            FramePtr = FrameBuf + 1 ;
+			            FramePtr = FrameBuf + 1;
                         ResponseByteCount = 5;
                     }
 
 		            MemoryReadBlock(FramePtr, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
                 }
 
-            	else if (Command ==ISO15693_CMD_WRITE_SINGLE){
+            	else if (Command == ISO15693_CMD_WRITE_SINGLE){
 					uint8_t* Dataptr;
-					uint8_t PageAddress ;
+					uint8_t PageAddress;
 
 
-					if ((FrameBuf[0] & ISO15693_REQ_FLAG_ADDRESS) && ISO15693CompareUid(&FrameBuf[2], Uid) ){
-						PageAddress =  FrameBuf[10]; /*when receiving anaddressed request pick block number from 10th byte in the request*/
-						Dataptr     = &FrameBuf[11];
+					if (ISO15693Addressed(FrameBuf, Uid)) {
+						PageAddress = FrameBuf[10]; /*when receiving anaddressed request pick block number from 10th byte in the request*/
+						Dataptr = &FrameBuf[11];
 					} else {
-						PageAddress =  FrameBuf[2]; /*when receiving an unanaddressed request pick block number from 2nd byte in the request*/
-						Dataptr     = &FrameBuf[3];
+						PageAddress = FrameBuf[2]; /*when receiving an unanaddressed request pick block number from 2nd byte in the request*/
+						Dataptr = &FrameBuf[3];
 					}
 
-					MemoryWriteBlock( Dataptr , PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
+					MemoryWriteBlock(Dataptr, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
 					FrameBuf[0] = 0x00;
 					ResponseByteCount = 1;
 				}
@@ -142,7 +142,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
             case STATE_QUIET:
                 if (Command == ISO15693_CMD_RESET_TO_READY) {
-                    if (ISO15693Addressed(FrameBuf,Uid)) {
+                    if (ISO15693Addressed(FrameBuf, Uid)) {
                         FrameBuf[0] = 0;
                         ResponseByteCount = 1;
                         State = STATE_READY;
