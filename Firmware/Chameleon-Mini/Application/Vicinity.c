@@ -61,11 +61,13 @@ uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                     ISO15693CopyUid(&FrameBuf[2], Uid);
                     ResponseByteCount = 10;
                 } else if (Command == ISO15693_CMD_STAY_QUIET) {
-                    if (ISO15693Addressed(FrameBuf, Uid)) {
+                    /* TODO: check for unaddressed requests */
+                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
                         State = STATE_QUIET;
                     }
                 } else if (Command == ISO15693_CMD_GET_SYS_INFO) {
-                    if (ISO15693Addressed(FrameBuf, Uid)) {
+                    /* TODO: check for unaddressed requests */
+                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
                         FrameBuf[0] = 0; /* Flags */
                         FrameBuf[1] = 0; /* InfoFlags */
                         ISO15693CopyUid(&FrameBuf[2], Uid);
@@ -81,7 +83,8 @@ uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             case STATE_QUIET:
                 if (Command == ISO15693_CMD_RESET_TO_READY) {
                     MemoryReadBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
-                    if (ISO15693Addressed(FrameBuf, Uid)) {
+                    /* TODO: check for unaddressed requests */
+                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
                         FrameBuf[0] = 0;
                         ResponseByteCount = 1;
                         State = STATE_READY;

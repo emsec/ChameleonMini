@@ -95,20 +95,8 @@ void ISO15693CopyUid(uint8_t* DstUid, uint8_t* SrcUid)
 }
 
 INLINE
-bool ISO15693Addressed(uint8_t* Buffer, uint8_t* MyUid) {
-    if (Buffer[0] & ISO15693_REQ_FLAG_ADDRESS) {
-        /* Addressed mode */
-        if ( ISO15693CompareUid(&Buffer[2], MyUid) ) {
-            /* Our UID addressed */
-            return true;
-        } else {
-            /* Our UID not addressed */
-            return false;
-        }
-    } else {
-        /* Non-Addressed mode */
-        return true;
-    }
+bool ISO15693Addressed(uint8_t* Buffer) {
+    return (Buffer[0] & ISO15693_REQ_FLAG_ADDRESS); /* if the flag is set, the command is addressed */
 }
 
 // (FrameBuf[0] & ISO15693_REQ_FLAG_ADDRESS) && ISO15693CompareUid(&FrameBuf[2], Uid)
