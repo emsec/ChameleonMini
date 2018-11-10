@@ -10,6 +10,14 @@
 
 #include "../Common.h"
 
+/* request and response fields addresses */
+#define ISO15693_ADDR_FLAGS             0x00
+#define ISO15693_REQ_ADDR_CMD           0x01
+#define ISO15693_REQ_ADDR_PARAM         0x02
+
+#define ISO15693_RES_ADDR_PARAM         0x01
+
+/* command codes */
 #define ISO15693_CMD_INVENTORY          0x01
 #define ISO15693_CMD_STAY_QUIET         0x02
 #define ISO15693_CMD_READ_SINGLE        0x20
@@ -39,6 +47,7 @@
 #define ISO15693_REQ_FLAG_AFI           0x10
 #define ISO15693_REQ_FLAG_NB_SLOTS      0x20
 
+#define ISO15693_RES_FLAG_NO_ERROR      0x00
 #define ISO15693_RES_FLAG_ERROR         0x01
 #define ISO15693_RES_FLAG_PROT_EXT      0x08
 
@@ -52,6 +61,7 @@
 #define ISO15693_RES_ERR_BLK_NOT_PRGR   0x13
 #define ISO15693_RES_ERR_BLK_NOT_LKD    0x14
 
+#define ISO15693_RES_INVENTORY_DSFID    0x00
 
 #define ISO15693_MIN_FRAME_SIZE         5
 
@@ -96,9 +106,25 @@ void ISO15693CopyUid(uint8_t* DstUid, uint8_t* SrcUid)
 
 INLINE
 bool ISO15693Addressed(uint8_t* Buffer) {
-    return (Buffer[0] & ISO15693_REQ_FLAG_ADDRESS); /* if the flag is set, the command is addressed */
+    return (Buffer[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_ADDRESS); /* if the flag is set, the command is addressed */
 }
 
-// (FrameBuf[0] & ISO15693_REQ_FLAG_ADDRESS) && ISO15693CompareUid(&FrameBuf[2], Uid)
+
+INLINE
+bool ISO15693AddressedLegacy(uint8_t* Buffer, uint8_t* MyUid) {
+    if (Buffer[0] & ISO15693_REQ_FLAG_ADDRESS) {
+        /* Addressed mode */
+        if ( ISO15693CompareUid(&Buffer[2], MyUid) ) {
+            /* Our UID addressed */
+            return true;
+        } else {
+            /* Our UID not addressed */
+            return false;
+        }
+    } else {
+        /* Non-Addressed mode */
+        return true;
+    }
+}
 
 #endif /* ISO15693_3_H_ */

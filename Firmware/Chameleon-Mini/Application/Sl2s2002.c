@@ -3,6 +3,10 @@
  *
  *  Created on: 01-03-2017
  *      Author: Phillip Nash
+ * 
+ *  TODO:
+ *    - ISO15693AddressedLegacy should be replaced with ISO15693Addressed and appropriate check
+ *      should be performed (see TITagitstandard.c) - ceres-c
  */
 
 
@@ -62,13 +66,11 @@ uint16_t Sl2s2002AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                     ISO15693CopyUid(&FrameBuf[2], Uid);
                     ResponseByteCount = 10;
                 } else if (Command == ISO15693_CMD_STAY_QUIET) {
-                    /* TODO: check for unaddressed requests */
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
                         State = STATE_QUIET;
                     }
                 } else if (Command == ISO15693_CMD_GET_SYS_INFO) {
-                    /* TODO: check for unaddressed requests */
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
                         FrameBuf[0] = 0; /* Flags */
                         FrameBuf[1] = 0x0F; /* InfoFlags */
                         ISO15693CopyUid(&FrameBuf[2], Uid);
@@ -80,8 +82,7 @@ uint16_t Sl2s2002AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                         ResponseByteCount = 15;
                     }
                 } else if (Command == ISO15693_CMD_READ_SINGLE) {
-                    /* TODO: check for unaddressed requests */
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                      if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
                           uint8_t PageAddress = FrameBuf[10];
                           if (FrameBuf[0] & ISO15693_REQ_FLAG_OPTION)
                           {
@@ -96,8 +97,7 @@ uint16_t Sl2s2002AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                           }
                       }
                 } else if (Command == ISO15693_CMD_READ_MULTIPLE) {
-                    /* TODO: check for unaddressed requests */
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
                         uint16_t PageAddress = FrameBuf[10];
                         uint16_t PageAddressCount = FrameBuf[11] + 1;
 
@@ -120,8 +120,7 @@ uint16_t Sl2s2002AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                         FrameBuf[0] = 0; /* Flags */
                     }
                 } else if (Command == ISO15693_CMD_GET_BLOCK_SEC) {
-                    /* TODO: check for unaddressed requests */
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
                         uint8_t PageAddressStart = FrameBuf[10];
                         uint8_t PageAddressCount = FrameBuf[11] + 1;
                         FrameBuf[0] = 0; /* Flags */
@@ -138,8 +137,7 @@ uint16_t Sl2s2002AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
             case STATE_QUIET:
                 if (Command == ISO15693_CMD_RESET_TO_READY) {
-                    /* TODO: check for unaddressed requests */
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
                         FrameBuf[0] = 0;
                         ResponseByteCount = 1;
                         State = STATE_READY;

@@ -5,8 +5,9 @@
  *      Author: Phillip Nash
  *      Modified by rickventura for texas 15693 tag-it STANDARD
  *      Modified by ceres-c to finish things up
+ *  TODO:
+ *    - Selected mode has to be impemented altogether - ceres-c
  */
-
 
 #include "TITagitstandard.h"
 #include "../Codec/ISO15693.h"
@@ -14,10 +15,6 @@
 #include "Crypto1.h"
 #include "../Random.h"
 #include "ISO15693-A.h"
-
-#define BYTES_PER_PAGE        4
-#define NUMBER_OF_SECTORS     ( TITAGIT_STD_MEM_SIZE / BYTES_PER_PAGE )
-#define MEM_UID_ADDRESS       0x20
 
 static enum {
     STATE_READY,
@@ -49,15 +46,7 @@ void TITagitstandardAppTask(void)
 void TITagitstandardAppTick(void)
 {
 
-
 }
-
-// void sendIntToTermina(uint8_t val)
-// {
-//     char buf[16];
-//     snprintf(buf,16, "%02x",val);
-//     TerminalSendString(buf);
-// }
 
 uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
@@ -66,94 +55,87 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             // At this point, we have a valid ISO15693 frame
             uint8_t Command = FrameBuf[1];
             uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
-            uint8_t Uid[8];
-
-	        //MemoryReadBlock(actualTagIt, 0, 44); // read the whole tag from FRAM
+            uint8_t Uid[ActiveConfiguration.UidSize];
             TITagitstandardGetUid(Uid);
-
-            //for (j==0 ; j < ActiveConfiguration.UidSize; j++) Uid[j] = actualTagIt[MEM_UID_ADDRESS + j] ;
 
             switch(State) {
             case STATE_READY:
                 if (Command == ISO15693_CMD_INVENTORY) {
-                    FrameBuf[0] = 0x00; /* Flags */
-                    FrameBuf[1] = 0x00; /* DSFID */
-                    ISO15693CopyUid(&FrameBuf[2], Uid);
-
+                    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+                    FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_INVENTORY_DSFID;
+                    ISO15693CopyUid(&FrameBuf[ISO15693_RES_ADDR_PARAM + 0x01], Uid);
                     ResponseByteCount = 10;
 
-
                 } else if (Command == ISO15693_CMD_STAY_QUIET) {
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid))
                         State = STATE_QUIET;
-                    }
 
                 } else if (Command == ISO15693_CMD_READ_SINGLE) {
 		            uint8_t *FramePtr;
                     uint8_t PageAddress;
 
-                    if (ISO15693Addressed(FrameBuf))
-                        if (ISO15693CompareUid(&FrameBuf[2], Uid)) /* read is addressed to us */
-			                PageAddress = FrameBuf[10]; /* when receiving an addressed request pick block number from the 10th byte in the request*/
-                        else { /* we are not the addressee of the read command */
-                            ResponseByteCount = 0;
+                    if (ISO15693Addressed(FrameBuf)) {
+                        if (ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid)) /* read is addressed to us */
+                            /* pick block 2 + 8 (UID Lenght) */
+			                PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x08];
+                        else /* we are not the addressee of the read command */
                             break;
-                        }
-		            else
-			            PageAddress = FrameBuf[2];
-					
-					if (PageAddress >= NUMBER_OF_SECTORS) { /* the reader is requesting a sector out of bound */
-						FrameBuf[0] = ISO15693_RES_FLAG_ERROR;
-						FrameBuf[1] = ISO15693_RES_ERR_BLK_NOT_AVL; /* real TiTag standard reply with this error */
+                    } else /* request is not addressed */
+			            PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM];
+
+					if (PageAddress >= TITAGIT_NUMBER_OF_SECTORS) { /* the reader is requesting a sector out of bound */
+						FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+						FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL; /* real TiTag standard reply with this error */
 						ResponseByteCount = 2;
 						break;
 					}
 
-                    if (FrameBuf[0] & ISO15693_REQ_FLAG_OPTION) { /* request with option flag set */
-                        FrameBuf[0] = 0x00; /* Flags */
-                        FrameBuf[1] = ( PageAddress == 8 || PageAddress == 9) ? 0x02 : 0x00; /* block security status:when request has the option flag set*/
+                    if (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_OPTION) { /* request with option flag set */
+                        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+                        /* UID is stored in blocks 8 and 9 which are blocked */
+                        FrameBuf[1] = ( PageAddress == 8 || PageAddress == 9) ? 0x02 : 0x00; /* block security status: when request has the option flag set */
 			            FramePtr = FrameBuf + 2;
                         ResponseByteCount = 6;
                     } else { /* request with option flag not set*/
-                        FrameBuf[0] = 0x00; /* Flags */
+                        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_REQ_FLAG_OPTION; /* Flags */
 			            FramePtr = FrameBuf + 1;
                         ResponseByteCount = 5;
                     }
 
-		            MemoryReadBlock(FramePtr, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
+		            MemoryReadBlock(FramePtr, PageAddress * TITAGIT_BYTES_PER_PAGE, TITAGIT_BYTES_PER_PAGE);
                 }
 
-            	else if (Command == ISO15693_CMD_WRITE_SINGLE){
+            	else if (Command == ISO15693_CMD_WRITE_SINGLE) {
 					uint8_t* Dataptr;
 					uint8_t PageAddress;
 
-
-                    if (ISO15693Addressed(FrameBuf))
-                        if (ISO15693CompareUid(&FrameBuf[2], Uid)) {/* write is addressed to us */
-                            PageAddress = FrameBuf[10]; /*when receiving an addressed request pick block number from 10th byte in the request*/
-						    Dataptr = &FrameBuf[11];
+                    if (ISO15693Addressed(FrameBuf)) {
+                        if (ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid)) {/* write is addressed to us */
+                            /* pick block 2 + 8 (UID Lenght) */
+                            PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x08]; /*when receiving an addressed request pick block number from 10th byte in the request*/
+						    /* pick block 2 + 8 (UID Lenght) + 1 (data starts here) */
+                            Dataptr = &FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x08 + 0x01]; /* addr of sent data to write in memory */
                         }
-                        else { /* we are not the addressee of the write command */
-                            ResponseByteCount = 0;
+                        else /* we are not the addressee of the write command */
                             break;
-                        }
-		            else {
-			            PageAddress = FrameBuf[2];
-                        Dataptr = &FrameBuf[3];
+		            } else { /* request is not addressed */
+			            PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM];
+                        Dataptr = &FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x01];
                     }
 
-					MemoryWriteBlock(Dataptr, PageAddress * BYTES_PER_PAGE, BYTES_PER_PAGE);
-					FrameBuf[0] = 0x00;
+					MemoryWriteBlock(Dataptr, PageAddress * TITAGIT_BYTES_PER_PAGE, TITAGIT_BYTES_PER_PAGE);
+					FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
 					ResponseByteCount = 1;
 				}
                 break;
             case STATE_SELECTED:
+                /* TODO: Selected has to be impemented altogether */
                 break;
 
             case STATE_QUIET:
                 if (Command == ISO15693_CMD_RESET_TO_READY) {
                     if (ISO15693Addressed(FrameBuf)) {
-                        FrameBuf[0] = 0;
+                        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
                         ResponseByteCount = 1;
                         State = STATE_READY;
                     }
@@ -183,26 +165,26 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
 void TITagitstandardGetUid(ConfigurationUidType Uid)
 {
-    MemoryReadBlock(&Uid[0], MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
-    
+    MemoryReadBlock(&Uid[0], TITAGIT_MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
+
     // Reverse UID after reading it
-    uint8_t* UidTemp = calloc(ActiveConfiguration.UidSize, sizeof(UidTemp));
-    int i;
-    for (i = 0; i < ActiveConfiguration.UidSize; i++)
-        UidTemp[i] = Uid[i];
-    for (i = 0; i < ActiveConfiguration.UidSize; i++)
-        Uid[i] = UidTemp[ActiveConfiguration.UidSize - i - 1];
+    TITagitstandardFlipUid(Uid);
 }
 
 void TITagitstandardSetUid(ConfigurationUidType Uid)
 {
     // Reverse UID before writing it
-    uint8_t* UidTemp = calloc(ActiveConfiguration.UidSize, sizeof(UidTemp));
+    TITagitstandardFlipUid(Uid);
+    
+    MemoryWriteBlock(Uid, TITAGIT_MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
+}
+
+void TITagitstandardFlipUid(ConfigurationUidType Uid)
+{
+    uint8_t UidTemp[ActiveConfiguration.UidSize];
     int i;
     for (i = 0; i < ActiveConfiguration.UidSize; i++)
         UidTemp[i] = Uid[i];
     for (i = 0; i < ActiveConfiguration.UidSize; i++)
         Uid[i] = UidTemp[ActiveConfiguration.UidSize - i - 1];
-    
-    MemoryWriteBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
 }

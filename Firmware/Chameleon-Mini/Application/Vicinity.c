@@ -3,6 +3,10 @@
  *
  *  Created on: 01-03-2017
  *      Author: Phillip Nash
+ * 
+ *  TODO:
+ *    - ISO15693AddressedLegacy should be replaced with ISO15693Addressed and appropriate check
+ *      should be performed (see TITagitstandard.c) - ceres-c
  */
 
 
@@ -61,13 +65,11 @@ uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                     ISO15693CopyUid(&FrameBuf[2], Uid);
                     ResponseByteCount = 10;
                 } else if (Command == ISO15693_CMD_STAY_QUIET) {
-                    /* TODO: check for unaddressed requests */
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
                         State = STATE_QUIET;
                     }
                 } else if (Command == ISO15693_CMD_GET_SYS_INFO) {
-                    /* TODO: check for unaddressed requests */
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
                         FrameBuf[0] = 0; /* Flags */
                         FrameBuf[1] = 0; /* InfoFlags */
                         ISO15693CopyUid(&FrameBuf[2], Uid);
@@ -83,8 +85,7 @@ uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             case STATE_QUIET:
                 if (Command == ISO15693_CMD_RESET_TO_READY) {
                     MemoryReadBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
-                    /* TODO: check for unaddressed requests */
-                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[2], Uid)) {
+                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
                         FrameBuf[0] = 0;
                         ResponseByteCount = 1;
                         State = STATE_READY;
