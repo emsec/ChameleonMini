@@ -97,7 +97,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 			            FramePtr = FrameBuf + 2;
                         ResponseByteCount = 6;
                     } else { /* request with option flag not set*/
-                        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_REQ_FLAG_OPTION; /* Flags */
+                        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* Flags */
 			            FramePtr = FrameBuf + 1;
                         ResponseByteCount = 5;
                     }
