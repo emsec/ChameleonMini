@@ -183,13 +183,11 @@ void TITagitstandardSetUid(ConfigurationUidType Uid)
 
 void TITagitstandardFlipUid(ConfigurationUidType Uid)
 {
-
-  uint8_t tmp , *tail ;
-  tail = Uid + ActiveConfiguration.UidSize - 1; 
-  while ( Uid < tail ){
-    tmp = *Uid;
-    *Uid++ = *tail ;
-    *tail-- = tmp;	     	
-  }
-
+    uint8_t tmp, *tail;
+    tail = Uid + ActiveConfiguration.UidSize - 1;
+    while ( Uid < tail ) {
+        tmp = *Uid;
+        *Uid++ = *tail;
+        *tail-- = tmp;
+    }
 }
