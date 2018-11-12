@@ -76,35 +76,35 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
                     if (ISO15693Addressed(FrameBuf)) {
                         if (ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid)) /* read is addressed to us */
-                            
-			    PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x08];/* pick block 2 + 8 (UID Lenght) */
+
+                            /* pick block 2 + 8 (UID Lenght) */
+			                PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x08];
                         else /* we are not the addressee of the read command */
                             break;
-
                     } else /* request is not addressed */
-			   PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM];
+			            PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM];
 
-		    if (PageAddress >= TITAGIT_NUMBER_OF_SECTORS) { /* the reader is requesting a sector out of bound */
-			FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-			FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL; /* real TiTag standard reply with this error */
-			ResponseByteCount = 2;
-			break;
-		    }
+					if (PageAddress >= TITAGIT_NUMBER_OF_SECTORS) { /* the reader is requesting a sector out of bound */
+						FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+						FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL; /* real TiTag standard reply with this error */
+						ResponseByteCount = 2;
+						break;
+					}
 
                     if (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_OPTION) { /* request with option flag set */
-
-                        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;/* UID is stored in blocks 8 and 9 which are blocked */                        
+                        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+                        /* UID is stored in blocks 8 and 9 which are blocked */
                         FrameBuf[1] = ( PageAddress == 8 || PageAddress == 9) ? 0x02 : 0x00; /* block security status: when request has the option flag set */
-			FramePtr = FrameBuf + 2;
+			            FramePtr = FrameBuf + 2;
                         ResponseByteCount = 6;
-
                     } else { /* request with option flag not set*/
                         FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* Flags */
-			FramePtr = FrameBuf + 1;
+			            FramePtr = FrameBuf + 1;
                         ResponseByteCount = 5;
                     }
 
-		    MemoryReadBlock(FramePtr, PageAddress * TITAGIT_BYTES_PER_PAGE, TITAGIT_BYTES_PER_PAGE);
+		            MemoryReadBlock(FramePtr, PageAddress * TITAGIT_BYTES_PER_PAGE, TITAGIT_BYTES_PER_PAGE);
+
                 }
 
             	else if (Command == ISO15693_CMD_WRITE_SINGLE) {
@@ -183,15 +183,9 @@ void TITagitstandardSetUid(ConfigurationUidType Uid)
 
 void TITagitstandardFlipUid(ConfigurationUidType Uid)
 {
-/*    uint8_t UidTemp[ActiveConfiguration.UidSize];
-    int i;
-    for (i = 0; i < ActiveConfiguration.UidSize; i++)
-        UidTemp[i] = Uid[i];
-    for (i = 0; i < ActiveConfiguration.UidSize; i++)
-        Uid[i] = UidTemp[ActiveConfiguration.UidSize - i - 1];
-*/
+
   uint8_t tmp , *tail ;
-  tail = Uid + 7; 
+  tail = Uid + ActiveConfiguration.UidSize - 1; 
   while ( Uid < tail ){
     tmp = *Uid;
     *Uid++ = *tail ;
@@ -199,4 +193,3 @@ void TITagitstandardFlipUid(ConfigurationUidType Uid)
   }
 
 }
-

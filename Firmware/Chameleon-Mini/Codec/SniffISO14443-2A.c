@@ -363,11 +363,18 @@ ISR(ACA_AC0_vect) // this interrupt either finds the SOC or gets triggered befor
     CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_DIV1_gc;
     StateRegister = PICC_FRAME;
 }
+
+ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
+{
+    isr_func_CODEC_TIMER_LOADMOD_CCB_VECT();
+}
+
 // Decode the Card -> Reader signal
 // according to the pause and modulated period
 // if the half bit duration is modulated, then add 1 to buffer
 // if the half bit duration is not modulated, then add 0 to buffer
-ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
+//ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
+void isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT(void)
 {
     uint8_t tmp = CODEC_TIMER_TIMESTAMPS.CNTL;
     CODEC_TIMER_TIMESTAMPS.CNT = 0;
@@ -487,6 +494,7 @@ void Sniff14443ACodecInit(void)
     PORTE.DIRSET= PIN3_bm | PIN2_bm;
     // Common Codec Register settings
     CodecInitCommon();
+    isr_func_CODEC_TIMER_LOADMOD_CCB_VECT = &isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT;
     // Enable demodulator power
     CodecSetDemodPower(true);
 
