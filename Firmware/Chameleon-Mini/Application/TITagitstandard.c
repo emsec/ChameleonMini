@@ -76,6 +76,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
                     if (ISO15693Addressed(FrameBuf)) {
                         if (ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid)) /* read is addressed to us */
+
                             /* pick block 2 + 8 (UID Lenght) */
 			                PageAddress = FrameBuf[ISO15693_REQ_ADDR_PARAM + 0x08];
                         else /* we are not the addressee of the read command */
@@ -103,6 +104,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                     }
 
 		            MemoryReadBlock(FramePtr, PageAddress * TITAGIT_BYTES_PER_PAGE, TITAGIT_BYTES_PER_PAGE);
+
                 }
 
             	else if (Command == ISO15693_CMD_WRITE_SINGLE) {
@@ -181,10 +183,13 @@ void TITagitstandardSetUid(ConfigurationUidType Uid)
 
 void TITagitstandardFlipUid(ConfigurationUidType Uid)
 {
-    uint8_t UidTemp[ActiveConfiguration.UidSize];
-    int i;
-    for (i = 0; i < ActiveConfiguration.UidSize; i++)
-        UidTemp[i] = Uid[i];
-    for (i = 0; i < ActiveConfiguration.UidSize; i++)
-        Uid[i] = UidTemp[ActiveConfiguration.UidSize - i - 1];
+
+  uint8_t tmp , *tail ;
+  tail = Uid + ActiveConfiguration.UidSize - 1; 
+  while ( Uid < tail ){
+    tmp = *Uid;
+    *Uid++ = *tail ;
+    *tail-- = tmp;	     	
+  }
+
 }
