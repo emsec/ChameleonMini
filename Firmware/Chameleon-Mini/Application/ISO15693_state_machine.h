@@ -208,7 +208,9 @@ uint16_t  ISO15693_select (enum status *State , uint8_t *FrameBuf, struct ISO156
        ResponseByteCount = 1;         
     	
   } else if (request->isaddressed == TO_OTHERS ){
-     if ( *State == STATE_SELECTED ){ //if in selected state and different UID it shall return to the Ready state and shall not send a response.15693-3 2009_A2_2015.pdf manual 10.4.6: 
+     if ( *State == STATE_SELECTED ){ 
+	     /* if in selected state and different UID it shall return to the Ready state and 
+	        shall not send a response.15693-3 2009_A2_2015.pdf manual 10.4.6: */
   	  *State = STATE_READY;
            ResponseByteCount = 0;
 
