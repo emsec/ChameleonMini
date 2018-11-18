@@ -215,7 +215,8 @@ uint16_t  ISO15693_select (enum status *State , uint8_t *FrameBuf, struct ISO156
            ResponseByteCount = 0;
 
 
-     } else //not in select state and UID different from its own, the VICC shall remain in its state and shall not return a response.
+     } else 
+	//not in select state and UID different from its own, the VICC shall remain in its state and shall not return a response.
         ResponseByteCount = 0;
 
   } else { // not addressed 
