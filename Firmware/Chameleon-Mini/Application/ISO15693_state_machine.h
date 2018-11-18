@@ -189,8 +189,7 @@ uint16_t ISO15693_stay_quiet(enum status *State , uint8_t *FrameBuf, struct ISO1
  if (request->isaddressed == OUR_ADDR)
     *State = STATE_QUIET;
  else if (*State == STATE_SELECTED)
-
- ResponseByteCount = 0;
+ 	 ResponseByteCount = 0;
 
  return ResponseByteCount;
 
