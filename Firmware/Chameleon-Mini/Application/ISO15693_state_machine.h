@@ -15,7 +15,7 @@
 
  The extern declaration below must correspond to a set of definitions in a tag specific file.
  For instance: Assumig Mytag is a specific 15693 tag which ,like tagit standard, defines a tag-specific getUid, setUid ,readsingle.  
- In order to work properly, with the aforementined specific functions, MyTag.c must define the following lines
+ In order to work properly, with the aforementioned specific functions, MyTag.c must define the following lines
 
  void MyTagGetUid(ConfigurationUidType Uid);  declaration and function definition are supposed to be in the tag specific file, MyTag.c.
  void (*TagGetUid)(ConfigurationUidType Uid) = MyTagGetUid; // pointer to function assignement to dereference the function call to MyTagGetUid.
