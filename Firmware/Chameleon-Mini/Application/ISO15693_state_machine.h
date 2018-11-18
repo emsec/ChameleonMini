@@ -25,8 +25,7 @@
       the following declaration is added to this file.
       
       extern uint16_t (*readsingle) (uint8_t *FrameBuf, struct ISO15693_parameters *request);
-      Notice that (*readsingle) is generic and, in TITagitstandard.c must be assigned a value.
-      
+      Notice that (*readsingle) is generic and, in TITagitstandard.c must be assigned a value.     
       In TITagitstandard.c the following lines shall be added:             
       
       uint16_t Tagit_readsingle(uint8_t *FrameBuf, struct ISO15693_parameters *request);   
