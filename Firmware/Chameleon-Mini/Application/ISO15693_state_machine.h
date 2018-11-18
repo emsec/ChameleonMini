@@ -74,7 +74,7 @@ struct ISO15693_parameters ISO15693_extract_par (uint8_t *FrameBuf)
   request.AFI_flg      = 0;
   request.Nb_slot_flg   = 0;
  
-   if (request.inventory_flg ) { // when inventory flag is set that sets follow table 5
+   if (request.inventory_flg ) { // when inventory flag is set flags set according to table 5
    
     request.AFI_flg       = FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_AFI ?      1 : 0;
     request.Nb_slot_flg   = FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_NB_SLOTS ? 1 : 0;    
