@@ -311,7 +311,7 @@ uint16_t IS015693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                   break;
 
 	        case ISO15693_CMD_READ_SINGLE:        
-	          ResponseByteCount = readsingle(FrameBuf, &request);         
+	          ResponseByteCount = (*readsingle)(FrameBuf, &request);         
                   break;
 
    	       case ISO15693_CMD_WRITE_SINGLE:       
