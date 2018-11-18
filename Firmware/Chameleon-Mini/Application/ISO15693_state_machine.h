@@ -14,7 +14,8 @@
 /* Dereferenced Tag specific functions: 
 
  The extern declaration below must correspond to a set of definitions in a tag specific file.
- For instance: Assumig Mytag is a specific 15693 tag, than, in order to work properly, MyTag.c must define the following lines
+ For instance: Assumig Mytag is a specific 15693 tag which ,like tagit standard, defines a tag-specific getUid, setUid ,readsingle.  
+ In order to work properly, with the aforementined specific functions, MyTag.c must define the following lines
 
  void MyTagGetUid(ConfigurationUidType Uid);  declaration and function definition are supposed to be in the tag specific file, MyTag.c.
  void (*TagGetUid)(ConfigurationUidType Uid) = MyTagGetUid; // pointer to function assignement to dereference the function call to MyTagGetUid.
@@ -308,19 +309,17 @@ uint16_t IS015693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
                 case ISO15693_CMD_INVENTORY:  
 		  ResponseByteCount = ISO15693_inventory(FrameBuf , &request);         
-                  break;
-
-	        case ISO15693_CMD_READ_SINGLE:        
-	          ResponseByteCount = (*readsingle)(FrameBuf, &request);         
-                  break;
+                  break;       
 
    	       case ISO15693_CMD_WRITE_SINGLE:       
 	          ResponseByteCount = ISO15693_writesingle(FrameBuf, &request);         
 	          break;
 
+	      case ISO15693_CMD_READ_SINGLE:        
+	          ResponseByteCount = (*readsingle)(FrameBuf, &request);         
+                  break;
               default:
                 ResponseByteCount = 0;
-
                 break;
             }// end switch
 
