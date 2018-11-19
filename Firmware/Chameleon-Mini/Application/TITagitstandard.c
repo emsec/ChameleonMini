@@ -2,11 +2,14 @@
  * TITagitstandard.c
  *
  *  Created by rickventura on: Nov-16-2018 
- *  ceres    
- *      
- *  A more general 15693 state machine. 
- *  Dereferenced functions (pointer to functions) are used in case tags use different function for the same purpouse.
- *  Reuse of this code is supposed to speedup and generalize code making for different 15693 tags.
+ *  Modified by ceres-c to finish things up    
+ *
+ * This File defines only those special functions necessary to emulate a TI™ HF-I TI STANDARD.
+ * While a previous file with the same name was inclusive of the iso 15693 state machine this was rebuild and parted from 
+ * the ISO 15693 state machine to achieve tag independece. A file named ISO15693_state_machine.h contains a new ISO15693 state machine.
+ * 
+ * Dereferenced functions are used in ISO15693_state_machine.h to support tag independece.
+ * Reuse of this code is supposed to speedup and generalize code making for different 15693 tags.
  *      
  */
 
