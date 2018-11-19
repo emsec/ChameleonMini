@@ -99,7 +99,7 @@ struct ISO15693_parameters ISO15693_extract_par (uint8_t *FrameBuf)
     request.select_flg   = FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_SELECT    ? 1 : 0;    
   }
 
-  (*TagGetUid)(request.tagUid); // get the actual tag uid using a pointer to a tag specific function whatever it maight be
+  (*TagGetUid)(request.tagUid); // get the actual tag uid using a pointer to a tag specific function whatever it might be
 
   if (request.address_flg){ // addressed request       
     
