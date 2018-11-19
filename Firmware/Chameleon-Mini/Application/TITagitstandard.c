@@ -20,7 +20,7 @@
 #include "ISO15693-A.h"
 #include "TITagitstandard.h"
 
-/* any tag shall define the following constants *
+/* any tag shall define the following constants */
 #define TAG_STD_UID_SIZE        ISO15693_GENERIC_UID_SIZE  //ISO15693_UID_SIZE
 #define TAG_STD_MEM_SIZE        44 //TAG-IT STANDARD MAX MEM SIZE
 #define TAG_BYTES_PER_PAGE      4
