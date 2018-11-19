@@ -5,7 +5,7 @@
  *        
  *      
  *  A more general 15693 state machine. 
- *  Dereferenced functions (pointer to functions) are used in case tags use different function for the same purpouse.
+ *  Dereferenced functions (pointer to functions) are used to support tags specific functions.
  *  Reuse of this code is supposed to speedup and generalize code making for different 15693 tags.
  *      
  */
