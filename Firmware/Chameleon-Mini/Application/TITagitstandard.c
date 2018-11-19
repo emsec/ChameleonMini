@@ -20,15 +20,19 @@
 #include "ISO15693-A.h"
 #include "TITagitstandard.h"
 
+/* any tag shall define the following constants *
 #define TAG_STD_UID_SIZE        ISO15693_GENERIC_UID_SIZE  //ISO15693_UID_SIZE
 #define TAG_STD_MEM_SIZE        44 //TAG-IT STANDARD MAX MEM SIZE
 #define TAG_BYTES_PER_PAGE      4
 #define TAG_NUMBER_OF_SECTORS   ( TAG_STD_MEM_SIZE / TAG_BYTES_PER_PAGE )
 #define TAG_MEM_UID_ADDRESS     0x20
 
+/* Any tag shall include the general ISO15693 state machine */
 #include "ISO15693_sm_definitions.h"
 #include "ISO15693_state_machine.h"
 
+/* Tag's specific function necessary to the ISO15693 state machine shall be declared
+and assigned to a dereferenced pointer to function used by the state machine*/
 void TITagitstandardGetUid(ConfigurationUidType Uid);
 void (*TagGetUid)(ConfigurationUidType Uid) = TITagitstandardGetUid; // this sets function pointer ISO15693_TagGetuid to any tag specicic function
 
