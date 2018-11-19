@@ -12,11 +12,12 @@
 #include "Application.h"
 #include "ISO15693-A.h"
 
-#define TITAGIT_STD_UID_SIZE        ISO15693_GENERIC_UID_SIZE  //ISO15693_UID_SIZE
-#define TITAGIT_STD_MEM_SIZE        44 //TAG-IT STANDARD MAX MEM SIZE
-#define TITAGIT_BYTES_PER_PAGE      4
-#define TITAGIT_NUMBER_OF_SECTORS   ( TITAGIT_STD_MEM_SIZE / TITAGIT_BYTES_PER_PAGE )
-#define TITAGIT_MEM_UID_ADDRESS     0x20
+/* any tag shall define the following constants */
+#define TAG_STD_UID_SIZE        ISO15693_GENERIC_UID_SIZE  //ISO15693_UID_SIZE
+#define TAG_STD_MEM_SIZE        44 //TAG-IT STANDARD MAX MEM SIZE
+#define TAG_BYTES_PER_PAGE      4
+#define TAG_NUMBER_OF_SECTORS   ( TAG_STD_MEM_SIZE / TAG_BYTES_PER_PAGE )
+#define TAG_MEM_UID_ADDRESS     0x20
 
 void TITagitstandardAppInit(void);
 void TITagitstandardAppReset(void);
