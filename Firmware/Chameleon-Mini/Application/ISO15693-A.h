@@ -63,7 +63,7 @@
 
 #define ISO15693_RES_INVENTORY_DSFID    0x00
 
-#define ISO15693_MIN_FRAME_SIZE         5
+#define ISO15693_MIN_FRAME_SIZE         4
 
 #define ISO15693_CRC16_SIZE             2 /* Bytes */
 #define ISO15693_CRC16_POLYNORMAL       0x8408
