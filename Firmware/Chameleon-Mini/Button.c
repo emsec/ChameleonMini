@@ -4,6 +4,7 @@
 #include "Settings.h"
 #include "Memory.h"
 #include "Map.h"
+#include "Configuration.h"
 #include "Terminal/CommandLine.h"
 #include "Application/Application.h"
 
@@ -41,6 +42,10 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
     {
         for (uint8_t i=0; i<ActiveConfiguration.UidSize; i++) {
             UidBuffer[i] = RandomGetByte();
+        }
+        /* If we are using an ISO15 tag, the first byte needs to be E0 by standard */
+        if (ActiveConfiguration.TagFamily == TAG_FAMILY_ISO15693) {
+            UidBuffer[0] = 0xE0;
         }
 
         ApplicationSetUid(UidBuffer);
