@@ -185,13 +185,18 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                 break;
 
             case STATE_QUIET:
+                /* Ti TagIt Standard does not support reset to ready command */
+                /* following code is lef for future reference for other tags */
+                /*
                 if (Command == ISO15693_CMD_RESET_TO_READY) {
-                    if (ISO15693Addressed(FrameBuf)) {
+                    if (ISO15693Addressed(FrameBuf) && ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid)) {
                         FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
                         ResponseByteCount = 1;
                         State = STATE_READY;
                     }
                 }
+                */
+                ResponseByteCount = 0; /* better safe than sorry */
                 break;
 
             default:
