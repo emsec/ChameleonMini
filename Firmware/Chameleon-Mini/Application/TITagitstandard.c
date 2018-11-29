@@ -5,8 +5,6 @@
  *      Author: Phillip Nash
  *      Modified by rickventura for texas 15693 tag-it STANDARD
  *      Modified by ceres-c to finish things up
- *  TODO:
- *    - Selected mode has to be impemented altogether - ceres-c
  */
 
 #include "TITagitstandard.h"
@@ -35,7 +33,6 @@ void TITagitstandardAppInit(void)
     State = STATE_READY;
     FactoryLockBits_Mask |= (1 << 8);   /* Locks block 8... */
     FactoryLockBits_Mask |= (1 << 9);   /* ...and 9, which contains the UID */
-    UserLockBits_Mask |= (1 << 3);   /* TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 }
 
 void TITagitstandardAppReset(void)
