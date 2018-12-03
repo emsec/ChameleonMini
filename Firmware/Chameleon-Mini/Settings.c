@@ -83,7 +83,7 @@ bool SettingsSetActiveById(uint8_t Setting) {
 			ButtonSetActionById(BUTTON_L_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[0]);
 			ButtonSetActionById(BUTTON_R_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[1]);
 			ButtonSetActionById(BUTTON_L_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[2]);
-			ButtonSetActionById(BUTTON_L_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[3]);
+			ButtonSetActionById(BUTTON_R_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[3]);
 
             /* Recall new memory contents */
             MemoryRecall();
