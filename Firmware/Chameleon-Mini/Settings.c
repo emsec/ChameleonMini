@@ -5,6 +5,9 @@
 #include "Memory.h"
 #include "LEDHook.h"
 #include "Terminal/CommandLine.h"
+#include "LED.h"
+#include "Button.h"
+
 
 #include "System.h"
 
@@ -75,6 +78,12 @@ bool SettingsSetActiveById(uint8_t Setting) {
             /* Settings have changed. Progress changes through system */
             ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
             LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
+            LEDSetFuncById(LED_RED,GlobalSettings.ActiveSettingPtr->LEDRedFunction);
+			LEDSetFuncById(LED_GREEN,GlobalSettings.ActiveSettingPtr->LEDGreenFunction);
+			ButtonSetActionById(BUTTON_L_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[0]);
+			ButtonSetActionById(BUTTON_R_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[1]);
+			ButtonSetActionById(BUTTON_L_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[2]);
+			ButtonSetActionById(BUTTON_L_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[3]);
 
             /* Recall new memory contents */
             MemoryRecall();
