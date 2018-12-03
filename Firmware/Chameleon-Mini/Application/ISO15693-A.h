@@ -63,16 +63,26 @@
 
 #define ISO15693_RES_INVENTORY_DSFID    0x00
 
-#define ISO15693_MIN_FRAME_SIZE         4
+#define ISO15693_MIN_FRAME_SIZE         0x04
 
-#define ISO15693_CRC16_SIZE             2 /* Bytes */
+#define ISO15693_GENERIC_UID_SIZE       0x08
+#define ISO15693_GENERIC_MEM_SIZE       8192
+
+#define ISO15693_CRC16_SIZE             2       /* Bytes */
 #define ISO15693_CRC16_POLYNORMAL       0x8408
 #define ISO15693_CRC16_PRESET           0xFFFF
 
-typedef uint8_t ISO15693UidType[8];
+typedef struct {
+    uint8_t* Flags;
+    uint8_t* Command;
+    uint8_t* Parameters;
+    uint8_t ParamLen;
+    bool Addressed;
+} CurrentFrame;
 
 void ISO15693AppendCRC(uint8_t* FrameBuf, uint16_t FrameBufSize);
 bool ISO15693CheckCRC(void* FrameBuf, uint16_t FrameBufSize);
+bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t* MyUid);
 
 INLINE
 bool ISO15693CompareUid(uint8_t* Uid1, uint8_t* Uid2)
