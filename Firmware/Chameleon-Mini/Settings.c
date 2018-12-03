@@ -75,7 +75,12 @@ bool SettingsSetActiveById(uint8_t Setting) {
             /* Settings have changed. Progress changes through system */
             ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
             LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
-
+			LEDSetFuncById(LED_RED,GlobalSettings.ActiveSettingPtr->LEDRedFunction);
+			LEDSetFuncById(LED_GREEN,GlobalSettings.ActiveSettingPtr->LEDGreenFunction);
+			ButtonSetActionById(BUTTON_L_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_SHORT]);
+			ButtonSetActionById(BUTTON_R_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_SHORT]);
+			ButtonSetActionById(BUTTON_L_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_LONG]);
+			ButtonSetActionById(BUTTON_R_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_LONG]);
             /* Recall new memory contents */
             MemoryRecall();
 
