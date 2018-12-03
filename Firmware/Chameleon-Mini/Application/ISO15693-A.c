@@ -50,3 +50,43 @@ bool ISO15693CheckCRC(void* FrameBuf, uint16_t FrameBufSize)
     
     return (DataPtr[FrameBufSize] == crcLb && DataPtr[FrameBufSize + 1] == crcHb);
 }
+
+/*
+ * ISO15693PrepareFrame
+ * 
+ * This function validates frame lenght and sets pointers in 'frame' struct
+ * to relevant byte(s) of 'FrameBuf'. Also sets frame.addressed as true if
+ * the command is addressed
+ * 
+ * Returns:
+ *  - true:  Frame is valid and a response is needed
+ *  - false: Request is not addressed to us
+ *           Frame is not valid because it's too short or CRC is wrong
+ */
+bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t* MyUid)
+{
+    if ((FrameBytes < ISO15693_MIN_FRAME_SIZE) || !ISO15693CheckCRC(FrameBuf, FrameBytes - ISO15693_CRC16_SIZE))
+        /* malformed frame */
+        return false;
+
+    /* following declarations are not dependent on addressed/unaddressed state */
+    FrameStruct -> Flags        = &FrameBuf[ISO15693_ADDR_FLAGS];
+    FrameStruct -> Command      = &FrameBuf[ISO15693_REQ_ADDR_CMD];
+    FrameStruct -> Addressed    = ( !(FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_INVENTORY) & (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_ADDRESS) );
+                                /* "inventory" flag must be 0, otherwise "addressed" flag have a different meaning (see ISO15693-3) */
+
+    if (FrameStruct -> Addressed)
+        /* UID sits between CMD and PARAM */
+        FrameStruct -> Parameters = &FrameBuf[ISO15693_REQ_ADDR_PARAM + ISO15693_GENERIC_UID_SIZE];
+    else
+        FrameStruct -> Parameters = &FrameBuf[ISO15693_REQ_ADDR_PARAM];
+
+    FrameStruct -> ParamLen = FrameBuf + (FrameBytes - ISO15693_CRC16_SIZE) - (FrameStruct -> Parameters);
+
+    if (FrameStruct -> Addressed && !ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], MyUid)) {
+        /* addressed request but we're not the addressee */
+        return false;
+    } else {
+        return true;
+    }
+}
