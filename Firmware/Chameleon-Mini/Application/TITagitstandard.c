@@ -100,11 +100,9 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             if (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_OPTION) { /* request with option flag set */
                 if (FactoryLockBits_Mask & (1 << PageAddress)) { /* tests if the n-th bit of the factory bitmask if set to 1 */
                     FrameBuf[1] = 0x02; /* return bit 1 set as 1 (factory locked) */
-                }
-                else if (UserLockBits_Mask & (1 << PageAddress)) { /* tests if the n-th bit of the user bitmask if set to 1 */
+                } else if (UserLockBits_Mask & (1 << PageAddress)) { /* tests if the n-th bit of the user bitmask if set to 1 */
                     FrameBuf[1] = 0x01; /* return bit 0 set as 1 (user locked) */
-                }
-                else
+                } else
                     FrameBuf[1] = 0x00; /* return lock status 00 (unlocked) */
                 FramePtr = FrameBuf + 2; /* block's data from byte 2 */
                 ResponseByteCount = 6;
@@ -114,15 +112,15 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             }
 
             FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
-
             MemoryReadBlock(FramePtr, PageAddress * TITAGIT_BYTES_PER_PAGE, TITAGIT_BYTES_PER_PAGE);
+
         } else if (*FrameInfo.Command == ISO15693_CMD_WRITE_SINGLE) {
             uint8_t* Dataptr;
             uint8_t PageAddress = *FrameInfo.Parameters;
 
             if (FrameInfo.ParamLen != 5)
                 break; /* malformed: not enough or too much data */
-            
+
             if (PageAddress > TITAGIT_NUMBER_OF_SECTORS)
                 /* TODO: Check actual tag's response (error?) */
                 break; /* malformed: trying to write in a non-existing block */
@@ -142,6 +140,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                 FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
                 ResponseByteCount = 1;
             }
+
         } else if (*FrameInfo.Command == ISO15693_CMD_LOCK_BLOCK) {
             uint8_t PageAddress = *FrameInfo.Parameters;
 
@@ -161,12 +160,14 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                 FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
                 ResponseByteCount = 1;
             }
+
         } else {
             FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
             FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_NOT_SUPP;
             ResponseByteCount = 2;
         }
         break;
+
     case STATE_SELECTED:
         /* Selected state is not supported by Ti TagIt Standard */
         break;
