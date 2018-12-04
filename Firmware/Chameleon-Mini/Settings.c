@@ -5,6 +5,9 @@
 #include "Memory.h"
 #include "LEDHook.h"
 #include "Terminal/CommandLine.h"
+#include "LED.h"
+#include "Button.h"
+
 
 #include "System.h"
 
