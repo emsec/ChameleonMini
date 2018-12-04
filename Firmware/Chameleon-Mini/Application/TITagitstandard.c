@@ -10,12 +10,8 @@
  *      - Check actual tag's response (error?) when trying to LOCK out of bound sectors
  */
 
-#include "TITagitstandard.h"
-#include "../Codec/ISO15693.h"
-#include "../Memory.h"
-#include "Crypto1.h"
-#include "../Random.h"
 #include "ISO15693-A.h"
+#include "TITagitstandard.h"
 
 static enum {
     STATE_READY,

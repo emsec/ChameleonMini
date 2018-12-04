@@ -72,8 +72,11 @@ bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* 
     /* following declarations are not dependent on addressed/unaddressed state */
     FrameStruct -> Flags        = &FrameBuf[ISO15693_ADDR_FLAGS];
     FrameStruct -> Command      = &FrameBuf[ISO15693_REQ_ADDR_CMD];
-    FrameStruct -> Addressed    = ( !(FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_INVENTORY) & (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_ADDRESS) );
-                                /* "inventory" flag must be 0, otherwise "addressed" flag have a different meaning (see ISO15693-3) */
+
+    if(!(FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_INVENTORY)) /* if inventory flag is not set */
+        FrameStruct -> Addressed = (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_ADDRESS); /* check for addressed flag */
+    else /* otherwise always false */
+        FrameStruct -> Addressed = false;
 
     if (FrameStruct -> Addressed)
         /* UID sits between CMD and PARAM */
