@@ -62,6 +62,8 @@ bool ISO15693CheckCRC(void* FrameBuf, uint16_t FrameBufSize)
  *  - true:  Frame is valid and a response is needed
  *  - false: Request is not addressed to us
  *           Frame is not valid because it's too short or CRC is wrong
+ * 
+ * Authors: ceres-c & MrMoDDoM
  */
 bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t* MyUid)
 {
