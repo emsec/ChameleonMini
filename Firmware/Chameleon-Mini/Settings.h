@@ -13,6 +13,7 @@
 #include "Log.h"
 #include "LED.h"
 #include "Memory.h"
+#include "UserInterface.h"
 #include <avr/eeprom.h>
 
 #define SETTINGS_COUNT		(MEMORY_SIZE / MEMORY_SIZE_PER_SETTING)
@@ -37,6 +38,7 @@ typedef struct {
     uint8_t ActiveSettingIdx;
     SettingsEntryType* ActiveSettingPtr;
     SettingsEntryType Settings[SETTINGS_COUNT];
+	UserInterfaceModeEnum UserInterfaceMode; // UserInterface Mode (Global/Individual)
 } SettingsType;
 
 extern SettingsType GlobalSettings, StoredSettings;
@@ -61,6 +63,8 @@ INLINE void SettingUpdate(const void * addr, uint16_t size)
 
 #endif
 }
+
+#define GLOBAL_UI_STORAGE GlobalSettings.Settings[0]
 
 #define SETTING_UPDATE(x)	SettingUpdate(&(x), sizeof(x))
 
