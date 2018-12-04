@@ -4,10 +4,7 @@
  *  Created on: 01-03-2017
  *      Author: Phillip Nash
  *      Modified by rickventura for texas 15693 tag-it STANDARD
- *      Modified by ceres-c to finish things up
- *  TODO:
- *      - Check actual tag's response (error?) when trying to WRITE out of bound sectors
- *      - Check actual tag's response (error?) when trying to LOCK out of bound sectors
+ *      Modified by ceres-c & MrMoDDoM to finish things up
  */
 
 #include "ISO15693-A.h"
@@ -118,7 +115,8 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                 break; /* malformed: not enough or too much data */
 
             if (PageAddress > TITAGIT_NUMBER_OF_SECTORS)
-                /* TODO: Check actual tag's response (error?) */
+                FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+                FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_OPT_NOT_SUPP;
                 break; /* malformed: trying to write in a non-existing block */
 
             Dataptr = PageAddress + 0x01;
@@ -144,7 +142,9 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                 break; /* malformed: not enough or too much data */
 
             if (PageAddress > TITAGIT_NUMBER_OF_SECTORS)
-                /* TODO: Check actual tag's response (error?) */
+                FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+                FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_OPT_NOT_SUPP;
+                ResponseByteCount = 2;
                 break; /* malformed: trying to lock a non-existing block */
 
             if ((FactoryLockBits_Mask & (1 << PageAddress)) || (UserLockBits_Mask & (1 << PageAddress))) {
