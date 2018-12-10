@@ -55,6 +55,9 @@ typedef enum  {
 #ifdef CONFIG_TITAGITSTANDARD_SUPPORT
 	CONFIG_TITAGITSTANDARD,
 #endif
+#ifdef CONFIG_EM4233_SUPPORT
+	CONFIG_EM4233,
+#endif
     /* This HAS to be the last element */
     CONFIG_COUNT
 } ConfigurationEnum;

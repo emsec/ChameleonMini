@@ -20,7 +20,7 @@
 #include "Sl2s2002.h"
 #include "TITagitstandard.h"
 #include "Sniff14443A.h"
-
+#include "EM4233.h"
 
 /* Function wrappers */
 INLINE void ApplicationInit(void) {

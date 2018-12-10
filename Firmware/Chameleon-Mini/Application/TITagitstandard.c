@@ -114,10 +114,12 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             if (FrameInfo.ParamLen != 5)
                 break; /* malformed: not enough or too much data */
 
-            if (PageAddress > TITAGIT_NUMBER_OF_SECTORS)
+            if (PageAddress > TITAGIT_NUMBER_OF_SECTORS) {
                 FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
                 FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_OPT_NOT_SUPP;
+                ResponseByteCount = 2;
                 break; /* malformed: trying to write in a non-existing block */
+            }
 
             Dataptr = PageAddress + 0x01;
 
@@ -141,11 +143,12 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             if (FrameInfo.ParamLen != 1)
                 break; /* malformed: not enough or too much data */
 
-            if (PageAddress > TITAGIT_NUMBER_OF_SECTORS)
+            if (PageAddress > TITAGIT_NUMBER_OF_SECTORS) {
                 FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
                 FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_OPT_NOT_SUPP;
                 ResponseByteCount = 2;
                 break; /* malformed: trying to lock a non-existing block */
+            }
 
             if ((FactoryLockBits_Mask & (1 << PageAddress)) || (UserLockBits_Mask & (1 << PageAddress))) {
                 FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
