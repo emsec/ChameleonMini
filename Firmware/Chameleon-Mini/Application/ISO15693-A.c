@@ -75,17 +75,20 @@ bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* 
     FrameStruct -> Flags        = &FrameBuf[ISO15693_ADDR_FLAGS];
     FrameStruct -> Command      = &FrameBuf[ISO15693_REQ_ADDR_CMD];
 
-    if(!(FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_INVENTORY)) /* if inventory flag is not set */
+    if(!(FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_INVENTORY)) { /* if inventory flag is not set */
         FrameStruct -> Addressed = (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_ADDRESS); /* check for addressed flag */
-    else /* otherwise always false */
+        FrameStruct -> Selected  = (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_SELECT);  /* check for selected flag */
+    } else { /* otherwise always false */
         FrameStruct -> Addressed = false;
+        FrameStruct -> Selected  = false;
+    }
 
     if (FrameStruct -> Addressed)
         /* UID sits between CMD and PARAM */
         FrameStruct -> Parameters = &FrameBuf[ISO15693_REQ_ADDR_PARAM + ISO15693_GENERIC_UID_SIZE];
     else
         FrameStruct -> Parameters = &FrameBuf[ISO15693_REQ_ADDR_PARAM];
-
+     
     FrameStruct -> ParamLen = FrameBuf + (FrameBytes - ISO15693_CRC16_SIZE) - (FrameStruct -> Parameters);
 
     if (FrameStruct -> Addressed && !ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], MyUid)) {

@@ -32,6 +32,7 @@ void TITagitstandardAppInit(void)
     FrameInfo.Parameters    = NULL;
     FrameInfo.ParamLen      = 0;
     FrameInfo.Addressed     = false;
+    FrameInfo.Selected      = false;
 }
 
 void TITagitstandardAppReset(void)
@@ -43,6 +44,7 @@ void TITagitstandardAppReset(void)
     FrameInfo.Parameters    = NULL;
     FrameInfo.ParamLen      = 0;
     FrameInfo.Addressed     = false;
+    FrameInfo.Selected      = false;
 }
 
 

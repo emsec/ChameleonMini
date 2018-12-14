@@ -63,7 +63,7 @@
 
 #define ISO15693_RES_INVENTORY_DSFID    0x00
 
-#define ISO15693_MIN_FRAME_SIZE         0x05
+#define ISO15693_MIN_FRAME_SIZE         0x04
 
 #define ISO15693_GENERIC_UID_SIZE       0x08
 #define ISO15693_GENERIC_MEM_SIZE       8192
@@ -76,8 +76,8 @@
  * The byte used for the lock status has its bits addressed as follow:
  * 
  */
-#define ISO15693_MASK_FACTORY_LOCK      ( 1 << 0 )
-#define ISO15693_MASK_USER_LOCK         ( 1 << 1 )
+#define ISO15693_MASK_USER_LOCK         ( 1 << 0 )
+#define ISO15693_MASK_FACTORY_LOCK      ( 1 << 1 )
 
 typedef struct {
     uint8_t* Flags;
@@ -85,6 +85,7 @@ typedef struct {
     uint8_t* Parameters;
     uint8_t ParamLen;
     bool Addressed;
+    bool Selected;
 } CurrentFrame;
 
 void ISO15693AppendCRC(uint8_t* FrameBuf, uint16_t FrameBufSize);
