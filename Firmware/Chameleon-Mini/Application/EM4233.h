@@ -27,7 +27,7 @@
 
 #define EM4233_MEM_LSM_ADDRESS          0x0110      // From 0x0108 to 0x0157 - Lock status masks
 #define EM4233_MEM_PSW_ADDRESS          0x0150      // From 0x0118 to 0x011F - Password
-#define EM4233_MEM_KEY_ADDRESS          0x0120      // From 0x0120 to 0x0127 - Encryption Key
+#define EM4233_MEM_KEY_ADDRESS          0x0154      // From 0x0120 to 0x0127 - Encryption Key
 
 #define EM4233_SYSINFO_BYTE             0x0F        // DSFID - AFI - VICC mem size - IC ref are present
 
