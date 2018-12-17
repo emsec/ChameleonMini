@@ -14,6 +14,8 @@ static enum {
     STATE_QUIET
 } State;
 
+bool loggedIn;
+
 CurrentFrame FrameInfo;
 
 uint64_t EM4233_FactoryLockBits_Mask = 0;  /* Holds lock state of blocks */
@@ -29,6 +31,8 @@ void EM4233AppInit(void)
     FrameInfo.ParamLen      = 0;
     FrameInfo.Addressed     = false;
     FrameInfo.Selected      = false;
+    loggedIn = false;
+
 }
 
 void EM4233AppReset(void)
@@ -41,6 +45,7 @@ void EM4233AppReset(void)
     FrameInfo.ParamLen      = 0;
     FrameInfo.Addressed     = false;
     FrameInfo.Selected      = false;
+    loggedIn = false;
 }
 
 void EM4233AppTask(void)
@@ -449,6 +454,34 @@ uint16_t EM4233_Select(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
     }
 }
 
+uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
+{
+    uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
+    uint8_t Password[4] = { 0 }; 
+
+    if (FrameInfo.ParamLen != 4)
+        return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
+
+    MemoryReadBlock(&Password, EM4233_MEM_PSW_ADDRESS, 4);
+
+    if( false ){ // YES-MAN!
+//    if (!memcmp(Password, FrameInfo.Parameters, 4)) { /* Incorrect password */
+
+        loggedIn = false;
+
+        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
+        ResponseByteCount = ISO15693_APP_NO_RESPONSE;
+        return ResponseByteCount;
+    }
+
+    loggedIn = true;
+
+    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
+    ResponseByteCount += 1; 
+    return ResponseByteCount;
+}
+
 uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
@@ -457,13 +490,6 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
     if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, Uid))
         return ISO15693_APP_NO_RESPONSE;
-
-    FrameBuf[ISO15693_ADDR_FLAGS] = FrameInfo.ParamLen;
-    ResponseByteCount = 1;
-    ISO15693AppendCRC(FrameBuf, ResponseByteCount);
-    ResponseByteCount += ISO15693_CRC16_SIZE;
-    return ResponseByteCount;
-
 
     if (State == STATE_READY || State == STATE_SELECTED) {
         if (*FrameInfo.Command == ISO15693_CMD_INVENTORY) {
@@ -509,7 +535,7 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             ResponseByteCount = EM4233_Select(FrameBuf, FrameBytes, Uid);
 
         } else if (*FrameInfo.Command == EM4233_CMD_LOGIN) {
-            // ResponseByteCount = EM4233_Select(FrameBuf, FrameBytes, Uid);
+            ResponseByteCount = EM4233_Login(FrameBuf, FrameBytes, Uid);
 
         } else {
             FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
