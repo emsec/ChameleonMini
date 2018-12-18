@@ -307,7 +307,7 @@ uint16_t EM4233_Lock_DSFID(uint8_t* FrameBuf, uint16_t FrameBytes)
 
     LockStatus |= EM4233_MASK_DSFID_STATUS;
 
-    MemoryWriteBlock(&LockStatus, EM4233_MEM_INF_ADDRESS, 1); /* Actually write new AFI */
+    MemoryWriteBlock(*FrameInfo.Parameters, EM4233_MEM_INF_ADDRESS, 4); /* Actually write the new PASSWORD */
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
     ResponseByteCount += 1; 
@@ -476,6 +476,9 @@ uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
     }
 
     loggedIn = true;
+
+    MemoryWriteBlock(Password, EM4233_MEM_PSW_ADDRESS, 1); /* Actually write new AFI */
+
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
     ResponseByteCount += 1; 
