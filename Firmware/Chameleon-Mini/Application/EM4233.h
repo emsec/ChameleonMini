@@ -11,7 +11,7 @@
 #include "Application.h"
 
 #define EM4233_STD_UID_SIZE             ISO15693_GENERIC_UID_SIZE
-#define EM4233_STD_MEM_SIZE             256     // Bytes
+#define EM4233_STD_MEM_SIZE             208     // Bytes
 #define EM4233_BYTES_PER_BLCK           0x4
 #define EM4233_BLCKS_PER_PAGE           0x4
 #define EM4233_NUMBER_OF_BLCKS          ( EM4233_STD_MEM_SIZE / EM4233_BYTES_PER_BLCK )
