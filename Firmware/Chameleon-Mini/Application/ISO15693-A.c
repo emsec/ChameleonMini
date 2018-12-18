@@ -89,7 +89,7 @@ bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* 
     else
         FrameStruct -> Parameters = &FrameBuf[ISO15693_REQ_ADDR_PARAM];
     
-    if (*(FrameStruct -> Command) >= 0xA0) { /* if command is Custom or  Proprietary */
+    if ( (*FrameStruct -> Command) >= 0xA0) { /* if command is Custom or  Proprietary */
         /* then between CMD and UID is placed another byte which is IC Mfg Code, but we don't need it */
         FrameStruct -> Parameters += 0x01;
         if (FrameBuf[ISO15693_REQ_ADDR_PARAM] != MyUid[1])
@@ -99,7 +99,9 @@ bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* 
 
     FrameStruct -> ParamLen = FrameBuf + (FrameBytes - ISO15693_CRC16_SIZE) - (FrameStruct -> Parameters);
 
-    if (FrameStruct -> Addressed && !ISO15693CompareUid(FrameStruct -> Parameters, MyUid)) {
+    uint8_t *uid = (FrameStruct -> Parameters) - ISO15693_GENERIC_UID_SIZE;
+
+    if (FrameStruct -> Addressed && !ISO15693CompareUid( uid, MyUid)) {
         /* addressed request but we're not the addressee */
         return false;
     } else {

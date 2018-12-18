@@ -443,15 +443,17 @@ uint16_t EM4233_Select(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
         return ISO15693_APP_NO_RESPONSE;
     } else if (State == STATE_SELECTED && !UidEquals) {
         /* tag should remain silent if Select is performed while the tag is selected but against another tag */
-        State == STATE_READY;
+        State = STATE_READY;
         return ISO15693_APP_NO_RESPONSE;
     } else if (State != STATE_SELECTED && !UidEquals) {
         /* tag should remain silent if Select is performed against another UID */
         return ISO15693_APP_NO_RESPONSE;
     } else if (State != STATE_SELECTED && UidEquals) {
-        State == STATE_SELECTED;
+        State = STATE_SELECTED;
         return ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
     }
+
+    return ISO15693_APP_NO_RESPONSE;
 }
 
 uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
@@ -477,8 +479,7 @@ uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
 
     loggedIn = true;
 
-    MemoryWriteBlock(Password, EM4233_MEM_PSW_ADDRESS, 1); /* Actually write new AFI */
-
+    MemoryWriteBlock(Password, EM4233_MEM_PSW_ADDRESS, 4); /* Actually write new AFI */
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
     ResponseByteCount += 1; 
@@ -501,7 +502,7 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             ISO15693CopyUid(&FrameBuf[ISO15693_RES_ADDR_PARAM + 0x01], Uid);
             ResponseByteCount = 10;
 
-        } else if (*FrameInfo.Command == ISO15693_CMD_STAY_QUIET && FrameInfo.Addressed) {
+        } else if ( (*FrameInfo.Command == ISO15693_CMD_STAY_QUIET ) && FrameInfo.Addressed) {
             State = STATE_QUIET;
 
         } else if (*FrameInfo.Command == ISO15693_CMD_READ_SINGLE) {
@@ -545,8 +546,7 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_NOT_SUPP;
             ResponseByteCount = 2;
         }
-    }
-    else if (State == STATE_QUIET) {
+    } else if (State == STATE_QUIET) {
         if (*FrameInfo.Command == ISO15693_CMD_RESET_TO_READY) {
             FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
             ResponseByteCount = 1;
