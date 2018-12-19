@@ -198,7 +198,7 @@ uint16_t EM4233_Read_Multiple(uint8_t* FrameBuf, uint16_t FrameBytes)
         MemoryReadBlock(&LockStatusBuffer, EM4233_MEM_LSM_ADDRESS + BlockAddress, BlocksNumber);
 
         for (uint8_t block = 0; block < BlocksNumber; block++) { /* we cycle through the blocks */
-            
+
             /* add lock status */
             if (LockStatusBuffer[block] & ISO15693_MASK_USER_LOCK) { /* tests if bit 0 of the status byte if set to 1 */
                 FrameBuf[FramePtr] = 0x01; /* return bit 0 set as 1 (user locked) */

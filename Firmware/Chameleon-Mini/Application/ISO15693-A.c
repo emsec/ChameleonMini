@@ -88,7 +88,7 @@ bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* 
         FrameStruct -> Parameters = &FrameBuf[ISO15693_REQ_ADDR_PARAM + ISO15693_GENERIC_UID_SIZE];
     else
         FrameStruct -> Parameters = &FrameBuf[ISO15693_REQ_ADDR_PARAM];
-    
+
     if ( (*FrameStruct -> Command) >= 0xA0) { /* if command is Custom or  Proprietary */
         /* then between CMD and UID is placed another byte which is IC Mfg Code, but we don't need it */
         FrameStruct -> Parameters += 0x01;

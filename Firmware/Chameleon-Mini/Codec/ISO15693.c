@@ -143,7 +143,7 @@ void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void)
                     CODEC_TIMER_SAMPLING.INTCTRLB = 0;
                 }
                 break;
-                
+
             case DEMOD_1_OUT_OF_4_STATE:
                 if (SampleRegister == EOC_CODE)
                 {
@@ -184,7 +184,7 @@ void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void)
                     }
                 }
                 break;
-            
+
             case DEMOD_1_OUT_OF_256_STATE:
                 if (SampleRegister == EOC_CODE)
                 {
@@ -252,7 +252,7 @@ void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void)
     } else {
         return;
     }
-    
+
     LOADMOD_START_SINGLE_LABEL:
         CodecStartSubcarrier();
         ShiftRegister = SOF_PATTERN;  
@@ -276,7 +276,7 @@ void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void)
             StateRegister = LOADMOD_SOF_SINGLE;
         }
     return;
-    
+
     LOADMOD_BIT0_SINGLE_LABEL: //Manchester encoding
         if (ShiftRegister & 0x01) {
             /* Deactivate carrier */
@@ -288,7 +288,7 @@ void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void)
 
         StateRegister = LOADMOD_BIT1_SINGLE;
     return;
-    
+
     LOADMOD_BIT1_SINGLE_LABEL: //Manchester encoding
         if (ShiftRegister & 0x01) {
             CodecSetLoadmodState(true);
@@ -312,7 +312,7 @@ void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void)
             }
         }
     return;
-    
+
     LOADMOD_EOF_SINGLE_LABEL: //End of Manchester encoding
         /* Output EOF */
         if (ShiftRegister & 0x80) {
@@ -333,7 +333,7 @@ void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void)
     return;
 
    // ------------------------------------------------------------- 
-   
+
    LOADMOD_START_DUAL_LABEL:
         CodecStartSubcarrier();
         ShiftRegister = SOF_PATTERN;
@@ -514,11 +514,11 @@ void ISO15693CodecTask(void)
 {
     if (Flags.DemodFinished) {
         Flags.DemodFinished = 0;
-        
+
         uint16_t DemodByteCount = ByteCount;
         uint16_t AppReceivedByteCount = 0;
         bool bDualSubcarrier = false;
-        
+
         if (DemodByteCount > 0)
         {
             if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL)
@@ -531,13 +531,13 @@ void ISO15693CodecTask(void)
         } else {
             ApplicationReset();
         }
-        
+
         //This is only reached when we've received a valid frame
         if (AppReceivedByteCount > 0) { 
             LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, AppReceivedByteCount);
             CodecBufferPtr = CodecBuffer;
             ByteCount = AppReceivedByteCount;
-            
+
             CodecStartSubcarrier();
 
             /* Start loadmodulating */
@@ -548,7 +548,7 @@ void ISO15693CodecTask(void)
                 StateRegister = LOADMOD_START_SINGLE;
                 CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OOK, SUBCARRIER_1);
             }
-            
+
         } else {
             /* No data to be processed. Disable T1 waiting and
              * start listening again */
@@ -557,7 +557,7 @@ void ISO15693CodecTask(void)
             StartISO15693Demod();
         }
     }
-    
+
     if (Flags.LoadmodFinished) {
         Flags.LoadmodFinished = 0;
         /* Load modulation has been finished. Stop it and start to listen
