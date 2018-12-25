@@ -440,6 +440,7 @@ void StartISO15693Demod(void) {
     Flags.DemodFinished = 0;
     Flags.LoadmodFinished = 0;
     DemodState = DEMOD_SOC_STATE;
+    LoadModState = LOADMOD_WAIT;
     DataRegister = 0;
     SampleRegister = 0;
     BitSampleCount = 0;
@@ -489,6 +490,7 @@ void ISO15693CodecDeInit(void)
     Flags.DemodFinished = 0;
     Flags.LoadmodFinished = 0;
     DemodState = DEMOD_SOC_STATE;
+    LoadModState = LOADMOD_WAIT;
     DataRegister = 0;
     SampleRegister = 0;
     BitSampleCount = 0;
