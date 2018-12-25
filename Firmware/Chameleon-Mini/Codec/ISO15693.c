@@ -94,13 +94,13 @@ void isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void)
 
 INLINE void ISO15693_EOC(void)
 {
-    BitRate1 = 256 * 4;
+    BitRate1 = 256 * 4; // 256 * 4 - 1
     if (CodecBuffer[0] & ISO15693_REQ_DATARATE_HIGH)
         BitRate1 = 256;
 
     if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL)
     {
-        BitRate2 = 252 * 4;
+        BitRate2 = 252 * 4; // 252 * 4 - 3
         if (CodecBuffer[0] & ISO15693_REQ_DATARATE_HIGH)
             BitRate2 = 252;
     } else {
@@ -254,16 +254,18 @@ void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void)
     }
 
     LOADMOD_START_SINGLE_LABEL:
-        CodecStartSubcarrier();
+        /* Application produced data. With this interrupt we are aligned to the bit-grid. */
         ShiftRegister = SOF_PATTERN;  
         BitSent = 0;
-        // fallthrough
+        /* Fallthrough */
     LOADMOD_SOF_SINGLE_LABEL:
         if (ShiftRegister & 0x80) {
             CodecSetLoadmodState(true);
         } else {
             CodecSetLoadmodState(false);
         }
+
+        CodecStartSubcarrier();
 
         ShiftRegister <<= 1;
         BitSent++;
@@ -335,10 +337,10 @@ void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void)
    // ------------------------------------------------------------- 
 
    LOADMOD_START_DUAL_LABEL:
-        CodecStartSubcarrier();
         ShiftRegister = SOF_PATTERN;
         BitSent = 0;
         CodecSetLoadmodState(true);
+        CodecStartSubcarrier();
         // fallthrough
     LOADMOD_SOF_DUAL_LABEL:
         if (ShiftRegister & 0x80) {
@@ -433,7 +435,7 @@ void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void)
 #endif /* CONFIG_VICINITY_SUPPORT */
 
 void StartISO15693Demod(void) {
-    
+
     CodecBufferPtr = CodecBuffer;
     Flags.DemodFinished = 0;
     Flags.LoadmodFinished = 0;
@@ -445,7 +447,8 @@ void StartISO15693Demod(void) {
     ModulationPauseCount = 0;
     ByteCount = 0;
     ShiftRegister = 0;
-    
+
+    /* Activate Power for demodulator */
     CodecSetDemodPower(true);
 
     /* Configure sampling-timer free running and sync to first modulation-pause. */
@@ -521,39 +524,38 @@ void ISO15693CodecTask(void)
 
         if (DemodByteCount > 0)
         {
+            LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, DemodByteCount);
+            LEDHook(LED_CODEC_RX, LED_PULSE);
+
             if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL)
             {
                 bDualSubcarrier = true;
             }
-            LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, DemodByteCount);
             AppReceivedByteCount = ApplicationProcess(CodecBuffer, DemodByteCount);
-            
-        } else {
-            ApplicationReset();
         }
 
-        //This is only reached when we've received a valid frame
-        if (AppReceivedByteCount > 0) { 
+        /* This is only reached when we've received a valid frame */
+        if (AppReceivedByteCount != ISO15693_APP_NO_RESPONSE) {
             LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, AppReceivedByteCount);
-            CodecBufferPtr = CodecBuffer;
-            ByteCount = AppReceivedByteCount;
+            LEDHook(LED_CODEC_TX, LED_PULSE);
 
-            CodecStartSubcarrier();
+            ByteCount = AppReceivedByteCount;
+            CodecBufferPtr = CodecBuffer;
 
             /* Start loadmodulating */
             if (bDualSubcarrier) {
-                StateRegister = LOADMOD_START_DUAL;
                 CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OOK, SUBCARRIER_2);
+                StateRegister = LOADMOD_START_DUAL;
             } else {
-                StateRegister = LOADMOD_START_SINGLE;
                 CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OOK, SUBCARRIER_1);
+                StateRegister = LOADMOD_START_SINGLE;
             }
 
         } else {
-            /* No data to be processed. Disable T1 waiting and
-             * start listening again */
+            /* No data to be processed. Disable T1 waiting and start listening again */
             CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
-            CODEC_TIMER_LOADMOD.INTCTRLB = TC_CCBINTLVL_OFF_gc;
+            CODEC_TIMER_LOADMOD.INTCTRLB = 0;
+
             StartISO15693Demod();
         }
     }
