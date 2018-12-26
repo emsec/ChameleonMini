@@ -18,9 +18,6 @@ bool loggedIn;
 
 CurrentFrame FrameInfo;
 
-uint64_t EM4233_FactoryLockBits_Mask = 0;  /* Holds lock state of blocks */
-uint64_t EM4233_UserLockBits_Mask = 0;     /* Holds lock state of blocks */
-
 void EM4233AppInit(void)
 {
     State = STATE_READY;
@@ -61,25 +58,28 @@ void EM4233AppTick(void)
 uint16_t EM4233_Lock_Block(uint8_t* FrameBuf, uint16_t FrameBytes) 
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
-    uint8_t PageAddress = *FrameInfo.Parameters;
+    uint8_t BlockAddress = *FrameInfo.Parameters;
+    uint8_t LockStatus = 0;
+
+    MemoryReadBlock(&LockStatus, (EM4233_MEM_LSM_ADDRESS + BlockAddress), 1);
 
     if (FrameInfo.ParamLen != 1)
-         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
+        return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
-    if (PageAddress > EM4233_NUMBER_OF_BLCKS) {
+    if (BlockAddress > EM4233_NUMBER_OF_BLCKS) {
         // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
         // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_OPT_NOT_SUPP;
         ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
         return ResponseByteCount; /* malformed: trying to lock a non-existing block */
     }
 
-    if ((EM4233_FactoryLockBits_Mask & (uint64_t)(1 << PageAddress)) || (EM4233_UserLockBits_Mask & (uint64_t)(1 << PageAddress))) { /* if already locked */
-        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_ALRD_LKD;
+
+    if (LockStatus > ISO15693_MASK_UNLOCKED) { /* LockStatus 0x00 represent unlocked block, greater values are different kind of locks */
         ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
     } else {
-        EM4233_UserLockBits_Mask |= (uint64_t)(1 << PageAddress); /* write the lock status in mask */
-        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+        LockStatus |= ISO15693_MASK_USER_LOCK;
+        MemoryWriteBlock(&LockStatus, (EM4233_MEM_LSM_ADDRESS + BlockAddress), 1); /* write user lock in memory */
+        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
         ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
     }
 
@@ -135,7 +135,7 @@ uint16_t EM4233_Read_Single(uint8_t* FrameBuf, uint16_t FrameBytes)
 
     if (PageAddress >= EM4233_NUMBER_OF_BLCKS) { /* the reader is requesting a sector out of bound */
         // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL; 
+        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL;
         ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
         return ResponseByteCount;
     }
@@ -145,11 +145,11 @@ uint16_t EM4233_Read_Single(uint8_t* FrameBuf, uint16_t FrameBytes)
     if (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_OPTION) { /* request with option flag set */  
         MemoryReadBlock(&LockStatus, (EM4233_MEM_LSM_ADDRESS + PageAddress), 1);
         if (LockStatus & ISO15693_MASK_FACTORY_LOCK)  { /* tests if the n-th bit of the factory bitmask if set to 1 */
-            FrameBuf[FramePtr] = 0x02; /* return bit 1 set as 1 (factory locked) */
+            FrameBuf[FramePtr] = ISO15693_MASK_FACTORY_LOCK; /* return bit 1 set as 1 (factory locked) */
         } else if (LockStatus & ISO15693_MASK_USER_LOCK) { /* tests if the n-th bit of the user bitmask if set to 1 */
-            FrameBuf[FramePtr] = 0x01; /* return bit 0 set as 1 (user locked) */
+            FrameBuf[FramePtr] = ISO15693_MASK_USER_LOCK; /* return bit 0 set as 1 (user locked) */
         } else
-            FrameBuf[FramePtr] = 0x00; /* return lock status 00 (unlocked) */
+            FrameBuf[FramePtr] = ISO15693_MASK_UNLOCKED; /* return lock status 00 (unlocked) */
         FramePtr += 1; /* block's data from byte 2 */
         ResponseByteCount += 1;
     }
@@ -159,7 +159,7 @@ uint16_t EM4233_Read_Single(uint8_t* FrameBuf, uint16_t FrameBytes)
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
     ResponseByteCount += 1;
-    
+
     return ResponseByteCount;
 }
 
@@ -168,14 +168,14 @@ uint16_t EM4233_Read_Multiple(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     uint8_t FramePtr; /* holds the address where block's data will be put */
     uint8_t BlockAddress = FrameInfo.Parameters[0];
-    uint8_t BlocksNumber = FrameInfo.Parameters[1] + 0x01; /* according to ISO standard, we have to read 8 blocks if we get 0x07 in request */
+    uint8_t BlocksNumber = FrameInfo.Parameters[1] + 0x01; /* according to ISO standard, we have to read 0x08 blocks if we get 0x07 in request */
 
     if (FrameInfo.ParamLen != 2)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
     if (BlockAddress > EM4233_NUMBER_OF_BLCKS) { /* the reader is requesting a starting block out of bound */
         // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL; 
+        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL;
         ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
         return ResponseByteCount;
     } else if ((BlockAddress + BlocksNumber) >= EM4233_NUMBER_OF_BLCKS) { /* last block is out of bound */
@@ -191,7 +191,7 @@ uint16_t EM4233_Read_Multiple(uint8_t* FrameBuf, uint16_t FrameBytes)
 
     } else { /* we have to slice blocks' data with lock statuses */
         uint8_t DataBuffer[ BlocksNumber * EM4233_BYTES_PER_BLCK ]; /* a temporary vector with blocks' content */
-        uint8_t LockStatusBuffer[ BlocksNumber ]; /* a vector with blocks' lock status */
+        uint8_t LockStatusBuffer[ BlocksNumber ]; /* a temporary vector with blocks' lock status */
 
         /* read all at once to reduce timing issues */
         MemoryReadBlock(&DataBuffer, BlockAddress * EM4233_BYTES_PER_BLCK, BlocksNumber * EM4233_BYTES_PER_BLCK);
@@ -200,20 +200,15 @@ uint16_t EM4233_Read_Multiple(uint8_t* FrameBuf, uint16_t FrameBytes)
         for (uint8_t block = 0; block < BlocksNumber; block++) { /* we cycle through the blocks */
 
             /* add lock status */
-            if (LockStatusBuffer[block] & ISO15693_MASK_USER_LOCK) { /* tests if bit 0 of the status byte if set to 1 */
-                FrameBuf[FramePtr] = 0x01; /* return bit 0 set as 1 (user locked) */
-            } else if (LockStatusBuffer[block] & ISO15693_MASK_FACTORY_LOCK)  { /* tests if bit 1 of the status byte if set to 1 */
-                FrameBuf[FramePtr] = 0x02; /* return bit 1 set as 1 (factory locked) */
-            } else
-                FrameBuf[FramePtr] = 0x00; /* return lock status 00 (unlocked) */
+            FrameBuf[FramePtr++] = LockStatusBuffer[block]; /* Byte in dump equals to the byte that has to be sent */
+            /* I.E. We store 0x01 to identify user lock, which is the same as what ISO15693 enforce */
             ResponseByteCount += 1;
-            FramePtr += 1;
 
             /* then copy block's data */
-            for (uint8_t byte = 0; byte < EM4233_BYTES_PER_BLCK; byte++) { /* we cycle through the bytes in every block */
-                FrameBuf[FramePtr] = DataBuffer[block * EM4233_BYTES_PER_BLCK + byte]; /* to copy them in the frame from our temporary buffer */
-                FramePtr += 1;
-            }
+            FrameBuf[FramePtr++] = DataBuffer[block * EM4233_BYTES_PER_BLCK + 0];
+            FrameBuf[FramePtr++] = DataBuffer[block * EM4233_BYTES_PER_BLCK + 1];
+            FrameBuf[FramePtr++] = DataBuffer[block * EM4233_BYTES_PER_BLCK + 2];
+            FrameBuf[FramePtr++] = DataBuffer[block * EM4233_BYTES_PER_BLCK + 3];
             ResponseByteCount += EM4233_BYTES_PER_BLCK;
         }
     }
@@ -227,41 +222,44 @@ uint16_t EM4233_Write_AFI(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     uint8_t AFI = FrameInfo.Parameters[0];
-    uint8_t LockStatus = 0; 
+    uint8_t LockStatus = 0;
 
     if (FrameInfo.ParamLen != 1)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
     MemoryReadBlock(&LockStatus, EM4233_MEM_INF_ADDRESS, 1);
 
-    if (LockStatus & EM4233_MASK_AFI_STATUS ) { /* The afi is locked */
-        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
-        ResponseByteCount += 2;
+    if (LockStatus & EM4233_MASK_AFI_STATUS ) { /* The AFI is locked */
+        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
+        // ResponseByteCount += 2;
+        ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
         return ResponseByteCount;
     }
 
     MemoryWriteBlock(&AFI, EM4233_MEM_AFI_ADDRESS, 1); /* Actually write new AFI */
 
-    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
-    ResponseByteCount += 1; 
+    // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
+    // ResponseByteCount += 1;
+    ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
     return ResponseByteCount;
 }
 
 uint16_t EM4233_Lock_AFI(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
-    uint8_t LockStatus = 0; 
+    uint8_t LockStatus = 0;
 
     if (FrameInfo.ParamLen != 0)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
     MemoryReadBlock(&LockStatus, EM4233_MEM_INF_ADDRESS, 1);
 
-    if (LockStatus & EM4233_MASK_AFI_STATUS ) { /* The afi is already locked */
-        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
-        ResponseByteCount += 2;
+    if (LockStatus & EM4233_MASK_AFI_STATUS ) { /* The AFI is already locked */
+        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
+        // ResponseByteCount += 2;
+        ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
         return ResponseByteCount;
     }
 
@@ -269,8 +267,9 @@ uint16_t EM4233_Lock_AFI(uint8_t* FrameBuf, uint16_t FrameBytes)
 
     MemoryWriteBlock(&LockStatus, EM4233_MEM_INF_ADDRESS, 1); /* Actually write new AFI */
 
-    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
-    ResponseByteCount += 1; 
+    // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
+    // ResponseByteCount += 1;
+    ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
     return ResponseByteCount;
 }
 
@@ -278,50 +277,54 @@ uint16_t EM4233_Write_DSFID(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     uint8_t DSFID = FrameInfo.Parameters[0];
-    uint8_t LockStatus = 0; 
+    uint8_t LockStatus = 0;
 
     if (FrameInfo.ParamLen != 1)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
     MemoryReadBlock(&LockStatus, EM4233_MEM_INF_ADDRESS, 1);
 
-    if (LockStatus & EM4233_MASK_DSFID_STATUS ) { /* The afi is locked */
-        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
-        ResponseByteCount += 2;
+    if (LockStatus & EM4233_MASK_DSFID_STATUS ) { /* The DSFID is locked */
+        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
+        // ResponseByteCount += 2;
+        ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
         return ResponseByteCount;
     }
 
-    MemoryWriteBlock(&DSFID, EM4233_MEM_DSFID_ADDRESS, 1); /* Actually write new AFI */
+    MemoryWriteBlock(&DSFID, EM4233_MEM_DSFID_ADDRESS, 1); /* Actually write new DSFID */
 
-    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
-    ResponseByteCount += 1; 
+    // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
+    // ResponseByteCount += 1;
+    ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
     return ResponseByteCount;
 }
 
 uint16_t EM4233_Lock_DSFID(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
-    uint8_t LockStatus = 0; 
+    uint8_t LockStatus = 0;
 
     if (FrameInfo.ParamLen != 0)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
     MemoryReadBlock(&LockStatus, EM4233_MEM_INF_ADDRESS, 1);
 
-    if (LockStatus & EM4233_MASK_DSFID_STATUS ) { /* The afi is already locked */
-        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
-        ResponseByteCount += 2;
+    if (LockStatus & EM4233_MASK_DSFID_STATUS ) { /* The DSFID is already locked */
+        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
+        // ResponseByteCount += 2;
+        ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
         return ResponseByteCount;
     }
 
     LockStatus |= EM4233_MASK_DSFID_STATUS;
 
-    MemoryWriteBlock(*FrameInfo.Parameters, EM4233_MEM_INF_ADDRESS, 4); /* Actually write the new PASSWORD */
+    MemoryWriteBlock(*FrameInfo.Parameters, EM4233_MEM_INF_ADDRESS, 4); /* Actually write the new DSFID */
 
-    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
-    ResponseByteCount += 1; 
+    // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
+    // ResponseByteCount += 1;
+    ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
     return ResponseByteCount;
 }
 
@@ -345,7 +348,7 @@ uint8_t EM4233_Get_SysInfo(uint8_t* FrameBuf, uint16_t FrameBytes)
     */
 
     /* System info flags */
-    FrameBuf[FramePtr] = EM4233_SYSINFO_BYTE; /* check pdf for this */ 
+    FrameBuf[FramePtr] = EM4233_SYSINFO_BYTE; /* check EM4233SLIC datasheet for this */ 
     FramePtr += 1;             /* Move forward the buffer data pointer */
     ResponseByteCount += 1;    /* Increment the response count */
 
@@ -389,7 +392,7 @@ uint8_t EM4233_Get_SysInfo(uint8_t* FrameBuf, uint16_t FrameBytes)
     }
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
-    ResponseByteCount += 1; 
+    ResponseByteCount += 1;
     return ResponseByteCount;
 }
 
@@ -398,40 +401,28 @@ uint16_t EM4233_Get_Multi_Block_Sec_Stat(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     uint8_t FramePtr; /* holds the address where block's data will be put */
     uint8_t BlockAddress = FrameInfo.Parameters[0];
-    uint8_t BlocksNumber = 0;
-    uint8_t LockStatus = 0; 
+    uint8_t BlocksNumber = FrameInfo.Parameters[1] + 0x01;
 
     if (FrameInfo.ParamLen != 2)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
-    BlocksNumber = FrameInfo.Parameters[1];
-
-    if (BlockAddress >= EM4233_NUMBER_OF_BLCKS || (BlockAddress + BlocksNumber) >= EM4233_NUMBER_OF_BLCKS) { /* the reader is requesting a sector out of bound */
-        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL; /* real TiTag standard reply with this error */
-        ResponseByteCount += 2;
+    if (BlockAddress > EM4233_NUMBER_OF_BLCKS) { /* the reader is requesting a starting block out of bound */
+        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL;
+        ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
         return ResponseByteCount;
+    } else if ((BlockAddress + BlocksNumber) >= EM4233_NUMBER_OF_BLCKS) { /* last block is out of bound */
+        BlocksNumber = EM4233_NUMBER_OF_BLCKS - BlockAddress; /* we read up to latest block, as real tag does */
     }
 
-    FramePtr = 1; /* Start of response data  */
+    FramePtr = 1; /* start of response data  */
 
-    for (uint8_t blk = 0; blk <= BlocksNumber; blk++) {
-
-        MemoryReadBlock(&LockStatus, (EM4233_MEM_LSM_ADDRESS + (BlockAddress + blk)), 1);
-
-        if (LockStatus & ISO15693_MASK_FACTORY_LOCK)  { /* tests if the n-th bit of the factory bitmask if set to 1 */
-            FrameBuf[FramePtr] = 0x02; /* return bit 1 set as 1 (factory locked) */
-        } else if (LockStatus & ISO15693_MASK_USER_LOCK) { /* tests if the n-th bit of the user bitmask if set to 1 */
-            FrameBuf[FramePtr] = 0x01; /* return bit 0 set as 1 (user locked) */
-        } else
-            FrameBuf[FramePtr] = 0x00; /* return lock status 00 (unlocked) */
-
-        FramePtr += 1;          /* Move forward the buffer data pointer */
-        ResponseByteCount += 1; /* Increment the response count */
-    }
+    /* read all at once to reduce timing issues */
+    MemoryReadBlock(&FrameBuf[FramePtr], EM4233_MEM_LSM_ADDRESS + BlockAddress, BlocksNumber);
+    ResponseByteCount += BlocksNumber;
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
-    ResponseByteCount += 1; 
+    ResponseByteCount += 1;
     return ResponseByteCount;
 }
 
@@ -463,13 +454,13 @@ uint16_t EM4233_Select(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
         return ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
     }
 
-    return ISO15693_APP_NO_RESPONSE;
+    return ISO15693_APP_NO_RESPONSE; /* Just because you never know... */
 }
 
 uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
-    uint8_t Password[4] = { 0 }; 
+    uint8_t Password[4] = { 0 };
 
     if (FrameInfo.ParamLen != 4)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
@@ -489,10 +480,10 @@ uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
 
     loggedIn = true;
 
-    MemoryWriteBlock(Password, EM4233_MEM_PSW_ADDRESS, 4); /* Actually write new AFI */
+    MemoryWriteBlock(Password, EM4233_MEM_PSW_ADDRESS, 4); /* Store password in memory for retrival */
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
-    ResponseByteCount += 1; 
+    ResponseByteCount += 1;
     return ResponseByteCount;
 }
 

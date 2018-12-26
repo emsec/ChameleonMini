@@ -76,6 +76,7 @@
  * The byte used for the lock status has its bits addressed as follow:
  * 
  */
+#define ISO15693_MASK_UNLOCKED          ( 0 << 0 )
 #define ISO15693_MASK_USER_LOCK         ( 1 << 0 )
 #define ISO15693_MASK_FACTORY_LOCK      ( 1 << 1 )
 
