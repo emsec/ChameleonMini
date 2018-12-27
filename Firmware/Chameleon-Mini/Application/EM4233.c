@@ -15,6 +15,7 @@ static enum {
 } State;
 
 bool loggedIn;
+uint8_t MyAFI; /* This variable holds current tag's AFI (is used in inventory) */
 
 CurrentFrame FrameInfo;
 
@@ -29,6 +30,7 @@ void EM4233AppInit(void)
     FrameInfo.Addressed     = false;
     FrameInfo.Selected      = false;
     loggedIn = false;
+    MemoryReadBlock(&MyAFI, EM4233_MEM_AFI_ADDRESS, 1);
 
 }
 
@@ -238,6 +240,7 @@ uint16_t EM4233_Write_AFI(uint8_t* FrameBuf, uint16_t FrameBytes)
     }
 
     MemoryWriteBlock(&AFI, EM4233_MEM_AFI_ADDRESS, 1); /* Actually write new AFI */
+    MyAFI = AFI; /* And update global variable */
 
     // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
     // ResponseByteCount += 1;
@@ -493,15 +496,20 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint8_t Uid[ActiveConfiguration.UidSize];
     EM4233GetUid(Uid);
 
-    if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, Uid))
+    if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, Uid, MyAFI))
         return ISO15693_APP_NO_RESPONSE;
 
     if (State == STATE_READY || State == STATE_SELECTED) {
         if (*FrameInfo.Command == ISO15693_CMD_INVENTORY) {
-            FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
-            MemoryReadBlock(&FrameBuf[ISO15693_RES_ADDR_PARAM], EM4233_MEM_DSFID_ADDRESS, 1);
-            ISO15693CopyUid(&FrameBuf[ISO15693_RES_ADDR_PARAM + 0x01], Uid);
-            ResponseByteCount = 10;
+            if (FrameInfo.ParamLen == 0)
+                return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
+
+            if (ISO15693AntiColl (FrameBuf, FrameBytes, &FrameInfo, Uid)) {
+                FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+                MemoryReadBlock(&FrameBuf[ISO15693_RES_ADDR_PARAM], EM4233_MEM_DSFID_ADDRESS, 1);
+                ISO15693CopyUid(&FrameBuf[ISO15693_RES_ADDR_PARAM + 0x01], Uid);
+                ResponseByteCount += 10;
+            }
 
         } else if ( (*FrameInfo.Command == ISO15693_CMD_STAY_QUIET ) && FrameInfo.Addressed) {
             State = STATE_QUIET;

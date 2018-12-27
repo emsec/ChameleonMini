@@ -16,6 +16,7 @@ static enum {
     STATE_QUIET
 } State;
 
+uint8_t MyAFI;                      /* Holds current tag's AFI (is used in inventory) */
 uint16_t UserLockBits_Mask = 0;     /* Holds lock state of blocks */
 uint16_t FactoryLockBits_Mask = 0;  /* Holds lock state of blocks */
 CurrentFrame FrameInfo;
@@ -33,6 +34,8 @@ void TITagitstandardAppInit(void)
     FrameInfo.ParamLen      = 0;
     FrameInfo.Addressed     = false;
     FrameInfo.Selected      = false;
+
+    MemoryReadBlock(&MyAFI, TITAGIT_MEM_AFI_ADDRESS, 1);
 }
 
 void TITagitstandardAppReset(void)
@@ -64,7 +67,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint8_t Uid[ActiveConfiguration.UidSize];
     TITagitstandardGetUid(Uid);
 
-    if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, Uid))
+    if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, Uid, MyAFI))
         return ISO15693_APP_NO_RESPONSE;
 
     switch(State) {

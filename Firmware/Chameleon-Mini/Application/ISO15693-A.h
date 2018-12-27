@@ -88,7 +88,8 @@ typedef struct {
 
 void ISO15693AppendCRC(uint8_t* FrameBuf, uint16_t FrameBufSize);
 bool ISO15693CheckCRC(void* FrameBuf, uint16_t FrameBufSize);
-bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t* MyUid);
+bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t* MyUid, uint8_t MyAFI);
+bool ISO15693AntiColl(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t* MyUid);
 
 INLINE
 bool ISO15693CompareUid(uint8_t* Uid1, uint8_t* Uid2)

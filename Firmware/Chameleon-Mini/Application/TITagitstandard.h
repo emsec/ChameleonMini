@@ -12,10 +12,11 @@
 #include "Application.h"
 
 #define TITAGIT_STD_UID_SIZE        ISO15693_GENERIC_UID_SIZE  //ISO15693_UID_SIZE
-#define TITAGIT_STD_MEM_SIZE        44 //TAG-IT STANDARD MAX MEM SIZE
+#define TITAGIT_STD_MEM_SIZE        44          //TAG-IT STANDARD MAX MEM SIZE
 #define TITAGIT_BYTES_PER_PAGE      4
 #define TITAGIT_NUMBER_OF_SECTORS   ( TITAGIT_STD_MEM_SIZE / TITAGIT_BYTES_PER_PAGE )
 #define TITAGIT_MEM_UID_ADDRESS     0x20
+#define TITAGIT_MEM_AFI_ADDRESS     0x28        // AFI byte address
 
 void TITagitstandardAppInit(void);
 void TITagitstandardAppReset(void);
