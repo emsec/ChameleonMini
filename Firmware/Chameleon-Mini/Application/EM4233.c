@@ -3,6 +3,9 @@
  *
  *  Created on: 12-05-2018
  *      Author: ceres-c & MrMoDDoM
+ *  TODO:
+ *      - Check with real tag every command's actual response in addressed/selected State
+ *          (Only EM4233_Read_Single and EM4233_Read_Multiple have been checked up to now)
  */
 
 #include "ISO15693-A.h"
@@ -91,22 +94,21 @@ uint16_t EM4233_Lock_Block(uint8_t* FrameBuf, uint16_t FrameBytes)
 uint16_t EM4233_Write_Single(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
-    uint8_t* Dataptr;
-    uint8_t PageAddress = *FrameInfo.Parameters;
+    uint8_t BlockAddress = *FrameInfo.Parameters;
+    uint8_t* Dataptr = BlockAddress + 0x01; /* Data to write begins on 2nd byte of the frame received by the reader */
     uint8_t LockStatus = 0;
 
     if (FrameInfo.ParamLen != 5)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
-    if (PageAddress > EM4233_NUMBER_OF_BLCKS) {
+    if (BlockAddress > EM4233_NUMBER_OF_BLCKS) {
         // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
         // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_OPT_NOT_SUPP;
         ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
         return ResponseByteCount; /* malformed: trying to write in a non-existing block */
     }
 
-    MemoryReadBlock(&LockStatus, (EM4233_MEM_LSM_ADDRESS + PageAddress), 1);
-    Dataptr = PageAddress + 0x01;
+    MemoryReadBlock(&LockStatus, (EM4233_MEM_LSM_ADDRESS + BlockAddress), 1);
 
     if (LockStatus & ISO15693_MASK_FACTORY_LOCK) {
         // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
@@ -117,7 +119,7 @@ uint16_t EM4233_Write_Single(uint8_t* FrameBuf, uint16_t FrameBytes)
         // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_CHG_LKD;
         ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
     } else {
-        MemoryWriteBlock(Dataptr, PageAddress * EM4233_BYTES_PER_BLCK, EM4233_BYTES_PER_BLCK);
+        MemoryWriteBlock(Dataptr, BlockAddress * EM4233_BYTES_PER_BLCK, EM4233_BYTES_PER_BLCK);
         FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
         ResponseByteCount += 1;
     }
@@ -129,23 +131,25 @@ uint16_t EM4233_Read_Single(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     uint8_t FramePtr; /* holds the address where block's data will be put */
-    uint8_t PageAddress = *FrameInfo.Parameters;
+    uint8_t BlockAddress = FrameInfo.Parameters[0];
     uint8_t LockStatus = 0;
 
     if (FrameInfo.ParamLen != 1)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
-    if (PageAddress >= EM4233_NUMBER_OF_BLCKS) { /* the reader is requesting a sector out of bound */
-        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL;
-        ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
-        return ResponseByteCount;
+    if (BlockAddress >= EM4233_NUMBER_OF_BLCKS) { /* check if the reader is requesting a sector out of bound */
+        if (FrameInfo.Addressed) { /* If the request is addressed */
+            FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+            FrameBuf[ISO15693_RES_ADDR_PARAM] = 0x0F; /* Magic number from real tag */
+            ResponseByteCount += 2; /* Copied this behaviour from real tag, not specified in ISO documents */
+        }
+        return ResponseByteCount; /* If not addressed real tag does not respond */
     }
 
     FramePtr = 1;
 
     if (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_OPTION) { /* request with option flag set */  
-        MemoryReadBlock(&LockStatus, (EM4233_MEM_LSM_ADDRESS + PageAddress), 1);
+        MemoryReadBlock(&LockStatus, (EM4233_MEM_LSM_ADDRESS + BlockAddress), 1);
         if (LockStatus & ISO15693_MASK_FACTORY_LOCK)  { /* tests if the n-th bit of the factory bitmask if set to 1 */
             FrameBuf[FramePtr] = ISO15693_MASK_FACTORY_LOCK; /* return bit 1 set as 1 (factory locked) */
         } else if (LockStatus & ISO15693_MASK_USER_LOCK) { /* tests if the n-th bit of the user bitmask if set to 1 */
@@ -156,7 +160,7 @@ uint16_t EM4233_Read_Single(uint8_t* FrameBuf, uint16_t FrameBytes)
         ResponseByteCount += 1;
     }
 
-    MemoryReadBlock(&FrameBuf[FramePtr], PageAddress * EM4233_BYTES_PER_BLCK, EM4233_BYTES_PER_BLCK);
+    MemoryReadBlock(&FrameBuf[FramePtr], BlockAddress * EM4233_BYTES_PER_BLCK, EM4233_BYTES_PER_BLCK);
     ResponseByteCount += 4;
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
@@ -175,11 +179,13 @@ uint16_t EM4233_Read_Multiple(uint8_t* FrameBuf, uint16_t FrameBytes)
     if (FrameInfo.ParamLen != 2)
         return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
-    if (BlockAddress > EM4233_NUMBER_OF_BLCKS) { /* the reader is requesting a starting block out of bound */
-        // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-        // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_BLK_NOT_AVL;
-        ResponseByteCount = ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
-        return ResponseByteCount;
+    if (BlockAddress >= EM4233_NUMBER_OF_BLCKS) { /* the reader is requesting a block out of bound */
+        if (FrameInfo.Addressed) { /* If the request is addressed */
+            FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+            FrameBuf[ISO15693_RES_ADDR_PARAM] = 0x0F; /* Magic number from real tag */
+            ResponseByteCount += 2; /* Copied this behaviour from real tag, not specified in ISO documents */
+        }
+        return ResponseByteCount; /* If not addressed real tag does not respond */
     } else if ((BlockAddress + BlocksNumber) >= EM4233_NUMBER_OF_BLCKS) { /* last block is out of bound */
         BlocksNumber = EM4233_NUMBER_OF_BLCKS - BlockAddress; /* we read up to latest block, as real tag does */
     }
@@ -431,6 +437,7 @@ uint16_t EM4233_Get_Multi_Block_Sec_Stat(uint8_t* FrameBuf, uint16_t FrameBytes)
 
 uint16_t EM4233_Select(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
 {
+    uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     /* I've no idea how this request could generate errors ._.
     if ( ) {
         FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
@@ -442,22 +449,48 @@ uint16_t EM4233_Select(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
 
     bool UidEquals = ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid);
 
-    if (!FrameInfo.Addressed || FrameInfo.Selected) {
+    if (!(FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_ADDRESS) ||
+               (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_SELECT)
+              ) {
         /* tag should remain silent if Select is performed without address flag or with select flag */
         return ISO15693_APP_NO_RESPONSE;
-    } else if (State == STATE_SELECTED && !UidEquals) {
-        /* tag should remain silent if Select is performed while the tag is selected but against another tag */
+    } else if (!UidEquals) {
+        /* tag should remain silent and reset if Select is performed against another UID,
+         * whether our the tag is selected or not
+         */
         State = STATE_READY;
-        return ISO15693_APP_NO_RESPONSE;
-    } else if (State != STATE_SELECTED && !UidEquals) {
-        /* tag should remain silent if Select is performed against another UID */
         return ISO15693_APP_NO_RESPONSE;
     } else if (State != STATE_SELECTED && UidEquals) {
         State = STATE_SELECTED;
-        return ISO15693_APP_NO_RESPONSE; /* real tag does not respond anyway */
+        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+        ResponseByteCount += 1;
+        return ResponseByteCount;
     }
+}
 
-    return ISO15693_APP_NO_RESPONSE; /* Just because you never know... */
+uint16_t EM4233_Reset_To_Ready(uint8_t* FrameBuf, uint16_t FrameBytes)
+{
+    uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
+    /* I've no idea how this request could generate errors ._.
+    if ( ) {
+        FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+        FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
+        ResponseByteCount += 2;
+        return ResponseByteCount;
+    }
+    */
+    FrameInfo.Flags         = NULL;
+    FrameInfo.Command       = NULL;
+    FrameInfo.Parameters    = NULL;
+    FrameInfo.ParamLen      = 0;
+    FrameInfo.Addressed     = false;
+    FrameInfo.Selected      = false;
+
+    State = STATE_READY;
+
+    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+    ResponseByteCount += 1;
+    return ResponseByteCount;
 }
 
 uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
@@ -496,7 +529,14 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint8_t Uid[ActiveConfiguration.UidSize];
     EM4233GetUid(Uid);
 
-    if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, Uid, MyAFI))
+    if (FrameBuf[ISO15693_REQ_ADDR_CMD] == ISO15693_CMD_SELECT) {
+        /* Select has its own path before PrepareFrame because we have to change the variable State
+         * from Select to Ready if "Select" cmd is addressed to another tag.
+         * It felt weird to add this kind of check in ISO15693PrepareFrame, which should not
+         * interfere with tag specific variables, such as State in this case.
+         */
+        ResponseByteCount = EM4233_Select(FrameBuf, FrameBytes, Uid);
+    } else if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, State == STATE_SELECTED, Uid, MyAFI))
         return ISO15693_APP_NO_RESPONSE;
 
     if (State == STATE_READY || State == STATE_SELECTED) {
@@ -543,30 +583,25 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 
         } else if (*FrameInfo.Command == ISO15693_CMD_GET_BLOCK_SEC) {
             ResponseByteCount = EM4233_Get_Multi_Block_Sec_Stat(FrameBuf, FrameBytes);
-        
-        } else if (*FrameInfo.Command == ISO15693_CMD_SELECT) {
-            ResponseByteCount = EM4233_Select(FrameBuf, FrameBytes, Uid);
+
+        } else if (*FrameInfo.Command == ISO15693_CMD_RESET_TO_READY) {
+            ResponseByteCount = EM4233_Reset_To_Ready (FrameBuf, FrameBytes);
 
         } else if (*FrameInfo.Command == EM4233_CMD_LOGIN) {
             ResponseByteCount = EM4233_Login(FrameBuf, FrameBytes, Uid);
 
+        } else if (*FrameInfo.Command == ISO15693_CMD_INVENTORY) {
+            /* This is just a placeholder to avoid falling in the following else */
+
         } else {
-            FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-            FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_NOT_SUPP;
-            ResponseByteCount = 2;
+            /* EM4233 does not respond to non existing commands */
+            // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+            // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_NOT_SUPP;
+            // ResponseByteCount = 2;
         }
     } else if (State == STATE_QUIET) {
         if (*FrameInfo.Command == ISO15693_CMD_RESET_TO_READY) {
-            FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
-            ResponseByteCount = 1;
-            State = STATE_READY;
-
-            FrameInfo.Flags         = NULL;
-            FrameInfo.Command       = NULL;
-            FrameInfo.Parameters    = NULL;
-            FrameInfo.ParamLen      = 0;
-            FrameInfo.Addressed     = false;
-            FrameInfo.Selected      = false;
+            ResponseByteCount = EM4233_Reset_To_Ready (FrameBuf, FrameBytes);
         }
     }
 

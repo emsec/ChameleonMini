@@ -67,7 +67,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint8_t Uid[ActiveConfiguration.UidSize];
     TITagitstandardGetUid(Uid);
 
-    if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, Uid, MyAFI))
+    if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, State == STATE_SELECTED, Uid, MyAFI))
         return ISO15693_APP_NO_RESPONSE;
 
     switch(State) {

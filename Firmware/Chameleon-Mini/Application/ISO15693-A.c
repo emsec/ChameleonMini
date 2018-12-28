@@ -65,7 +65,7 @@ bool ISO15693CheckCRC(void* FrameBuf, uint16_t FrameBufSize)
  * 
  * Authors: ceres-c & MrMoDDoM
  */
-bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t* MyUid, uint8_t MyAFI)
+bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t IsSelected, uint8_t* MyUid, uint8_t MyAFI)
 {
     if ((FrameBytes < ISO15693_MIN_FRAME_SIZE) || !ISO15693CheckCRC(FrameBuf, FrameBytes - ISO15693_CRC16_SIZE))
         /* malformed frame */
@@ -96,8 +96,7 @@ bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* 
             return false;
         FrameStruct -> Parameters += 0x01;
     }
-    else if ( ((*FrameStruct -> Command) == ISO15693_CMD_INVENTORY) && (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_AFI)) {
-    /* or if it is Inventory with AFI flag set */
+    else if ( ((*FrameStruct -> Command) == ISO15693_CMD_INVENTORY) && (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_AFI)) { /* or if it is Inventory with AFI flag set */
         /* then between CMD and UID is placed another byte which is requested AFI, but we don't need it */
         if (FrameBuf[ISO15693_REQ_ADDR_PARAM] != MyAFI)
             /* if requested AFI is different from our current one, then don't respond */
@@ -107,10 +106,11 @@ bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* 
 
     FrameStruct -> ParamLen = FrameBuf + (FrameBytes - ISO15693_CRC16_SIZE) - (FrameStruct -> Parameters);
 
-    uint8_t *uid = (FrameStruct -> Parameters) - ISO15693_GENERIC_UID_SIZE;
-
-    if (FrameStruct -> Addressed && !ISO15693CompareUid( uid, MyUid)) {
+    if (FrameStruct -> Addressed && !ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], MyUid)) {
         /* addressed request but we're not the addressee */
+        return false;
+    } else if (FrameStruct -> Selected && !IsSelected) {
+        /* selected request but we're not in selected state */
         return false;
     } else {
         return true;
