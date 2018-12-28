@@ -95,7 +95,7 @@ uint16_t EM4233_Write_Single(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     uint8_t BlockAddress = *FrameInfo.Parameters;
-    uint8_t* Dataptr = BlockAddress + 0x01; /* Data to write begins on 2nd byte of the frame received by the reader */
+    uint8_t* Dataptr = FrameInfo.Parameters + 0x01; /* Data to write begins on 2nd byte of the frame received by the reader */
     uint8_t LockStatus = 0;
 
     if (FrameInfo.ParamLen != 5)
