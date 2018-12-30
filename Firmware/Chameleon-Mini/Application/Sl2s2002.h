@@ -11,9 +11,6 @@
 #include "Application.h"
 #include "ISO15693-A.h"
 
-#define ISO15693_GENERIC_UID_SIZE    8 //ISO15693_UID_SIZE
-#define ISO15693_GENERIC_MEM_SIZE    8192 //ISO15693_MAX_MEM_SIZE
-
 void Sl2s2002AppInit(void);
 void Sl2s2002AppReset(void);
 void Sl2s2002AppTask(void);

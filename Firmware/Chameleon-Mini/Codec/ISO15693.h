@@ -12,11 +12,6 @@
 
 #define ISO15693_APP_NO_RESPONSE        0x0000
 
-/* VERY OUTDATED */
-#define TIMER_SAMPLING                  TCC0
-#define TIMER_T1_BITRATE                TCD1
-#define TIMER_SUBCARRIER                TCD0
-
 #define SUBCARRIER_1                    32
 #define SUBCARRIER_2                    28
 #define SUBCARRIER_OFF                  0

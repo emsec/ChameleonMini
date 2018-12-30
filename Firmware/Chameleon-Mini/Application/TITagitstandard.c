@@ -16,6 +16,7 @@ static enum {
     STATE_QUIET
 } State;
 
+uint8_t MyAFI;                      /* Holds current tag's AFI (is used in inventory) */
 uint16_t UserLockBits_Mask = 0;     /* Holds lock state of blocks */
 uint16_t FactoryLockBits_Mask = 0;  /* Holds lock state of blocks */
 CurrentFrame FrameInfo;
@@ -32,6 +33,9 @@ void TITagitstandardAppInit(void)
     FrameInfo.Parameters    = NULL;
     FrameInfo.ParamLen      = 0;
     FrameInfo.Addressed     = false;
+    FrameInfo.Selected      = false;
+
+    MemoryReadBlock(&MyAFI, TITAGIT_MEM_AFI_ADDRESS, 1);
 }
 
 void TITagitstandardAppReset(void)
@@ -43,6 +47,7 @@ void TITagitstandardAppReset(void)
     FrameInfo.Parameters    = NULL;
     FrameInfo.ParamLen      = 0;
     FrameInfo.Addressed     = false;
+    FrameInfo.Selected      = false;
 }
 
 
@@ -62,7 +67,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint8_t Uid[ActiveConfiguration.UidSize];
     TITagitstandardGetUid(Uid);
 
-    if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, Uid))
+    if (!ISO15693PrepareFrame(FrameBuf, FrameBytes, &FrameInfo, State == STATE_SELECTED, Uid, MyAFI))
         return ISO15693_APP_NO_RESPONSE;
 
     switch(State) {
@@ -114,10 +119,12 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             if (FrameInfo.ParamLen != 5)
                 break; /* malformed: not enough or too much data */
 
-            if (PageAddress > TITAGIT_NUMBER_OF_SECTORS)
+            if (PageAddress > TITAGIT_NUMBER_OF_SECTORS) {
                 FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
                 FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_OPT_NOT_SUPP;
+                ResponseByteCount = 2;
                 break; /* malformed: trying to write in a non-existing block */
+            }
 
             Dataptr = PageAddress + 0x01;
 
@@ -141,11 +148,12 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             if (FrameInfo.ParamLen != 1)
                 break; /* malformed: not enough or too much data */
 
-            if (PageAddress > TITAGIT_NUMBER_OF_SECTORS)
+            if (PageAddress > TITAGIT_NUMBER_OF_SECTORS) {
                 FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
                 FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_OPT_NOT_SUPP;
                 ResponseByteCount = 2;
                 break; /* malformed: trying to lock a non-existing block */
+            }
 
             if ((FactoryLockBits_Mask & (1 << PageAddress)) || (UserLockBits_Mask & (1 << PageAddress))) {
                 FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
