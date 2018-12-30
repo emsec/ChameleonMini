@@ -80,10 +80,6 @@ CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam)
     for (uint8_t i=0; i<UidSize; i++) {
       UidBuffer[i] = RandomGetByte();
     }
-    /* If we are using an ISO15 tag, the first byte needs to be E0 by standard */
-    if (ActiveConfiguration.TagFamily == TAG_FAMILY_ISO15693) {
-      UidBuffer[0] = 0xE0;
-    }
 
   } else {
     /* Convert to Bytes */
