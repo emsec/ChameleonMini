@@ -106,7 +106,8 @@ bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* 
 
     FrameStruct -> ParamLen = FrameBuf + (FrameBytes - ISO15693_CRC16_SIZE) - (FrameStruct -> Parameters);
 
-    if (FrameStruct -> Addressed && !ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], MyUid)) {
+    /*                                                  The UID, if present, always sits right befoore the parameters */
+    if (FrameStruct -> Addressed && !ISO15693CompareUid(FrameStruct -> Parameters - ISO15693_GENERIC_UID_SIZE, MyUid)) {
         /* addressed request but we're not the addressee */
         return false;
     } else if (FrameStruct -> Selected && !IsSelected) {
