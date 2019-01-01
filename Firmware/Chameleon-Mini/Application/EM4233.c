@@ -3,11 +3,16 @@
  *
  *  Created on: 12-05-2018
  *      Author: ceres-c & MrMoDDoM
+ *  Notes:
+ *      - In EM4233.h you can find the define EM4233_LOGIN_YES_CARD that has to be uncommnted
+ *        to allow any login request without checking the password.
+ *
  *  TODO:
  *      - Check with real tag every command's actual response in addressed/selected State
  *          (Only EM4233_Read_Single and EM4233_Read_Multiple have been checked up to now)
  */
 
+#include "../Random.h"
 #include "ISO15693-A.h"
 #include "EM4233.h"
 
@@ -274,7 +279,7 @@ uint16_t EM4233_Lock_AFI(uint8_t* FrameBuf, uint16_t FrameBytes)
 
     LockStatus |= EM4233_MASK_AFI_STATUS;
 
-    MemoryWriteBlock(&LockStatus, EM4233_MEM_INF_ADDRESS, 1); /* Actually write new AFI */
+    MemoryWriteBlock(&LockStatus, EM4233_MEM_INF_ADDRESS, 1); /* Write in info bits AFI lockdown */
 
     // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
     // ResponseByteCount += 1;
@@ -329,7 +334,7 @@ uint16_t EM4233_Lock_DSFID(uint8_t* FrameBuf, uint16_t FrameBytes)
 
     LockStatus |= EM4233_MASK_DSFID_STATUS;
 
-    MemoryWriteBlock(*FrameInfo.Parameters, EM4233_MEM_INF_ADDRESS, 4); /* Actually write the new DSFID */
+    MemoryWriteBlock(&LockStatus, EM4233_MEM_INF_ADDRESS, 1); /* Write in info bits DSFID lockdown */
 
     // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
     // ResponseByteCount += 1;
@@ -450,8 +455,8 @@ uint16_t EM4233_Select(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
     bool UidEquals = ISO15693CompareUid(&FrameBuf[ISO15693_REQ_ADDR_PARAM], Uid);
 
     if (!(FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_ADDRESS) ||
-               (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_SELECT)
-              ) {
+         (FrameBuf[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_SELECT)
+       ) {
         /* tag should remain silent if Select is performed without address flag or with select flag */
         return ISO15693_APP_NO_RESPONSE;
     } else if (!UidEquals) {
@@ -466,6 +471,10 @@ uint16_t EM4233_Select(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
         ResponseByteCount += 1;
         return ResponseByteCount;
     }
+
+    /* This should never happen (TM), I've added it to shut the compiler up */
+    State = STATE_READY;
+    return ISO15693_APP_NO_RESPONSE;
 }
 
 uint16_t EM4233_Reset_To_Ready(uint8_t* FrameBuf, uint16_t FrameBytes)
@@ -493,19 +502,26 @@ uint16_t EM4233_Reset_To_Ready(uint8_t* FrameBuf, uint16_t FrameBytes)
     return ResponseByteCount;
 }
 
-uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
+uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     uint8_t Password[4] = { 0 };
 
-    if (FrameInfo.ParamLen != 4)
-        return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
+    if (FrameInfo.ParamLen != 4 || !FrameInfo.Addressed)
+        /* Malformed: not enough or too much data. Also this command only works in addressed mode */
+        return ISO15693_APP_NO_RESPONSE;
 
     MemoryReadBlock(&Password, EM4233_MEM_PSW_ADDRESS, 4);
 
-    if( false ){ // YES-MAN!
-    // if (!memcmp(Password, FrameInfo.Parameters, 4)) { /* Incorrect password */
+    #ifdef EM4233_LOGIN_YES_CARD
+    /* Accept any password from reader as correct one */
+    loggedIn = true;
 
+    MemoryWriteBlock(FrameInfo.Parameters, EM4233_MEM_PSW_ADDRESS, 4); /* Store password in memory for retrival */
+
+    #else
+    /* Check if the password is actually the right one */
+    if (memcmp(Password, FrameInfo.Parameters, 4) != 0) { /* Incorrect password */
         loggedIn = false;
 
         // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
@@ -514,12 +530,58 @@ uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes, uint8_t* Uid)
         return ResponseByteCount;
     }
 
-    loggedIn = true;
+    #endif
 
-    MemoryWriteBlock(Password, EM4233_MEM_PSW_ADDRESS, 4); /* Store password in memory for retrival */
+    loggedIn = true;
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR; /* flags */
     ResponseByteCount += 1;
+    return ResponseByteCount;
+}
+
+uint16_t EM4233_Auth1(uint8_t* FrameBuf, uint16_t FrameBytes)
+{
+    uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
+    // uint8_t KeyNo = *FrameInfo.Parameters; /* Right now this parameter is unused, but it will be useful */
+
+    if (FrameInfo.ParamLen != 1 || !FrameInfo.Addressed)
+        /* Malformed: not enough or too much data. Also this command only works in addressed mode */
+        return ISO15693_APP_NO_RESPONSE;
+
+    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+    #ifdef EM4233_LOGIN_YES_CARD
+    /* Will be useful for testing purposes, probably removed in final version */
+    FrameBuf[ISO15693_ADDR_FLAGS + 1] = 0x00;
+    FrameBuf[ISO15693_ADDR_FLAGS + 2] = 0x00;
+    FrameBuf[ISO15693_ADDR_FLAGS + 3] = 0x00;
+    FrameBuf[ISO15693_ADDR_FLAGS + 4] = 0x00;
+    FrameBuf[ISO15693_ADDR_FLAGS + 5] = 0x00;
+    FrameBuf[ISO15693_ADDR_FLAGS + 6] = 0x00;
+    FrameBuf[ISO15693_ADDR_FLAGS + 7] = 0x00;
+    #else
+    /* Respond like a real tag */
+    RandomGetBuffer(FrameBuf + 0x01, 7); /* Random number A1 in EM Marin definitions */
+    #endif
+    ResponseByteCount += 8;
+    return ResponseByteCount;
+}
+
+uint16_t EM4233_Auth2(uint8_t* FrameBuf, uint16_t FrameBytes)
+{
+    uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
+    // uint8_t A2 = FrameInfo.Parameters;
+    // uint8_t f = FrameInfo.Parameters + 0x08;
+    // uint8_t g[3] = { 0 }; /* Names according to EM Marin definitions */
+
+    if (FrameInfo.ParamLen != 11) /* Malformed: not enough or too much data */
+        return ISO15693_APP_NO_RESPONSE;
+    // else if (!fFunc()) /* Actual f implementation to check if the f bytes we received are correct */
+    //     return ISO15693_APP_NO_RESPONSE;
+
+
+    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+    RandomGetBuffer(FrameBuf + 0x01, 3); /* This should be replaced with actual gFunc() implementation */
+    ResponseByteCount += 4;
     return ResponseByteCount;
 }
 
@@ -528,6 +590,10 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     uint8_t Uid[ActiveConfiguration.UidSize];
     EM4233GetUid(Uid);
+
+    if ((FrameBytes < ISO15693_MIN_FRAME_SIZE) || !ISO15693CheckCRC(FrameBuf, FrameBytes - ISO15693_CRC16_SIZE))
+        /* malformed frame */
+        return ResponseByteCount;
 
     if (FrameBuf[ISO15693_REQ_ADDR_CMD] == ISO15693_CMD_SELECT) {
         /* Select has its own path before PrepareFrame because we have to change the variable State
@@ -540,6 +606,7 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
         return ISO15693_APP_NO_RESPONSE;
 
     if (State == STATE_READY || State == STATE_SELECTED) {
+
         if (*FrameInfo.Command == ISO15693_CMD_INVENTORY) {
             if (FrameInfo.ParamLen == 0)
                 return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
@@ -588,17 +655,22 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             ResponseByteCount = EM4233_Reset_To_Ready (FrameBuf, FrameBytes);
 
         } else if (*FrameInfo.Command == EM4233_CMD_LOGIN) {
-            ResponseByteCount = EM4233_Login(FrameBuf, FrameBytes, Uid);
+            ResponseByteCount = EM4233_Login(FrameBuf, FrameBytes);
 
-        } else if (*FrameInfo.Command == ISO15693_CMD_INVENTORY) {
-            /* This is just a placeholder to avoid falling in the following else */
+        } else if (*FrameInfo.Command == EM4233_CMD_AUTH1) {
+            ResponseByteCount = EM4233_Auth1(FrameBuf, FrameBytes);
+
+        } else if (*FrameInfo.Command == EM4233_CMD_AUTH2) {
+            ResponseByteCount = EM4233_Auth2(FrameBuf, FrameBytes);
 
         } else {
-            /* EM4233 does not respond to non existing commands */
-            // FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-            // FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_NOT_SUPP;
-            // ResponseByteCount = 2;
+            if (FrameInfo.Addressed) {
+                FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+                FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_NOT_SUPP;
+                ResponseByteCount = 2;
+            } /* EM4233 respond with error flag only to addressed commands */
         }
+
     } else if (State == STATE_QUIET) {
         if (*FrameInfo.Command == ISO15693_CMD_RESET_TO_READY) {
             ResponseByteCount = EM4233_Reset_To_Ready (FrameBuf, FrameBytes);
@@ -606,7 +678,7 @@ uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
     }
 
     if (ResponseByteCount > 0) {
-        /* There is data to be sent. Append CRC */
+        /* There is data to send. Append CRC */
         ISO15693AppendCRC(FrameBuf, ResponseByteCount);
         ResponseByteCount += ISO15693_CRC16_SIZE;
     }

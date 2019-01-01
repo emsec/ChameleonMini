@@ -54,9 +54,8 @@ bool ISO15693CheckCRC(void* FrameBuf, uint16_t FrameBufSize)
 /*
  * ISO15693PrepareFrame
  * 
- * This function validates frame lenght and sets pointers in 'frame' struct
- * to relevant byte(s) of 'FrameBuf'. Also sets frame.addressed as true if
- * the command is addressed
+ * This function sets pointers in 'frame' struct to relevant byte(s) of 'FrameBuf'.
+ * Also sets frame.Addressed as true if the command is addressed, same goes for frame.Selected
  * 
  * Returns:
  *  - true:  Frame is valid and a response is needed
@@ -67,10 +66,6 @@ bool ISO15693CheckCRC(void* FrameBuf, uint16_t FrameBufSize)
  */
 bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t IsSelected, uint8_t* MyUid, uint8_t MyAFI)
 {
-    if ((FrameBytes < ISO15693_MIN_FRAME_SIZE) || !ISO15693CheckCRC(FrameBuf, FrameBytes - ISO15693_CRC16_SIZE))
-        /* malformed frame */
-        return false;
-
     /* following declarations are not dependent on addressed/unaddressed state */
     FrameStruct -> Flags        = &FrameBuf[ISO15693_ADDR_FLAGS];
     FrameStruct -> Command      = &FrameBuf[ISO15693_REQ_ADDR_CMD];

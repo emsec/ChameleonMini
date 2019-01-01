@@ -53,8 +53,17 @@
 #define EM4233_CMD_FST_READ_BLKS        0xC3
 
 /* Proprietary command code */
+#define EM4233_CMD_AUTH1                0xE0
+#define EM4233_CMD_AUTH2                0xE1
 #define EM4233_CMD_LOGIN                0xE4
 
+/* Compile time switch */
+/* EM4233_LOGIN_YES_CARD has to be uncommented if you want your emulated card
+ * to accept any given password from the reader when a Login request (E4) is issued.
+ * It is expecially useful when analyzing an unknown system and you want to fool a reader
+ * into thiking you are using the original tag without actually knowing the password.
+ */
+#define EM4233_LOGIN_YES_CARD
 
 void EM4233AppInit(void);
 void EM4233AppReset(void);
