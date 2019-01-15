@@ -35,6 +35,7 @@ typedef enum LEDFunctionEnum {
 
     LED_LOG_MEM_FULL,		/* Light up if log memory is full. */
 
+    LED_CLONE_DONE,		/* Blink once when clone is done. */
     //TODO: LED_APP_SELECTED,		/* Show LED while the correct UID has been selected and the application is active */
     /* Has to be last element */
     LED_FUNC_COUNT

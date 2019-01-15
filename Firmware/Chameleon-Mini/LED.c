@@ -22,6 +22,7 @@ static const MapEntryType PROGMEM LEDFunctionMap[] = {
     { .Id = LED_CODEC_TX,		.Text = "CODEC_TX"			},
     { .Id = LED_FIELD_DETECTED,	.Text = "FIELD_DETECTED"	},
     { .Id = LED_LOG_MEM_FULL,	.Text = "LOGMEM_FULL"		},
+    { .Id = LED_CLONE_DONE,		.Text = "CLONE_DONE"		},
 };
 
 INLINE void Tick(uint8_t Mask, LEDActionEnum* Action)
@@ -165,4 +166,3 @@ bool LEDSetFuncByName(uint8_t Mask, const char* Function)
         return false;
     }
 }
-

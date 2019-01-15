@@ -1,5 +1,6 @@
 #include "Reader14443A.h"
 #include "Application.h"
+#include "LEDHook.h"
 #include "ISO14443-3A.h"
 #include "../Codec/Reader14443-2A.h"
 #include "Crypto1.h"
@@ -933,6 +934,8 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 					if (cfgid > -1)
 					{
 						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Cloned OK!");
+            /* Notify LED. blink when clone is done */
+            LEDHook(LED_CLONE_DONE, LED_BLINK_1X);
 						ConfigurationSetById(cfgid);
 						ApplicationReset();
 						ApplicationSetUid(CardCharacteristics.UID);
