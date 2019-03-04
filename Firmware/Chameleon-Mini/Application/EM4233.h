@@ -55,6 +55,8 @@
 /* Proprietary command code */
 #define EM4233_CMD_AUTH1                0xE0
 #define EM4233_CMD_AUTH2                0xE1
+#define EM4233_CMD_GEN_READ             0xE2    // Implies some sort of singed CRC. Unknown at the moment
+#define EM4233_CMD_GEN_WRITE            0xE3    // Same
 #define EM4233_CMD_LOGIN                0xE4
 
 /* Compile time switch */

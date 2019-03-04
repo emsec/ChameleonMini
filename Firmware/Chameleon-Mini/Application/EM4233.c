@@ -507,7 +507,7 @@ uint16_t EM4233_Login(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     uint8_t Password[4] = { 0 };
 
-    if (FrameInfo.ParamLen != 4 || !FrameInfo.Addressed)
+    if (FrameInfo.ParamLen != 4 || !FrameInfo.Addressed || !(FrameInfo.Selected && State == STATE_SELECTED))
         /* Malformed: not enough or too much data. Also this command only works in addressed mode */
         return ISO15693_APP_NO_RESPONSE;
 
@@ -544,8 +544,7 @@ uint16_t EM4233_Auth1(uint8_t* FrameBuf, uint16_t FrameBytes)
     uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
     // uint8_t KeyNo = *FrameInfo.Parameters; /* Right now this parameter is unused, but it will be useful */
 
-    if (FrameInfo.ParamLen != 1 || !FrameInfo.Addressed)
-        /* Malformed: not enough or too much data. Also this command only works in addressed mode */
+    if (FrameInfo.ParamLen != 1) /* Malformed: not enough or too much data */
         return ISO15693_APP_NO_RESPONSE;
 
     FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
