@@ -667,3 +667,24 @@ CommandStatusIdType CommandExecClone(char *OutMessage)
 
     return TIMEOUT_COMMAND;
 }
+
+CommandStatusIdType CommandSetUserInterface(char* OutMessage, const char* InParam)
+{
+    if (COMMAND_IS_SUGGEST_STRING(InParam)) {
+        UserInterfaceModeList(OutMessage, TERMINAL_BUFFER_SIZE);
+        return COMMAND_INFO_OK_WITH_TEXT_ID;
+    } else if (UserInterfaceSetModeByName(InParam)) {
+        SettingsSave();
+        return COMMAND_INFO_OK_ID;
+    } else {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+}
+
+
+CommandStatusIdType CommandGetUserInterface(char* OutParam)
+{
+    UserInterfaceGetModeByName(OutParam, TERMINAL_BUFFER_SIZE);
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+

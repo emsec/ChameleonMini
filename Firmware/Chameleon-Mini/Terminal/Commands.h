@@ -187,6 +187,11 @@ CommandStatusIdType CommandGetField(char* OutMessage);
 #define COMMAND_CLONE  "CLONE"
 CommandStatusIdType CommandExecClone(char* OutMessage);
 
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+#define COMMAND_USERINTERFACE "USER_INTERFACE"
+CommandStatusIdType CommandSetUserInterface(char* OutMessage, const char* InParam);
+CommandStatusIdType CommandGetUserInterface(char* OutMessage);
+#endif
 #define COMMAND_LIST_END    ""
 /* Defines the end of command list. This is no actual command */
 

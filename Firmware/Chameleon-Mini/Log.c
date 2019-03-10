@@ -4,6 +4,7 @@
 #include "System.h"
 #include "Map.h"
 #include "LEDHook.h"
+#include "UserInterface.h"
 
 static uint8_t LogMem[LOG_SIZE];
 static uint8_t *LogMemPtr;
@@ -63,8 +64,18 @@ static void LogFuncLive(LogEntryEnum Entry, const void* Data, uint8_t Length)
 
 void LogInit(void)
 {
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+	if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL) {
+		LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
+	}
+	else
+	{
+		LogSetModeById(GLOBAL_UI_STORAGE.LogMode);
+	}
+#else
     LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
-    LogMemPtr = LogMem;
+#endif
+	LogMemPtr = LogMem;
     LogMemLeft = sizeof(LogMem);
 
     uint8_t result;
@@ -166,6 +177,16 @@ uint16_t LogMemFree(void)
 
 void LogSetModeById(LogModeEnum Mode)
 {
+	
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+	if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL) {
+		GlobalSettings.ActiveSettingPtr->LogMode = Mode;
+	}
+	else
+	{
+		GLOBAL_UI_STORAGE.LogMode = Mode;
+	}
+#else
 #ifndef LOG_SETTING_GLOBAL
     GlobalSettings.ActiveSettingPtr->LogMode = Mode;
 #else
@@ -174,7 +195,7 @@ void LogSetModeById(LogModeEnum Mode)
          GlobalSettings.Settings[i].LogMode = Mode;
     }
 #endif
-
+#endif
     switch(Mode) {
     case LOG_MODE_OFF:
         EnableLogSRAMtoFRAM = false;
@@ -211,8 +232,20 @@ bool LogSetModeByName(const char* Mode)
 
 void LogGetModeByName(char* Mode, uint16_t BufferSize)
 {
-    MapIdToText(LogModeMap, ARRAY_COUNT(LogModeMap),
+	
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+	if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL) {
+		MapIdToText(LogModeMap, ARRAY_COUNT(LogModeMap),
+		GlobalSettings.ActiveSettingPtr->LogMode, Mode, BufferSize);
+	}
+	else {
+		MapIdToText(LogModeMap, ARRAY_COUNT(LogModeMap),
+		GLOBAL_UI_STORAGE.LogMode, Mode, BufferSize);
+	}
+#else
+	MapIdToText(LogModeMap, ARRAY_COUNT(LogModeMap),
             GlobalSettings.ActiveSettingPtr->LogMode, Mode, BufferSize);
+#endif
 }
 
 void LogGetModeList(char* List, uint16_t BufferSize)

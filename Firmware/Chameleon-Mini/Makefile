@@ -39,15 +39,17 @@ SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
 #SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_STORE_MEM
 SETTINGS	+= -DDEFAULT_LBUTTON_ACTION=BUTTON_ACTION_RECALL_MEM
 
+SETTINGS    += -DUSER_INTERFACE_MODE_CONFIGURABLE
+
 #Define if button action setting should be independent of active setting 
-SETTINGS	+= -DBUTTON_SETTING_GLOBAL
+#SETTINGS	+= -DBUTTON_SETTING_GLOBAL
 
 #Default LED functions
 SETTINGS	+= -DDEFAULT_RED_LED_ACTION=LED_SETTING_CHANGE
 SETTINGS	+= -DDEFAULT_GREEN_LED_ACTION=LED_POWERED
 
 #Define if LED function setting should be independent of active setting
-SETTINGS	+= -DLED_SETTING_GLOBAL
+#SETTINGS	+= -DLED_SETTING_GLOBAL
 
 #Default logging mode
 SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_OFF
@@ -55,7 +57,7 @@ SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_OFF
 #SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_TERMINAL
 
 #Define if log settings should be global
-SETTINGS	+= -DLOG_SETTING_GLOBAL
+#SETTINGS	+= -DLOG_SETTING_GLOBAL
 
 #Default setting
 SETTINGS	+= -DDEFAULT_SETTING=SETTINGS_FIRST
@@ -68,6 +70,9 @@ SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
 
 #Use EEPROM to store settings
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
+
+#Default user interface mode
+SETTINGS	+= -DDEFAULT_USERINTERFACE_MODE=USER_INTERFACE_GLOBAL
 
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
@@ -94,6 +99,7 @@ SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c C
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S
 SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c
+SRC			+= UserInterface.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)

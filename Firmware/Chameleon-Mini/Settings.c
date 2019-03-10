@@ -5,6 +5,9 @@
 #include "Memory.h"
 #include "LEDHook.h"
 #include "Terminal/CommandLine.h"
+#include "LED.h"
+#include "Button.h"
+
 
 #include "System.h"
 
@@ -26,8 +29,9 @@ SettingsType EEMEM StoredSettings = {
         .LEDRedFunction = DEFAULT_RED_LED_ACTION,
         .LEDGreenFunction = DEFAULT_GREEN_LED_ACTION,
         .PendingTaskTimeout = DEFAULT_PENDING_TASK_TIMEOUT,
-        .ReaderThreshold = DEFAULT_READER_THRESHOLD
-    }}
+        .ReaderThreshold = DEFAULT_READER_THRESHOLD,
+    }},
+	.UserInterfaceMode = DEFAULT_USERINTERFACE_MODE
 };
 
 void SettingsLoad(void) {
@@ -74,7 +78,36 @@ bool SettingsSetActiveById(uint8_t Setting) {
 
             /* Settings have changed. Progress changes through system */
             ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
-            LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
+
+			
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+			if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL) {
+				LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
+				LEDSetFuncById(LED_RED,GlobalSettings.ActiveSettingPtr->LEDRedFunction);
+				LEDSetFuncById(LED_GREEN,GlobalSettings.ActiveSettingPtr->LEDGreenFunction);
+				ButtonSetActionById(BUTTON_L_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_SHORT]);
+				ButtonSetActionById(BUTTON_R_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_SHORT]);
+				ButtonSetActionById(BUTTON_L_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_LONG]);
+				ButtonSetActionById(BUTTON_R_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_LONG]);
+			}
+			else {
+				LogSetModeById(GlobalSettings.Settings[0].LogMode);
+				LEDSetFuncById(LED_RED,GlobalSettings.Settings[0].LEDRedFunction);
+				LEDSetFuncById(LED_GREEN,GlobalSettings.Settings[0].LEDGreenFunction);
+				ButtonSetActionById(BUTTON_L_PRESS_SHORT,GlobalSettings.Settings[0].ButtonActions[BUTTON_L_PRESS_SHORT]);
+				ButtonSetActionById(BUTTON_R_PRESS_SHORT,GlobalSettings.Settings[0].ButtonActions[BUTTON_R_PRESS_SHORT]);
+				ButtonSetActionById(BUTTON_L_PRESS_LONG,GlobalSettings.Settings[0].ButtonActions[BUTTON_L_PRESS_LONG]);
+				ButtonSetActionById(BUTTON_R_PRESS_LONG,GlobalSettings.Settings[0].ButtonActions[BUTTON_R_PRESS_LONG]);
+			}
+#else
+	        LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
+			LEDSetFuncById(LED_RED,GlobalSettings.ActiveSettingPtr->LEDRedFunction);
+			LEDSetFuncById(LED_GREEN,GlobalSettings.ActiveSettingPtr->LEDGreenFunction);
+			ButtonSetActionById(BUTTON_L_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_SHORT]);
+			ButtonSetActionById(BUTTON_R_PRESS_SHORT,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_SHORT]);
+			ButtonSetActionById(BUTTON_L_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_LONG]);
+			ButtonSetActionById(BUTTON_R_PRESS_LONG,GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_LONG]);
+#endif
 
             /* Recall new memory contents */
             MemoryRecall();

@@ -4,6 +4,7 @@
 
 #include "Terminal/CommandLine.h"
 #include "System.h"
+#include "UserInterface.h"
 
 #define BLINK_PRESCALER	1 /* x LEDTick(); */
 
@@ -109,6 +110,28 @@ void LEDGetFuncList(char* List, uint16_t BufferSize)
 
 void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
 {
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+	if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL) {
+		if (Mask & LED_GREEN) {
+			GlobalSettings.ActiveSettingPtr->LEDGreenFunction = Function;
+		}
+
+		if (Mask & LED_RED) {
+			GlobalSettings.ActiveSettingPtr->LEDRedFunction = Function;
+		}
+	}
+	else
+	{
+        /* Always 1st setting is used */
+		if (Mask & LED_GREEN) {
+			GLOBAL_UI_STORAGE.LEDGreenFunction = Function;
+		}
+
+		if (Mask & LED_RED) {
+			GLOBAL_UI_STORAGE.LEDRedFunction = Function;
+		}
+	}
+#else
 #ifndef LED_SETTING_GLOBAL
     if (Mask & LED_GREEN) {
         GlobalSettings.ActiveSettingPtr->LEDGreenFunction = Function;
@@ -118,7 +141,7 @@ void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
         GlobalSettings.ActiveSettingPtr->LEDRedFunction = Function;
     }
 #else
-    /* Write LED func to all settings when using global settings */
+	/* Write LED func to all settings when using global settings */
     for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
         if (Mask & LED_GREEN) {
             GlobalSettings.Settings[i].LEDGreenFunction = Function;
@@ -128,6 +151,7 @@ void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
             GlobalSettings.Settings[i].LEDRedFunction = Function;
         }
     }
+#endif
 #endif
 
     /* Clear modified LED and remove any pending actions */
@@ -145,13 +169,37 @@ void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
 
 void LEDGetFuncByName(uint8_t Mask, char* Function, uint16_t BufferSize)
 {
-    if (Mask == LED_GREEN) {
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+	if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL) {
+		if (Mask == LED_GREEN) {
+        MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
+                GlobalSettings.ActiveSettingPtr->LEDGreenFunction, Function, BufferSize);
+		} else if (Mask == LED_RED) {
+			MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
+                GlobalSettings.ActiveSettingPtr->LEDRedFunction, Function, BufferSize);
+		
+		}
+	}
+	else
+	{
+		if (Mask == LED_GREEN) {
+        MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
+                GLOBAL_UI_STORAGE.LEDGreenFunction, Function, BufferSize);
+		} else if (Mask == LED_RED) {
+			MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
+                GLOBAL_UI_STORAGE.LEDRedFunction, Function, BufferSize);
+		
+		}
+	}
+ #else
+	if (Mask == LED_GREEN) {
         MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
                 GlobalSettings.ActiveSettingPtr->LEDGreenFunction, Function, BufferSize);
     } else if (Mask == LED_RED) {
         MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
                 GlobalSettings.ActiveSettingPtr->LEDRedFunction, Function, BufferSize);
     }
+#endif
 }
 
 bool LEDSetFuncByName(uint8_t Mask, const char* Function)

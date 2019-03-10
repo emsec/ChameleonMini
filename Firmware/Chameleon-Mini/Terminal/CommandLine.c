@@ -316,6 +316,15 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc        = NO_FUNCTION,
     .GetFunc        = NO_FUNCTION
   },
+  #ifdef USER_INTERFACE_MODE_CONFIGURABLE
+  {
+    .Command        = COMMAND_USERINTERFACE,
+    .ExecFunc       = NO_FUNCTION,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = CommandSetUserInterface,
+    .GetFunc        = CommandGetUserInterface
+  },
+  #endif
   { /* This has to be last element */
     .Command    = COMMAND_LIST_END,
     .ExecFunc   = NO_FUNCTION,

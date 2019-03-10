@@ -6,6 +6,7 @@
 #include "Map.h"
 #include "Terminal/CommandLine.h"
 #include "Application/Application.h"
+#include "UserInterface.h"
 
 #define BUTTON_PORT     	PORTA
 #define BUTTON_L			PIN5_bm
@@ -215,8 +216,17 @@ void ButtonTick(void)
         } else if (ButtonRPressTick == LONG_PRESS_TICK_COUNT) {
             /* Long button press detected execute button action and advance PressTickCounter
              * to an invalid state. */
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+			if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL){
+				ExecuteButtonAction(GLOBAL_UI_STORAGE.ButtonActions[BUTTON_R_PRESS_LONG]);
+			}
+			else {
+				ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_LONG]);
+			}
+#else
             ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_LONG]);
-            ButtonRPressTick++;
+#endif
+		    ButtonRPressTick++;
         } else {
             /* Button is still pressed, ignore */
         }
@@ -225,7 +235,16 @@ void ButtonTick(void)
          * a recent short button press. */
         if ( (ButtonRPressTick > 0) && (ButtonRPressTick <= LONG_PRESS_TICK_COUNT) ) {
             /* We have a short button press */
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+			if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL){
+				ExecuteButtonAction(GLOBAL_UI_STORAGE.ButtonActions[BUTTON_R_PRESS_SHORT]);
+			}
+			else {
+				ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_SHORT]);
+			}
+#else
             ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_SHORT]);
+#endif
         }
 
         ButtonRPressTick = 0;
@@ -239,8 +258,17 @@ void ButtonTick(void)
         } else if (ButtonLPressTick == LONG_PRESS_TICK_COUNT) {
             /* Long button press detected execute button action and advance PressTickCounter
              * to an invalid state. */
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+			if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL){
+				ExecuteButtonAction(GLOBAL_UI_STORAGE.ButtonActions[BUTTON_L_PRESS_LONG]);
+			}
+			else {
+				ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_LONG]);
+			}
+#else
             ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_LONG]);
-            ButtonLPressTick++;
+#endif     
+			ButtonLPressTick++;
         } else {
             /* Button is still pressed, ignore */
         }
@@ -249,7 +277,16 @@ void ButtonTick(void)
          * a recent short button press. */
         if ( (ButtonLPressTick > 0) && (ButtonLPressTick <= LONG_PRESS_TICK_COUNT) ) {
             /* We have a short button press */
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+			if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL){
+				ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_SHORT]);
+			}
+			else {
+				ExecuteButtonAction(GLOBAL_UI_STORAGE.ButtonActions[BUTTON_L_PRESS_SHORT]);
+			}
+#else
             ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_L_PRESS_SHORT]);
+#endif
         }
 
         ButtonLPressTick = 0;
@@ -263,6 +300,16 @@ void ButtonGetActionList(char* List, uint16_t BufferSize)
 
 void ButtonSetActionById(ButtonTypeEnum Type, ButtonActionEnum Action)
 {
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+	if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL){
+		GlobalSettings.ActiveSettingPtr->ButtonActions[Type] = Action;
+	}
+	else
+	{
+		GLOBAL_UI_STORAGE.ButtonActions[Type] = Action;
+	}
+#else
+	
 #ifndef BUTTON_SETTING_GLOBAL
     GlobalSettings.ActiveSettingPtr->ButtonActions[Type] = Action;
 #else
@@ -271,12 +318,24 @@ void ButtonSetActionById(ButtonTypeEnum Type, ButtonActionEnum Action)
         GlobalSettings.Settings[i].ButtonActions[Type] = Action;
     }
 #endif
+#endif
 }
 
 void ButtonGetActionByName(ButtonTypeEnum Type, char* Action, uint16_t BufferSize)
 {
+#ifdef	USER_INTERFACE_MODE_CONFIGURABLE
+	if ( GlobalSettings.UserInterfaceMode == USER_INTERFACE_INDIVIDUAL){
+		 MapIdToText(ButtonActionMap, ARRAY_COUNT(ButtonActionMap),
+            GlobalSettings.ActiveSettingPtr->ButtonActions[Type], Action, BufferSize);
+	}
+	else {
+		 MapIdToText(ButtonActionMap, ARRAY_COUNT(ButtonActionMap),
+            GLOBAL_UI_STORAGE.ButtonActions[Type], Action, BufferSize);
+	}
+#else
     MapIdToText(ButtonActionMap, ARRAY_COUNT(ButtonActionMap),
             GlobalSettings.ActiveSettingPtr->ButtonActions[Type], Action, BufferSize);
+#endif
 }
 
 bool ButtonSetActionByName(ButtonTypeEnum Type, const char* Action)
