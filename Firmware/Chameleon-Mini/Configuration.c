@@ -37,6 +37,9 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_ISO14443A_READER_SUPPORT
     { .Id = CONFIG_ISO14443A_READER,	.Text = "ISO14443A_READER" },
 #endif
+#ifdef CONFIG_NTAG215_SUPPORT
+    { .Id = CONFIG_NTAG215,	.Text = "NTAG215" },
+#endif
 };
 
 /* Include all Codecs and Applications */
@@ -218,6 +221,23 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .UidSize = 0,
         .MemorySize = 0,
         .ReadOnly = false
+    },
+#endif
+#ifdef CONFIG_NTAG215_SUPPORT
+    [CONFIG_NTAG215] = {
+        .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
+        .CodecTaskFunc = ISO14443ACodecTask,
+        .ApplicationInitFunc = NTAG215AppInit,
+        .ApplicationResetFunc = NTAG215AppReset,
+        .ApplicationTaskFunc = NTAG215AppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
+        .ApplicationProcessFunc = NTAG215AppProcess,
+        .ApplicationGetUidFunc = NTAG215GetUid,
+        .ApplicationSetUidFunc = NTAG215SetUid,
+        .UidSize = NTAG215_UID_SIZE,
+        .MemorySize = NTAG215_MEM_SIZE,
+        .ReadOnly = false,
     },
 #endif
 };

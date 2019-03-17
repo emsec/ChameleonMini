@@ -17,6 +17,7 @@
 #include "MifareClassic.h"
 #include "Reader14443A.h"
 #include "Sniff14443A.h"
+#include "NTAG215.h"
 
 /* Function wrappers */
 INLINE void ApplicationInit(void) {
