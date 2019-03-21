@@ -130,7 +130,7 @@ uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                 break; /* malformed: trying to write in a non-existing block */
             }
 
-            Dataptr = PageAddress + 0x01;
+            Dataptr = FrameInfo.Parameters + 1;
 
             if (FactoryLockBits_Mask & (1 << PageAddress)) {
                 FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
