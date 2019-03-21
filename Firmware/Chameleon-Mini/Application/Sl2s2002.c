@@ -119,9 +119,9 @@ uint16_t Sl2s2002AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                         }
                         FrameBuf[0] = 0; /* Flags */
                     }
-                } else if (Command == ISO15693_CMD_GET_BLOCK_SEC) {
+                } else if (Command == ISO15693_CMD_GET_BLOCK_SEC) { // TODO read out block security status
                     if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
-                        uint8_t PageAddressStart = FrameBuf[10];
+                        //uint8_t PageAddressStart = FrameBuf[10];
                         uint8_t PageAddressCount = FrameBuf[11] + 1;
                         FrameBuf[0] = 0; /* Flags */
                         for (uint8_t i = 0; i < PageAddressCount; i++) {
