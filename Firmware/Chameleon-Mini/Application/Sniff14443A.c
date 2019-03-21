@@ -55,7 +55,7 @@ INLINE void reset2REQA(void){
         tmp_th = CodecThresholdIncrement();
     } else{
         // mark finish
-        CommandLinePendingTaskFinished(COMMAND_INFO_FALSE, NULL);
+        CommandLinePendingTaskFinished(COMMAND_INFO_FALSE_ID, NULL);
     }
 }
 uint16_t Sniff14443AAppProcess(uint8_t* Buffer, uint16_t BitCount){
@@ -170,4 +170,5 @@ uint16_t Sniff14443AAppProcess(uint8_t* Buffer, uint16_t BitCount){
         default:
             return 0;
     }
+    return 0;
 }
