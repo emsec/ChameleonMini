@@ -1,0 +1,33 @@
+//------------------------------------------------
+//--- 010 Editor v9.0.1 Binary Template
+//
+//      File: EM4233 ChameleonMini dump format
+//   Authors: ceres-c
+//   Version: 1.0
+//   Purpose: Quick edit of custom dumps
+//  Category: Electronics
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+// 1.0 2018-12-27 ceres-c: Initial release
+//------------------------------------------------
+
+struct FILE {
+        struct Card_dump {
+            char    Data[4] <format=hex>;
+        } block [52];
+
+        struct Emulation_data {
+            char    UID[8] <format=hex, fgcolor=cDkGreen>;
+            char    AFI[1] <format=binary, fgcolor=cLtRed>;
+            char    DSFID[1] <format=binary, fgcolor=cDkAqua>;
+            char    RFU[2] <fgcolor=cBlack>;
+            char    Info_bits[4] <format=binary, fgcolor=cDkBlue>;
+            struct Lock_status_bytes {
+                char    lsbyte <format=binary, fgcolor=cDkRed>;
+            } lsb [52];
+            char    Password[4] <format=hex, fgcolor=cPurple>;
+            char    Key[12] <format=hex, fgcolor=cDkPurple>;
+        } emudata;
+
+} file <bgcolor=cSilver>;

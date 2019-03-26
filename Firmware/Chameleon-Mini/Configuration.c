@@ -39,6 +39,20 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #endif
 #ifdef CONFIG_NTAG215_SUPPORT
     { .Id = CONFIG_NTAG215,	.Text = "NTAG215" },
+#ifdef CONFIG_VICINITY_SUPPORT
+    { .Id = CONFIG_VICINITY,	.Text = "VICINITY" },
+#endif
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+    { .Id = CONFIG_ISO15693_SNIFF,	.Text = "ISO15693_SNIFF" },
+#endif
+#ifdef CONFIG_SL2S2002_SUPPORT
+    { .Id = CONFIG_SL2S2002,	.Text = "SL2S2002" },
+#endif
+#ifdef CONFIG_TITAGITSTANDARD_SUPPORT
+    { .Id = CONFIG_TITAGITSTANDARD,	.Text = "TITAGITSTANDARD" },
+#endif
+#ifdef CONFIG_EM4233_SUPPORT
+    { .Id = CONFIG_EM4233,	.Text = "EM4233" },
 #endif
 };
 
@@ -72,7 +86,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = ApplicationSetUidDummy,
         .UidSize = 0,
         .MemorySize = 0,
-        .ReadOnly = true
+        .ReadOnly = true,
+        .TagFamily = TAG_FAMILY_NONE
     },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
     [CONFIG_MF_ULTRALIGHT] = {
@@ -88,7 +103,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = MifareUltralightSetUid,
         .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
         .MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
-        .ReadOnly = false
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO14443A
     },
     [CONFIG_MF_ULTRALIGHT_EV1_80B] = {
         .CodecInitFunc = ISO14443ACodecInit,
@@ -103,7 +119,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = MifareUltralightSetUid,
         .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
         .MemorySize = MIFARE_ULTRALIGHT_EV11_MEM_SIZE,
-        .ReadOnly = false
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO14443A
     },
     [CONFIG_MF_ULTRALIGHT_EV1_164B] = {
         .CodecInitFunc = ISO14443ACodecInit,
@@ -118,7 +135,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = MifareUltralightSetUid,
         .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
         .MemorySize = MIFARE_ULTRALIGHT_EV12_MEM_SIZE,
-        .ReadOnly = false
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO14443A
     },
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
@@ -135,7 +153,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = MifareClassicSetUid,
         .UidSize = MIFARE_CLASSIC_UID_SIZE,
         .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
-        .ReadOnly = false
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO14443A
     },
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
@@ -152,7 +171,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = MifareClassicSetUid,
         .UidSize = ISO14443A_UID_SIZE_DOUBLE,
         .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
-        .ReadOnly = false
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO14443A
     },
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
@@ -169,7 +189,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = MifareClassicSetUid,
         .UidSize = MIFARE_CLASSIC_UID_SIZE,
         .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
-        .ReadOnly = false
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO14443A
     },
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
@@ -186,7 +207,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = MifareClassicSetUid,
         .UidSize = ISO14443A_UID_SIZE_DOUBLE,
         .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
-        .ReadOnly = false
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO14443A
     },
 #endif
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
@@ -203,7 +225,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = ApplicationSetUidDummy,
         .UidSize = 0,
         .MemorySize = 0,
-        .ReadOnly = true
+        .ReadOnly = true,
+        .TagFamily = TAG_FAMILY_NONE
     },
 #endif
 #ifdef CONFIG_ISO14443A_READER_SUPPORT
@@ -220,7 +243,98 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = ApplicationSetUidDummy,
         .UidSize = 0,
         .MemorySize = 0,
-        .ReadOnly = false
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_NONE
+    },
+#endif
+#ifdef CONFIG_VICINITY_SUPPORT
+    [CONFIG_VICINITY] = {
+        .CodecInitFunc = ISO15693CodecInit,
+        .CodecDeInitFunc = ISO15693CodecDeInit,
+        .CodecTaskFunc = ISO15693CodecTask,
+        .ApplicationInitFunc = VicinityAppInit,
+        .ApplicationResetFunc = VicinityAppReset,
+        .ApplicationTaskFunc = VicinityAppTask,
+        .ApplicationTickFunc = VicinityAppTick,
+        .ApplicationProcessFunc = VicinityAppProcess,
+        .ApplicationGetUidFunc = VicinityGetUid,
+        .ApplicationSetUidFunc = VicinitySetUid,
+        .UidSize = ISO15693_GENERIC_UID_SIZE,
+        .MemorySize = ISO15693_GENERIC_MEM_SIZE,
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO15693
+    },
+#endif
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+    [CONFIG_ISO15693_SNIFF] = {
+        .CodecInitFunc = ISO15693CodecInit,
+        .CodecDeInitFunc = ISO15693CodecDeInit,
+        .CodecTaskFunc = ISO15693CodecTask,
+        .ApplicationInitFunc = ApplicationInitDummy,
+        .ApplicationResetFunc = ApplicationResetDummy,
+        .ApplicationTaskFunc = ApplicationTaskDummy,
+        .ApplicationTickFunc = ApplicationTickDummy,
+        .ApplicationProcessFunc = ApplicationProcessDummy,
+        .ApplicationGetUidFunc = ApplicationGetUidDummy,
+        .ApplicationSetUidFunc = ApplicationSetUidDummy,
+        .UidSize = 0,
+        .MemorySize = 0,
+        .ReadOnly = true,
+        .TagFamily = TAG_FAMILY_NONE
+    },
+#endif
+#ifdef CONFIG_SL2S2002_SUPPORT
+    [CONFIG_SL2S2002] = {
+        .CodecInitFunc = ISO15693CodecInit,
+        .CodecDeInitFunc = ISO15693CodecDeInit,
+        .CodecTaskFunc = ISO15693CodecTask,
+        .ApplicationInitFunc = Sl2s2002AppInit,
+        .ApplicationResetFunc = Sl2s2002AppReset,
+        .ApplicationTaskFunc = Sl2s2002AppTask,
+        .ApplicationTickFunc = Sl2s2002AppTick,
+        .ApplicationProcessFunc = Sl2s2002AppProcess,
+        .ApplicationGetUidFunc = Sl2s2002GetUid,
+        .ApplicationSetUidFunc = Sl2s2002SetUid,
+        .UidSize = ISO15693_GENERIC_UID_SIZE,
+        .MemorySize = ISO15693_GENERIC_MEM_SIZE,
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO15693
+    },
+#endif
+#ifdef CONFIG_TITAGITSTANDARD_SUPPORT
+    [CONFIG_TITAGITSTANDARD] = {
+        .CodecInitFunc = ISO15693CodecInit,
+        .CodecDeInitFunc = ISO15693CodecDeInit,
+        .CodecTaskFunc = ISO15693CodecTask,
+        .ApplicationInitFunc = TITagitstandardAppInit,
+        .ApplicationResetFunc = TITagitstandardAppReset,
+        .ApplicationTaskFunc = TITagitstandardAppTask,
+        .ApplicationTickFunc = TITagitstandardAppTick,
+        .ApplicationProcessFunc = TITagitstandardAppProcess,
+        .ApplicationGetUidFunc = TITagitstandardGetUid,
+        .ApplicationSetUidFunc = TITagitstandardSetUid,
+        .UidSize = TITAGIT_STD_UID_SIZE,
+        .MemorySize = TITAGIT_STD_MEM_SIZE,
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO15693
+    },
+#endif
+#ifdef CONFIG_EM4233_SUPPORT
+    [CONFIG_EM4233] = {
+        .CodecInitFunc = ISO15693CodecInit,
+        .CodecDeInitFunc = ISO15693CodecDeInit,
+        .CodecTaskFunc = ISO15693CodecTask,
+        .ApplicationInitFunc = EM4233AppInit,
+        .ApplicationResetFunc = EM4233AppReset,
+        .ApplicationTaskFunc = EM4233AppTask,
+        .ApplicationTickFunc = EM4233AppTick,
+        .ApplicationProcessFunc = EM4233AppProcess,
+        .ApplicationGetUidFunc = EM4233GetUid,
+        .ApplicationSetUidFunc = EM4233SetUid,
+        .UidSize = EM4233_STD_UID_SIZE,
+        .MemorySize = EM4233_STD_MEM_SIZE,
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO15693
     },
 #endif
 #ifdef CONFIG_NTAG215_SUPPORT

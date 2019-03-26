@@ -79,8 +79,15 @@ static void StartDemod(void) {
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
 }
 
+ISR (CODEC_DEMOD_IN_INT0_VECT)
+{
+  isr_func_CODEC_DEMOD_IN_INT0_VECT();
+}
+
+// ISR(CODEC_DEMOD_IN_INT0_VECT) 
 // Find first pause and start sampling
-ISR(CODEC_DEMOD_IN_INT0_VECT) {
+void isr_ISO14443_2A_TCD0_CCC_vect(void)
+{
     /* This is the first edge of the first modulation-pause after StartDemod.
      * Now we have time to start
      * demodulating beginning from one bit-width after this edge. */
@@ -384,6 +391,8 @@ void ISO14443ACodecInit(void) {
     Flags.DemodFinished = 0;
     Flags.LoadmodFinished = 0;
 
+    isr_func_TCD0_CCC_vect = &isr_Reader14443_2A_TCD0_CCC_vect;
+    isr_func_CODEC_DEMOD_IN_INT0_VECT = &isr_ISO14443_2A_TCD0_CCC_vect;
     CodecInitCommon();
     StartDemod();
 }
