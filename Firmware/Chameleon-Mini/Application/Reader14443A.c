@@ -1,4 +1,5 @@
 #include "Reader14443A.h"
+#include "LEDHook.h"
 #include "Application.h"
 #include "ISO14443-3A.h"
 #include "../Codec/Reader14443-2A.h"
@@ -887,7 +888,9 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 return BitCount;
             }
         }
-
+        /****************************************
+         * This function do simple cloning UID. *
+         ****************************************/
         case Reader14443_Identify_Clone:
         {
         	if (Identify(Buffer, &BitCount))
@@ -900,8 +903,14 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 						case CardType_NXP_MIFARE_Ultralight:
 						{
 							cfgid = CONFIG_MF_ULTRALIGHT;
-							// TODO: enter MFU clone mdoe
+							// TODO: enter MFU clone mode
 							break;
+						}
+						case CardType_NXP_MIFARE_DESFire_EV1:
+						{
+  							cfgid = CONFIG_MF_ULTRALIGHT;
+  							// Only set UL for DESFire_EV1 and read UID for some small tests - simple UID cloning
+  							break;
 						}
 						case CardType_NXP_MIFARE_Classic_1k:
 						case CardType_Infineon_MIFARE_Classic_1k:
@@ -933,6 +942,8 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 					if (cfgid > -1)
 					{
 						CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Cloned OK!");
+						/* Notify LED. blink when clone is done - ToDo: maybe use other LEDHook */
+						LEDHook(LED_SETTING_CHANGE, LED_BLINK_2X);
 						ConfigurationSetById(cfgid);
 						ApplicationReset();
 						ApplicationSetUid(CardCharacteristics.UID);
