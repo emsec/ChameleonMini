@@ -13,27 +13,29 @@
 #include "Crypto1.h"
 #include "../Random.h"
 
-#define MFCLASSIC_1K_ATQA_VALUE     0x0004
-#define MFCLASSIC_1K_7B_ATQA_VALUE  0x0044
-#define MFCLASSIC_4K_ATQA_VALUE     0x0002
-#define MFCLASSIC_4K_7B_ATQA_VALUE  0x0042
+#define MFCLASSIC_MINI_4B_ATQA_VALUE    0x0004
+#define MFCLASSIC_1K_ATQA_VALUE         0x0004
+#define MFCLASSIC_1K_7B_ATQA_VALUE      0x0044
+#define MFCLASSIC_4K_ATQA_VALUE         0x0002
+#define MFCLASSIC_4K_7B_ATQA_VALUE      0x0042
 
-#define MFCLASSIC_1K_SAK_VALUE 		0x08
-#define MFCLASSIC_4K_SAK_VALUE  	0x18
-#define SAK_UID_NOT_FINISHED		0x04
+#define MFCLASSIC_MINI_4B_SAK_VALUE    0x09
+#define MFCLASSIC_1K_SAK_VALUE         0x08
+#define MFCLASSIC_4K_SAK_VALUE         0x18
+#define SAK_UID_NOT_FINISHED           0x04
 
 #define MEM_UID_CL1_ADDRESS         0x00
 #define MEM_UID_CL1_SIZE            4
 #define MEM_UID_BCC1_ADDRESS        0x04
-#define MEM_UID_CL2_ADDRESS        	0x03
+#define MEM_UID_CL2_ADDRESS         0x03
 #define MEM_UID_CL2_SIZE            4
 #define MEM_KEY_A_OFFSET            48        /* Bytes */
 #define MEM_KEY_B_OFFSET            58        /* Bytes */
-#define MEM_KEY_BIGSECTOR_OFFSET	192
+#define MEM_KEY_BIGSECTOR_OFFSET    192
 #define MEM_KEY_SIZE                6        /* Bytes */
 #define MEM_ACC_GPB_SIZE            4        /* Bytes */
 #define MEM_SECTOR_ADDR_MASK        0xFC
-#define MEM_BIGSECTOR_ADDR_MASK		0xF0
+#define MEM_BIGSECTOR_ADDR_MASK     0xF0
 #define MEM_BYTES_PER_BLOCK         16        /* Bytes */
 #define MEM_VALUE_SIZE              4       /* Bytes */
 
@@ -111,19 +113,19 @@ C1 C2 C3        read  write  read  write  read  write
 
 /*
 Access conditions for data blocks
-Access bits Access condition for 				Application
-C1 C2 C3 	read 	write 	increment 	decrement, 
+Access bits Access condition for                 Application
+C1 C2 C3     read     write     increment     decrement, 
                                                 transfer, 
                                                 restore 
 
-0 0 0 		key A|B key A|B key A|B 	key A|B 	transport configuration
-0 1 0 		key A|B never 	never 		never 		read/write block
-1 0 0 		key A|B key B 	never 		never 		read/write block
-1 1 0 		key A|B key B 	key B 		key A|B 	value block
-0 0 1 		key A|B never 	never 		key A|B 	value block
-0 1 1 		key B 	key B 	never 		never 		read/write block
-1 0 1 		key B 	never 	never 		never 		read/write block
-1 1 1 		never 	never 	never 		never 		read/write block
+0 0 0         key A|B key A|B key A|B     key A|B     transport configuration
+0 1 0         key A|B never     never         never         read/write block
+1 0 0         key A|B key B     never         never         read/write block
+1 1 0         key A|B key B     key B         key A|B     value block
+0 0 1         key A|B never     never         key A|B     value block
+0 1 1         key B     key B     never         never         read/write block
+1 0 1         key B     never     never         never         read/write block
+1 1 1         never     never     never         never         read/write block
 
 */
 #define ACC_BLOCK_READ      0x01
@@ -138,56 +140,56 @@ C1 C2 C3 	read 	write 	increment 	decrement,
 static const uint8_t abBlockAccessConditions[8][2] =
 {
     /*C1C2C3 */
-    /* 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B 	transport configuration */
+    /* 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B     transport configuration */
     {
         /* Access with Key A */
         ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT,
         /* Access with Key B */
         ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
     },
-    /* 1 0 0 R:key A|B W:key B I:never D:never 	read/write block */
+    /* 1 0 0 R:key A|B W:key B I:never D:never     read/write block */
     {
         /* Access with Key A */
         ACC_BLOCK_READ,
         /* Access with Key B */
         ACC_BLOCK_READ | ACC_BLOCK_WRITE
     },
-    /* 0 1 0 R:key A|B W:never I:never D:never 	read/write block */
+    /* 0 1 0 R:key A|B W:never I:never D:never     read/write block */
     {
         /* Access with Key A */
         ACC_BLOCK_READ,
         /* Access with Key B */
         ACC_BLOCK_READ
     },
-    /* 1 1 0 R:key A|B W:key B I:key B D:key A|B 	value block */
+    /* 1 1 0 R:key A|B W:key B I:key B D:key A|B     value block */
     {
         /* Access with Key A */
         ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
         /* Access with Key B */
         ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
     },
-    /* 0 0 1 R:key A|B W:never I:never D:key A|B 	value block */
+    /* 0 0 1 R:key A|B W:never I:never D:key A|B     value block */
     {
         /* Access with Key A */
         ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
         /* Access with Key B */
         ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT
     },
-    /* 1 0 1 R:key B W:never I:never D:never 	read/write block */
+    /* 1 0 1 R:key B W:never I:never D:never     read/write block */
     {
         /* Access with Key A */
         0,
         /* Access with Key B */
         ACC_BLOCK_READ  
     },
-    /* 0 1 1 R:key B W:key B I:never D:never	read/write block */
+    /* 0 1 1 R:key B W:key B I:never D:never    read/write block */
     {
         /* Access with Key A */
         0,
         /* Access with Key B */
         ACC_BLOCK_READ | ACC_BLOCK_WRITE 
     },
-    /* 1 1 1 R:never W:never I:never D:never	read/write block */
+    /* 1 1 1 R:never W:never I:never D:never    read/write block */
     {
         /* Access with Key A */
         0,
@@ -199,7 +201,7 @@ static const uint8_t abBlockAccessConditions[8][2] =
 /* Decoding table for Access conditions of the sector trailor */
 static const uint8_t abTrailorAccessConditions[8][2] =
 {
-    /* 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A  	Key B may be read[1] */
+    /* 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A      Key B may be read[1] */
     {
         /* Access with Key A */
         ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_READ_KEYB | ACC_TRAILOR_WRITE_KEYB,
@@ -379,6 +381,14 @@ INLINE void ValueToBlock(uint8_t* Block, uint32_t Value)
     Block[9] = Block[1];
     Block[10] = Block[2];
     Block[11] = Block[3];
+}
+
+void MifareClassicAppInitMini4B(void)
+{
+    State = STATE_IDLE;
+    CardATQAValue = MFCLASSIC_MINI_4B_ATQA_VALUE;
+    CardSAKValue = MFCLASSIC_MINI_4B_SAK_VALUE;
+    FromHalt = false;
 }
 
 void MifareClassicAppInit1K(void)
