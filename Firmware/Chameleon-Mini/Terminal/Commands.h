@@ -151,6 +151,12 @@ CommandStatusIdType CommandExecHelp(char* OutMessage);
 #define COMMAND_RSSI		"RSSI"
 CommandStatusIdType CommandGetRssi(char* OutParam);
 
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+#define COMMAND_DETECTION	"DETECTION"
+CommandStatusIdType CommandGetDetection(char* OutParam);
+CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
+#endif
+
 #define COMMAND_SYSTICK		"SYSTICK"
 CommandStatusIdType CommandGetSysTick(char* OutParam);
 

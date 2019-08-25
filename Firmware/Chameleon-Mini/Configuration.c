@@ -37,6 +37,9 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
     { .Id = CONFIG_ISO14443A_SNIFF,	.Text = "ISO14443A_SNIFF" },
 #endif
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+	{ .Id = CONFIG_MF_DETECTION, 	.Text = "MF_DETECTION" },
+#endif
 #ifdef CONFIG_ISO14443A_READER_SUPPORT
     { .Id = CONFIG_ISO14443A_READER,	.Text = "ISO14443A_READER" },
 #endif
@@ -247,6 +250,23 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ReadOnly = true,
         .TagFamily = TAG_FAMILY_NONE
     },
+#endif
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+[CONFIG_MF_DETECTION] = {
+	.CodecInitFunc = ISO14443ACodecInit,
+	.CodecDeInitFunc = Reader14443ACodecDeInit,
+	.CodecTaskFunc = ISO14443ACodecTask,
+	.ApplicationInitFunc = MifareDetectionInit,
+	.ApplicationResetFunc = MifareDetectionReset,
+	.ApplicationTaskFunc = MifareClassicAppTask,
+    	.ApplicationTickFunc = ApplicationTickDummy,
+	.ApplicationProcessFunc = MifareDetectionAppProcess,
+	.ApplicationGetUidFunc = MifareClassicGetUid,
+	.ApplicationSetUidFunc = MifareClassicSetUid,
+	.UidSize = MIFARE_CLASSIC_UID_SIZE,
+	.MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+	.ReadOnly = false
+},
 #endif
 #ifdef CONFIG_ISO14443A_READER_SUPPORT
     [CONFIG_ISO14443A_READER] = {
