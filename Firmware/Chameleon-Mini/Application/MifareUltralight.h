@@ -11,6 +11,11 @@
 #include "Application.h"
 #include "ISO14443-3A.h"
 
+#define MIFARE_ULTRALIGHTC_UID_SIZE    ISO14443A_UID_SIZE_DOUBLE
+#define MIFARE_ULTRALIGHTC_PAGE_SIZE   4
+#define MIFARE_ULTRALIGHTC_PAGES      48
+#define MIFARE_ULTRALIGHTC_MEM_SIZE			(MIFARE_ULTRALIGHTC_PAGES * MIFARE_ULTRALIGHTC_PAGE_SIZE)
+
 #define MIFARE_ULTRALIGHT_UID_SIZE    ISO14443A_UID_SIZE_DOUBLE
 #define MIFARE_ULTRALIGHT_PAGE_SIZE   4
 #define MIFARE_ULTRALIGHT_PAGES       16
@@ -25,6 +30,9 @@ void MifareUltralightEV11AppInit(void);
 void MifareUltralightEV12AppInit(void);
 void MifareUltralightAppReset(void);
 void MifareUltralightAppTask(void);
+
+void MifareUltralightCAppInit(void);
+void MifareUltralightCAppReset(void);
 
 uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount);
 

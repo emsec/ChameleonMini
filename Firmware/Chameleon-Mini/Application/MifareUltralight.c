@@ -7,8 +7,10 @@
 
 #include "MifareUltralight.h"
 #include "ISO14443-3A.h"
+#include "../CryptoAlgorithms/CryptoTDEA.h"
 #include "../Codec/ISO14443-2A.h"
 #include "../Memory.h"
+#include "../Random.h"
 
 
 #define ATQA_VALUE              0x0044
@@ -29,6 +31,10 @@
 
 /* ISO commands */
 #define CMD_HALT                0x50
+/* ULC commands */
+#define CMD_ULC_AUTH             0x1A
+#define CMD_ULC_AUTH_2            0xAF
+#define CMD_ULC_AUTH_FINISHED    0x00
 /* EV0 commands */
 #define CMD_READ                0x30
 #define CMD_READ_FRAME_SIZE     2 /* without CRC bytes */
@@ -47,6 +53,9 @@
 #define CMD_VCSL                0x4B
 
 /* Tag memory layout; addresses and sizes in bytes */
+#define MF_ULC_COUNTER_ADDRESS    0x29
+#define MF_ULC_READ_MAX_PAGE 0x2C
+
 #define UID_CL1_ADDRESS         0x00
 #define UID_CL1_SIZE            3
 #define UID_BCC1_ADDRESS        0x03
@@ -82,6 +91,7 @@
 
 static enum {
     UL_EV0,
+    UL_C,
     UL_EV1,
 } Flavor;
 
@@ -91,7 +101,8 @@ static enum {
     STATE_READY1,
     STATE_READY2,
     STATE_ACTIVE,
-    STATE_COMPAT_WRITE
+    STATE_COMPAT_WRITE,
+    STATE_AUTH
 } State;
 
 static bool FromHalt = false;
@@ -101,9 +112,71 @@ static uint8_t CompatWritePageAddress;
 static bool Authenticated;
 static uint8_t FirstAuthenticatedPage;
 static bool ReadAccessProtected;
+static uint8_t RNDBBuff [8];
+static uint8_t InitialVector[8] = {0};
+static uint8_t TripleDesKey [16];
+
+static void leftshift1byte ( uint8_t* Input)
+{
+    uint8_t tmpstorage;
+    tmpstorage =Input[0];
+    memmove(Input,&Input[1],7);
+    Input[7] = tmpstorage;
+}
+/* Keys are stored in little Endian Order but we need them in Big  */
+static void rotateKey ( uint8_t* Key)
+{
+    uint8_t tmpstorage [8] ;
+    tmpstorage [0]=Key[7];
+    tmpstorage [1]=Key[6];
+    tmpstorage [2]=Key[5];
+    tmpstorage [3]=Key[4];
+    tmpstorage [4]=Key[3];
+    tmpstorage [5]=Key[2];
+    tmpstorage [6]=Key[1];
+    tmpstorage [7]=Key[0];
+    memcpy (Key, tmpstorage, 8);
+}
+
+static bool MifareUltralightcCheckRNDB (const uint8_t* InMessage)
+{
+    /*Checks if RNDB of Card is equal to decrypted RNDB' send by reader shifted left one Byte */
+    return (RNDBBuff [0]==InMessage [7]&&
+            RNDBBuff [1]==InMessage [0]&&
+            RNDBBuff [2]==InMessage [1]&&
+            RNDBBuff [3]==InMessage [2]&&
+            RNDBBuff [4]==InMessage [3]&&
+            RNDBBuff [5]==InMessage [4]&&
+            RNDBBuff [6]==InMessage [5]&&
+            RNDBBuff [7]==InMessage [6]);
+}
 
 static void AppInitCommon(void)
 {
+    State = STATE_IDLE;
+    FromHalt = false;
+    Authenticated = false;
+    ArmedForCompatWrite = false;
+}
+void MifareUltralightCAppInit (void)
+{
+    Flavor = UL_C;
+    
+    uint8_t AuthentificationAddress = 0x2A * MIFARE_ULTRALIGHTC_PAGE_SIZE;
+    uint8_t ReadAccessAddress = 0x2b * MIFARE_ULTRALIGHTC_PAGE_SIZE;
+    uint8_t KeyAddress = 0x2c * MIFARE_ULTRALIGHTC_PAGE_SIZE;
+    uint8_t Access;
+    
+    /*Get and rotate Keys*/
+    MemoryReadBlock (TripleDesKey, KeyAddress, CRYPTO_2KTDEA_KEY_SIZE );
+    rotateKey(TripleDesKey);
+    rotateKey(&TripleDesKey[8]);
+    
+    PageCount = MIFARE_ULTRALIGHTC_PAGES;
+    
+    MemoryReadBlock(&FirstAuthenticatedPage,AuthentificationAddress, 1 );
+    MemoryReadBlock(&Access, ReadAccessAddress, 1);
+    ReadAccessProtected = (Access == 0x00);
     State = STATE_IDLE;
     FromHalt = false;
     Authenticated = false;
@@ -152,7 +225,11 @@ void MifareUltralightAppReset(void)
 {
     State = STATE_IDLE;
 }
-
+void MifareUltralightCAppReset(void)
+{
+    Authenticated = false;
+    State = STATE_IDLE;
+}
 void MifareUltralightAppTask(void)
 {
 
@@ -161,7 +238,7 @@ void MifareUltralightAppTask(void)
 static bool VerifyAuthentication(uint8_t PageAddress)
 {
     /* No authentication for EV0 cards; always pass */
-    if (Flavor < UL_EV1) {
+    if (Flavor < UL_C) {
         return true;
     }
     /* If authenticated, no verification needed */
@@ -171,6 +248,26 @@ static bool VerifyAuthentication(uint8_t PageAddress)
     /* Otherwise, verify the accessed page is below the limit */
     return PageAddress < FirstAuthenticatedPage;
 }
+
+static bool IncrementCounter (uint8_t* IncrementValue)
+{
+    uint16_t CounterValue;
+    MemoryReadBlock(&CounterValue,MF_ULC_COUNTER_ADDRESS, 2 );
+    if(CounterValue==0){
+        CounterValue =IncrementValue[0]+(IncrementValue[1]<<8);
+        MemoryWriteBlock(&CounterValue, MF_ULC_COUNTER_ADDRESS, 2);
+        return true;
+    }else{
+        IncrementValue[0] &= 0x0f;
+        if (IncrementValue[0] <= (0xffff - CounterValue)){
+            CounterValue += IncrementValue[0];
+            MemoryWriteBlock(&CounterValue, MF_ULC_COUNTER_ADDRESS, 2);
+            return true;
+        }
+        return false;
+    }
+}
+
 
 static bool AuthCounterIncrement(void)
 {
@@ -203,6 +300,18 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
     /* Handle the compatibility write command */
     if (ArmedForCompatWrite) {
         ArmedForCompatWrite = false;
+        
+        //Handle MF ULC counter
+        if (CompatWritePageAddress == MF_ULC_COUNTER_ADDRESS && Flavor == UL_C) {
+            if (IncrementCounter(&Buffer[2])) {
+                Buffer[0] = ACK_VALUE;
+                return ACK_FRAME_SIZE;
+            } else {
+                Buffer[0] = NAK_INVALID_ARG;
+                return NAK_FRAME_SIZE;
+            }
+        }
+        
         AppWritePage(CompatWritePageAddress, &Buffer[2]);
         Buffer[0] = ACK_VALUE;
         return ACK_FRAME_SIZE;
@@ -216,10 +325,11 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             uint8_t PageLimit;
             uint8_t Offset;
             /* For EV1+ cards, ensure the wraparound is at the first protected page */
-            if (Flavor >= UL_EV1 && ReadAccessProtected && !Authenticated) {
+            if (Flavor >= UL_C && ReadAccessProtected && !Authenticated) {
                 PageLimit = FirstAuthenticatedPage;
             } else {
-                PageLimit = PageCount;
+                if(Flavor == UL_C) PageLimit = MF_ULC_READ_MAX_PAGE;  // For ULC make sure wraparound is at the first key page
+                else PageLimit = PageCount;
             }
             /* Validation */
             if (PageAddress >= PageLimit) {
@@ -242,6 +352,18 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             /* This is a write command containing 4 bytes of data that
             * should be written to the given page address. */
             uint8_t PageAddress = Buffer[1];
+
+            //Handle MF ULC counter
+            if (PageAddress == MF_ULC_COUNTER_ADDRESS && Flavor == UL_C) {
+                if (IncrementCounter(&Buffer[2])) {
+                    Buffer[0] = ACK_VALUE;
+                    return ACK_FRAME_SIZE;
+                } else {
+                    Buffer[0] = NAK_INVALID_ARG;
+                    return NAK_FRAME_SIZE;
+                }
+            }
+
             /* Validation */
             if ((PageAddress < PAGE_WRITE_MIN) || (PageAddress >= PageCount)) {
                 Buffer[0] = NAK_INVALID_ARG;
@@ -290,6 +412,19 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
         }
         default:
             break;
+    }
+    if(Flavor == UL_C){
+        if (Cmd == CMD_ULC_AUTH) {
+            State = STATE_AUTH;
+
+            RandomGetBuffer(RNDBBuff,8); // Get Random Number
+            memset(InitialVector,0,8);    // initialize InitialVector
+            CryptoEncrypt2KTDEA_CBCSend(1,RNDBBuff,&Buffer[1],InitialVector,TripleDesKey);// Crypt
+
+            Buffer [0] = CMD_ULC_AUTH_2 ;
+            ISO14443AAppendCRCA(Buffer, 9);
+            return (9 + ISO14443A_CRCA_SIZE) * 8;
+        }
     }
     /* Handle EV1 commands */
     if (Flavor >= UL_EV1) {
@@ -504,6 +639,34 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
             return NAK_FRAME_SIZE;
         }
         return AppProcess(Buffer, ByteCount);
+
+    case STATE_AUTH: // ULC Authing
+        ByteCount = (BitCount + 7) >> 3;
+        /* We check if we received an auth message */
+        if (Buffer[0] == CMD_ULC_AUTH_2 && ISO14443ACheckCRCA(Buffer,ByteCount-2) )
+        {
+            uint8_t tmpBuff [8];
+            uint8_t RNDA [8] = {0};
+            CryptoDecrypt2KTDEA_CBCReceive(1,&Buffer[1],RNDA,InitialVector,TripleDesKey);
+
+            CryptoDecrypt2KTDEA_CBCReceive(1,&Buffer[9],tmpBuff,InitialVector,TripleDesKey);
+
+            if(MifareUltralightcCheckRNDB (tmpBuff))
+            {
+                leftshift1byte(RNDA);
+                CryptoEncrypt2KTDEA_CBCSend(1,RNDA,&Buffer[1],InitialVector,TripleDesKey);
+
+                Buffer[0] = CMD_ULC_AUTH_FINISHED;
+                ISO14443AAppendCRCA(Buffer,9);
+                Authenticated = true;
+                State = STATE_ACTIVE;
+                return (9 + ISO14443A_CRCA_SIZE) * 8;
+            }
+
+        }
+        State = STATE_IDLE;
+        Buffer[0] = NAK_AUTH_FAILED;
+        return NAK_FRAME_SIZE;
 
     default:
         /* Unknown state? Should never happen. */
