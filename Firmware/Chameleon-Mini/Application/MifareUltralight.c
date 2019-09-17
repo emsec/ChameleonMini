@@ -7,10 +7,10 @@
 
 #include "MifareUltralight.h"
 #include "ISO14443-3A.h"
-#include "../CryptoAlgorithms/CryptoTDEA.h"
 #include "../Codec/ISO14443-2A.h"
 #include "../Memory.h"
 #include "../Random.h"
+#include "CryptoTDEA.h"
 
 
 #define ATQA_VALUE              0x0044
