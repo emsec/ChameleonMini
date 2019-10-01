@@ -72,12 +72,13 @@ bool SettingsSetActiveById(uint8_t Setting) {
             GlobalSettings.ActiveSettingPtr =
                     &GlobalSettings.Settings[SettingIdx];
 
+            /* Recall new memory contents ( Moved this to allow for Access to new Memory in Application init())*/
+            MemoryRecall();
+
             /* Settings have changed. Progress changes through system */
             ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
             LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
 
-            /* Recall new memory contents */
-            MemoryRecall();
 
             SETTING_UPDATE(GlobalSettings.ActiveSettingIdx);
             SETTING_UPDATE(GlobalSettings.ActiveSettingPtr);
