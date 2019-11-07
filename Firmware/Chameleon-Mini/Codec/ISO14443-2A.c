@@ -29,6 +29,7 @@ typedef enum {
     DEMOD_PARITY_BIT,
 
     /* Loadmod */
+    LOADMOD_PREPARING,
     LOADMOD_FDT,
     LOADMOD_START,
     LOADMOD_START_BIT0,
@@ -448,7 +449,9 @@ void ISO14443ACodecTask(void) {
             }
         }
 
-        if (AnswerBitCount != ISO14443A_APP_NO_RESPONSE) {
+    	if (AnswerBitCount == ISO14443A_APP_DELAYED_RESPONSE) {
+    		StateRegister = LOADMOD_PREPARING;
+    	} else if (AnswerBitCount != ISO14443A_APP_NO_RESPONSE) {
             LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, (AnswerBitCount + 7) / 8);
             LEDHook(LED_CODEC_TX, LED_PULSE);
 
@@ -474,3 +477,32 @@ void ISO14443ACodecTask(void) {
     }
 }
 
+void ISO14443ASendResponse(const uint8_t *buffer, uint16_t AnswerBitCount)
+{
+	/* Start sending a delayed response from the AppTask, if the last call
+	 * to ApplicationProcess returned ISO14443A_APP_DELAYED_RESPONSE */
+	if (StateRegister != LOADMOD_PREPARING) {
+		return;
+	}
+
+    memcpy(CodecBuffer, buffer, (AnswerBitCount + 7) / 8);
+
+    if (AnswerBitCount & ISO14443A_APP_CUSTOM_PARITY) {
+    	/* Application has generated it's own parity bits.
+    	 * Clear this option bit. */
+    	AnswerBitCount &= ~ISO14443A_APP_CUSTOM_PARITY;
+    	ParityBufferPtr = &CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET];
+    } else {
+    	/* We have to generate the parity bits ourself */
+    	ParityBufferPtr = 0;
+    }
+
+    LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, (AnswerBitCount + 7) / 8);
+    LEDHook(LED_CODEC_TX, LED_PULSE);
+
+    BitCount = AnswerBitCount;
+    CodecBufferPtr = CodecBuffer;
+    CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OOK, ISO14443A_SUBCARRIER_DIVIDER);
+
+    StateRegister = LOADMOD_START;
+}
