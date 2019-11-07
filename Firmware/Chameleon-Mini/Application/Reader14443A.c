@@ -899,7 +899,9 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 					{
 						case CardType_NXP_MIFARE_Ultralight:
 						{
+#ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
 							cfgid = CONFIG_MF_ULTRALIGHT;
+#endif
 							// TODO: enter MFU clone mdoe
 							break;
 						}
@@ -908,9 +910,13 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 						{
 							if (CardCharacteristics.UIDSize == UIDSize_Single)
 							{
+#ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
 								cfgid = CONFIG_MF_CLASSIC_1K;
+#endif
 							} else if (CardCharacteristics.UIDSize == UIDSize_Double) {
+#ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
 								cfgid = CONFIG_MF_CLASSIC_1K_7B;
+#endif
 							}
 							break;
 						}
@@ -920,9 +926,13 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
 						{
 							if (CardCharacteristics.UIDSize == UIDSize_Single)
 							{
+#ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
 								cfgid = CONFIG_MF_CLASSIC_4K;
+#endif
 							} else if (CardCharacteristics.UIDSize == UIDSize_Double) {
+#ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
 								cfgid = CONFIG_MF_CLASSIC_4K_7B;
+#endif
 							}
 							break;
 						}
