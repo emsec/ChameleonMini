@@ -3,7 +3,7 @@
  *
  *  Created on: 01.03.2017
  *      Author: skuser
- *  modified by rickventura   
+ *  modified by rickventura
  */
 
 #ifndef TITAGITSTANDARD_H_
@@ -22,7 +22,7 @@ void TITagitstandardAppInit(void);
 void TITagitstandardAppReset(void);
 void TITagitstandardAppTask(void);
 void TITagitstandardAppTick(void);
-uint16_t TITagitstandardAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes);
+uint16_t TITagitstandardAppProcess(uint8_t *FrameBuf, uint16_t FrameBytes);
 void TITagitstandardGetUid(ConfigurationUidType Uid);
 void TITagitstandardSetUid(ConfigurationUidType Uid);
 void TITagitstandardFlipUid(ConfigurationUidType Uid);

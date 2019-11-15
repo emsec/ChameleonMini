@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-void Crypto1GetState(uint8_t* pEven, uint8_t* pOdd);
+void Crypto1GetState(uint8_t *pEven, uint8_t *pOdd);
 
 /* Gets the current keystream-bit, without shifting the internal LFSR */
 uint8_t Crypto1FilterOutput(void);
@@ -22,8 +22,8 @@ void Crypto1Auth(uint8_t EncryptedReaderNonce[4]);
 uint8_t Crypto1Byte(void);
 
 /* Encrypt/Decrypt array */
-void Crypto1ByteArray(uint8_t* Buffer, uint8_t Count);
-void Crypto1ByteArrayWithParity(uint8_t* Buffer, uint8_t Count);
+void Crypto1ByteArray(uint8_t *Buffer, uint8_t Count);
+void Crypto1ByteArrayWithParity(uint8_t *Buffer, uint8_t Count);
 
 /* Generate 4 Bits of key stream */
 uint8_t Crypto1Nibble(void);
@@ -32,7 +32,7 @@ uint8_t Crypto1Nibble(void);
 void Crypto1PRNG(uint8_t State[4], uint8_t ClockCount);
 
 /* Encrypts buffer with consideration of parity bits */
-void Crypto1EncryptWithParity(uint8_t * Buffer, uint8_t BitCount);
+void Crypto1EncryptWithParity(uint8_t *Buffer, uint8_t BitCount);
 
 /* Encrypts buffer with LFSR feedback within reader nonce and considers parity bits */
 void Crypto1ReaderAuthWithParity(uint8_t PlainReaderAnswerWithParityBits[9]);

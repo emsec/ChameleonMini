@@ -15,7 +15,7 @@ void VicinityAppInit(void);
 void VicinityAppReset(void);
 void VicinityAppTask(void);
 void VicinityAppTick(void);
-uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes);
+uint16_t VicinityAppProcess(uint8_t *FrameBuf, uint16_t FrameBytes);
 void VicinityGetUid(ConfigurationUidType Uid);
 void VicinitySetUid(ConfigurationUidType Uid);
 

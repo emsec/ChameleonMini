@@ -2,27 +2,23 @@
 
 #include <stdlib.h>
 
-void RandomInit(void)
-{
+void RandomInit(void) {
 
 }
 
-uint8_t RandomGetByte(void)
-{
+uint8_t RandomGetByte(void) {
     return rand() & 0xFF;
 }
 
-void RandomGetBuffer(void* Buffer, uint8_t ByteCount)
-{
-    uint8_t* BufferPtr = (uint8_t*) Buffer;
+void RandomGetBuffer(void *Buffer, uint8_t ByteCount) {
+    uint8_t *BufferPtr = (uint8_t *) Buffer;
 
-    while(ByteCount--) {
+    while (ByteCount--) {
         *BufferPtr++ = RandomGetByte();
     }
 }
 
-void RandomTick(void)
-{
+void RandomTick(void) {
     rand();
     rand();
     rand();

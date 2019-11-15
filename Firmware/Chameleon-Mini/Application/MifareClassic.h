@@ -24,7 +24,7 @@ void MifareClassicAppInit4K7B(void);
 void MifareClassicAppReset(void);
 void MifareClassicAppTask(void);
 
-uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount);
+uint16_t MifareClassicAppProcess(uint8_t *Buffer, uint16_t BitCount);
 
 void MifareClassicGetUid(ConfigurationUidType Uid);
 void MifareClassicSetUid(ConfigurationUidType Uid);

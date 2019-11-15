@@ -33,12 +33,12 @@
 /* Bit masks */
 #define EM4233_MASK_READ_PROT           ( 1 << 2 )  // For lock status byte
 #define EM4233_MASK_WRITE_PROT          ( 1 << 3 )
-#define EM4233_MASK_AFI_STATUS          ( 1 << 0 ) 
-#define EM4233_MASK_DSFID_STATUS        ( 1 << 1 ) 
+#define EM4233_MASK_AFI_STATUS          ( 1 << 0 )
+#define EM4233_MASK_DSFID_STATUS        ( 1 << 1 )
 
 /* Custom command code */
 #define EM4233_CMD_SET_EAS              0xA2
-#define EM4233_CMD_RST_EAS              0xA3 
+#define EM4233_CMD_RST_EAS              0xA3
 #define EM4233_CMD_LCK_EAS              0xA4
 #define EM4233_CMD_ACT_EAS              0xA5
 #define EM4233_CMD_PRT_EAS              0xA6
@@ -71,7 +71,7 @@ void EM4233AppInit(void);
 void EM4233AppReset(void);
 void EM4233AppTask(void);
 void EM4233AppTick(void);
-uint16_t EM4233AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes);
+uint16_t EM4233AppProcess(uint8_t *FrameBuf, uint16_t FrameBytes);
 void EM4233GetUid(ConfigurationUidType Uid);
 void EM4233SetUid(ConfigurationUidType Uid);
 void EM4233FlipUid(ConfigurationUidType Uid);

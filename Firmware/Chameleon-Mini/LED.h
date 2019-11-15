@@ -62,9 +62,9 @@ typedef enum LEDActionEnum {
 void LEDInit(void);
 void LEDTick(void);
 
-void LEDGetFuncList(char* List, uint16_t BufferSize);
+void LEDGetFuncList(char *List, uint16_t BufferSize);
 void LEDSetFuncById(uint8_t Mask, LEDHookEnum Func);
-void LEDGetFuncByName(uint8_t Mask, char* Function, uint16_t BufferSize);
-bool LEDSetFuncByName(uint8_t Mask, const char* Function);
+void LEDGetFuncByName(uint8_t Mask, char *Function, uint16_t BufferSize);
+bool LEDSetFuncByName(uint8_t Mask, const char *Function);
 
 #endif /* LED_H */

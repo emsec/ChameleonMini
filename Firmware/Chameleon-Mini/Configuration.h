@@ -48,19 +48,19 @@ typedef enum  {
     CONFIG_ISO14443A_READER,
 #endif
 #ifdef CONFIG_VICINITY_SUPPORT
-	CONFIG_VICINITY,
+    CONFIG_VICINITY,
 #endif
 #ifdef CONFIG_ISO15693_SNIFF_SUPPORT
-	CONFIG_ISO15693_SNIFF,
+    CONFIG_ISO15693_SNIFF,
 #endif
 #ifdef CONFIG_SL2S2002_SUPPORT
-	CONFIG_SL2S2002,
+    CONFIG_SL2S2002,
 #endif
 #ifdef CONFIG_TITAGITSTANDARD_SUPPORT
-	CONFIG_TITAGITSTANDARD,
+    CONFIG_TITAGITSTANDARD,
 #endif
 #ifdef CONFIG_EM4233_SUPPORT
-	CONFIG_EM4233,
+    CONFIG_EM4233,
 #endif
     /* This HAS to be the last element */
     CONFIG_COUNT
@@ -82,13 +82,13 @@ typedef struct {
      * @{
      */
     /** Function that initializes the codec. */
-    void (*CodecInitFunc) (void);
+    void (*CodecInitFunc)(void);
     /** Function that deinitializes the codec. */
-    void (*CodecDeInitFunc) (void);
+    void (*CodecDeInitFunc)(void);
     /** Function that is called on every iteration of the main loop.
      * Within this function the essential codec work is done.
      */
-    void (*CodecTaskFunc) (void);
+    void (*CodecTaskFunc)(void);
     /**
      * @}
      */
@@ -100,13 +100,13 @@ typedef struct {
      * @{
      */
     /** Function that initializes the application. */
-    void (*ApplicationInitFunc) (void);
+    void (*ApplicationInitFunc)(void);
     /** Function that resets the application. */
-    void (*ApplicationResetFunc) (void);
+    void (*ApplicationResetFunc)(void);
     /** Function that is called on every iteration of the main loop. Application work that is independent from the codec layer can be done here. */
-    void (*ApplicationTaskFunc) (void);
+    void (*ApplicationTaskFunc)(void);
     /** Function that is called roughly every 100ms. This can be used for parallel tasks of the application, that is independent of the codec module. */
-    void (*ApplicationTickFunc) (void);
+    void (*ApplicationTickFunc)(void);
     /** This function does two important things. It gets called by the codec.
      *  The first task is to deliver data that have been received by the codec module to
      *  the application module. The application then can decide how to answer to these data and return
@@ -118,17 +118,17 @@ typedef struct {
      *
      * \return				Number of bits of the response.
      */
-    uint16_t (*ApplicationProcessFunc) (uint8_t* ByteBuffer, uint16_t BitCount);
+    uint16_t (*ApplicationProcessFunc)(uint8_t *ByteBuffer, uint16_t BitCount);
     /**
      * Writes the UID for the current configuration to the given buffer.
      * \param Uid	The target buffer.
      */
-    void (*ApplicationGetUidFunc) (ConfigurationUidType Uid);
+    void (*ApplicationGetUidFunc)(ConfigurationUidType Uid);
     /**
      * Writes a given UID to the current configuration.
      * \param Uid	The source buffer.
      */
-    void (*ApplicationSetUidFunc) (ConfigurationUidType Uid);
+    void (*ApplicationSetUidFunc)(ConfigurationUidType Uid);
     /**
      * @}
      */
@@ -161,8 +161,8 @@ extern ConfigurationType ActiveConfiguration;
 
 void ConfigurationInit(void);
 void ConfigurationSetById(ConfigurationEnum Configuration);
-void ConfigurationGetByName(char* Configuration, uint16_t BufferSize);
-bool ConfigurationSetByName(const char* Configuration);
-void ConfigurationGetList(char* ConfigurationList, uint16_t BufferSize);
+void ConfigurationGetByName(char *Configuration, uint16_t BufferSize);
+bool ConfigurationSetByName(const char *Configuration);
+void ConfigurationGetList(char *ConfigurationList, uint16_t BufferSize);
 
 #endif /* STANDARDS_H_ */

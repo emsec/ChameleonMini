@@ -34,7 +34,7 @@ void MifareUltralightAppTask(void);
 void MifareUltralightCAppInit(void);
 void MifareUltralightCAppReset(void);
 
-uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount);
+uint16_t MifareUltralightAppProcess(uint8_t *Buffer, uint16_t BitCount);
 
 void MifareUltralightGetUid(ConfigurationUidType Uid);
 void MifareUltralightSetUid(ConfigurationUidType Uid);

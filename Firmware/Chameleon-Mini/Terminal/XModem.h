@@ -10,7 +10,7 @@
 
 #include "../Common.h"
 
-typedef bool (*XModemCallbackType) (void* ByteBuffer, uint32_t BlockAddress, uint16_t ByteCount);
+typedef bool (*XModemCallbackType)(void *ByteBuffer, uint32_t BlockAddress, uint16_t ByteCount);
 
 void XModemReceive(XModemCallbackType CallbackFunc);
 void XModemSend(XModemCallbackType CallbackFunc);

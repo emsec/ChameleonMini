@@ -138,8 +138,7 @@ INLINE void CodecTask(void) {
 }
 
 /* Helper Functions for Codec implementations */
-INLINE void CodecInitCommon(void)
-{
+INLINE void CodecInitCommon(void) {
     /* Configure CARRIER input pin and route it to EVSYS.
      * Multiply by 2 again by using both edges when externally
      * dividing by 2 */
@@ -211,8 +210,7 @@ INLINE void CodecInitCommon(void)
     ACA.AC1CTRL = CODEC_AC_DEMOD_SETTINGS;
 }
 
-INLINE void CodecSetSubcarrier(SubcarrierModType ModType, uint16_t Divider)
-{
+INLINE void CodecSetSubcarrier(SubcarrierModType ModType, uint16_t Divider) {
     if (ModType == CODEC_SUBCARRIERMOD_OFF) {
         CODEC_SUBCARRIER_TIMER.CTRLA = TC_CLKSEL_OFF_gc;
         CODEC_SUBCARRIER_TIMER.CTRLB = 0;
@@ -220,23 +218,20 @@ INLINE void CodecSetSubcarrier(SubcarrierModType ModType, uint16_t Divider)
         /* Configure subcarrier generation with 50% DC output using OOK */
         CODEC_SUBCARRIER_TIMER.CNT = 0;
         CODEC_SUBCARRIER_TIMER.PER = Divider - 1;
-        CODEC_SUBCARRIER_TIMER.CODEC_SUBCARRIER_CC_OOK = Divider/2;
+        CODEC_SUBCARRIER_TIMER.CODEC_SUBCARRIER_CC_OOK = Divider / 2;
         CODEC_SUBCARRIER_TIMER.CTRLB = CODEC_SUBCARRIER_CCEN_OOK | TC_WGMODE_SINGLESLOPE_gc;
     }
 }
 
-INLINE void CodecChangeDivider(uint16_t Divider)
-{
+INLINE void CodecChangeDivider(uint16_t Divider) {
     CODEC_SUBCARRIER_TIMER.PER = Divider - 1;
 }
 
-INLINE void CodecStartSubcarrier(void)
-{
+INLINE void CodecStartSubcarrier(void) {
     CODEC_SUBCARRIER_TIMER.CTRLA = CODEC_TIMER_CARRIER_CLKSEL;
 }
 
-INLINE void CodecSetDemodPower(bool bOnOff)
-{
+INLINE void CodecSetDemodPower(bool bOnOff) {
     if (bOnOff) {
         CODEC_DEMOD_POWER_PORT.OUTSET = CODEC_DEMOD_POWER_MASK;
     } else {

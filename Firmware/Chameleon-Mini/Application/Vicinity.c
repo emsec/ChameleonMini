@@ -3,7 +3,7 @@
  *
  *  Created on: 01-03-2017
  *      Author: Phillip Nash
- * 
+ *
  *  TODO:
  *    - ISO15693AddressedLegacy should be replaced with ISO15693Addressed and appropriate check
  *      should be performed (see TITagitstandard.c) - ceres-c
@@ -25,76 +25,71 @@ static enum {
     STATE_QUIET
 } State;
 
-void VicinityAppInit(void)
-{
+void VicinityAppInit(void) {
     State = STATE_READY;
 }
 
-void VicinityAppReset(void)
-{
+void VicinityAppReset(void) {
     State = STATE_READY;
 }
 
 
-void VicinityAppTask(void)
-{
-    
+void VicinityAppTask(void) {
+
 }
 
-void VicinityAppTick(void)
-{
+void VicinityAppTick(void) {
 
-    
+
 }
 
-uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
-{
+uint16_t VicinityAppProcess(uint8_t *FrameBuf, uint16_t FrameBytes) {
     if (FrameBytes >= ISO15693_MIN_FRAME_SIZE) {
-        if(ISO15693CheckCRC(FrameBuf, FrameBytes - ISO15693_CRC16_SIZE)) {
+        if (ISO15693CheckCRC(FrameBuf, FrameBytes - ISO15693_CRC16_SIZE)) {
             // At this point, we have a valid ISO15693 frame
             uint8_t Command = FrameBuf[1];
             uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
             uint8_t Uid[8];
             MemoryReadBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
-            
-            switch(State) {
-            case STATE_READY:
-                if (Command == ISO15693_CMD_INVENTORY) {
-                    FrameBuf[0] = 0x00; /* Flags */
-                    FrameBuf[1] = 0x00; /* DSFID */
-                    ISO15693CopyUid(&FrameBuf[2], Uid);
-                    ResponseByteCount = 10;
-                } else if (Command == ISO15693_CMD_STAY_QUIET) {
-                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
-                        State = STATE_QUIET;
-                    }
-                } else if (Command == ISO15693_CMD_GET_SYS_INFO) {
-                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
-                        FrameBuf[0] = 0; /* Flags */
-                        FrameBuf[1] = 0; /* InfoFlags */
+
+            switch (State) {
+                case STATE_READY:
+                    if (Command == ISO15693_CMD_INVENTORY) {
+                        FrameBuf[0] = 0x00; /* Flags */
+                        FrameBuf[1] = 0x00; /* DSFID */
                         ISO15693CopyUid(&FrameBuf[2], Uid);
                         ResponseByteCount = 10;
+                    } else if (Command == ISO15693_CMD_STAY_QUIET) {
+                        if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
+                            State = STATE_QUIET;
+                        }
+                    } else if (Command == ISO15693_CMD_GET_SYS_INFO) {
+                        if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
+                            FrameBuf[0] = 0; /* Flags */
+                            FrameBuf[1] = 0; /* InfoFlags */
+                            ISO15693CopyUid(&FrameBuf[2], Uid);
+                            ResponseByteCount = 10;
+                        }
                     }
-                }
-                break;
+                    break;
 
-            case STATE_SELECTED:
+                case STATE_SELECTED:
 
-                break;
+                    break;
 
-            case STATE_QUIET:
-                if (Command == ISO15693_CMD_RESET_TO_READY) {
-                    MemoryReadBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
-                    if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
-                        FrameBuf[0] = 0;
-                        ResponseByteCount = 1;
-                        State = STATE_READY;
+                case STATE_QUIET:
+                    if (Command == ISO15693_CMD_RESET_TO_READY) {
+                        MemoryReadBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
+                        if (ISO15693AddressedLegacy(FrameBuf, Uid)) {
+                            FrameBuf[0] = 0;
+                            ResponseByteCount = 1;
+                            State = STATE_READY;
+                        }
                     }
-                }
-                break;
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
             }
 
             if (ResponseByteCount > 0) {
@@ -104,23 +99,21 @@ uint16_t VicinityAppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             }
 
             return ResponseByteCount;
-        
+
         } else { // Invalid CRC
             return ISO15693_APP_NO_RESPONSE;
         }
     } else { // Min frame size not met
         return ISO15693_APP_NO_RESPONSE;
     }
-    
+
 }
 
-void VicinityGetUid(ConfigurationUidType Uid)
-{
+void VicinityGetUid(ConfigurationUidType Uid) {
     MemoryReadBlock(&Uid[0], MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
 }
 
-void VicinitySetUid(ConfigurationUidType Uid)
-{
+void VicinitySetUid(ConfigurationUidType Uid) {
     MemoryWriteBlock(Uid, MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
 }
 

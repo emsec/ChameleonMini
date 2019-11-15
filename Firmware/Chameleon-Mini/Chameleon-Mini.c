@@ -1,7 +1,6 @@
 #include "Chameleon-Mini.h"
 
-int main(void)
-{
+int main(void) {
     SystemInit();
     SettingsLoad();
     LEDInit();
@@ -15,7 +14,7 @@ int main(void)
     LogInit();
     SystemInterruptInit();
 
-    while(1) {
+    while (1) {
         if (SystemTick100ms()) {
             LEDTick(); // this has to be the first function called here, since it is time-critical - the functions below may have non-negligible runtimes!
 

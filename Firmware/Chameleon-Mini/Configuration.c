@@ -69,7 +69,7 @@ static void ApplicationInitDummy(void) {}
 static void ApplicationResetDummy(void) {}
 static void ApplicationTaskDummy(void) {}
 static void ApplicationTickDummy(void) {}
-static uint16_t ApplicationProcessDummy(uint8_t* ByteBuffer, uint16_t ByteCount) { return 0; }
+static uint16_t ApplicationProcessDummy(uint8_t *ByteBuffer, uint16_t ByteCount) { return 0; }
 static void ApplicationGetUidDummy(ConfigurationUidType Uid) { }
 static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
 
@@ -108,7 +108,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ReadOnly = false,
         .TagFamily = TAG_FAMILY_ISO14443A
     },
-    [CONFIG_MF_ULTRALIGHT_C] ={
+    [CONFIG_MF_ULTRALIGHT_C] = {
         .CodecInitFunc = ISO14443ACodecInit,
         .CodecDeInitFunc = ISO14443ACodecDeInit,
         .CodecTaskFunc = ISO14443ACodecTask,
@@ -377,16 +377,14 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 
 ConfigurationType ActiveConfiguration;
 
-void ConfigurationInit(void)
-{
+void ConfigurationInit(void) {
     memcpy_P(&ActiveConfiguration,
-            &ConfigurationTable[CONFIG_NONE], sizeof(ConfigurationType));
+             &ConfigurationTable[CONFIG_NONE], sizeof(ConfigurationType));
 
     ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
 }
 
-void ConfigurationSetById( ConfigurationEnum Configuration )
-{
+void ConfigurationSetById(ConfigurationEnum Configuration) {
     CodecDeInit();
 
     CommandLinePendingTaskBreak(); // break possibly pending task
@@ -395,32 +393,29 @@ void ConfigurationSetById( ConfigurationEnum Configuration )
 
     /* Copy struct from PROGMEM to RAM */
     memcpy_P(&ActiveConfiguration,
-            &ConfigurationTable[Configuration], sizeof(ConfigurationType));
+             &ConfigurationTable[Configuration], sizeof(ConfigurationType));
 
     CodecInit();
     ApplicationInit();
 }
 
-void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
-{
+void ConfigurationGetByName(char *Configuration, uint16_t BufferSize) {
     MapIdToText(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), GlobalSettings.ActiveSettingPtr->Configuration, Configuration, BufferSize);
 }
 
-bool ConfigurationSetByName(const char* Configuration)
-{
+bool ConfigurationSetByName(const char *Configuration) {
     MapIdType Id;
 
     if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
         ConfigurationSetById(Id);
-        LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX-1));
+        LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX - 1));
         return true;
     } else {
         return false;
     }
 }
 
-void ConfigurationGetList(char* List, uint16_t BufferSize)
-{
+void ConfigurationGetList(char *List, uint16_t BufferSize) {
     MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
 }
 

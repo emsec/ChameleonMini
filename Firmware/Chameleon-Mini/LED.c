@@ -24,14 +24,12 @@ static const MapEntryType PROGMEM LEDFunctionMap[] = {
     { .Id = LED_LOG_MEM_FULL,	.Text = "LOGMEM_FULL"		},
 };
 
-INLINE void Tick(uint8_t Mask, LEDActionEnum* Action)
-{
+INLINE void Tick(uint8_t Mask, LEDActionEnum *Action) {
     static uint8_t LEDRedBlinkPrescaler = 0;
     static uint8_t LEDGreenBlinkPrescaler = 0;
-    uint8_t * BlinkPrescaler = (Action == &LEDGreenAction) ? &LEDGreenBlinkPrescaler : &LEDRedBlinkPrescaler;
+    uint8_t *BlinkPrescaler = (Action == &LEDGreenAction) ? &LEDGreenBlinkPrescaler : &LEDRedBlinkPrescaler;
 
-    switch (*Action)
-    {
+    switch (*Action) {
         case LED_NO_ACTION:
             /* Do nothing */
             break;
@@ -90,25 +88,21 @@ INLINE void Tick(uint8_t Mask, LEDActionEnum* Action)
     }
 }
 
-void LEDInit(void)
-{
+void LEDInit(void) {
     LED_PORT.DIRSET = LED_MASK;
 }
 
 
-void LEDTick(void)
-{
+void LEDTick(void) {
     Tick(LED_RED, &LEDRedAction);
     Tick(LED_GREEN, &LEDGreenAction);
 }
 
-void LEDGetFuncList(char* List, uint16_t BufferSize)
-{
+void LEDGetFuncList(char *List, uint16_t BufferSize) {
     MapToString(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap), List, BufferSize);
 }
 
-void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
-{
+void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function) {
 #ifndef LED_SETTING_GLOBAL
     if (Mask & LED_GREEN) {
         GlobalSettings.ActiveSettingPtr->LEDGreenFunction = Function;
@@ -119,7 +113,7 @@ void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
     }
 #else
     /* Write LED func to all settings when using global settings */
-    for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
+    for (uint8_t i = 0; i < SETTINGS_COUNT; i++) {
         if (Mask & LED_GREEN) {
             GlobalSettings.Settings[i].LEDGreenFunction = Function;
         }
@@ -143,19 +137,17 @@ void LEDSetFuncById(uint8_t Mask, LEDHookEnum Function)
 
 }
 
-void LEDGetFuncByName(uint8_t Mask, char* Function, uint16_t BufferSize)
-{
+void LEDGetFuncByName(uint8_t Mask, char *Function, uint16_t BufferSize) {
     if (Mask == LED_GREEN) {
         MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
-                GlobalSettings.ActiveSettingPtr->LEDGreenFunction, Function, BufferSize);
+                    GlobalSettings.ActiveSettingPtr->LEDGreenFunction, Function, BufferSize);
     } else if (Mask == LED_RED) {
         MapIdToText(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap),
-                GlobalSettings.ActiveSettingPtr->LEDRedFunction, Function, BufferSize);
+                    GlobalSettings.ActiveSettingPtr->LEDRedFunction, Function, BufferSize);
     }
 }
 
-bool LEDSetFuncByName(uint8_t Mask, const char* Function)
-{
+bool LEDSetFuncByName(uint8_t Mask, const char *Function) {
     MapIdType Id;
 
     if (MapTextToId(LEDFunctionMap, ARRAY_COUNT(LEDFunctionMap), Function, &Id)) {
