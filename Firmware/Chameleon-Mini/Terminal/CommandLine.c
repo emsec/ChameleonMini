@@ -275,6 +275,13 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .GetFunc 	= NO_FUNCTION
     },
     {
+        .Command	= COMMAND_CLONE_MFU,
+        .ExecFunc 	= CommandExecCloneMFU,
+        .ExecParamFunc  = NO_FUNCTION,
+        .SetFunc 	= NO_FUNCTION,
+        .GetFunc 	= NO_FUNCTION
+    },
+    {
         .Command	= COMMAND_IDENTIFY_CARD,
         .ExecFunc 	= CommandExecIdentifyCard,
         .ExecParamFunc = NO_FUNCTION,

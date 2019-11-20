@@ -488,6 +488,17 @@ CommandStatusIdType CommandExecDumpMFU(char *OutMessage) {
     return TIMEOUT_COMMAND;
 }
 
+CommandStatusIdType CommandExecCloneMFU(char *OutMessage) {
+    ConfigurationSetById(CONFIG_ISO14443A_READER);
+    ApplicationReset();
+
+    Reader14443CurrentCommand = Reader14443_Clone_MF_Ultralight;
+    Reader14443AAppInit();
+    Reader14443ACodecStart();
+    CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
+    return TIMEOUT_COMMAND;
+}
+
 CommandStatusIdType CommandExecGetUid(char *OutMessage) { // this function is for reading the uid in reader mode
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
         return COMMAND_ERR_INVALID_USAGE_ID;

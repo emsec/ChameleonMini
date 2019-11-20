@@ -683,6 +683,7 @@ uint16_t Reader14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
             return rVal;
         }
 
+        case Reader14443_Clone_MF_Ultralight:
         case Reader14443_Read_MF_Ultralight: {
             static uint8_t MFURead_CurrentAdress = 0;
             static uint8_t MFUContents[64];
@@ -717,18 +718,28 @@ uint16_t Reader14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                 if (MFURead_CurrentAdress == 16) {
                     Selected = false;
                     MFURead_CurrentAdress = 0;
-                    Reader14443CurrentCommand = Reader14443_Do_Nothing;
 
-                    char tmpBuf[135]; // 135 = 128 hex digits + 3 * \r\n + \0
-                    BufferToHexString(tmpBuf, 							135, 							MFUContents, 16);
-                    snprintf(tmpBuf + 32, 						135 - 32, 						"\r\n");
-                    BufferToHexString(tmpBuf + 32 + 2, 					135 - 32 - 2, 					MFUContents + 16, 16);
-                    snprintf(tmpBuf + 32 + 2 + 32, 				135 - 32 - 2 - 32, 				"\r\n");
-                    BufferToHexString(tmpBuf + 32 + 2 + 32 + 2, 			135 - 32 - 2 - 32 - 2, 			MFUContents + 32, 16);
-                    snprintf(tmpBuf + 32 + 2 + 32 + 2 + 32, 		135 - 32 - 2 - 32 - 2 - 32, 	"\r\n");
-                    BufferToHexString(tmpBuf + 32 + 2 + 32 + 2 + 32 + 2, 	135 - 32 - 2 - 32 - 2 - 32 - 2, MFUContents + 48, 16);
-                    CodecReaderFieldStop();
-                    CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpBuf);
+                    if (Reader14443CurrentCommand == Reader14443_Read_MF_Ultralight) { // dump
+                        Reader14443CurrentCommand = Reader14443_Do_Nothing;
+                        char tmpBuf[135]; // 135 = 128 hex digits + 3 * \r\n + \0
+                        BufferToHexString(tmpBuf, 							135, 							MFUContents, 16);
+                        snprintf(tmpBuf + 32, 						135 - 32, 						"\r\n");
+                        BufferToHexString(tmpBuf + 32 + 2, 					135 - 32 - 2, 					MFUContents + 16, 16);
+                        snprintf(tmpBuf + 32 + 2 + 32, 				135 - 32 - 2 - 32, 				"\r\n");
+                        BufferToHexString(tmpBuf + 32 + 2 + 32 + 2, 			135 - 32 - 2 - 32 - 2, 			MFUContents + 32, 16);
+                        snprintf(tmpBuf + 32 + 2 + 32 + 2 + 32, 		135 - 32 - 2 - 32 - 2 - 32, 	"\r\n");
+                        BufferToHexString(tmpBuf + 32 + 2 + 32 + 2 + 32 + 2, 	135 - 32 - 2 - 32 - 2 - 32 - 2, MFUContents + 48, 16);
+                        CodecReaderFieldStop();
+                        CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, tmpBuf);
+                    } else { // clone
+                        Reader14443CurrentCommand = Reader14443_Do_Nothing;
+                        CodecReaderFieldStop();
+                        MemoryUploadBlock(&MFUContents, 0, 64);
+                        CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Card Cloned to Slot");
+                        ConfigurationSetById(CONFIG_MF_ULTRALIGHT);
+                        MemoryStore();
+                        SettingsSave();
+                    }
                     return 0;
                 }
                 Buffer[0] = 0x30; // MiFare Ultralight read command
