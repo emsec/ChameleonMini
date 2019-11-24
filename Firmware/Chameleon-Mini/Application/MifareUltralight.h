@@ -38,7 +38,7 @@ uint16_t MifareUltralightAppProcess(uint8_t *Buffer, uint16_t BitCount);
 
 void MifareUltralightGetUid(ConfigurationUidType Uid);
 void MifareUltralightSetUid(ConfigurationUidType Uid);
-
+void UltraLightClone(uint8_t* buff);
 
 
 #endif /* MIFAREULTRALIGHT_H_ */

@@ -4,6 +4,7 @@
 #include "../Codec/Reader14443-2A.h"
 #include "Crypto1.h"
 #include "../System.h"
+#include "../Terminal/Commands.h"
 
 #include "../Terminal/Terminal.h"
 
@@ -17,9 +18,11 @@
 #define FLAGS_PARITY_OK	0x01
 #define FLAGS_NO_DATA	0x02
 
+int clone_mfu= 0;
 // TODO replace remaining magic numbers
 
 static bool Selected = false;
+static uint8_t cardContents[64]={0};
 Reader14443Command Reader14443CurrentCommand = Reader14443_Do_Nothing;
 
 static enum {
@@ -715,6 +718,15 @@ uint16_t Reader14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                     }
                 }
                 if (MFURead_CurrentAdress == 16) {
+		            if (clone_mfu == 1) {
+                      TerminalSendString("dumping...");
+                      CommandLineAppendData(MFUContents,64);
+			          memcpy(cardContents, MFUContents, 64);
+                      TerminalSendString("cardContents...");
+                      CommandLineAppendData(cardContents,64);
+                      CommandExecClone(NULL);
+			          return 0;
+		            }
                     Selected = false;
                     MFURead_CurrentAdress = 0;
                     Reader14443CurrentCommand = Reader14443_Do_Nothing;
@@ -805,6 +817,15 @@ uint16_t Reader14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                         case CardType_NXP_MIFARE_Ultralight: {
                             cfgid = CONFIG_MF_ULTRALIGHT;
                             // TODO: enter MFU clone mdoe
+			                if (clone_mfu == 0) {
+				                clone_mfu = 1;
+			                	CommandExecDumpMFU(NULL);
+                                return 0;
+			                }
+                            TerminalSendString("second part");
+                            CommandLineAppendData(cardContents,64);
+                            clone_mfu = 0;
+			                UltraLightClone(cardContents); // wrapper for MemoryWriteBlock
                             break;
                         }
                         case CardType_NXP_MIFARE_Classic_1k:

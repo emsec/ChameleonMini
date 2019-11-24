@@ -673,3 +673,8 @@ void MifareUltralightSetUid(ConfigurationUidType Uid) {
     MemoryWriteBlock(&BCC2, UID_BCC2_ADDRESS, ISO14443A_CL_BCC_SIZE);
 }
 
+
+void UltraLightClone(uint8_t* buff){
+
+     MemoryWriteBlock(buff, UID_CL1_ADDRESS, 64);
+}
