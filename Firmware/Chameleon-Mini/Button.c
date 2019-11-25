@@ -30,6 +30,7 @@ static const MapEntryType PROGMEM ButtonActionMap[] = {
     { .Id = BUTTON_ACTION_TOGGLE_FIELD,			.Text = "TOGGLE_FIELD" },
     { .Id = BUTTON_ACTION_STORE_LOG,			.Text = "STORE_LOG" },
     { .Id = BUTTON_ACTION_CLONE,			.Text = "CLONE" },
+    { .Id = BUTTON_ACTION_CLONE_MFU,			.Text = "CLONE_MFU" },
 };
 
 static void ExecuteButtonAction(ButtonActionEnum ButtonAction) {
@@ -177,6 +178,10 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction) {
         case BUTTON_ACTION_CLONE: {
             CommandExecute("CLONE");
             break;
+        }
+        case BUTTON_ACTION_CLONE_MFU: {
+          CommandExecute("CLONE_MFU");
+          break;
         }
 
         default:
