@@ -180,8 +180,8 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction) {
             break;
         }
         case BUTTON_ACTION_CLONE_MFU: {
-          CommandExecute("CLONE_MFU");
-          break;
+            CommandExecute("CLONE_MFU");
+            break;
         }
 
         default:
