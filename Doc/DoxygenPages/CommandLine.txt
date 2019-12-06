@@ -111,6 +111,7 @@
  * `SEND_RAW <BYTEVALUE>`| Does NOT add parity bits, sends the given byte string <BYTEVALUE> and returns the cards answer
  * `GETUID`              | Obtains the UID of a card that is in the range of the antenna and returns it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
  * `DUMP_MFU`            | Reads the whole content of a Mifare Ultralight card that is in the range of the antenna and returns it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
+ * `CLONE_MFU`            | Clones a Mifare Ultralight card that is in the range of the antenna to the current slot, which is then accordingly configured to emulate it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
  * `IDENTIFY`            | Identifies the type of a card in the range of the antenna and returns it. This command is a \ref Anchor_TimeoutCommands "Timeout command".
  * `THRESHOLD=?`         | Returns the possible number range for the reader threshold.
  * `THRESHOLD=<NUMBER>`  | Globally sets the reader threshold. The <NUMBER> influences the reader function and range. Setting a wrong value may result in malfunctioning of the reader. DEFAULT: 400

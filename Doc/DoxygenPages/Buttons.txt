@@ -29,6 +29,7 @@
  * `RECALL_MEM`         | Recalls a setting from the permanent Flash memory. Equivalent to the `RECALL` command.
  * `TOGGLE_FIELD`       | Activates the reader field if it was deactivated, deactivates the reader field if it was activated.
  * `STORE_LOG`          | Writes the current log from SRAM to FRAM and clears the SRAM log. Equivalent to the `STORE_LOG` command.
+ * `CLONE_MFU`         | Triggers the clone of a Mifare Ultralight card in range of the antenna to the selected slot and configures it to emulate it. Equivalent to the `CLONE_MFU` command.
  * 
  * Note the UID commands have no effect when the slot is configured as reader.
  */
