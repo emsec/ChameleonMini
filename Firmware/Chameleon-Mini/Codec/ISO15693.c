@@ -89,7 +89,7 @@ static volatile uint16_t ReadCommandFromReader = 0;
  * and unregistered writing the INT0MASK to 0
  */
 // ISR(CODEC_DEMOD_IN_INT0_VECT)
-void isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void) {
+ISR_SHARED isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void) {
     /* Start sample timer CODEC_TIMER_SAMPLING (TCD0).
      * Set Counter Channel C (CCC) with relevant bitmask (TC0_CCCIF_bm),
      * the period for clock sampling is specified in StartISO15693Demod.
@@ -146,8 +146,7 @@ INLINE void ISO15693_EOC(void) {
  *
  * It disables its own interrupt when receives an EOF (calling ISO15693_EOC) or when it receives garbage
  */
-// ISR(CODEC_TIMER_SAMPLING_CCC_VECT) // Reading data sent from the reader
-void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void) {
+ISR_SHARED isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void) {
     /* Shift demod data */
     SampleRegister = (SampleRegister << 1) | (!(CODEC_DEMOD_IN_PORT.IN & CODEC_DEMOD_IN_MASK) ? 0x01 : 0x00);
 
