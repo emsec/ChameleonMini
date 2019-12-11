@@ -8,26 +8,6 @@
 #ifndef CODEC_H_
 #define CODEC_H_
 
-#include <avr/io.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include "../Common.h"
-#include "../Configuration.h"
-#include "../Settings.h"
-
-#include "ISO14443-2A.h"
-#include "Reader14443-2A.h"
-#include "SniffISO14443-2A.h"
-#include "ISO15693.h"
-
-/* Timing definitions for ISO14443A */
-#define ISO14443A_SUBCARRIER_DIVIDER    16
-#define ISO14443A_BIT_GRID_CYCLES       128
-#define ISO14443A_BIT_RATE_CYCLES       128
-#define ISO14443A_FRAME_DELAY_PREV1     1236
-#define ISO14443A_FRAME_DELAY_PREV0     1172
-#define ISO14443A_RX_PENDING_TIMEOUT	4 // ms
-
 /* Peripheral definitions */
 #define CODEC_DEMOD_POWER_PORT      PORTB
 #define CODEC_DEMOD_POWER_MASK      PIN0_bm
@@ -87,6 +67,27 @@
 #define CODEC_TIMER_TIMESTAMPS_CCA_VECT	TCD1_CCA_vect
 #define CODEC_TIMER_TIMESTAMPS_CCB_VECT	TCD1_CCB_vect
 
+#ifndef __ASSEMBLER__
+
+#include <avr/io.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "../Common.h"
+#include "../Configuration.h"
+#include "../Settings.h"
+
+#include "ISO14443-2A.h"
+#include "Reader14443-2A.h"
+#include "SniffISO14443-2A.h"
+#include "ISO15693.h"
+
+/* Timing definitions for ISO14443A */
+#define ISO14443A_SUBCARRIER_DIVIDER    16
+#define ISO14443A_BIT_GRID_CYCLES       128
+#define ISO14443A_BIT_RATE_CYCLES       128
+#define ISO14443A_FRAME_DELAY_PREV1     1236
+#define ISO14443A_FRAME_DELAY_PREV0     1172
+#define ISO14443A_RX_PENDING_TIMEOUT	4 // ms
 
 #define CODEC_BUFFER_SIZE           256
 
@@ -285,4 +286,7 @@ bool CodecIsReaderToBeRestarted(void);
 void CodecThresholdSet(uint16_t th);
 uint16_t CodecThresholdIncrement(void);
 void CodecThresholdReset(void);
+
+#endif /* __ASSEMBLER__ */
+
 #endif /* CODEC_H_ */
