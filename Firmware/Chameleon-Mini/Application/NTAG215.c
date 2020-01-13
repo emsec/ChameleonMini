@@ -2,8 +2,10 @@
  * NTAG215.c
  *
  *  Created on: 20.02.2019
- *      Author: Giovanni Cammisa (gcammisa)
- *  Currently still missing support for CompatWrite
+ *  Author: Giovanni Cammisa (gcammisa)
+ *  Still missing support for:
+ *      -The management of both static and dynamic lock bytes
+ *      -Bruteforce protection (AUTHLIM COUNTER)
  *  Thanks to skuser for the MifareUltralight code used as a starting point
  */
 
@@ -87,6 +89,8 @@ static enum {
 
 static bool FromHalt = false;
 static uint8_t PageCount;
+static bool ArmedForCompatWrite;
+static uint8_t CompatWritePageAddress;
 static bool Authenticated;
 static uint8_t FirstAuthenticatedPage;
 static bool ReadAccessProtected;
@@ -98,6 +102,7 @@ void NTAG215AppInit(void)
 
     State = STATE_IDLE;
     FromHalt = false;
+    ArmedForCompatWrite = false;
     Authenticated = false;
     PageCount = NTAG215_PAGES;
 
@@ -145,6 +150,16 @@ static uint8_t AppWritePage(uint8_t PageAddress, uint8_t* const Buffer)
 static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
 {
      uint8_t Cmd = Buffer[0];
+
+    /* Handle the compatibility write command */
+    if (ArmedForCompatWrite) {
+        ArmedForCompatWrite = false;
+
+        AppWritePage(CompatWritePageAddress, &Buffer[2]);
+        Buffer[0] = ACK_VALUE;
+        return ACK_FRAME_SIZE;
+    }
+
       switch (Cmd) {
         case CMD_GET_VERSION: {
             /* Provide hardcoded version response */ //VERSION RESPONSE FOR NTAG 215
@@ -218,7 +233,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
         case CMD_PWD_AUTH: {
                 uint8_t Password[4];
 
-                /* For now we no give a shit about bruteforce protection, so: */
+                /* For now I don't care about bruteforce protection, so: */
                 /* TODO: IMPLEMENT COUNTER AUTHLIM */
 
                 /* Read and compare the password */
@@ -228,7 +243,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     return NAK_FRAME_SIZE;
                 }
                 /* Authenticate the user */
-		        //RESET COUNTER FUCKTHIS
+		        //RESET AUTHLIM COUNTER, CURRENTLY NOT IMPLEMENTED 
                 Authenticated = 1;
                 /* Send the PACK value back */
                 MemoryReadBlock(Buffer, CONFIG_AREA_START_ADDRESS + CONF_PACK_OFFSET, 2);
@@ -253,6 +268,26 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             Buffer[0] = ACK_VALUE;
             return ACK_FRAME_SIZE;
         }
+
+        case CMD_COMPAT_WRITE: {
+            uint8_t PageAddress = Buffer[1];
+            /* Validation */
+            if ((PageAddress < PAGE_WRITE_MIN) || (PageAddress >= PageCount)) {
+                Buffer[0] = NAK_INVALID_ARG;
+                return NAK_FRAME_SIZE;
+            }
+            if (!VerifyAuthentication(PageAddress)) {
+                Buffer[0] = NAK_NOT_AUTHED;
+                return NAK_FRAME_SIZE;
+            }
+            /* CRC check passed and page-address is within bounds.
+            * Store address and proceed to receiving the data. */
+            CompatWritePageAddress = PageAddress;
+            ArmedForCompatWrite = true; //TODO:IMPLEMENT ARMED COMPAT WRITE
+            Buffer[0] = ACK_VALUE;
+            return ACK_FRAME_SIZE;
+        }
+
 
         case CMD_READ_SIG: {
                 /* Hardcoded response */
@@ -290,7 +325,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
 }
 
 
-//FINITE STATE MACHINE STUFF, SHOULD BE THE EXACT SAME AS Mifare Ultralight
+//FINITE STATE MACHINE STUFF, SHOULD BE THE VERY SIMILAR TO Mifare Ultralight
 uint16_t NTAG215AppProcess(uint8_t* Buffer, uint16_t BitCount)
 {
     uint8_t Cmd = Buffer[0];
