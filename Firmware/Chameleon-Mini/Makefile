@@ -1,15 +1,16 @@
 # This makefile uses sh in order to build the project.
-# Note when using AVR-Toolchain, you have to install cygwin and 
-# append cygwin's bin directory to the PATH environment variable 
-# because Atmel does not ship sh.exe anymore with the toolchain. 
+# Note when using AVR-Toolchain, you have to install cygwin and
+# append cygwin's bin directory to the PATH environment variable
+# because Atmel does not ship sh.exe anymore with the toolchain.
 SHELL = /bin/sh
 
 #Supported configurations
+SETTINGS    += -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
-SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT 
+SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT
 SETTINGS	+= -DCONFIG_ISO14443A_SNIFF_SUPPORT
 SETTINGS	+= -DCONFIG_ISO14443A_READER_SUPPORT
 SETTINGS	+= -DCONFIG_NTAG215_SUPPORT
@@ -29,6 +30,7 @@ SETTINGS	+= -DSUPPORT_UID7_FIX_MANUFACTURER_BYTE
 SETTINGS	+= -DSUPPORT_FIRMWARE_UPGRADE
 
 #Default configuration
+#SETTINGS   += -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_MINI_4B
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
@@ -45,7 +47,7 @@ SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
 #SETTINGS	+= -DDEFAULT_RBUTTON_ACTION=BUTTON_ACTION_STORE_MEM
 SETTINGS	+= -DDEFAULT_LBUTTON_ACTION=BUTTON_ACTION_RECALL_MEM
 
-#Define if button action setting should be independent of active setting 
+#Define if button action setting should be independent of active setting
 SETTINGS	+= -DBUTTON_SETTING_GLOBAL
 
 #Default LED functions
@@ -96,10 +98,11 @@ F_CPU        = 27120000
 F_USB        = 48000000
 TARGET       = Chameleon-Mini
 OPTIMIZATION = s
-SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c MemoryAsm.S Button.c Log.c Settings.c LED.c Map.c AntennaLevel.c
+SRC         += $(TARGET).c LUFADescriptors.c System.c ISRSharing.S Configuration.c Random.c Common.c Memory.c MemoryAsm.S Button.c Log.c Settings.c LED.c Map.c AntennaLevel.c
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S
-SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c Application/NTAG215.c
+SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c Application/CryptoTDEA.S
+SRC			+= Application/NTAG215.c
 SRC         += Codec/ISO15693.c
 SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/ISO15693-A.c Application/EM4233.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
@@ -107,7 +110,7 @@ LUFA_PATH    = ../LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
-OBJECT_FILES = 
+OBJECT_FILES =
 
 
 #AVRDUDE settings
@@ -150,8 +153,8 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 spmhelper: $(TARGET).elf
 	@echo $(MSG_OBJCPY_CMD) Extracting SPM helper HEX file from $(TARGET).elf
 	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
-		
-# Program the device using avrdude  
+
+# Program the device using avrdude
 program: $(TARGET).hex $(TARGET).eep
 	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP) $(AVRDUDE_WRITE_EEPROM)
 
@@ -172,3 +175,18 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 	dfu-programmer $(MCU) flash-eeprom $(TARGET).eep
 	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) reset
+
+style:
+	# Make sure astyle is installed
+	@which astyle >/dev/null || ( echo "Please install 'astyle' package first" ; exit 1 )
+	# Remove spaces & tabs at EOL, add LF at EOF if needed on *.c, *.h, Makefile
+	find . \( -name "*.[ch]" -or -name "Makefile" \) \
+	    -exec perl -pi -e 's/[ \t]+$$//' {} \; \
+	    -exec sh -c "tail -c1 {} | xxd -p | tail -1 | grep -q -v 0a$$" \; \
+	    -exec sh -c "echo >> {}" \;
+	# Apply astyle on *.c, *.h
+	find . -name "*.[ch]" -exec astyle --formatted --mode=c --suffix=none \
+	    --indent=spaces=4 --indent-switches \
+	    --keep-one-line-blocks --max-instatement-indent=60 \
+	    --style=google --pad-oper --unpad-paren --pad-header \
+	    --align-pointer=name {} \;

@@ -27,7 +27,7 @@
 #define SUBCARRIER_1            32
 #define SUBCARRIER_2            28
 #define SUBCARRIER_OFF          0
-#define SOF_PATTERN             0x1D // 0001 1101 
+#define SOF_PATTERN             0x1D // 0001 1101
 #define EOF_PATTERN             0xB8 // 1011 1000
 
 // These registers provide quick access but are limited
@@ -89,8 +89,7 @@ static volatile uint16_t ReadCommandFromReader = 0;
  * and unregistered writing the INT0MASK to 0
  */
 // ISR(CODEC_DEMOD_IN_INT0_VECT)
-void isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void)
-{
+ISR_SHARED isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void) {
     /* Start sample timer CODEC_TIMER_SAMPLING (TCD0).
      * Set Counter Channel C (CCC) with relevant bitmask (TC0_CCCIF_bm),
      * the period for clock sampling is specified in StartISO15693Demod.
@@ -106,15 +105,13 @@ void isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void)
 /* This function is called from isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT
  * when we have 8 bits in SampleRegister and they represent an end of frame.
  */
-INLINE void ISO15693_EOC(void)
-{
+INLINE void ISO15693_EOC(void) {
     /* Set bitrate required by the reader on SOF for our following response */
     BitRate1 = 256 * 4; // 256 * 4 - 1
     if (CodecBuffer[0] & ISO15693_REQ_DATARATE_HIGH)
         BitRate1 = 256;
 
-    if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL)
-    {
+    if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL) {
         BitRate2 = 252 * 4; // 252 * 4 - 3
         if (CodecBuffer[0] & ISO15693_REQ_DATARATE_HIGH)
             BitRate2 = 252;
@@ -144,25 +141,20 @@ INLINE void ISO15693_EOC(void)
 
 /* This function is registered to CODEC_TIMER_SAMPLING (TCD0)'s Counter Channel C (CCC).
  * When the timer is enabled, this is called on counter's overflow
- * 
+ *
  * It demodulates bits received from the reader and saves them in CodecBuffer.
- * 
+ *
  * It disables its own interrupt when receives an EOF (calling ISO15693_EOC) or when it receives garbage
  */
-// ISR(CODEC_TIMER_SAMPLING_CCC_VECT) // Reading data sent from the reader
-void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void)
-{
+ISR_SHARED isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void) {
     /* Shift demod data */
     SampleRegister = (SampleRegister << 1) | (!(CODEC_DEMOD_IN_PORT.IN & CODEC_DEMOD_IN_MASK) ? 0x01 : 0x00);
 
-    if (++BitSampleCount == 8)
-    {
+    if (++BitSampleCount == 8) {
         BitSampleCount = 0;
-        switch (DemodState)
-        {
+        switch (DemodState) {
             case DEMOD_SOC_STATE:
-                if (SampleRegister == SOC_1_OF_4_CODE)
-                {
+                if (SampleRegister == SOC_1_OF_4_CODE) {
                     DemodState = DEMOD_1_OUT_OF_4_STATE;
                     SampleDataCount = 0;
                     ModulationPauseCount = 0;
@@ -179,13 +171,11 @@ void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void)
                 break;
 
             case DEMOD_1_OUT_OF_4_STATE:
-                if (SampleRegister == EOC_CODE)
-                {
+                if (SampleRegister == EOC_CODE) {
                     ISO15693_EOC();
                 } else {
                     uint8_t SampleData = ~SampleRegister;
-                    if (SampleData == (0x01 << 6))
-                    {
+                    if (SampleData == (0x01 << 6)) {
                         /* ^_^^^^^^ -> 00 */
                         ModulationPauseCount++;
                         DataRegister >>= 2;
@@ -209,8 +199,7 @@ void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void)
                         DataRegister |= 0b11 << 6;
                     }
 
-                    if (ModulationPauseCount == 4)
-                    {
+                    if (ModulationPauseCount == 4) {
                         ModulationPauseCount = 0;
                         *CodecBufferPtr = DataRegister;
                         ++CodecBufferPtr;
@@ -220,15 +209,13 @@ void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void)
                 break;
 
             case DEMOD_1_OUT_OF_256_STATE:
-                if (SampleRegister == EOC_CODE)
-                {
+                if (SampleRegister == EOC_CODE) {
                     ISO15693_EOC();
                 } else {
                     uint8_t Position = ((SampleDataCount / 2) % 256) - 1;
                     uint8_t SampleData = ~SampleRegister;
 
-                    if (SampleData == (0x01 << 6))
-                    {
+                    if (SampleData == (0x01 << 6)) {
                         /* ^_^^^^^^ -> N-3 */
                         DataRegister = Position - 3;
                         ModulationPauseCount++;
@@ -247,15 +234,14 @@ void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void)
                         /* ^^^^^^^_ -> N-0 */
                         DataRegister = Position - 0;
                         ModulationPauseCount++;
-                    } 
+                    }
 
-                    if (ModulationPauseCount == 1)
-                    {
+                    if (ModulationPauseCount == 1) {
                         ModulationPauseCount = 0;
                         *CodecBufferPtr = DataRegister;
                         ++CodecBufferPtr;
                         ++ByteCount;
-                    } 
+                    }
                 }
                 break;
         }
@@ -266,212 +252,211 @@ void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void)
 
 /* This function is registered to CODEC_TIMER_LOADMOD (TCE0)'s Counter Channel B (CCB).
  * When the timer is enabled, this is called on counter's overflow
- * 
+ *
  * It modulates the carrier with consuming bytes in CodecBuffer until ByteCount is 0.
- * 
+ *
  * It disables its own interrupt when all data has been sent
  */
 //ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
-void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void)
-{
-    static void* JumpTable[] = {
-        [LOADMOD_START_SINGLE]  = &&LOADMOD_START_SINGLE_LABEL,
-        [LOADMOD_SOF_SINGLE]    = &&LOADMOD_SOF_SINGLE_LABEL,
-        [LOADMOD_BIT0_SINGLE]   = &&LOADMOD_BIT0_SINGLE_LABEL,
-        [LOADMOD_BIT1_SINGLE]   = &&LOADMOD_BIT1_SINGLE_LABEL,
-        [LOADMOD_EOF_SINGLE]    = &&LOADMOD_EOF_SINGLE_LABEL,
-        [LOADMOD_START_DUAL]    = &&LOADMOD_START_DUAL_LABEL,
-        [LOADMOD_SOF_DUAL]      = &&LOADMOD_SOF_DUAL_LABEL,
-        [LOADMOD_BIT0_DUAL]     = &&LOADMOD_BIT0_DUAL_LABEL,
-        [LOADMOD_BIT1_DUAL]     = &&LOADMOD_BIT1_DUAL_LABEL,
-        [LOADMOD_EOF_DUAL]      = &&LOADMOD_EOF_DUAL_LABEL,
-        [LOADMOD_FINISHED]      = &&LOADMOD_FINISHED_LABEL
+void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
+    static void *JumpTable[] = {
+        [LOADMOD_START_SINGLE]  = && LOADMOD_START_SINGLE_LABEL,
+        [LOADMOD_SOF_SINGLE]    = && LOADMOD_SOF_SINGLE_LABEL,
+        [LOADMOD_BIT0_SINGLE]   = && LOADMOD_BIT0_SINGLE_LABEL,
+        [LOADMOD_BIT1_SINGLE]   = && LOADMOD_BIT1_SINGLE_LABEL,
+        [LOADMOD_EOF_SINGLE]    = && LOADMOD_EOF_SINGLE_LABEL,
+        [LOADMOD_START_DUAL]    = && LOADMOD_START_DUAL_LABEL,
+        [LOADMOD_SOF_DUAL]      = && LOADMOD_SOF_DUAL_LABEL,
+        [LOADMOD_BIT0_DUAL]     = && LOADMOD_BIT0_DUAL_LABEL,
+        [LOADMOD_BIT1_DUAL]     = && LOADMOD_BIT1_DUAL_LABEL,
+        [LOADMOD_EOF_DUAL]      = && LOADMOD_EOF_DUAL_LABEL,
+        [LOADMOD_FINISHED]      = && LOADMOD_FINISHED_LABEL
     };
 
-    if ( (StateRegister >= LOADMOD_START_SINGLE) && (StateRegister <= LOADMOD_FINISHED) ) {
+    if ((StateRegister >= LOADMOD_START_SINGLE) && (StateRegister <= LOADMOD_FINISHED)) {
         goto *JumpTable[StateRegister];
     } else {
         return;
     }
 
-    LOADMOD_START_SINGLE_LABEL:
-        /* Application produced data. With this interrupt we are aligned to the bit-grid. */
-        ShiftRegister = SOF_PATTERN;
-        BitSent = 0;
-        /* Fallthrough */
-    LOADMOD_SOF_SINGLE_LABEL:
-        if (ShiftRegister & 0x80) {
-            CodecSetLoadmodState(true);
-        } else {
-            CodecSetLoadmodState(false);
-        }
-
-        CodecStartSubcarrier();
-
-        ShiftRegister <<= 1;
-        BitSent++;
-
-        if ( (BitSent % 8) == 0) {
-            /* Last SOF bit has been put out. Start sending out data */
-            StateRegister = LOADMOD_BIT0_SINGLE;
-            ShiftRegister = (*CodecBufferPtr++);
-        } else {
-            StateRegister = LOADMOD_SOF_SINGLE;
-        }
-    return;
-
-    LOADMOD_BIT0_SINGLE_LABEL: //Manchester encoding
-        if (ShiftRegister & 0x01) {
-            /* Deactivate carrier */
-            CodecSetLoadmodState(false);
-        } else {
-            /* Activate carrier */
-            CodecSetLoadmodState(true);
-        }
-
-        StateRegister = LOADMOD_BIT1_SINGLE;
-    return;
-
-    LOADMOD_BIT1_SINGLE_LABEL: //Manchester encoding
-        if (ShiftRegister & 0x01) {
-            CodecSetLoadmodState(true);
-        } else {
-            CodecSetLoadmodState(false);
-        }
-
-        ShiftRegister >>= 1;
-        BitSent++;
-
-        StateRegister = LOADMOD_BIT0_SINGLE;
-
-        if ( (BitSent % 8) == 0 ) {
-            /* Byte boundary */
-            if (--ByteCount == 0) {
-                /* No more data left */
-                ShiftRegister = EOF_PATTERN;
-                StateRegister = LOADMOD_EOF_SINGLE;
-            } else {
-                ShiftRegister = (*CodecBufferPtr++);
-            }
-        }
-    return;
-
-    LOADMOD_EOF_SINGLE_LABEL: //End of Manchester encoding
-        /* Output EOF */
-        if (ShiftRegister & 0x80) {
-            CodecSetLoadmodState(true);
-        } else {
-            CodecSetLoadmodState(false);
-        }
-
-        ShiftRegister <<= 1;
-        BitSent++;
-
-        if ( (BitSent % 8) == 0) {
-            /* Last bit has been put out */
-            StateRegister = LOADMOD_FINISHED;
-        } else {
-            StateRegister = LOADMOD_EOF_SINGLE;
-        }
-    return;
-
-   // ------------------------------------------------------------- 
-
-   LOADMOD_START_DUAL_LABEL:
-        ShiftRegister = SOF_PATTERN;
-        BitSent = 0;
+LOADMOD_START_SINGLE_LABEL:
+    /* Application produced data. With this interrupt we are aligned to the bit-grid. */
+    ShiftRegister = SOF_PATTERN;
+    BitSent = 0;
+    /* Fallthrough */
+LOADMOD_SOF_SINGLE_LABEL:
+    if (ShiftRegister & 0x80) {
         CodecSetLoadmodState(true);
-        CodecStartSubcarrier();
-        // fallthrough
-    LOADMOD_SOF_DUAL_LABEL:
-        if (ShiftRegister & 0x80) {
-            CodecChangeDivider(SUBCARRIER_1);
-            CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
+    } else {
+        CodecSetLoadmodState(false);
+    }
+
+    CodecStartSubcarrier();
+
+    ShiftRegister <<= 1;
+    BitSent++;
+
+    if ((BitSent % 8) == 0) {
+        /* Last SOF bit has been put out. Start sending out data */
+        StateRegister = LOADMOD_BIT0_SINGLE;
+        ShiftRegister = (*CodecBufferPtr++);
+    } else {
+        StateRegister = LOADMOD_SOF_SINGLE;
+    }
+    return;
+
+LOADMOD_BIT0_SINGLE_LABEL: //Manchester encoding
+    if (ShiftRegister & 0x01) {
+        /* Deactivate carrier */
+        CodecSetLoadmodState(false);
+    } else {
+        /* Activate carrier */
+        CodecSetLoadmodState(true);
+    }
+
+    StateRegister = LOADMOD_BIT1_SINGLE;
+    return;
+
+LOADMOD_BIT1_SINGLE_LABEL: //Manchester encoding
+    if (ShiftRegister & 0x01) {
+        CodecSetLoadmodState(true);
+    } else {
+        CodecSetLoadmodState(false);
+    }
+
+    ShiftRegister >>= 1;
+    BitSent++;
+
+    StateRegister = LOADMOD_BIT0_SINGLE;
+
+    if ((BitSent % 8) == 0) {
+        /* Byte boundary */
+        if (--ByteCount == 0) {
+            /* No more data left */
+            ShiftRegister = EOF_PATTERN;
+            StateRegister = LOADMOD_EOF_SINGLE;
         } else {
-            CodecChangeDivider(SUBCARRIER_2);
-            CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
-        }
-
-        ShiftRegister <<= 1;
-        BitSent++;
-
-        if ( (BitSent % 8) == 0) {
-            /* Last SOF bit has been put out. Start sending out data */
-            StateRegister = LOADMOD_BIT0_DUAL;
             ShiftRegister = (*CodecBufferPtr++);
-        } else {
-            StateRegister = LOADMOD_SOF_DUAL;
         }
+    }
     return;
 
-    LOADMOD_BIT0_DUAL_LABEL: //Manchester encoding
-        if (ShiftRegister & 0x01) {
-            CodecChangeDivider(SUBCARRIER_2);
-            CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
-        } else {
-            CodecChangeDivider(SUBCARRIER_1);
-            CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
-        }
+LOADMOD_EOF_SINGLE_LABEL: //End of Manchester encoding
+    /* Output EOF */
+    if (ShiftRegister & 0x80) {
+        CodecSetLoadmodState(true);
+    } else {
+        CodecSetLoadmodState(false);
+    }
 
-        StateRegister = LOADMOD_BIT1_DUAL;
+    ShiftRegister <<= 1;
+    BitSent++;
+
+    if ((BitSent % 8) == 0) {
+        /* Last bit has been put out */
+        StateRegister = LOADMOD_FINISHED;
+    } else {
+        StateRegister = LOADMOD_EOF_SINGLE;
+    }
     return;
 
-    LOADMOD_BIT1_DUAL_LABEL: //Manchester encoding
-        if (ShiftRegister & 0x01) {
-            /* fc / 32 */
-            CodecChangeDivider(SUBCARRIER_1);
-            CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
-        } else {
-            /* fc / 28 */
-            CodecChangeDivider(SUBCARRIER_2);
-            CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
-        }
+    // -------------------------------------------------------------
 
-        ShiftRegister >>= 1;
-        BitSent++;
+LOADMOD_START_DUAL_LABEL:
+    ShiftRegister = SOF_PATTERN;
+    BitSent = 0;
+    CodecSetLoadmodState(true);
+    CodecStartSubcarrier();
+    // fallthrough
+LOADMOD_SOF_DUAL_LABEL:
+    if (ShiftRegister & 0x80) {
+        CodecChangeDivider(SUBCARRIER_1);
+        CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
+    } else {
+        CodecChangeDivider(SUBCARRIER_2);
+        CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
+    }
 
+    ShiftRegister <<= 1;
+    BitSent++;
+
+    if ((BitSent % 8) == 0) {
+        /* Last SOF bit has been put out. Start sending out data */
         StateRegister = LOADMOD_BIT0_DUAL;
-
-        if ( (BitSent % 8) == 0 ) {
-            /* Byte boundary */
-            if (--ByteCount == 0) {
-                /* No more data left */
-                ShiftRegister = EOF_PATTERN;
-                StateRegister = LOADMOD_EOF_DUAL;
-            } else {
-                ShiftRegister = (*CodecBufferPtr++);
-            }
-        }
+        ShiftRegister = (*CodecBufferPtr++);
+    } else {
+        StateRegister = LOADMOD_SOF_DUAL;
+    }
     return;
 
-    LOADMOD_EOF_DUAL_LABEL: //End of Manchester encoding
-        /* Output EOF */
-        if (ShiftRegister & 0x80) {
-            CodecChangeDivider(SUBCARRIER_1);
-            CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
-        } else {
-            CodecChangeDivider(SUBCARRIER_2);
-            CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
-        }
+LOADMOD_BIT0_DUAL_LABEL: //Manchester encoding
+    if (ShiftRegister & 0x01) {
+        CodecChangeDivider(SUBCARRIER_2);
+        CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
+    } else {
+        CodecChangeDivider(SUBCARRIER_1);
+        CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
+    }
 
-        ShiftRegister <<= 1;
-        BitSent++;
+    StateRegister = LOADMOD_BIT1_DUAL;
+    return;
 
-        if ( (BitSent % 8) == 0) {
-            /* Last bit has been put out */
-            StateRegister = LOADMOD_FINISHED;
-        } else {
+LOADMOD_BIT1_DUAL_LABEL: //Manchester encoding
+    if (ShiftRegister & 0x01) {
+        /* fc / 32 */
+        CodecChangeDivider(SUBCARRIER_1);
+        CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
+    } else {
+        /* fc / 28 */
+        CodecChangeDivider(SUBCARRIER_2);
+        CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
+    }
+
+    ShiftRegister >>= 1;
+    BitSent++;
+
+    StateRegister = LOADMOD_BIT0_DUAL;
+
+    if ((BitSent % 8) == 0) {
+        /* Byte boundary */
+        if (--ByteCount == 0) {
+            /* No more data left */
+            ShiftRegister = EOF_PATTERN;
             StateRegister = LOADMOD_EOF_DUAL;
+        } else {
+            ShiftRegister = (*CodecBufferPtr++);
         }
+    }
     return;
 
-    LOADMOD_FINISHED_LABEL:
-        /* Sets timer off for CODEC_TIMER_LOADMOD (TCE0) disabling clock source as we're done modulating */
-        CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
-        /* Sets register INTCTRLB to 0 to disable all compare/capture interrupts */
-        CODEC_TIMER_LOADMOD.INTCTRLB = 0;
-        CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OFF, 0);
-        Flags.LoadmodFinished = 1;
+LOADMOD_EOF_DUAL_LABEL: //End of Manchester encoding
+    /* Output EOF */
+    if (ShiftRegister & 0x80) {
+        CodecChangeDivider(SUBCARRIER_1);
+        CODEC_TIMER_LOADMOD.PER = BitRate1 - 1;
+    } else {
+        CodecChangeDivider(SUBCARRIER_2);
+        CODEC_TIMER_LOADMOD.PER = BitRate2 - 1;
+    }
+
+    ShiftRegister <<= 1;
+    BitSent++;
+
+    if ((BitSent % 8) == 0) {
+        /* Last bit has been put out */
+        StateRegister = LOADMOD_FINISHED;
+    } else {
+        StateRegister = LOADMOD_EOF_DUAL;
+    }
+    return;
+
+LOADMOD_FINISHED_LABEL:
+    /* Sets timer off for CODEC_TIMER_LOADMOD (TCE0) disabling clock source as we're done modulating */
+    CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
+    /* Sets register INTCTRLB to 0 to disable all compare/capture interrupts */
+    CODEC_TIMER_LOADMOD.INTCTRLB = 0;
+    CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OFF, 0);
+    Flags.LoadmodFinished = 1;
     return;
 }
 
@@ -540,8 +525,7 @@ void StartISO15693Demod(void) {
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
 }
 
-void ISO15693CodecInit(void) 
-{
+void ISO15693CodecInit(void) {
     CodecInitCommon();
 
     /* Register isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT function
@@ -560,8 +544,7 @@ void ISO15693CodecInit(void)
     StartISO15693Demod();
 }
 
-void ISO15693CodecDeInit(void) 
-{
+void ISO15693CodecDeInit(void) {
     /* Gracefully shutdown codec */
     CODEC_DEMOD_IN_PORT.INT0MASK = 0;
 
@@ -602,8 +585,7 @@ void ISO15693CodecDeInit(void)
     CodecSetLoadmodState(false);
 }
 
-void ISO15693CodecTask(void) 
-{
+void ISO15693CodecTask(void) {
     if (Flags.DemodFinished) {
         Flags.DemodFinished = 0;
 
@@ -611,13 +593,11 @@ void ISO15693CodecTask(void)
         uint16_t AppReceivedByteCount = 0;
         bool bDualSubcarrier = false;
 
-        if (DemodByteCount > 0)
-        {
+        if (DemodByteCount > 0) {
             LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, DemodByteCount);
             LEDHook(LED_CODEC_RX, LED_PULSE);
 
-            if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL)
-            {
+            if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL) {
                 bDualSubcarrier = true;
             }
             AppReceivedByteCount = ApplicationProcess(CodecBuffer, DemodByteCount);

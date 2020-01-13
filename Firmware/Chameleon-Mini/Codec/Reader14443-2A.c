@@ -79,16 +79,14 @@ void Reader14443ACodecDeInit(void) {
     Flags.Start = false;
 }
 
-INLINE void Insert0(void)
-{
+INLINE void Insert0(void) {
     SampleRegister >>= 1;
     if (++BitCount % 8)
         return;
     *CodecBufferPtr++ = SampleRegister;
 }
 
-INLINE void Insert1(void)
-{
+INLINE void Insert1(void) {
     SampleRegister = (SampleRegister >> 1) | 0x80;
     if (++BitCount % 8)
         return;
@@ -97,16 +95,14 @@ INLINE void Insert1(void)
 
 
 // End of Card-> reader communication and enter frame delay time
-INLINE void Reader14443A_EOC(void)
-{
+INLINE void Reader14443A_EOC(void) {
     CODEC_TIMER_LOADMOD.INTCTRLB = 0;
     CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
     CODEC_TIMER_TIMESTAMPS.INTCTRLB = 0;
     CODEC_TIMER_TIMESTAMPS.CTRLA = TC_CLKSEL_OFF_gc;
     ACA.AC1CTRL &= ~AC_ENABLE_bm;
 
-    if (BitCount & 1)
-    {
+    if (BitCount & 1) {
         if (SampleRegister & 0x80)
             Insert0();
         else
@@ -129,8 +125,7 @@ INLINE void Reader14443A_EOC(void)
     State = STATE_FDT;
 }
 
-INLINE void BufferToSequence(void)
-{
+INLINE void BufferToSequence(void) {
     uint16_t count = BitCount;
     if (count > BITS_PER_BYTE * CODEC_BUFFER_SIZE / 2) // todo is this correct?
         return;
@@ -138,7 +133,7 @@ INLINE void BufferToSequence(void)
     BitCount = 0;
 
     memcpy(CodecBuffer + CODEC_BUFFER_SIZE / 2, CodecBuffer, (count + 7) / 8);
-    uint8_t * Buffer = CodecBuffer + CODEC_BUFFER_SIZE / 2;
+    uint8_t *Buffer = CodecBuffer + CODEC_BUFFER_SIZE / 2;
     CodecBufferPtr = CodecBuffer;
 
     // Modified Miller Coding ISO14443-2 8.1.3
@@ -147,16 +142,13 @@ INLINE void BufferToSequence(void)
 
     uint16_t i;
     uint8_t last = 0;
-    for (i = 1; i <= count; i++)
-    {
-        if ((*Buffer) & 1)
-        {
+    for (i = 1; i <= count; i++) {
+        if ((*Buffer) & 1) {
             Insert0();
             Insert1();
             last = 1;
         } else {
-            if (last)
-            {
+            if (last) {
                 Insert0();
                 Insert0();
             } else {
@@ -170,8 +162,7 @@ INLINE void BufferToSequence(void)
             Buffer++;
     }
 
-    if (last == 0) // EOC
-    {
+    if (last == 0) { // EOC
         Insert1();
         Insert0();
     }
@@ -179,15 +170,10 @@ INLINE void BufferToSequence(void)
     if (BitCount % 8)
         CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
 }
-// Frame Delay Time PCD to PICC ends
-ISR (CODEC_TIMER_SAMPLING_CCC_VECT)
-{
-  isr_func_TCD0_CCC_vect();
-}
 
 // ISR (TCD0_CCC_vect)
-void isr_Reader14443_2A_TCD0_CCC_vect(void)  
-{
+// Frame Delay Time PCD to PICC ends
+ISR_SHARED isr_Reader14443_2A_TCD0_CCC_vect(void) {
     CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
 
@@ -214,9 +200,8 @@ void isr_Reader14443_2A_TCD0_CCC_vect(void)
 
 // Reader -> card send bits finished
 // Start Frame delay time PCD to PICC
-void Reader14443AMillerEOC(void)
-{
-    CODEC_TIMER_SAMPLING.PER = 5*SAMPLE_RATE_SYSTEM_CYCLES - 1;
+void Reader14443AMillerEOC(void) {
+    CODEC_TIMER_SAMPLING.PER = 5 * SAMPLE_RATE_SYSTEM_CYCLES - 1;
     CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCBIF_bm | TC0_CCCIF_bm;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_OFF_gc | TC_CCCINTLVL_HI_gc;
     CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES - 1;
@@ -224,14 +209,12 @@ void Reader14443AMillerEOC(void)
 }
 
 // EOC of Card->Reader found
-ISR(CODEC_TIMER_TIMESTAMPS_CCA_VECT) // EOC found
-{
+ISR(CODEC_TIMER_TIMESTAMPS_CCA_VECT) { // EOC found
     Reader14443A_EOC();
 }
 
 // This interrupt find Card -> Reader SOC
-ISR(ACA_AC1_vect) // this interrupt either finds the SOC or gets triggered before
-{
+ISR(ACA_AC1_vect) { // this interrupt either finds the SOC or gets triggered before
     ACA.AC1CTRL &= ~AC_INTLVL_HI_gc; // disable this interrupt
     // enable the pause-finding timer
     CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc;
@@ -242,8 +225,7 @@ ISR(ACA_AC1_vect) // this interrupt either finds the SOC or gets triggered befor
 // according to the pause and modulated period
 // if the half bit duration is modulated, then add 1 to buffer
 // if the half bit duration is not modulated, then add 0 to buffer
-ISR(CODEC_TIMER_LOADMOD_CCA_VECT) // pause found
-{
+ISR(CODEC_TIMER_LOADMOD_CCA_VECT) { // pause found
     uint8_t tmp = CODEC_TIMER_TIMESTAMPS.CNTL;
     CODEC_TIMER_TIMESTAMPS.CNT = 0;
 
@@ -251,43 +233,39 @@ ISR(CODEC_TIMER_LOADMOD_CCA_VECT) // pause found
      * but doing this only on a condition means wasting time, so we do it every time. */
     CODEC_TIMER_TIMESTAMPS.CTRLA = TC_CLKSEL_DIV4_gc;
 
-    switch (tmp) // decide how many half bit periods have been modulations
-    {
-    case 0 ... 48: // 32 ticks is one half of a bit period
-        return;
+    switch (tmp) { // decide how many half bit periods have been modulations
+        case 0 ... 48: // 32 ticks is one half of a bit period
+            return;
 
-    case 49 ... 80: // 64 ticks are a full bit period
-        Insert1();
-        Insert0();
-        return;
+        case 49 ... 80: // 64 ticks are a full bit period
+            Insert1();
+            Insert0();
+            return;
 
-    case 81 ... 112: // 96 ticks are 3 half bit periods
-        if (BitCount & 1)
-        {
+        case 81 ... 112: // 96 ticks are 3 half bit periods
+            if (BitCount & 1) {
+                Insert1();
+                Insert1();
+                Insert0();
+            } else {
+                Insert1();
+                Insert0();
+                Insert0();
+            }
+            return;
+
+        default: // every value over 96 + 16 (tolerance) is considered to be 4 half bit periods
             Insert1();
             Insert1();
             Insert0();
-        } else {
-            Insert1();
             Insert0();
-            Insert0();
-        }
-        return;
-
-    default: // every value over 96 + 16 (tolerance) is considered to be 4 half bit periods
-        Insert1();
-        Insert1();
-        Insert0();
-        Insert0();
-        return;
+            return;
     }
     return;
 }
 
-void Reader14443ACodecTask(void)
-{
-    if (Flags.RxPending && SYSTICK_DIFF(RxPendingSince) > Reader_FWT + 1)
-    {
+void Reader14443ACodecTask(void) {
+    if (Flags.RxPending && SYSTICK_DIFF(RxPendingSince) > Reader_FWT + 1) {
         Reader14443A_EOC();
         BitCount = 0;
         Flags.RxDone = true;
@@ -295,14 +273,11 @@ void Reader14443ACodecTask(void)
     }
     if (CodecIsReaderToBeRestarted() || !CodecIsReaderFieldReady())
         return;
-    if (!Flags.RxPending && (Flags.Start || Flags.RxDone))
-    {
+    if (!Flags.RxPending && (Flags.Start || Flags.RxDone)) {
         if (State == STATE_FDT && CODEC_TIMER_LOADMOD.CNT < ISO14443A_PICC_TO_PCD_MIN_FDT) // we are in frame delay time, so we can return later
             return;
-        if (Flags.RxDone && BitCount > 0) // decode the raw received data
-        {
-            if (BitCount < ISO14443A_RX_MINIMUM_BITCOUNT * 2)
-            {
+        if (Flags.RxDone && BitCount > 0) { // decode the raw received data
+            if (BitCount < ISO14443A_RX_MINIMUM_BITCOUNT * 2) {
                 BitCount = 0;
             } else {
                 uint8_t TmpCodecBuffer[CODEC_BUFFER_SIZE];
@@ -316,27 +291,25 @@ void Reader14443ACodecTask(void)
                 TmpCodecBuffer[0] >>= 2; // with this (and BitCountTmp = 2), the SOC is ignored
 
                 // Manchester Code ISO14443-2 8.2.5
-                while (!breakflag && BitCountTmp < TotalBitCount)
-                {
+                while (!breakflag && BitCountTmp < TotalBitCount) {
                     uint8_t Bit = TmpCodecBuffer[BitCountTmp / 8] & 0x03;
                     TmpCodecBuffer[BitCountTmp / 8] >>= 2;
-                    switch (Bit)
-                    {
-                    case 0b10:
-                        Insert1();
-                        break;
+                    switch (Bit) {
+                        case 0b10:
+                            Insert1();
+                            break;
 
-                    case 0b01:
-                        Insert0();
-                        break;
+                        case 0b01:
+                            Insert0();
+                            break;
 
-                    case 0b00: // EOC
-                        breakflag = true;
-                        break;
+                        case 0b00: // EOC
+                            breakflag = true;
+                            break;
 
-                    default:
-                        // error, should not happen, TODO handle this
-                        break;
+                        default:
+                            // error, should not happen, TODO handle this
+                            break;
                     }
                     BitCountTmp += 2;
                 }
@@ -352,8 +325,7 @@ void Reader14443ACodecTask(void)
         /* Call application with received data */
         BitCount = ApplicationProcess(CodecBuffer, BitCount);
 
-        if (BitCount > 0)
-        {
+        if (BitCount > 0) {
             /*
              * Prepare for Manchester decoding.
              * The basic idea is to use two timers. The first one will be reset everytime the DEMOD signal
@@ -406,8 +378,7 @@ void Reader14443ACodecTask(void)
     }
 }
 
-void Reader14443ACodecStart(void)
-{
+void Reader14443ACodecStart(void) {
     /* Application wants us to start a card transaction */
     BitCount = 0;
     Flags.Start = true;
@@ -415,8 +386,7 @@ void Reader14443ACodecStart(void)
     CodecReaderFieldStart();
 }
 
-void Reader14443ACodecReset(void)
-{
+void Reader14443ACodecReset(void) {
     Reader14443A_EOC(); // this breaks every interrupt etc.
     State = STATE_IDLE;
     Flags.RxDone = false;

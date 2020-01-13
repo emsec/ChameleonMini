@@ -38,8 +38,7 @@ void FlashWaitForSPM(void);
 
 static uint8_t ScrapBuffer[] = {0};
 
-INLINE uint8_t SPITransferByte(uint8_t Data)
-{
+INLINE uint8_t SPITransferByte(uint8_t Data) {
     FRAM_USART.DATA = Data;
 
     while (!(FRAM_USART.STATUS & USART_RXCIF_bm));
@@ -48,8 +47,7 @@ INLINE uint8_t SPITransferByte(uint8_t Data)
 }
 
 #ifdef USE_DMA
-INLINE void SPIReadBlock(void* Buffer, uint16_t ByteCount)
-{
+INLINE void SPIReadBlock(void *Buffer, uint16_t ByteCount) {
     /* Set up read and write transfers */
     RECV_DMA.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_INC_gc;
     RECV_DMA.DESTADDR0 = ((uintptr_t) Buffer >> 0) & 0xFF;
@@ -66,7 +64,7 @@ INLINE void SPIReadBlock(void* Buffer, uint16_t ByteCount)
     SEND_DMA.CTRLA |= DMA_CH_ENABLE_bm;
 
     /* Wait for DMA to finish */
-    while( RECV_DMA.CTRLA & DMA_CH_ENABLE_bm )
+    while (RECV_DMA.CTRLA & DMA_CH_ENABLE_bm)
         ;
 
     /* Clear Interrupt flag */
@@ -74,11 +72,10 @@ INLINE void SPIReadBlock(void* Buffer, uint16_t ByteCount)
     SEND_DMA.CTRLB = DMA_CH_TRNIF_bm | DMA_CH_ERRIF_bm;
 }
 #else
-INLINE void SPIReadBlock(void* Buffer, uint16_t ByteCount)
-{
-    uint8_t* ByteBuffer = (uint8_t*) Buffer;
+INLINE void SPIReadBlock(void *Buffer, uint16_t ByteCount) {
+    uint8_t *ByteBuffer = (uint8_t *) Buffer;
 
-    while(ByteCount-- > 0) {
+    while (ByteCount-- > 0) {
         FRAM_USART.DATA = 0;
         while (!(FRAM_USART.STATUS & USART_RXCIF_bm));
 
@@ -89,8 +86,7 @@ INLINE void SPIReadBlock(void* Buffer, uint16_t ByteCount)
 #endif
 
 #ifdef USE_DMA
-INLINE void SPIWriteBlock(const void* Buffer, uint16_t ByteCount)
-{
+INLINE void SPIWriteBlock(const void *Buffer, uint16_t ByteCount) {
     /* Set up read and write transfers */
     RECV_DMA.ADDRCTRL = DMA_CH_SRCRELOAD_NONE_gc | DMA_CH_SRCDIR_FIXED_gc | DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc;
     RECV_DMA.DESTADDR0 = ((uintptr_t) ScrapBuffer >> 0) & 0xFF;
@@ -106,7 +102,7 @@ INLINE void SPIWriteBlock(const void* Buffer, uint16_t ByteCount)
     SEND_DMA.CTRLA |= DMA_CH_ENABLE_bm;
 
     /* Wait for DMA to finish */
-    while( RECV_DMA.CTRLA & DMA_CH_ENABLE_bm )
+    while (RECV_DMA.CTRLA & DMA_CH_ENABLE_bm)
         ;
 
     /* Clear Interrupt flag */
@@ -114,11 +110,10 @@ INLINE void SPIWriteBlock(const void* Buffer, uint16_t ByteCount)
     SEND_DMA.CTRLB = DMA_CH_TRNIF_bm | DMA_CH_ERRIF_bm;
 }
 #else
-INLINE void SPIWriteBlock(const void* Buffer, uint16_t ByteCount)
-{
-    uint8_t* ByteBuffer = (uint8_t*) Buffer;
+INLINE void SPIWriteBlock(const void *Buffer, uint16_t ByteCount) {
+    uint8_t *ByteBuffer = (uint8_t *) Buffer;
 
-    while(ByteCount-- > 0) {
+    while (ByteCount-- > 0) {
         FRAM_USART.DATA = *ByteBuffer++;
         while (!(FRAM_USART.STATUS & USART_RXCIF_bm));
 
@@ -127,49 +122,46 @@ INLINE void SPIWriteBlock(const void* Buffer, uint16_t ByteCount)
 }
 #endif
 
-INLINE void FRAMRead(void* Buffer, uint16_t Address, uint16_t ByteCount)
-{
+INLINE void FRAMRead(void *Buffer, uint16_t Address, uint16_t ByteCount) {
     FRAM_PORT.OUTCLR = FRAM_CS;
 
     SPITransferByte(0x03); /* Read command */
-    SPITransferByte( (Address >> 8) & 0xFF ); /* Address hi and lo byte */
-    SPITransferByte( (Address >> 0) & 0xFF );
+    SPITransferByte((Address >> 8) & 0xFF);   /* Address hi and lo byte */
+    SPITransferByte((Address >> 0) & 0xFF);
 
     SPIReadBlock(Buffer, ByteCount);
 
     FRAM_PORT.OUTSET = FRAM_CS;
 }
 
-INLINE void FRAMWrite(const void* Buffer, uint16_t Address, uint16_t ByteCount)
-{
+INLINE void FRAMWrite(const void *Buffer, uint16_t Address, uint16_t ByteCount) {
     FRAM_PORT.OUTCLR = FRAM_CS;
     SPITransferByte(0x06); /* Write Enable */
     FRAM_PORT.OUTSET = FRAM_CS;
 
-    asm volatile ("nop");
-    asm volatile ("nop");
+    asm volatile("nop");
+    asm volatile("nop");
 
     FRAM_PORT.OUTCLR = FRAM_CS;
 
     SPITransferByte(0x02); /* Write command */
-    SPITransferByte( (Address >> 8) & 0xFF ); /* Address hi and lo byte */
-    SPITransferByte( (Address >> 0) & 0xFF );
+    SPITransferByte((Address >> 8) & 0xFF);   /* Address hi and lo byte */
+    SPITransferByte((Address >> 0) & 0xFF);
 
     SPIWriteBlock(Buffer, ByteCount);
 
     FRAM_PORT.OUTSET = FRAM_CS;
 }
 
-INLINE void FlashRead(void* Buffer, uint32_t Address, uint16_t ByteCount)
-{
-    uint8_t* BufPtr = (uint8_t*) Buffer;
+INLINE void FlashRead(void *Buffer, uint32_t Address, uint16_t ByteCount) {
+    uint8_t *BufPtr = (uint8_t *) Buffer;
 
     /* We assume that ByteCount is a multiple of 2 */
     uint32_t PhysicalAddress = Address + FLASH_DATA_ADDR;
 
-    if ( (PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END) ) {
+    if ((PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END)) {
         /* Sanity check to limit access to the allocated area */
-        while(ByteCount > 1) {
+        while (ByteCount > 1) {
             uint16_t Word = FlashReadWord(PhysicalAddress);
 
             *BufPtr++ = (Word >> 0) & 0xFF;
@@ -181,9 +173,8 @@ INLINE void FlashRead(void* Buffer, uint32_t Address, uint16_t ByteCount)
     }
 }
 
-INLINE void FlashWrite(const void* Buffer, uint32_t Address, uint16_t ByteCount)
-{
-    const uint8_t* BufPtr = (uint8_t*) Buffer;
+INLINE void FlashWrite(const void *Buffer, uint32_t Address, uint16_t ByteCount) {
+    const uint8_t *BufPtr = (uint8_t *) Buffer;
 
     /* We assume that FlashWrite is always called for write actions that are
      * aligned to APP_SECTION_PAGE_SIZE and a multiple of APP_SECTION_PAGE_SIZE.
@@ -191,10 +182,10 @@ INLINE void FlashWrite(const void* Buffer, uint32_t Address, uint16_t ByteCount)
     uint16_t PageCount = ByteCount / APP_SECTION_PAGE_SIZE;
     uint32_t PhysicalAddress = Address + FLASH_DATA_ADDR;
 
-    if ( (PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END) ) {
+    if ((PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END)) {
         /* Sanity check to limit access to the allocated area */
 
-        while(PageCount-- > 0) {
+        while (PageCount-- > 0) {
             /* For each page to program, wait for NVM to get ready,
              * erase the flash page buffer, program all data to the
              * flash page buffer and write buffer to flash using
@@ -205,11 +196,11 @@ INLINE void FlashWrite(const void* Buffer, uint32_t Address, uint16_t ByteCount)
             FlashEraseFlashBuffer();
             FlashWaitForSPM();
 
-            for (uint16_t i=0; i<APP_SECTION_PAGE_SIZE; i += 2) {
+            for (uint16_t i = 0; i < APP_SECTION_PAGE_SIZE; i += 2) {
                 uint16_t Word = 0;
 
-                Word |= ( (uint16_t) *BufPtr++ << 0);
-                Word |= ( (uint16_t) *BufPtr++ << 8);
+                Word |= ((uint16_t) * BufPtr++ << 0);
+                Word |= ((uint16_t) * BufPtr++ << 8);
 
                 FlashLoadFlashWord(i, Word);
                 FlashWaitForSPM();
@@ -223,14 +214,13 @@ INLINE void FlashWrite(const void* Buffer, uint32_t Address, uint16_t ByteCount)
     }
 }
 
-INLINE void FlashErase(uint32_t Address, uint16_t ByteCount)
-{
+INLINE void FlashErase(uint32_t Address, uint16_t ByteCount) {
     uint16_t PageCount = ByteCount / APP_SECTION_PAGE_SIZE;
     uint32_t PhysicalAddress = Address + FLASH_DATA_ADDR;
 
-    if ( (PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END) ) {
+    if ((PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END)) {
         /* Sanity check to limit access to the allocated area */
-        while(PageCount-- > 0) {
+        while (PageCount-- > 0) {
             FlashWaitForSPM();
 
             FlashEraseApplicationPage(PhysicalAddress);
@@ -241,20 +231,19 @@ INLINE void FlashErase(uint32_t Address, uint16_t ByteCount)
     }
 }
 
-INLINE void FlashToFRAM(uint32_t Address, uint16_t ByteCount)
-{
+INLINE void FlashToFRAM(uint32_t Address, uint16_t ByteCount) {
     /* We assume that ByteCount is a multiple of 2 */
     uint32_t PhysicalAddress = Address + FLASH_DATA_ADDR;
 
-    if ( (PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END) ) {
+    if ((PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END)) {
         /* Sanity check to limit access to the allocated area.
          * Set up FRAM memory for writing. */
         FRAM_PORT.OUTCLR = FRAM_CS;
         SPITransferByte(0x06); /* Write Enable */
         FRAM_PORT.OUTSET = FRAM_CS;
 
-        asm volatile ("nop");
-        asm volatile ("nop");
+        asm volatile("nop");
+        asm volatile("nop");
 
         FRAM_PORT.OUTCLR = FRAM_CS;
 
@@ -264,11 +253,11 @@ INLINE void FlashToFRAM(uint32_t Address, uint16_t ByteCount)
 
         /* Loop through bytes, read words from flash and write
          * double byte into FRAM. */
-        while(ByteCount > 1) {
+        while (ByteCount > 1) {
             uint16_t Word = FlashReadWord(PhysicalAddress);
 
-            SPITransferByte( (Word >> 0) & 0xFF );
-            SPITransferByte( (Word >> 8) & 0xFF );
+            SPITransferByte((Word >> 0) & 0xFF);
+            SPITransferByte((Word >> 8) & 0xFF);
 
             PhysicalAddress += 2;
             ByteCount -= 2;
@@ -279,15 +268,14 @@ INLINE void FlashToFRAM(uint32_t Address, uint16_t ByteCount)
     }
 }
 
-INLINE void FRAMToFlash(uint32_t Address, uint16_t ByteCount)
-{
+INLINE void FRAMToFlash(uint32_t Address, uint16_t ByteCount) {
     /* We assume that FlashWrite is always called for write actions that are
      * aligned to APP_SECTION_PAGE_SIZE and a multiple of APP_SECTION_PAGE_SIZE.
      * Thus only full pages are written into the flash. */
     uint16_t PageCount = ByteCount / APP_SECTION_PAGE_SIZE;
     uint32_t PhysicalAddress = Address + FLASH_DATA_ADDR;
 
-    if ( (PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END) ) {
+    if ((PhysicalAddress >= FLASH_DATA_START) && (PhysicalAddress <= FLASH_DATA_END)) {
         /* Sanity check to limit access to the allocated area and setup FRAM
          * read. */
         FRAM_PORT.OUTCLR = FRAM_CS;
@@ -296,7 +284,7 @@ INLINE void FRAMToFlash(uint32_t Address, uint16_t ByteCount)
         SPITransferByte(0); /* Address hi and lo byte */
         SPITransferByte(0);
 
-        while(PageCount-- > 0) {
+        while (PageCount-- > 0) {
             /* For each page to program, wait for NVM to get ready,
              * erase the flash page buffer, program all data to the
              * flash page buffer and write buffer to flash using
@@ -308,11 +296,11 @@ INLINE void FRAMToFlash(uint32_t Address, uint16_t ByteCount)
             FlashWaitForSPM();
 
             /* Write one page worth of data into flash buffer */
-            for (uint16_t i=0; i<APP_SECTION_PAGE_SIZE; i += 2) {
+            for (uint16_t i = 0; i < APP_SECTION_PAGE_SIZE; i += 2) {
                 uint16_t Word = 0;
 
-                Word |= ( (uint16_t) SPITransferByte(0) << 0);
-                Word |= ( (uint16_t) SPITransferByte(0) << 8);
+                Word |= ((uint16_t) SPITransferByte(0) << 0);
+                Word |= ((uint16_t) SPITransferByte(0) << 8);
 
                 FlashLoadFlashWord(i, Word);
                 FlashWaitForSPM();
@@ -330,14 +318,13 @@ INLINE void FRAMToFlash(uint32_t Address, uint16_t ByteCount)
     }
 }
 
-void MemoryInit(void)
-{
+void MemoryInit(void) {
     /* Configure FRAM_USART for SPI master mode 0 with maximum clock frequency */
     FRAM_PORT.OUTSET = FRAM_CS;
-    
+
     FRAM_PORT.OUTCLR = FRAM_SCK;
     FRAM_PORT.OUTSET = FRAM_MOSI;
-    
+
     FRAM_PORT.DIRSET = FRAM_SCK | FRAM_MOSI | FRAM_CS;
 
     FRAM_USART.BAUDCTRLA = 0;
@@ -369,15 +356,13 @@ void MemoryInit(void)
     SEND_DMA.CTRLA = DMA_CH_SINGLE_bm | DMA_CH_BURSTLEN_1BYTE_gc;
 }
 
-void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount)
-{
+void MemoryReadBlock(void *Buffer, uint16_t Address, uint16_t ByteCount) {
     if (ByteCount == 0)
         return;
     FRAMRead(Buffer, Address, ByteCount);
 }
 
-void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
-{
+void MemoryWriteBlock(const void *Buffer, uint16_t Address, uint16_t ByteCount) {
     if (ByteCount == 0)
         return;
     FRAMWrite(Buffer, Address, ByteCount);
@@ -385,23 +370,20 @@ void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
     LEDHook(LED_MEMORY_CHANGED, LED_ON);
 }
 
-void MemoryClear(void)
-{
+void MemoryClear(void) {
     FlashErase((uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
 
     MemoryRecall();
 }
 
-void MemoryRecall(void)
-{
+void MemoryRecall(void) {
     /* Recall memory from permanent flash */
     FlashToFRAM((uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
 
     SystemTickClearFlag();
 }
 
-void MemoryStore(void)
-{
+void MemoryStore(void) {
     /* Store current memory into permanent flash */
     FRAMToFlash((uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
 
@@ -411,8 +393,7 @@ void MemoryStore(void)
     SystemTickClearFlag();
 }
 
-bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
-{
+bool MemoryUploadBlock(void *Buffer, uint32_t BlockAddress, uint16_t ByteCount) {
     if (BlockAddress >= MEMORY_SIZE_PER_SETTING) {
         /* Prevent writing out of bounds by silently ignoring it */
         return true;
@@ -428,8 +409,7 @@ bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
     }
 }
 
-bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
-{
+bool MemoryDownloadBlock(void *Buffer, uint32_t BlockAddress, uint16_t ByteCount) {
     if (BlockAddress >= MEMORY_SIZE_PER_SETTING) {
         /* There are bytes out of bounds to be read. Notify that we are done. */
         return false;
@@ -447,27 +427,24 @@ bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount
 
 // EEPROM functions
 
-static inline void NVM_EXEC(void)
-{
+static inline void NVM_EXEC(void) {
     void *z = (void *)&NVM_CTRLA;
 
     __asm__ volatile("out %[ccp], %[ioreg]"  "\n\t"
-    "st z, %[cmdex]"
-    :
-    : [ccp] "I" (_SFR_IO_ADDR(CCP)),
-    [ioreg] "d" (CCP_IOREG_gc),
-                 [cmdex] "r" (NVM_CMDEX_bm),
-                 [z] "z" (z)
-                 );
+                     "st z, %[cmdex]"
+                     :
+                     : [ccp] "I"(_SFR_IO_ADDR(CCP)),
+                     [ioreg] "d"(CCP_IOREG_gc),
+                     [cmdex] "r"(NVM_CMDEX_bm),
+                     [z] "z"(z)
+                    );
 }
 
-void WaitForNVM(void)
-{
-        while (NVM.STATUS & NVM_NVMBUSY_bm) { };
+void WaitForNVM(void) {
+    while (NVM.STATUS & NVM_NVMBUSY_bm) { };
 }
 
-void FlushNVMBuffer(void)
-{
+void FlushNVMBuffer(void) {
     WaitForNVM();
 
     if ((NVM.STATUS & NVM_EELOAD_bm) != 0) {
@@ -476,36 +453,33 @@ void FlushNVMBuffer(void)
     }
 }
 
-uint16_t ReadEEPBlock(uint16_t Address, void *DestPtr, uint16_t ByteCount)
-{
+uint16_t ReadEEPBlock(uint16_t Address, void *DestPtr, uint16_t ByteCount) {
     uint16_t BytesRead = 0;
-    uint8_t* BytePtr = (uint8_t*) DestPtr;
+    uint8_t *BytePtr = (uint8_t *) DestPtr;
     NVM.ADDR2 = 0;
 
     WaitForNVM();
 
-    while (ByteCount > 0)
-    {
-            NVM.ADDR0 = Address & 0xFF;
-            NVM.ADDR1 = (Address >> 8) & 0x1F;
+    while (ByteCount > 0) {
+        NVM.ADDR0 = Address & 0xFF;
+        NVM.ADDR1 = (Address >> 8) & 0x1F;
 
-            NVM.CMD = NVM_CMD_READ_EEPROM_gc;
-            NVM_EXEC();
+        NVM.CMD = NVM_CMD_READ_EEPROM_gc;
+        NVM_EXEC();
 
-            *BytePtr++ = NVM.DATA0;
-            Address++;
+        *BytePtr++ = NVM.DATA0;
+        Address++;
 
-            ByteCount--;
-            BytesRead++;
+        ByteCount--;
+        BytesRead++;
     }
 
     return BytesRead;
 }
 
 
-uint16_t WriteEEPBlock(uint16_t Address, const void *SrcPtr, uint16_t ByteCount)
-{
-    const uint8_t* BytePtr = (const uint8_t*) SrcPtr;
+uint16_t WriteEEPBlock(uint16_t Address, const void *SrcPtr, uint16_t ByteCount) {
+    const uint8_t *BytePtr = (const uint8_t *) SrcPtr;
     uint8_t ByteAddress = Address % EEPROM_PAGE_SIZE;
     uint16_t PageAddress = Address - ByteAddress;
     uint16_t BytesWritten = 0;
@@ -517,8 +491,7 @@ uint16_t WriteEEPBlock(uint16_t Address, const void *SrcPtr, uint16_t ByteCount)
     NVM.ADDR1 = 0;
     NVM.ADDR2 = 0;
 
-    while (ByteCount > 0)
-    {
+    while (ByteCount > 0) {
         NVM.ADDR0 = ByteAddress;
 
         NVM.DATA0 = *BytePtr++;
@@ -526,8 +499,7 @@ uint16_t WriteEEPBlock(uint16_t Address, const void *SrcPtr, uint16_t ByteCount)
         ByteAddress++;
         ByteCount--;
 
-        if (ByteCount == 0 || ByteAddress >= EEPROM_PAGE_SIZE)
-        {
+        if (ByteCount == 0 || ByteAddress >= EEPROM_PAGE_SIZE) {
             NVM.ADDR0 = PageAddress & 0xFF;
             NVM.ADDR1 = (PageAddress >> 8) & 0x1F;
 

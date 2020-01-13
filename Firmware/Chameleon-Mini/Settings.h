@@ -35,28 +35,26 @@ typedef struct {
 
 typedef struct {
     uint8_t ActiveSettingIdx;
-    SettingsEntryType* ActiveSettingPtr;
+    SettingsEntryType *ActiveSettingPtr;
     SettingsEntryType Settings[SETTINGS_COUNT];
 } SettingsType;
 
 extern SettingsType GlobalSettings, StoredSettings;
 
-INLINE void SettingUpdate(const void * addr, uint16_t size)
-{
+INLINE void SettingUpdate(const void *addr, uint16_t size) {
 #if ENABLE_EEPROM_SETTINGS
     uintptr_t EEAddr = (uintptr_t)addr - (uintptr_t)&GlobalSettings + (uintptr_t)&StoredSettings;
-    switch (size)
-    {
-    case 1:
-        eeprom_update_byte((uint8_t *)EEAddr, *(uint8_t*)addr);
-        break;
+    switch (size) {
+        case 1:
+            eeprom_update_byte((uint8_t *)EEAddr, *(uint8_t *)addr);
+            break;
 
-    case 2:
-        eeprom_update_word((uint16_t *)EEAddr, *(uint16_t*)addr);
-        break;
+        case 2:
+            eeprom_update_word((uint16_t *)EEAddr, *(uint16_t *)addr);
+            break;
 
-    default:
-        eeprom_update_block((uint8_t*)addr, (uint8_t*)EEAddr, size);
+        default:
+            eeprom_update_block((uint8_t *)addr, (uint8_t *)EEAddr, size);
     }
 
 #endif
@@ -70,7 +68,7 @@ void SettingsSave(void);
 void SettingsCycle(void);
 bool SettingsSetActiveById(uint8_t Setting);
 uint8_t SettingsGetActiveById(void);
-void SettingsGetActiveByName(char* SettingOut, uint16_t BufferSize);
-bool SettingsSetActiveByName(const char* Setting);
+void SettingsGetActiveByName(char *SettingOut, uint16_t BufferSize);
+bool SettingsSetActiveByName(const char *Setting);
 
 #endif /* SETTINGS_H_ */

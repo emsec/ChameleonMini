@@ -16,8 +16,8 @@
 #include "Common.h"
 
 void MemoryInit(void);
-void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount);
-void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount);
+void MemoryReadBlock(void *Buffer, uint16_t Address, uint16_t ByteCount);
+void MemoryWriteBlock(const void *Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryClear(void);
 
 
@@ -25,8 +25,8 @@ void MemoryRecall(void);
 void MemoryStore(void);
 
 /* For use with XModem */
-bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
-bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
+bool MemoryUploadBlock(void *Buffer, uint32_t BlockAddress, uint16_t ByteCount);
+bool MemoryDownloadBlock(void *Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 
 /* EEPROM functions */
 uint16_t WriteEEPBlock(uint16_t Address, const void *SrcPtr, uint16_t ByteCount);

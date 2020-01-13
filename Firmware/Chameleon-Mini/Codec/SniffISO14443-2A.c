@@ -63,8 +63,7 @@ INLINE void CardSniffDeinit(void);
 // Reader->Card Direction Traffic
 /////////////////////////////////////////////////
 
-INLINE void ReaderSniffInit(void)
-{
+INLINE void ReaderSniffInit(void) {
 //    PORTE.OUTSET = PIN3_bm;
 
     // Configure interrupt for demod
@@ -94,8 +93,7 @@ INLINE void ReaderSniffInit(void)
     CODEC_DEMOD_IN_PORT.INTFLAGS = PORT_INT1IF_bm;
     CODEC_DEMOD_IN_PORT.INT1MASK = CODEC_DEMOD_IN_MASK0;
 }
-INLINE void ReaderSniffDeInit(void)
-{
+INLINE void ReaderSniffDeInit(void) {
 //    PORTE.OUTCLR = PIN3_bm;
 
     /* Gracefully shutdown codec */
@@ -126,8 +124,8 @@ ISR(CODEC_DEMOD_IN_INT1_VECT) {
      * We want to sample the demodulated data stream in the first quarter of the half-bit
      * where the pulsed miller encoded is located. */
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
-    CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES/2 - 1; /* Half bit width */
-    CODEC_TIMER_SAMPLING.CCDBUF = SAMPLE_RATE_SYSTEM_CYCLES/8 - 14 - 1; /* Compensate for DIGFILT and ISR prolog */
+    CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES / 2 - 1; /* Half bit width */
+    CODEC_TIMER_SAMPLING.CCDBUF = SAMPLE_RATE_SYSTEM_CYCLES / 8 - 14 - 1; /* Compensate for DIGFILT and ISR prolog */
 
     /* Disable this interrupt */
     CODEC_DEMOD_IN_PORT.INT1MASK = 0;
@@ -185,14 +183,13 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
             if (ReaderBitCount >= ISO14443A_MIN_BITS_PER_FRAME) {
                 Flags.ReaderDataAvaliable = true;
                 CardSniffInit();
-            } else{
+            } else {
                 ReaderSniffInit();
             }
 
             return;
 
-        }
-        else {
+        } else {
             /* Otherwise, we check the two sample bits from the bit before. */
             uint8_t BitSample = ReaderSampleR & 0xC;
             uint8_t Bit = 0;
@@ -202,8 +199,7 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
                 if (BitSample & (0x1 << 2)) {
                     /* 01 sequence or 11 sequence -> This is a zero bit */
                     Bit = 0;
-                }
-                else {
+                } else {
                     /* 10 sequence -> This is a one bit */
                     Bit = 1;
                 }
@@ -227,23 +223,19 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
                         StateRegister = DEMOD_PARITY_BIT;
                     }
 
-                }
-                else if (StateRegister == DEMOD_PARITY_BIT) {
+                } else if (StateRegister == DEMOD_PARITY_BIT) {
                     /* This is a parity bit. Store it */
 //                    *ParityBufferPtr++ = Bit;
                     StateRegister = DEMOD_DATA_BIT;
-                }
-                else {
+                } else {
                     /* Should never Happen (TM) */
                 }
-            }
-            else {
+            } else {
                 /* 00 sequence. -> No valid data yet. This also occurs if we just started
                  * sampling and have sampled less than 2 bits yet. Thus ignore. */
             }
         }
-    }
-    else {
+    } else {
         /* On odd sample position just sample. */
         SampleIdxRegister = ~SampleIdxRegister;
     }
@@ -259,8 +251,7 @@ ISR(CODEC_TIMER_SAMPLING_CCD_VECT) {
 // Card->Reader Direction Traffic
 /////////////////////////////////////////////////
 
-INLINE void CardSniffInit(void)
-{
+INLINE void CardSniffInit(void) {
 
     /* Initialize common peripherals and start listening
      * for incoming data. */
@@ -301,7 +292,7 @@ INLINE void CardSniffInit(void)
     CODEC_TIMER_TIMESTAMPS.INTCTRLA = 0;
     CODEC_TIMER_TIMESTAMPS.INTFLAGS = TC1_CCBIF_bm;         // Clear interrupt flag
 //    CODEC_TIMER_TIMESTAMPS.INTCTRLB = TC_CCBINTLVL_LO_gc;
-        CODEC_TIMER_TIMESTAMPS.INTCTRLB = TC_CCBINTLVL_HI_gc;
+    CODEC_TIMER_TIMESTAMPS.INTCTRLB = TC_CCBINTLVL_HI_gc;
 
     /* Use the event system for resetting the pause-detecting timer. */
     EVSYS.CH2MUX = EVSYS_CHMUX_ACA_CH0_gc; // on every ACA_AC0 INT
@@ -320,8 +311,7 @@ INLINE void CardSniffInit(void)
 
 }
 
-INLINE void CardSniffDeinit(void)
-{
+INLINE void CardSniffDeinit(void) {
 
     CODEC_TIMER_LOADMOD.CTRLA = 0;
     CODEC_TIMER_LOADMOD.INTCTRLB = 0;
@@ -337,16 +327,14 @@ INLINE void CardSniffDeinit(void)
 
 
 
-INLINE void Insert0(void)
-{
+INLINE void Insert0(void) {
     CardSampleR >>= 1;
     if (++BitCount % 8)
         return;
     *CardBufferPtr++ = CardSampleR;
 }
 
-INLINE void Insert1(void)
-{
+INLINE void Insert1(void) {
     CardSampleR = (CardSampleR >> 1) | 0x80;
     if (++BitCount % 8)
         return;
@@ -354,8 +342,7 @@ INLINE void Insert1(void)
 }
 
 // This interrupt find Card -> Reader SOC
-ISR(ACA_AC0_vect) // this interrupt either finds the SOC or gets triggered before
-{
+ISR(ACA_AC0_vect) { // this interrupt either finds the SOC or gets triggered before
 
     ACA.AC0CTRL &= ~AC_INTLVL_HI_gc; // disable this interrupt
     // enable the pause-finding timer
@@ -364,8 +351,7 @@ ISR(ACA_AC0_vect) // this interrupt either finds the SOC or gets triggered befor
     StateRegister = PICC_FRAME;
 }
 
-ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
-{
+ISR(CODEC_TIMER_LOADMOD_CCB_VECT) { // pause found
     isr_func_CODEC_TIMER_LOADMOD_CCB_VECT();
 }
 
@@ -374,8 +360,7 @@ ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
 // if the half bit duration is modulated, then add 1 to buffer
 // if the half bit duration is not modulated, then add 0 to buffer
 //ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
-void isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT(void)
-{
+void isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
     uint8_t tmp = CODEC_TIMER_TIMESTAMPS.CNTL;
     CODEC_TIMER_TIMESTAMPS.CNT = 0;
 
@@ -385,21 +370,20 @@ void isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT(void)
 
     // Remember, LSB is send first
     // If current raw bit count is odd, then the previous raw bit must be 0
-    switch (tmp) // decide how many half bit periods have been modulations
-    {
+    switch (tmp) { // decide how many half bit periods have been modulations
         case 0 ... 48: // 32 ticks is one half of a bit period
             return;
 
         case 49 ... 80: // 64 ticks are a full bit period
             // Got 01
-            if(rawBitCount & 1){
+            if (rawBitCount & 1) {
                 // 01 + 0 -> 0 10
                 // 10 -> 1, last 0 is ignored
-                if(rawBitCount > 1) {
+                if (rawBitCount > 1) {
                     // Ignore SOC
                     Insert1();
                 }
-            } else{
+            } else {
                 // Current sampled bit count is even, decode directly
                 // 01 -> 0
                 Insert0();
@@ -412,7 +396,7 @@ void isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT(void)
                 // Current sampled bit count is odd
                 // Got 011
                 // 011 + 0 -> 01 10 -> 01
-                if(rawBitCount > 1) {
+                if (rawBitCount > 1) {
                     // Ignore SOC
                     Insert1();
                 }
@@ -430,10 +414,10 @@ void isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT(void)
 
         default: // every value over 96 + 16 (tolerance) is considered to be 4 half bit periods
             // Got 00 11
-            if(rawBitCount & 1){
+            if (rawBitCount & 1) {
                 // 00 11 + 0 -> 0 01 10
                 // 01 -> 0, 10 -> 1, Ignore last 0
-                if(rawBitCount > 1) {
+                if (rawBitCount > 1) {
                     // Ignore SOC
                     Insert1();
                 }
@@ -449,8 +433,7 @@ void isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT(void)
     }
 }
 // EOC of Card->Reader found
-ISR(CODEC_TIMER_TIMESTAMPS_CCB_VECT) // EOC found
-{
+ISR(CODEC_TIMER_TIMESTAMPS_CCB_VECT) { // EOC found
 
     // Disable LOADMOD Timer
     CODEC_TIMER_LOADMOD.INTCTRLB = 0;               // Disable Interrupt
@@ -488,10 +471,9 @@ ISR(CODEC_TIMER_TIMESTAMPS_CCB_VECT) // EOC found
 // Init and deInit, task, functions for this codec
 /////////////////////////////////////////////////
 
-void Sniff14443ACodecInit(void)
-{
+void Sniff14443ACodecInit(void) {
 
-    PORTE.DIRSET= PIN3_bm | PIN2_bm;
+    PORTE.DIRSET = PIN3_bm | PIN2_bm;
     // Common Codec Register settings
     CodecInitCommon();
     isr_func_CODEC_TIMER_LOADMOD_CCB_VECT = &isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT;
@@ -505,8 +487,7 @@ void Sniff14443ACodecInit(void)
     ReaderSniffInit();
 }
 
-void Sniff14443ACodecDeInit(void)
-{
+void Sniff14443ACodecDeInit(void) {
 //    SniffEnable = false;
     CardSniffDeinit();
     ReaderSniffDeInit();
@@ -514,13 +495,12 @@ void Sniff14443ACodecDeInit(void)
 }
 
 
-void Sniff14443ACodecTask(void)
-{
+void Sniff14443ACodecTask(void) {
     PORTE.OUTSET = PIN3_bm;
-    if(Flags.ReaderDataAvaliable){
+    if (Flags.ReaderDataAvaliable) {
         Flags.ReaderDataAvaliable = false;
 
-        LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, (ReaderBitCount+7)/8);
+        LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, (ReaderBitCount + 7) / 8);
         // Let the Application layer know where this data comes from
         LEDHook(LED_CODEC_RX, LED_PULSE);
 
@@ -529,7 +509,7 @@ void Sniff14443ACodecTask(void)
     }
 
 
-    if (Flags.CardDataAvaliable){
+    if (Flags.CardDataAvaliable) {
         Flags.CardDataAvaliable = false;
 
 //        CardBitCount = removeParityBits(CodecBuffer2,CardBitCount );
@@ -542,7 +522,7 @@ void Sniff14443ACodecTask(void)
     }
 
 
-    if(StateRegister == PCD_PICC_FDT && (SYSTICK_DIFF(RxPendingSince) > Reader_FWT)){
+    if (StateRegister == PCD_PICC_FDT && (SYSTICK_DIFF(RxPendingSince) > Reader_FWT)) {
         CardSniffDeinit();
         ReaderSniffInit();
     }

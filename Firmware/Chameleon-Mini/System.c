@@ -13,19 +13,16 @@
 #define WDT_PER_500CLK_gc WDT_PER_512CLK_gc
 #endif
 
-ISR(BADISR_vect)
-{
+ISR(BADISR_vect) {
     //LED_PORT.OUTSET = LED_RED;
-    while(1);
+    while (1);
 }
 
-ISR(RTC_OVF_vect)
-{
+ISR(RTC_OVF_vect) {
     SYSTEM_TICK_REGISTER += SYSTEM_TICK_PERIOD;
 }
 
-void SystemInit(void)
-{
+void SystemInit(void) {
     if (RST.STATUS & RST_WDRF_bm) {
         /* On Watchdog reset clear WDRF bit, disable watchdog
          * and jump into bootloader */
@@ -34,19 +31,19 @@ void SystemInit(void)
         CCP = CCP_IOREG_gc;
         WDT.CTRL = WDT_CEN_bm;
 
-        asm volatile ("jmp %0"::"i" (BOOT_SECTION_START + 0x1FC));
+        asm volatile("jmp %0"::"i"(BOOT_SECTION_START + 0x1FC));
     }
 
     /* XTAL x 2 as SysCLK */
     OSC.XOSCCTRL = OSC_FRQRANGE_12TO16_gc | OSC_XOSCSEL_XTAL_16KCLK_gc;
     OSC.CTRL |= OSC_XOSCEN_bm;
-    while(!(OSC.STATUS & OSC_XOSCRDY_bm))
+    while (!(OSC.STATUS & OSC_XOSCRDY_bm))
         ;
 
     OSC.PLLCTRL = OSC_PLLSRC_XOSC_gc | (2 << OSC_PLLFAC_gp);
     OSC.CTRL |= OSC_PLLEN_bm;
 
-    while(!(OSC.STATUS & OSC_PLLRDY_bm))
+    while (!(OSC.STATUS & OSC_PLLRDY_bm))
         ;
 
     /* Set PLL as main clock */
@@ -71,39 +68,36 @@ void SystemInit(void)
 
 }
 
-void SystemReset(void)
-{
+void SystemReset(void) {
     CCP = CCP_IOREG_gc;
     RST.CTRL = RST_SWRST_bm;
 }
 
-void SystemEnterBootloader(void)
-{
+void SystemEnterBootloader(void) {
     /* Use Watchdog timer to reset into bootloader. */
     CCP = CCP_IOREG_gc;
     WDT.CTRL = WDT_PER_500CLK_gc | WDT_ENABLE_bm | WDT_CEN_bm;
 }
 
 
-void SystemStartUSBClock(void)
-{
+void SystemStartUSBClock(void) {
     //SystemSleepDisable();
 #if 0
     /* 48MHz USB Clock using 12MHz XTAL */
     OSC.XOSCCTRL = OSC_FRQRANGE_12TO16_gc | OSC_XOSCSEL_XTAL_16KCLK_gc;
     OSC.CTRL |= OSC_XOSCEN_bm;
-    while(!(OSC.STATUS & OSC_XOSCRDY_bm))
+    while (!(OSC.STATUS & OSC_XOSCRDY_bm))
         ;
 
     OSC.PLLCTRL = OSC_PLLSRC_XOSC_gc | (4 << OSC_PLLFAC_gp);
 
     OSC.CTRL |= OSC_PLLEN_bm;
-    while(!(OSC.STATUS & OSC_PLLRDY_bm))
+    while (!(OSC.STATUS & OSC_PLLRDY_bm))
         ;
 #else
     /* Use internal HS RC for USB */
     OSC.CTRL |= OSC_RC32MEN_bm;
-    while(!(OSC.STATUS & OSC_RC32MRDY_bm))
+    while (!(OSC.STATUS & OSC_RC32MRDY_bm))
         ;
 
     /* Load RC32 CAL values for 48MHz use */
@@ -125,8 +119,7 @@ void SystemStartUSBClock(void)
 #endif
 }
 
-void SystemStopUSBClock(void)
-{
+void SystemStopUSBClock(void) {
     //SystemSleepEnable();
 
 #if 0
@@ -142,10 +135,8 @@ void SystemStopUSBClock(void)
 #endif
 }
 
-void SystemInterruptInit(void)
-{
+void SystemInterruptInit(void) {
     /* Enable all interrupt levels */
     PMIC.CTRL = PMIC_LOLVLEN_bm | PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm;
     sei();
 }
-

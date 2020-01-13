@@ -12,7 +12,7 @@
 
 void RandomInit(void);
 uint8_t RandomGetByte(void);
-void RandomGetBuffer(void* Buffer, uint8_t ByteCount);
+void RandomGetBuffer(void *Buffer, uint8_t ByteCount);
 void RandomTick(void);
 
 #endif /* RANDOM_H_ */

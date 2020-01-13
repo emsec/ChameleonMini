@@ -35,11 +35,11 @@ void TerminalTick(void);
 
 /*void TerminalSendHex(void* Buffer, uint16_t ByteCount);*/
 INLINE void TerminalSendByte(uint8_t Byte);
-void TerminalSendBlock(const void* Buffer, uint16_t ByteCount);
+void TerminalSendBlock(const void *Buffer, uint16_t ByteCount);
 
 INLINE void TerminalSendChar(char c);
-void TerminalSendString(const char* s);
-void TerminalSendStringP(const char* s);
+void TerminalSendString(const char *s);
+void TerminalSendStringP(const char *s);
 
 void EVENT_USB_Device_Connect(void);
 void EVENT_USB_Device_Disconnect(void);

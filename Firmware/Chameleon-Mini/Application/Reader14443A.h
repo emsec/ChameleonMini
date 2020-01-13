@@ -15,12 +15,12 @@ void Reader14443AAppTask(void);
 void Reader14443AAppTick(void);
 void Reader14443AAppTimeout(void);
 
-uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount);
+uint16_t Reader14443AAppProcess(uint8_t *Buffer, uint16_t BitCount);
 
-uint16_t addParityBits(uint8_t * Buffer, uint16_t bits);
-uint16_t removeParityBits(uint8_t * Buffer, uint16_t BitCount);
-bool checkParityBits(uint8_t * Buffer, uint16_t BitCount);
-uint16_t ISO14443_CRCA(uint8_t * Buffer, uint8_t ByteCount);
+uint16_t addParityBits(uint8_t *Buffer, uint16_t bits);
+uint16_t removeParityBits(uint8_t *Buffer, uint16_t BitCount);
+bool checkParityBits(uint8_t *Buffer, uint16_t BitCount);
+uint16_t ISO14443_CRCA(uint8_t *Buffer, uint8_t ByteCount);
 
 typedef enum {
     Reader14443_Do_Nothing,
@@ -30,7 +30,8 @@ typedef enum {
     Reader14443_Autocalibrate,
     Reader14443_Read_MF_Ultralight,
     Reader14443_Identify,
-	Reader14443_Identify_Clone
+    Reader14443_Identify_Clone,
+    Reader14443_Clone_MF_Ultralight
 } Reader14443Command;
 
 

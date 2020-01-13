@@ -1,7 +1,6 @@
 #include "Map.h"
 
-bool MapIdToText(const MapEntryType* MapPtr, uint8_t MapSize, MapIdType Id, char* Text, uint16_t MaxBufferSize)
-{
+bool MapIdToText(const MapEntryType *MapPtr, uint8_t MapSize, MapIdType Id, char *Text, uint16_t MaxBufferSize) {
     while (MapSize--) {
         if (pgm_read_byte(&MapPtr->Id) == Id) {
             strncpy_P(Text, MapPtr->Text, MaxBufferSize);
@@ -14,8 +13,7 @@ bool MapIdToText(const MapEntryType* MapPtr, uint8_t MapSize, MapIdType Id, char
     return false;
 }
 
-bool MapTextToId(const MapEntryType* MapPtr, uint8_t MapSize, MapTextPtrType Text, MapIdType* IdPtr)
-{
+bool MapTextToId(const MapEntryType *MapPtr, uint8_t MapSize, MapTextPtrType Text, MapIdType *IdPtr) {
     while (MapSize--) {
         if (strcmp_P(Text, MapPtr->Text) == 0) {
             if (sizeof(MapIdType) == 1) {
@@ -32,16 +30,15 @@ bool MapTextToId(const MapEntryType* MapPtr, uint8_t MapSize, MapTextPtrType Tex
     return false;
 }
 
-void MapToString(MapEntryType* MapPtr, uint8_t MapSize, char* String, uint16_t MaxBufferSize)
-{
+void MapToString(MapEntryType *MapPtr, uint8_t MapSize, char *String, uint16_t MaxBufferSize) {
     uint8_t EntriesLeft = MapSize;
     uint16_t BytesLeft = MaxBufferSize;
 
     while (EntriesLeft > 0) {
-        const char* Text = MapPtr->Text;
+        const char *Text = MapPtr->Text;
         char c;
 
-        while( (c = pgm_read_byte(Text)) != '\0') {
+        while ((c = pgm_read_byte(Text)) != '\0') {
             if (BytesLeft == 0) {
                 return;
             }

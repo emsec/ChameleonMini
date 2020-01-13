@@ -17,6 +17,9 @@
 
 #define ODD_PARITY(Value) OddParityBit(Value)//(parity_even_bit(Value) ? 0 : 1)
 
+#define ISR_SHARED \
+    void __attribute__((signal)) // This function type has to be used for all the interrupt handlers that have to be changed at runtime
+
 #define INLINE \
     static inline __attribute__((always_inline))
 
@@ -33,28 +36,25 @@
 
 #define BITS_PER_BYTE 8
 
-uint16_t BufferToHexString(char* HexOut, uint16_t MaxChars, const void* Buffer, uint16_t ByteCount);
-uint16_t HexStringToBuffer(void* Buffer, uint16_t MaxBytes, const char* HexIn);
+uint16_t BufferToHexString(char *HexOut, uint16_t MaxChars, const void *Buffer, uint16_t ByteCount);
+uint16_t HexStringToBuffer(void *Buffer, uint16_t MaxBytes, const char *HexIn);
 
-INLINE uint8_t BitReverseByte(uint8_t Byte)
-{
+INLINE uint8_t BitReverseByte(uint8_t Byte) {
     extern const uint8_t PROGMEM BitReverseByteTable[];
 
     return pgm_read_byte(&BitReverseByteTable[Byte]);
 }
 
-INLINE uint8_t OddParityBit(uint8_t Byte)
-{
+INLINE uint8_t OddParityBit(uint8_t Byte) {
     extern const uint8_t PROGMEM OddParityByteTable[];
 
     return pgm_read_byte(&OddParityByteTable[Byte]);
 }
 
-INLINE uint8_t StringLength(const char* Str, uint8_t MaxLen)
-{
+INLINE uint8_t StringLength(const char *Str, uint8_t MaxLen) {
     uint8_t StrLen = 0;
 
-    while(MaxLen > 0) {
+    while (MaxLen > 0) {
         if (*Str++ == '\0')
             break;
 

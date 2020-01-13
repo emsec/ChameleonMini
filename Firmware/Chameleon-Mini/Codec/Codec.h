@@ -8,26 +8,6 @@
 #ifndef CODEC_H_
 #define CODEC_H_
 
-#include <avr/io.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include "../Common.h"
-#include "../Configuration.h"
-#include "../Settings.h"
-
-#include "ISO14443-2A.h"
-#include "Reader14443-2A.h"
-#include "SniffISO14443-2A.h"
-#include "ISO15693.h"
-
-/* Timing definitions for ISO14443A */
-#define ISO14443A_SUBCARRIER_DIVIDER    16
-#define ISO14443A_BIT_GRID_CYCLES       128
-#define ISO14443A_BIT_RATE_CYCLES       128
-#define ISO14443A_FRAME_DELAY_PREV1     1236
-#define ISO14443A_FRAME_DELAY_PREV0     1172
-#define ISO14443A_RX_PENDING_TIMEOUT	4 // ms
-
 /* Peripheral definitions */
 #define CODEC_DEMOD_POWER_PORT      PORTB
 #define CODEC_DEMOD_POWER_MASK      PIN0_bm
@@ -87,6 +67,27 @@
 #define CODEC_TIMER_TIMESTAMPS_CCA_VECT	TCD1_CCA_vect
 #define CODEC_TIMER_TIMESTAMPS_CCB_VECT	TCD1_CCB_vect
 
+#ifndef __ASSEMBLER__
+
+#include <avr/io.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "../Common.h"
+#include "../Configuration.h"
+#include "../Settings.h"
+
+#include "ISO14443-2A.h"
+#include "Reader14443-2A.h"
+#include "SniffISO14443-2A.h"
+#include "ISO15693.h"
+
+/* Timing definitions for ISO14443A */
+#define ISO14443A_SUBCARRIER_DIVIDER    16
+#define ISO14443A_BIT_GRID_CYCLES       128
+#define ISO14443A_BIT_RATE_CYCLES       128
+#define ISO14443A_FRAME_DELAY_PREV1     1236
+#define ISO14443A_FRAME_DELAY_PREV0     1172
+#define ISO14443A_RX_PENDING_TIMEOUT	4 // ms
 
 #define CODEC_BUFFER_SIZE           256
 
@@ -138,8 +139,7 @@ INLINE void CodecTask(void) {
 }
 
 /* Helper Functions for Codec implementations */
-INLINE void CodecInitCommon(void)
-{
+INLINE void CodecInitCommon(void) {
     /* Configure CARRIER input pin and route it to EVSYS.
      * Multiply by 2 again by using both edges when externally
      * dividing by 2 */
@@ -211,8 +211,7 @@ INLINE void CodecInitCommon(void)
     ACA.AC1CTRL = CODEC_AC_DEMOD_SETTINGS;
 }
 
-INLINE void CodecSetSubcarrier(SubcarrierModType ModType, uint16_t Divider)
-{
+INLINE void CodecSetSubcarrier(SubcarrierModType ModType, uint16_t Divider) {
     if (ModType == CODEC_SUBCARRIERMOD_OFF) {
         CODEC_SUBCARRIER_TIMER.CTRLA = TC_CLKSEL_OFF_gc;
         CODEC_SUBCARRIER_TIMER.CTRLB = 0;
@@ -220,23 +219,20 @@ INLINE void CodecSetSubcarrier(SubcarrierModType ModType, uint16_t Divider)
         /* Configure subcarrier generation with 50% DC output using OOK */
         CODEC_SUBCARRIER_TIMER.CNT = 0;
         CODEC_SUBCARRIER_TIMER.PER = Divider - 1;
-        CODEC_SUBCARRIER_TIMER.CODEC_SUBCARRIER_CC_OOK = Divider/2;
+        CODEC_SUBCARRIER_TIMER.CODEC_SUBCARRIER_CC_OOK = Divider / 2;
         CODEC_SUBCARRIER_TIMER.CTRLB = CODEC_SUBCARRIER_CCEN_OOK | TC_WGMODE_SINGLESLOPE_gc;
     }
 }
 
-INLINE void CodecChangeDivider(uint16_t Divider)
-{
+INLINE void CodecChangeDivider(uint16_t Divider) {
     CODEC_SUBCARRIER_TIMER.PER = Divider - 1;
 }
 
-INLINE void CodecStartSubcarrier(void)
-{
+INLINE void CodecStartSubcarrier(void) {
     CODEC_SUBCARRIER_TIMER.CTRLA = CODEC_TIMER_CARRIER_CLKSEL;
 }
 
-INLINE void CodecSetDemodPower(bool bOnOff)
-{
+INLINE void CodecSetDemodPower(bool bOnOff) {
     if (bOnOff) {
         CODEC_DEMOD_POWER_PORT.OUTSET = CODEC_DEMOD_POWER_MASK;
     } else {
@@ -290,4 +286,7 @@ bool CodecIsReaderToBeRestarted(void);
 void CodecThresholdSet(uint16_t th);
 uint16_t CodecThresholdIncrement(void);
 void CodecThresholdReset(void);
+
+#endif /* __ASSEMBLER__ */
+
 #endif /* CODEC_H_ */

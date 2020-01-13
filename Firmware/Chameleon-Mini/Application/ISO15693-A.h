@@ -78,30 +78,29 @@
 #define ISO15693_MASK_FACTORY_LOCK      ( 1 << 1 )
 
 typedef struct {
-    uint8_t* Flags;
-    uint8_t* Command;
-    uint8_t* Parameters;
+    uint8_t *Flags;
+    uint8_t *Command;
+    uint8_t *Parameters;
     uint8_t ParamLen;
     bool Addressed;
     bool Selected;
 } CurrentFrame;
 
-void ISO15693AppendCRC(uint8_t* FrameBuf, uint16_t FrameBufSize);
-bool ISO15693CheckCRC(void* FrameBuf, uint16_t FrameBufSize);
-bool ISO15693PrepareFrame(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t IsSelected, uint8_t* MyUid, uint8_t MyAFI);
-bool ISO15693AntiColl(uint8_t* FrameBuf, uint16_t FrameBytes, CurrentFrame* FrameStruct, uint8_t* MyUid);
+void ISO15693AppendCRC(uint8_t *FrameBuf, uint16_t FrameBufSize);
+bool ISO15693CheckCRC(void *FrameBuf, uint16_t FrameBufSize);
+bool ISO15693PrepareFrame(uint8_t *FrameBuf, uint16_t FrameBytes, CurrentFrame *FrameStruct, uint8_t IsSelected, uint8_t *MyUid, uint8_t MyAFI);
+bool ISO15693AntiColl(uint8_t *FrameBuf, uint16_t FrameBytes, CurrentFrame *FrameStruct, uint8_t *MyUid);
 
 INLINE
-bool ISO15693CompareUid(uint8_t* Uid1, uint8_t* Uid2)
-{
-    if (    (Uid1[0] == Uid2[7])
-        &&  (Uid1[1] == Uid2[6])
-        &&  (Uid1[2] == Uid2[5])
-        &&  (Uid1[3] == Uid2[4])
-        &&  (Uid1[4] == Uid2[3])
-        &&  (Uid1[5] == Uid2[2])
-        &&  (Uid1[6] == Uid2[1])
-        &&  (Uid1[7] == Uid2[0]) ) {
+bool ISO15693CompareUid(uint8_t *Uid1, uint8_t *Uid2) {
+    if ((Uid1[0] == Uid2[7])
+            && (Uid1[1] == Uid2[6])
+            && (Uid1[2] == Uid2[5])
+            && (Uid1[3] == Uid2[4])
+            && (Uid1[4] == Uid2[3])
+            && (Uid1[5] == Uid2[2])
+            && (Uid1[6] == Uid2[1])
+            && (Uid1[7] == Uid2[0])) {
         return true;
     } else {
         return false;
@@ -109,8 +108,7 @@ bool ISO15693CompareUid(uint8_t* Uid1, uint8_t* Uid2)
 }
 
 INLINE
-void ISO15693CopyUid(uint8_t* DstUid, uint8_t* SrcUid)
-{
+void ISO15693CopyUid(uint8_t *DstUid, uint8_t *SrcUid) {
     DstUid[0] = SrcUid[7];
     DstUid[1] = SrcUid[6];
     DstUid[2] = SrcUid[5];
@@ -122,16 +120,16 @@ void ISO15693CopyUid(uint8_t* DstUid, uint8_t* SrcUid)
 }
 
 INLINE
-bool ISO15693Addressed(uint8_t* Buffer) {
+bool ISO15693Addressed(uint8_t *Buffer) {
     return (Buffer[ISO15693_ADDR_FLAGS] & ISO15693_REQ_FLAG_ADDRESS); /* if the flag is set, the command is addressed */
 }
 
 
 INLINE
-bool ISO15693AddressedLegacy(uint8_t* Buffer, uint8_t* MyUid) {
+bool ISO15693AddressedLegacy(uint8_t *Buffer, uint8_t *MyUid) {
     if (Buffer[0] & ISO15693_REQ_FLAG_ADDRESS) {
         /* Addressed mode */
-        if ( ISO15693CompareUid(&Buffer[2], MyUid) ) {
+        if (ISO15693CompareUid(&Buffer[2], MyUid)) {
             /* Our UID addressed */
             return true;
         } else {

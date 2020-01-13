@@ -58,7 +58,7 @@ typedef enum {
     LOG_MODE_LIVE
 } LogModeEnum;
 
-typedef void (*LogFuncType) (LogEntryEnum Entry, const void* Data, uint8_t Length);
+typedef void (*LogFuncType)(LogEntryEnum Entry, const void *Data, uint8_t Length);
 
 extern LogFuncType CurrentLogFunc;
 
@@ -69,15 +69,15 @@ void LogTask(void);
 void LogMemClear(void);
 uint16_t LogMemFree(void);
 /* XModem callback */
-bool LogMemLoadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
+bool LogMemLoadBlock(void *Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 
 void LogSetModeById(LogModeEnum Mode);
-bool LogSetModeByName(const char* Mode);
-void LogGetModeByName(char* Mode, uint16_t BufferSize);
-void LogGetModeList(char* List, uint16_t BufferSize);
+bool LogSetModeByName(const char *Mode);
+void LogGetModeByName(char *Mode, uint16_t BufferSize);
+void LogGetModeList(char *List, uint16_t BufferSize);
 void LogSRAMToFRAM(void);
 
 /* Wrapper function to call current logging function */
-INLINE void LogEntry(LogEntryEnum Entry, const void* Data, uint8_t Length) { CurrentLogFunc(Entry, Data, Length); }
+INLINE void LogEntry(LogEntryEnum Entry, const void *Data, uint8_t Length) { CurrentLogFunc(Entry, Data, Length); }
 
 #endif /* LOG_H_ */

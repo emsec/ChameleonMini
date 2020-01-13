@@ -21,25 +21,22 @@ extern Sniff14443Command Sniff14443CurrentCommand;
 
 extern const PROGMEM CommandEntryType CommandTable[];
 
-CommandStatusIdType CommandGetVersion(char* OutParam)
-{
-  snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR(
-    "ChameleonMini RevG %S using LUFA %S compiled with AVR-GCC %S. Based on the open-source NFC tool ChameleonMini. https://github.com/emsec/ChameleonMini commit %S"
-    ), PSTR(CHAMELEON_MINI_VERSION_STRING), PSTR(LUFA_VERSION_STRING), PSTR(__VERSION__), PSTR(COMMIT_ID)
-  );
+CommandStatusIdType CommandGetVersion(char *OutParam) {
+    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR(
+                   "ChameleonMini RevG %S using LUFA %S compiled with AVR-GCC %S. Based on the open-source NFC tool ChameleonMini. https://github.com/emsec/ChameleonMini commit %S"
+               ), PSTR(CHAMELEON_MINI_VERSION_STRING), PSTR(LUFA_VERSION_STRING), PSTR(__VERSION__), PSTR(COMMIT_ID)
+              );
 
-  return COMMAND_INFO_OK_WITH_TEXT_ID;
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetConfig(char* OutParam)
-{
-  ConfigurationGetByName(OutParam, TERMINAL_BUFFER_SIZE);
+CommandStatusIdType CommandGetConfig(char *OutParam) {
+    ConfigurationGetByName(OutParam, TERMINAL_BUFFER_SIZE);
 
-  return COMMAND_INFO_OK_WITH_TEXT_ID;
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetConfig(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         ConfigurationGetList(OutMessage, TERMINAL_BUFFER_SIZE);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
@@ -51,141 +48,128 @@ CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandGetUid(char* OutParam)
-{
-  uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
-  uint16_t UidSize = ActiveConfiguration.UidSize;
+CommandStatusIdType CommandGetUid(char *OutParam) {
+    uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
+    uint16_t UidSize = ActiveConfiguration.UidSize;
 
-  if (UidSize == 0)
-  {
-      snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("NO UID."));
-      return COMMAND_INFO_OK_WITH_TEXT_ID;
-  }
-
-  ApplicationGetUid(UidBuffer);
-
-  BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE,
-    UidBuffer, UidSize);
-
-  return COMMAND_INFO_OK_WITH_TEXT_ID;
-}
-
-CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam)
-{
-  uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
-  uint16_t UidSize = ActiveConfiguration.UidSize;
-
-  if (strcmp_P(InParam, PSTR(COMMAND_UID_RANDOM)) == 0) {
-    /* Load with random bytes */
-    for (uint8_t i=0; i<UidSize; i++) {
-      UidBuffer[i] = RandomGetByte();
-    }
-    /* If we are using an ISO15 tag, the first byte needs to be E0 by standard */
-    if (ActiveConfiguration.TagFamily == TAG_FAMILY_ISO15693) {
-      UidBuffer[0] = 0xE0;
-    }
-
-  } else {
-    /* Convert to Bytes */
-    if (HexStringToBuffer(UidBuffer, sizeof(UidBuffer), InParam) != UidSize) {
-      /* Malformed input. Abort */
-      return COMMAND_ERR_INVALID_PARAM_ID;
-    }
-  }
-
-  ApplicationSetUid(UidBuffer);
-
-  return COMMAND_INFO_OK_ID;
-}
-
-CommandStatusIdType CommandGetReadOnly(char* OutParam)
-{
-  if (ActiveConfiguration.ReadOnly) {
-    OutParam[0] = COMMAND_CHAR_TRUE;
-  } else {
-    OutParam[0] = COMMAND_CHAR_FALSE;
-  }
-
-  OutParam[1] = '\0';
-
-  return COMMAND_INFO_OK_WITH_TEXT_ID;
-}
-
-CommandStatusIdType CommandSetReadOnly(char* OutMessage, const char* InParam)
-{
-  if (InParam[1] == '\0') {
-    if (InParam[0] == COMMAND_CHAR_TRUE) {
-      ActiveConfiguration.ReadOnly = true;
-      return COMMAND_INFO_OK_ID;
-    } else if (InParam[0] == COMMAND_CHAR_FALSE) {
-      ActiveConfiguration.ReadOnly = false;
-      return COMMAND_INFO_OK_ID;
-    } else if (InParam[0] == COMMAND_CHAR_SUGGEST) {
-        snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("%c,%c"), COMMAND_CHAR_TRUE, COMMAND_CHAR_FALSE);
+    if (UidSize == 0) {
+        snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("NO UID."));
         return COMMAND_INFO_OK_WITH_TEXT_ID;
     }
-  }
 
-  return COMMAND_ERR_INVALID_PARAM_ID;
+    ApplicationGetUid(UidBuffer);
+
+    BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE,
+                      UidBuffer, UidSize);
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandExecUpload(char* OutMessage)
-{
+CommandStatusIdType CommandSetUid(char *OutMessage, const char *InParam) {
+    uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
+    uint16_t UidSize = ActiveConfiguration.UidSize;
+
+    if (strcmp_P(InParam, PSTR(COMMAND_UID_RANDOM)) == 0) {
+        /* Load with random bytes */
+        for (uint8_t i = 0; i < UidSize; i++) {
+            UidBuffer[i] = RandomGetByte();
+        }
+        /* If we are using an ISO15 tag, the first byte needs to be E0 by standard */
+        if (ActiveConfiguration.TagFamily == TAG_FAMILY_ISO15693) {
+            UidBuffer[0] = 0xE0;
+        }
+
+    } else {
+        /* Convert to Bytes */
+        if (HexStringToBuffer(UidBuffer, sizeof(UidBuffer), InParam) != UidSize) {
+            /* Malformed input. Abort */
+            return COMMAND_ERR_INVALID_PARAM_ID;
+        }
+    }
+
+    ApplicationSetUid(UidBuffer);
+
+    return COMMAND_INFO_OK_ID;
+}
+
+CommandStatusIdType CommandGetReadOnly(char *OutParam) {
+    if (ActiveConfiguration.ReadOnly) {
+        OutParam[0] = COMMAND_CHAR_TRUE;
+    } else {
+        OutParam[0] = COMMAND_CHAR_FALSE;
+    }
+
+    OutParam[1] = '\0';
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetReadOnly(char *OutMessage, const char *InParam) {
+    if (InParam[1] == '\0') {
+        if (InParam[0] == COMMAND_CHAR_TRUE) {
+            ActiveConfiguration.ReadOnly = true;
+            return COMMAND_INFO_OK_ID;
+        } else if (InParam[0] == COMMAND_CHAR_FALSE) {
+            ActiveConfiguration.ReadOnly = false;
+            return COMMAND_INFO_OK_ID;
+        } else if (InParam[0] == COMMAND_CHAR_SUGGEST) {
+            snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("%c,%c"), COMMAND_CHAR_TRUE, COMMAND_CHAR_FALSE);
+            return COMMAND_INFO_OK_WITH_TEXT_ID;
+        }
+    }
+
+    return COMMAND_ERR_INVALID_PARAM_ID;
+}
+
+CommandStatusIdType CommandExecUpload(char *OutMessage) {
     XModemReceive(MemoryUploadBlock);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
-CommandStatusIdType CommandExecDownload(char* OutMessage)
-{
+CommandStatusIdType CommandExecDownload(char *OutMessage) {
     XModemSend(MemoryDownloadBlock);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
-CommandStatusIdType CommandExecReset(char* OutMessage)
-{
-  USB_Detach();
-  USB_Disable();
+CommandStatusIdType CommandExecReset(char *OutMessage) {
+    USB_Detach();
+    USB_Disable();
 
-  SystemReset();
+    SystemReset();
 
-  return COMMAND_INFO_OK_ID;
+    return COMMAND_INFO_OK_ID;
 }
 
 #ifdef SUPPORT_FIRMWARE_UPGRADE
-CommandStatusIdType CommandExecUpgrade(char* OutMessage)
-{
-  USB_Detach();
-  USB_Disable();
+CommandStatusIdType CommandExecUpgrade(char *OutMessage) {
+    USB_Detach();
+    USB_Disable();
 
-  SystemEnterBootloader();
+    SystemEnterBootloader();
 
-  return COMMAND_INFO_OK_ID;
+    return COMMAND_INFO_OK_ID;
 }
 #endif
 
-CommandStatusIdType CommandGetMemSize(char* OutParam)
-{
-  snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ActiveConfiguration.MemorySize);
+CommandStatusIdType CommandGetMemSize(char *OutParam) {
+    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ActiveConfiguration.MemorySize);
 
-  return COMMAND_INFO_OK_WITH_TEXT_ID;
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetUidSize(char* OutParam)
-{
+CommandStatusIdType CommandGetUidSize(char *OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ActiveConfiguration.UidSize);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetRButton(char* OutParam)
-{
+CommandStatusIdType CommandGetRButton(char *OutParam) {
     ButtonGetActionByName(BUTTON_R_PRESS_SHORT, OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetRButton(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetRButton(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         /* Get suggestion list */
         ButtonGetActionList(OutMessage, TERMINAL_BUFFER_SIZE);
@@ -199,15 +183,13 @@ CommandStatusIdType CommandSetRButton(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandGetRButtonLong(char* OutParam)
-{
+CommandStatusIdType CommandGetRButtonLong(char *OutParam) {
     ButtonGetActionByName(BUTTON_R_PRESS_LONG, OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetRButtonLong(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetRButtonLong(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         /* Get suggestion list */
         ButtonGetActionList(OutMessage, TERMINAL_BUFFER_SIZE);
@@ -221,15 +203,13 @@ CommandStatusIdType CommandSetRButtonLong(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandGetLButton(char* OutParam)
-{
+CommandStatusIdType CommandGetLButton(char *OutParam) {
     ButtonGetActionByName(BUTTON_L_PRESS_SHORT, OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetLButton(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetLButton(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         /* Get suggestion list */
         ButtonGetActionList(OutMessage, TERMINAL_BUFFER_SIZE);
@@ -243,15 +223,13 @@ CommandStatusIdType CommandSetLButton(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandGetLButtonLong(char* OutParam)
-{
+CommandStatusIdType CommandGetLButtonLong(char *OutParam) {
     ButtonGetActionByName(BUTTON_L_PRESS_LONG, OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetLButtonLong(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetLButtonLong(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         /* Get suggestion list */
         ButtonGetActionList(OutMessage, TERMINAL_BUFFER_SIZE);
@@ -265,15 +243,13 @@ CommandStatusIdType CommandSetLButtonLong(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandGetLedGreen(char* OutParam)
-{
+CommandStatusIdType CommandGetLedGreen(char *OutParam) {
     LEDGetFuncByName(LED_GREEN, OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetLedGreen(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetLedGreen(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         LEDGetFuncList(OutMessage, TERMINAL_BUFFER_SIZE);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
@@ -285,15 +261,13 @@ CommandStatusIdType CommandSetLedGreen(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandGetLedRed(char* OutParam)
-{
+CommandStatusIdType CommandGetLedRed(char *OutParam) {
     LEDGetFuncByName(LED_RED, OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetLedRed(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetLedRed(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         LEDGetFuncList(OutMessage, TERMINAL_BUFFER_SIZE);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
@@ -305,16 +279,14 @@ CommandStatusIdType CommandSetLedRed(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandGetLogMode(char* OutParam)
-{
+CommandStatusIdType CommandGetLogMode(char *OutParam) {
     /* Get Logmode */
     LogGetModeByName(OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetLogMode(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetLogMode(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         LogGetModeList(OutMessage, TERMINAL_BUFFER_SIZE);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
@@ -326,43 +298,37 @@ CommandStatusIdType CommandSetLogMode(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandGetLogMem(char* OutParam)
-{
+CommandStatusIdType CommandGetLogMem(char *OutParam) {
     uint16_t free = LogMemFree();
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-        PSTR("%u (from which %u non-volatile)"), free, (free <= LOG_SIZE) ? 0 : (free - LOG_SIZE));
+               PSTR("%u (from which %u non-volatile)"), free, (free <= LOG_SIZE) ? 0 : (free - LOG_SIZE));
 
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 
-CommandStatusIdType CommandExecLogDownload(char* OutMessage)
-{
+CommandStatusIdType CommandExecLogDownload(char *OutMessage) {
     XModemSend(LogMemLoadBlock);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
-CommandStatusIdType CommandExecStoreLog(char* OutMessage)
-{
+CommandStatusIdType CommandExecStoreLog(char *OutMessage) {
     LogSRAMToFRAM();
     return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandExecLogClear(char* OutMessage)
-{
+CommandStatusIdType CommandExecLogClear(char *OutMessage) {
     LogMemClear();
     return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandGetSetting(char* OutParam)
-{
+CommandStatusIdType CommandGetSetting(char *OutParam) {
     SettingsGetActiveByName(OutParam, TERMINAL_BUFFER_SIZE);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetSetting(char *OutMessage, const char *InParam) {
     if (SettingsSetActiveByName(InParam)) {
         return COMMAND_INFO_OK_ID;
     } else {
@@ -370,26 +336,22 @@ CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandExecClear(char* OutMessage)
-{
+CommandStatusIdType CommandExecClear(char *OutMessage) {
     MemoryClear();
     return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandExecStore(char* OutMessage)
-{
+CommandStatusIdType CommandExecStore(char *OutMessage) {
     MemoryStore();
     return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandExecRecall(char* OutMessage)
-{
+CommandStatusIdType CommandExecRecall(char *OutMessage) {
     MemoryRecall();
     return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandGetCharging(char* OutMessage)
-{
+CommandStatusIdType CommandGetCharging(char *OutMessage) {
     if (BatteryIsCharging()) {
         return COMMAND_INFO_TRUE_ID;
     } else {
@@ -397,16 +359,15 @@ CommandStatusIdType CommandGetCharging(char* OutMessage)
     }
 }
 
-CommandStatusIdType CommandExecHelp(char* OutMessage)
-{
-    const CommandEntryType* EntryPtr = CommandTable;
+CommandStatusIdType CommandExecHelp(char *OutMessage) {
+    const CommandEntryType *EntryPtr = CommandTable;
     uint16_t ByteCount = TERMINAL_BUFFER_SIZE - 1; /* Account for '\0' */
 
-    while(strcmp_P(COMMAND_LIST_END, EntryPtr->Command) != 0 && ByteCount > 0) {
-        const char* CommandName = EntryPtr->Command;
+    while (strcmp_P(COMMAND_LIST_END, EntryPtr->Command) != 0 && ByteCount > 0) {
+        const char *CommandName = EntryPtr->Command;
         char c;
 
-        while( (c = pgm_read_byte(CommandName)) != '\0' && ByteCount > 1) {
+        while ((c = pgm_read_byte(CommandName)) != '\0' && ByteCount > 1) {
             *OutMessage++ = c;
             CommandName++;
             ByteCount--;
@@ -423,108 +384,99 @@ CommandStatusIdType CommandExecHelp(char* OutMessage)
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetRssi(char* OutParam)
-{
+CommandStatusIdType CommandGetRssi(char *OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-        PSTR("%5u mV"), AntennaLevelGet());
+               PSTR("%5u mV"), AntennaLevelGet());
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetSysTick(char* OutParam)
-{
+CommandStatusIdType CommandGetSysTick(char *OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%4.4X"), SystemGetSysTick());
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandExecParamSend(char* OutMessage, const char* InParams)
-{
+CommandStatusIdType CommandExecParamSend(char *OutMessage, const char *InParams) {
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
         return COMMAND_ERR_INVALID_USAGE_ID;
 
     ApplicationReset();
     Reader14443CurrentCommand = Reader14443_Send;
 
-    char const * paramTwo = strchr(InParams, ' ');
+    char const *paramTwo = strchr(InParams, ' ');
     uint16_t length;
-    if (paramTwo == NULL) // this means, we have to calculate the length
-    {
+    if (paramTwo == NULL) { // this means, we have to calculate the length
         length = strlen(InParams);
-        if (length&1) // return error when length is odd
+        if (length & 1) // return error when length is odd
             return COMMAND_ERR_INVALID_PARAM_ID;
         length /= 2;
-        if (length == 1)
-        {
+        if (length == 1) {
             ReaderSendBitCount = 7; // this is a short frame
         } else {
             ReaderSendBitCount = length * 8;
         }
-    } else if(paramTwo == (InParams+4)) { // we have a bitcount prepended
+    } else if (paramTwo == (InParams + 4)) { // we have a bitcount prepended
         uint8_t tmp[2];
         HexStringToBuffer(tmp, 2, InParams);
-        ReaderSendBitCount = (tmp[0]<<8) + tmp[1]; // set our BitCount to the given value
+        ReaderSendBitCount = (tmp[0] << 8) + tmp[1]; // set our BitCount to the given value
         InParams = ++paramTwo; // set InParams to the beginning of the second parameter
         length = strlen(InParams);
-        if ((length&1) || (length / 2 * 8) < ReaderSendBitCount) // this parameter is malformed, if it is odd or if there are less bits than the BitCount indicates
+        if ((length & 1) || (length / 2 * 8) < ReaderSendBitCount) // this parameter is malformed, if it is odd or if there are less bits than the BitCount indicates
             return COMMAND_ERR_INVALID_PARAM_ID;
     } else { // any other case means we have malformed parameters
         return COMMAND_ERR_INVALID_PARAM_ID;
     }
 
-    HexStringToBuffer(ReaderSendBuffer, (ReaderSendBitCount+7)/8, InParams);
+    HexStringToBuffer(ReaderSendBuffer, (ReaderSendBitCount + 7) / 8, InParams);
 
     Reader14443ACodecStart();
 
     return TIMEOUT_COMMAND;
 }
 
-CommandStatusIdType CommandExecParamSendRaw(char* OutMessage, const char* InParams)
-{
+CommandStatusIdType CommandExecParamSendRaw(char *OutMessage, const char *InParams) {
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
         return COMMAND_ERR_INVALID_USAGE_ID;
 
     ApplicationReset();
     Reader14443CurrentCommand = Reader14443_Send_Raw;
 
-    char const * paramTwo = strchr(InParams, ' ');
+    char const *paramTwo = strchr(InParams, ' ');
     uint16_t length;
-    if (paramTwo == NULL) // this means, we have to calculate the length
-    {
+    if (paramTwo == NULL) { // this means, we have to calculate the length
         length = strlen(InParams);
-        if (length&1) // return error when length is odd
+        if (length & 1) // return error when length is odd
             return COMMAND_ERR_INVALID_PARAM_ID;
         length /= 2;
-        if (length == 1)
-        {
+        if (length == 1) {
             ReaderSendBitCount = 7; // this is a short frame
         } else {
             length *= 8;
             ReaderSendBitCount = length - (length % 9); // how many bytes+paritybit match into our input?
         }
-    } else if(paramTwo == (InParams+4)) { // we have a bitcount prepended
+    } else if (paramTwo == (InParams + 4)) { // we have a bitcount prepended
         uint8_t tmp[2];
         HexStringToBuffer(tmp, 2, InParams);
-        ReaderSendBitCount = (tmp[0]<<8) + tmp[1]; // set our BitCount to the given value
+        ReaderSendBitCount = (tmp[0] << 8) + tmp[1]; // set our BitCount to the given value
         if (ReaderSendBitCount != 7 && (ReaderSendBitCount % 8)) // since we have to add parity bits here (in case this is not a short frame), the number of bits to be sent has to be a multiple of 8
             return COMMAND_ERR_INVALID_PARAM_ID;
         InParams = ++paramTwo; // set InParams to the beginning of the second parameter
         length = strlen(InParams);
-        if ((length&1) || (length / 2 * 8) < ReaderSendBitCount) // this parameter is malformed, if it is odd or if there are less bits than the BitCount indicates
+        if ((length & 1) || (length / 2 * 8) < ReaderSendBitCount) // this parameter is malformed, if it is odd or if there are less bits than the BitCount indicates
             return COMMAND_ERR_INVALID_PARAM_ID;
     } else { // any other case means we have malformed parameters
         return COMMAND_ERR_INVALID_PARAM_ID;
     }
 
-    HexStringToBuffer(ReaderSendBuffer, (ReaderSendBitCount+7)/8, InParams);
+    HexStringToBuffer(ReaderSendBuffer, (ReaderSendBitCount + 7) / 8, InParams);
 
     Reader14443ACodecStart();
 
     return TIMEOUT_COMMAND;
 }
 
-CommandStatusIdType CommandExecDumpMFU(char* OutMessage)
-{
+CommandStatusIdType CommandExecDumpMFU(char *OutMessage) {
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
         return COMMAND_ERR_INVALID_USAGE_ID;
     ApplicationReset();
@@ -536,8 +488,18 @@ CommandStatusIdType CommandExecDumpMFU(char* OutMessage)
     return TIMEOUT_COMMAND;
 }
 
-CommandStatusIdType CommandExecGetUid(char* OutMessage) // this function is for reading the uid in reader mode
-{
+CommandStatusIdType CommandExecCloneMFU(char *OutMessage) {
+    ConfigurationSetById(CONFIG_ISO14443A_READER);
+    ApplicationReset();
+
+    Reader14443CurrentCommand = Reader14443_Clone_MF_Ultralight;
+    Reader14443AAppInit();
+    Reader14443ACodecStart();
+    CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
+    return TIMEOUT_COMMAND;
+}
+
+CommandStatusIdType CommandExecGetUid(char *OutMessage) { // this function is for reading the uid in reader mode
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
         return COMMAND_ERR_INVALID_USAGE_ID;
     ApplicationReset();
@@ -549,8 +511,7 @@ CommandStatusIdType CommandExecGetUid(char* OutMessage) // this function is for 
     return TIMEOUT_COMMAND;
 }
 
-CommandStatusIdType CommandExecIdentifyCard(char* OutMessage)
-{
+CommandStatusIdType CommandExecIdentifyCard(char *OutMessage) {
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
         return COMMAND_ERR_INVALID_USAGE_ID;
     ApplicationReset();
@@ -562,16 +523,13 @@ CommandStatusIdType CommandExecIdentifyCard(char* OutMessage)
     return TIMEOUT_COMMAND;
 }
 
-CommandStatusIdType CommandGetTimeout(char* OutParam)
-{
+CommandStatusIdType CommandGetTimeout(char *OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u ms"), GlobalSettings.ActiveSettingPtr->PendingTaskTimeout * 100);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetTimeout(char* OutMessage, const char* InParam)
-{
-    if (COMMAND_IS_SUGGEST_STRING(InParam))
-    {
+CommandStatusIdType CommandSetTimeout(char *OutMessage, const char *InParam) {
+    if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("0 = no timeout\r\n1-600 = 100 ms - 60000 ms timeout"));
         return COMMAND_INFO_OK_WITH_TEXT_ID;
     }
@@ -583,16 +541,13 @@ CommandStatusIdType CommandSetTimeout(char* OutMessage, const char* InParam)
     return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandGetThreshold(char* OutParam)
-{
+CommandStatusIdType CommandGetThreshold(char *OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), GlobalSettings.ActiveSettingPtr->ReaderThreshold);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetThreshold(char* OutMessage, const char* InParam)
-{
-    if (COMMAND_IS_SUGGEST_STRING(InParam))
-    {
+CommandStatusIdType CommandSetThreshold(char *OutMessage, const char *InParam) {
+    if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("Any integer from 0 to %u. Reference voltage will be (VCC * THRESHOLD / 4095) mV."), CODEC_MAXIMUM_THRESHOLD);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
     }
@@ -605,17 +560,14 @@ CommandStatusIdType CommandSetThreshold(char* OutMessage, const char* InParam)
     return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandSetField(char* OutMessage, const char* InParam)
-{
-    if (COMMAND_IS_SUGGEST_STRING(InParam))
-    {
+CommandStatusIdType CommandSetField(char *OutMessage, const char *InParam) {
+    if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("%c,%c"), COMMAND_CHAR_TRUE, COMMAND_CHAR_FALSE);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
     }
-    if (InParam[0] == COMMAND_CHAR_TRUE)
-    {
+    if (InParam[0] == COMMAND_CHAR_TRUE) {
         CodecReaderFieldStart();
-    } else if(InParam[0] == COMMAND_CHAR_FALSE) {
+    } else if (InParam[0] == COMMAND_CHAR_FALSE) {
         CodecReaderFieldStop();
     } else {
         return COMMAND_ERR_INVALID_PARAM_ID;
@@ -623,8 +575,7 @@ CommandStatusIdType CommandSetField(char* OutMessage, const char* InParam)
     return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandGetField(char* OutMessage)
-{
+CommandStatusIdType CommandGetField(char *OutMessage) {
     if (CodecGetReaderField())
         OutMessage[0] = COMMAND_CHAR_TRUE;
     else
@@ -634,9 +585,8 @@ CommandStatusIdType CommandGetField(char* OutMessage)
 }
 
 
-CommandStatusIdType CommandExecAutocalibrate(char* OutMessage)
-{
-    if (GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO14443A_READER){
+CommandStatusIdType CommandExecAutocalibrate(char *OutMessage) {
+    if (GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO14443A_READER) {
         ApplicationReset();
 
         Reader14443CurrentCommand = Reader14443_Autocalibrate;
@@ -644,23 +594,20 @@ CommandStatusIdType CommandExecAutocalibrate(char* OutMessage)
         Reader14443ACodecStart();
         CommandLinePendingTaskTimeout = &Reader14443AAppTimeout;
         return TIMEOUT_COMMAND;
-    }
-    else if (GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO14443A_SNIFF){
+    } else if (GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO14443A_SNIFF) {
         ApplicationReset();
 
         Sniff14443CurrentCommand = Sniff14443_Autocalibrate;
         Sniff14443AAppInit();
         CommandLinePendingTaskTimeout = &Sniff14443AAppTimeout;
         return TIMEOUT_COMMAND;
-    }
-    else {
+    } else {
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
 
 }
 
-CommandStatusIdType CommandExecClone(char *OutMessage)
-{
+CommandStatusIdType CommandExecClone(char *OutMessage) {
     ConfigurationSetById(CONFIG_ISO14443A_READER);
 
     ApplicationReset();

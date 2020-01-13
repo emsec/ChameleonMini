@@ -13,7 +13,7 @@ void Sniff14443AAppTask(void);
 void Sniff14443AAppTick(void);
 void Sniff14443AAppTimeout(void);
 
-uint16_t Sniff14443AAppProcess(uint8_t* Buffer, uint16_t BitCount);
+uint16_t Sniff14443AAppProcess(uint8_t *Buffer, uint16_t BitCount);
 
 typedef enum {
     Sniff14443_Do_Nothing,
