@@ -43,6 +43,7 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #endif
 #ifdef CONFIG_NTAG215_SUPPORT
     { .Id = CONFIG_NTAG215,	.Text = "NTAG215" },
+#endif
 #ifdef CONFIG_VICINITY_SUPPORT
     { .Id = CONFIG_VICINITY,	.Text = "VICINITY" },
 #endif
