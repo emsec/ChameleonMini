@@ -6,13 +6,13 @@ The ChameleonMini RevG is now also available via the Kasper & Oswald [Webshop](h
 
 IMPORTANT: Third-party Clones
 ------------------
-We are aware of various third-party ChameleonMini clones or modified variants that are available on the Internet. Warning: We have evidence that some of these devices are defective or suffer from reading problems et cetera. Please understand that we cannot give support for these non-official devices, as we have no schematics / layout or other information, nor do we know the manufacturers. In case of problems, please contact the manufacturers of your device directly. 
+We are aware of various third-party ChameleonMini clones or modified variants that are available on the Internet. Warning: We have evidence that some of these devices are defective or suffer from reading problems et cetera. Please understand that we cannot give support for these non-official devices, as we have no schematics / layout or other information, nor do we know the manufacturers. In case of problems, please contact the manufacturers of your device directly.
 
 Note to the manufacturers: Some of the third-party ChameleonMini are violating the ChameleonMini license, please obey the license (see LICENSE.txt)!
 
 First Steps
 -----------
-To upgrade the firmware of your ChameleonMini, please visit the [Getting Started page](https://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/_page__getting_started.html) from the [doxygen documentation](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
+To upgrade the firmware of your ChameleonMini, please visit the [Getting Started page](https://cdn.statically.io/gh/emsec/ChameleonMini/master/Doc/Doxygen/html/_page__getting_started.html) from the [doxygen documentation](https://cdn.statically.io/gh/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
 
 Supported Cards and Codecs
 --------------------------
@@ -21,7 +21,7 @@ See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Code
 
 Questions
 ---------
-If you have any questions, please visit the [Issues page](https://github.com/emsec/ChameleonMini/issues) and ask your questions there so everyone benefits from the answer. 
+If you have any questions, please visit the [Issues page](https://github.com/emsec/ChameleonMini/issues) and ask your questions there so everyone benefits from the answer.
 
 **Please note that we cannot give any support if you have issues with the RevE-rebooted hardware or any GUI. Please use this issues page only for problems with the RevG hardware as distributed by Kasper & Oswald and for problems with the firmware from this page.**
 
@@ -32,7 +32,7 @@ We appreciate every contribution to the project. Have a look at the [External Co
 Repository Structure
 --------------------
 The code repository contains
-* Doc: A doxygen documentation 
+* Doc: A doxygen documentation
 * Drivers: Chameleon drivers for Windows and Linux
 * Dumps: Dumps of different smartcards
 * Hardware: The layout and schematics of the PCB
