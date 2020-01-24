@@ -15,5 +15,5 @@ var searchData=
   ['configurationdescriptor',['ConfigurationDescriptor',['../_l_u_f_a_descriptors_8c.html#a59d882a5961a04a054fab63be98c3b80',1,'LUFADescriptors.c']]],
   ['configurations_2etxt',['Configurations.txt',['../_configurations_8txt.html',1,'']]],
   ['configurationtype',['ConfigurationType',['../struct_configuration_type.html',1,'']]],
-  ['configurations',['Configurations',['../_page__configurations.html',1,'index']]]
+  ['configurations',['Configurations',['../Page_Configurations.html',1,'index']]]
 ];

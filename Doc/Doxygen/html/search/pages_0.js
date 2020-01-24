@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['buttons',['Buttons',['../_page__buttons.html',1,'index']]]
+  ['buttons',['Buttons',['../Page_Buttons.html',1,'index']]]
 ];

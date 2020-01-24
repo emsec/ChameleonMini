@@ -4,10 +4,10 @@ var indexSectionsWithContent =
   1: "csu",
   2: "bcglmrsu",
   3: "c",
-  4: "acdlmpru",
+  4: "acdlmprtu",
   5: "l",
   6: "l",
-  7: "c",
+  7: "ct",
   8: "bcgilstu"
 };
 

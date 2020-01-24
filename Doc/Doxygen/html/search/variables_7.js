@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['uidsize',['UidSize',['../struct_configuration_type.html#ac730d8b9dc9e728bb10069ea1917d99f',1,'ConfigurationType']]]
+  ['tagfamily',['TagFamily',['../struct_configuration_type.html#a2c563c8b1f486f38a074f2d4682c2d8a',1,'ConfigurationType']]]
 ];
