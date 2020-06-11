@@ -89,10 +89,13 @@
 #define VERSION_INFO_LENGTH     8
 #define SIGNATURE_LENGTH        32
 
+#define CONFIG_AREA_START_ADDRESS   MIFARE_ULTRALIGHT_PAGE_SIZE * 0x83
+
 static enum {
     UL_EV0,
     UL_C,
     UL_EV1,
+    UL_NTAG_215
 } Flavor;
 
 static enum {
@@ -202,6 +205,19 @@ static void AppInitEV1Common(void) {
     AppInitCommon();
 }
 
+static void AppInitNTAG215Common(void) {
+    uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
+    uint8_t Access;
+
+    /* Set up the emulation flavor */
+    Flavor = UL_NTAG_215;
+    /* Fetch some of the configuration into RAM */
+    MemoryReadBlock(&FirstAuthenticatedPage, ConfigAreaAddress + CONF_AUTH0_OFFSET, 1);
+    MemoryReadBlock(&Access, ConfigAreaAddress + CONF_ACCESS_OFFSET, 1);
+    ReadAccessProtected = !!(Access & CONF_ACCESS_PROT);
+    AppInitCommon();
+}
+
 void MifareUltralightEV11AppInit(void) {
     PageCount = MIFARE_ULTRALIGHT_EV11_PAGES;
     AppInitEV1Common();
@@ -210,6 +226,11 @@ void MifareUltralightEV11AppInit(void) {
 void MifareUltralightEV12AppInit(void) {
     PageCount = MIFARE_ULTRALIGHT_EV12_PAGES;
     AppInitEV1Common();
+}
+
+void MifareUltralightNTAG215AppInit(void) {
+    PageCount = MIFARE_ULTRALIGHT_NTAG_215_PAGES;
+    AppInitNTAG215Common();
 }
 
 void MifareUltralightAppReset(void) {
@@ -414,14 +435,26 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
             case CMD_GET_VERSION: {
                 /* Provide hardcoded version response */
-                Buffer[0] = 0x00;
-                Buffer[1] = 0x04;
-                Buffer[2] = 0x03;
-                Buffer[3] = 0x01; /**/
-                Buffer[4] = 0x01;
-                Buffer[5] = 0x00;
-                Buffer[6] = PageCount == MIFARE_ULTRALIGHT_EV11_PAGES ? 0x0B : 0x0E;
-                Buffer[7] = 0x03;
+                if (Flavor == UL_EV1) { //VERSION RESPONSE FOR EV1
+                    Buffer[0] = 0x00;
+                    Buffer[1] = 0x04;
+                    Buffer[2] = 0x03;
+                    Buffer[3] = 0x01; /**/
+                    Buffer[4] = 0x01;
+                    Buffer[5] = 0x00;
+                    Buffer[6] = PageCount == MIFARE_ULTRALIGHT_EV11_PAGES ? 0x0B : 0x0E;
+                    Buffer[7] = 0x03;
+                } else { //VERSION RESPONSE FOR NTAG 215
+                    /* Provide hardcoded version response */ 
+                    Buffer[0] = 0x00;
+                    Buffer[1] = 0x04;
+                    Buffer[2] = 0x04;
+                    Buffer[3] = 0x02;
+                    Buffer[4] = 0x01;
+                    Buffer[5] = 0x00;
+                    Buffer[6] = 0x11;
+                    Buffer[7] = 0x03;
+                }
                 ISO14443AAppendCRCA(Buffer, VERSION_INFO_LENGTH);
                 return (VERSION_INFO_LENGTH + ISO14443A_CRCA_SIZE) * 8;
             }
@@ -459,7 +492,11 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                     return NAK_FRAME_SIZE;
                 }
                 /* Read and compare the password */
-                MemoryReadBlock(Password, ConfigAreaAddress + CONF_PASSWORD_OFFSET, 4);
+                if (Flavor == UL_EV1) { //VERSION RESPONSE FOR EV1
+                    MemoryReadBlock(Password, ConfigAreaAddress + CONF_PASSWORD_OFFSET, 4);
+                } else { //VERSION RESPONSE FOR NTAG 215
+                    MemoryReadBlock(Password, CONFIG_AREA_START_ADDRESS + CONF_PASSWORD_OFFSET, 4);
+                }
                 if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
                     Buffer[0] = NAK_AUTH_FAILED;
                     return NAK_FRAME_SIZE;
