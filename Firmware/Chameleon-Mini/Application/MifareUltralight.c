@@ -89,8 +89,6 @@
 #define VERSION_INFO_LENGTH     8
 #define SIGNATURE_LENGTH        32
 
-#define CONFIG_AREA_START_ADDRESS   MIFARE_ULTRALIGHT_PAGE_SIZE * 0x83
-
 static enum {
     UL_EV0,
     UL_C,
@@ -492,11 +490,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                     return NAK_FRAME_SIZE;
                 }
                 /* Read and compare the password */
-                if (Flavor == UL_EV1) { //VERSION RESPONSE FOR EV1
-                    MemoryReadBlock(Password, ConfigAreaAddress + CONF_PASSWORD_OFFSET, 4);
-                } else { //VERSION RESPONSE FOR NTAG 215
-                    MemoryReadBlock(Password, CONFIG_AREA_START_ADDRESS + CONF_PASSWORD_OFFSET, 4);
-                }
+                MemoryReadBlock(Password, ConfigAreaAddress + CONF_PASSWORD_OFFSET, 4);
                 if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
                     Buffer[0] = NAK_AUTH_FAILED;
                     return NAK_FRAME_SIZE;
