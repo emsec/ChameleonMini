@@ -21,12 +21,13 @@
 #define ACK_FRAME_SIZE          4 /* Bits */
 #define NAK_INVALID_ARG         0x00
 #define NAK_CRC_ERROR           0x01
-#define NAK_CTR_ERROR           0x04
+#define NAK_CTR_ERROR           0x04 /* counter overflow for EV1 */
+#define NAK_NOT_AUTHED          0x04 /* invalid authentication & counter overflow for NATG */
 #define NAK_EEPROM_ERROR        0x05
 #define NAK_OTHER_ERROR         0x06
 /* NOTE: the spec is not crystal clear which error is returned */
-#define NAK_AUTH_REQUIRED       NAK_OTHER_ERROR
-#define NAK_AUTH_FAILED         NAK_OTHER_ERROR
+#define NAK_AUTH_REQUIRED       NAK_OTHER_ERROR /* probably is NAK_NOT_AUTHED 0x04 */
+#define NAK_AUTH_FAILED         NAK_OTHER_ERROR /* probably is NAK_NOT_AUTHED 0x04 */
 #define NAK_FRAME_SIZE          4
 
 /* ISO commands */
