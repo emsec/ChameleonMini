@@ -192,7 +192,7 @@ void MifareUltralightAppInit(void) {
 }
 
 static void AppInitEV1Common(void) {
-    uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
+    uint16_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
     uint8_t Access;
 
     /* Set up the emulation flavor */
@@ -205,7 +205,7 @@ static void AppInitEV1Common(void) {
 }
 
 static void AppInitNTAG215Common(void) {
-    uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
+    uint16_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
     uint8_t Access;
 
     /* Set up the emulation flavor */
@@ -481,7 +481,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             }
 
             case CMD_PWD_AUTH: {
-                uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
+                uint16_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
                 uint8_t Password[4];
 
                 /* Verify value and increment authentication attempt counter */
@@ -554,7 +554,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 return (1 + ISO14443A_CRCA_SIZE) * 8;
 
             case CMD_VCSL: {
-                uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
+                uint16_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
                 /* Input is ignored completely */
                 /* Read out the value */
                 MemoryReadBlock(Buffer, ConfigAreaAddress + CONF_VCTID_OFFSET, 1);
