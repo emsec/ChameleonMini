@@ -16,10 +16,8 @@ static enum {
     STATE_QUIET
 } State;
 
-uint8_t MyAFI;                      /* Holds current tag's AFI (is used in inventory) */
 uint16_t UserLockBits_Mask = 0;     /* Holds lock state of blocks */
 uint16_t FactoryLockBits_Mask = 0;  /* Holds lock state of blocks */
-CurrentFrame FrameInfo;
 
 void TITagitstandardAppInit(void) {
     State = STATE_READY;

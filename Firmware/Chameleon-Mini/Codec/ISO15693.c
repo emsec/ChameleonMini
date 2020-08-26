@@ -88,7 +88,6 @@ static volatile uint16_t ReadCommandFromReader = 0;
  * CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
  * and unregistered writing the INT0MASK to 0
  */
-// ISR(CODEC_DEMOD_IN_INT0_VECT)
 ISR_SHARED isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void) {
     /* Start sample timer CODEC_TIMER_SAMPLING (TCD0).
      * Set Counter Channel C (CCC) with relevant bitmask (TC0_CCCIF_bm),
@@ -258,7 +257,7 @@ ISR_SHARED isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void) {
  * It disables its own interrupt when all data has been sent
  */
 //ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
-void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
+ISR_SHARED isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
     static void *JumpTable[] = {
         [LOADMOD_START_SINGLE]  = && LOADMOD_START_SINGLE_LABEL,
         [LOADMOD_SOF_SINGLE]    = && LOADMOD_SOF_SINGLE_LABEL,

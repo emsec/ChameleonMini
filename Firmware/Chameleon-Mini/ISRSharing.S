@@ -9,7 +9,7 @@
 #include "Codec/Codec.h"
 #include <avr/interrupt.h>
 
-; Use this macro to call isr functions
+; Macro to call ISR functions
 .macro call_isr isr_address
 push r30
 push r31
@@ -21,12 +21,28 @@ pop r30
 reti
 .endm
 
-; Find first pause and start sampling
+; Shared ISR must be defined below as globals
+; Example:
+;
+; .global <INTERRUPT-TO-SHARE>
+; INTERRUPT-TO-SHARE:
+;     call_isr POINTER-TO-VARIABLE-INTERRUPT-HANDLER
+;
+; Where:
+; INTERRUPT-TO-SHARE
+;   The target interrupt which needs to be shared
+; POINTER-TO-VARIABLE-INTERRUPT-HANDLER
+;   A pointer to the interrupt handler which can be modified at runtime.
+;   Must be a volatile pointer to function declared in Codec.h
+
 .global CODEC_DEMOD_IN_INT0_VECT
 CODEC_DEMOD_IN_INT0_VECT:
     call_isr isr_func_CODEC_DEMOD_IN_INT0_VECT
 
-; Frame Delay Time PCD to PICC ends
 .global CODEC_TIMER_SAMPLING_CCC_VECT
 CODEC_TIMER_SAMPLING_CCC_VECT:
     call_isr isr_func_TCD0_CCC_vect
+
+.global CODEC_TIMER_LOADMOD_CCB_VECT
+CODEC_TIMER_LOADMOD_CCB_VECT:
+    call_isr isr_func_CODEC_TIMER_LOADMOD_CCB_VECT

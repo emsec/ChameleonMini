@@ -19,6 +19,9 @@
 
 // TODO replace remaining magic numbers
 
+uint8_t ReaderSendBuffer[CODEC_BUFFER_SIZE];
+uint16_t ReaderSendBitCount;
+
 static bool Selected = false;
 Reader14443Command Reader14443CurrentCommand = Reader14443_Do_Nothing;
 
