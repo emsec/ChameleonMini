@@ -258,7 +258,7 @@ ISR_SHARED isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void) {
  * It disables its own interrupt when all data has been sent
  */
 //ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
-void isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
+ISR_SHARED isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
     static void *JumpTable[] = {
         [LOADMOD_START_SINGLE]  = && LOADMOD_START_SINGLE_LABEL,
         [LOADMOD_SOF_SINGLE]    = && LOADMOD_SOF_SINGLE_LABEL,
