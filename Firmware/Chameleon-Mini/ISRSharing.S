@@ -32,22 +32,17 @@ reti
 ; INTERRUPT-TO-SHARE
 ;   The target interrupt which needs to be shared
 ; POINTER-TO-VARIABLE-INTERRUPT-HANDLER
-;   A pointer to the current interrupt handler which can be modified
-;   at runtime. Must be a volatile pointer to function defined in Codec.h
+;   A pointer to the interrupt handler which can be modified at runtime.
+;   Must be a volatile pointer to function declared in Codec.h
 
-; TODO spostare i commenti qui sotto alle funzioni appropriate. Non ha senso commentare i nomi dei vettori, ma bisogna commentare la funzione nel contesto
-; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-; Sample reader field and demodulate signal after first pause
 .global CODEC_DEMOD_IN_INT0_VECT
 CODEC_DEMOD_IN_INT0_VECT:
     call_isr isr_func_CODEC_DEMOD_IN_INT0_VECT
 
-; Frame Delay Time PCD to PICC ends
 .global CODEC_TIMER_SAMPLING_CCC_VECT
 CODEC_TIMER_SAMPLING_CCC_VECT:
     call_isr isr_func_TCD0_CCC_vect
 
-; Send response data from emulated card to reader
 .global CODEC_TIMER_LOADMOD_CCB_VECT
 CODEC_TIMER_LOADMOD_CCB_VECT:
     call_isr isr_func_CODEC_TIMER_LOADMOD_CCB_VECT

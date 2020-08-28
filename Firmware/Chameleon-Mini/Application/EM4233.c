@@ -23,9 +23,6 @@ static enum {
 } State;
 
 bool loggedIn;
-uint8_t MyAFI; /* This variable holds current tag's AFI (is used in inventory) */
-
-CurrentFrame FrameInfo;
 
 void EM4233AppInit(void) {
     State = STATE_READY;
