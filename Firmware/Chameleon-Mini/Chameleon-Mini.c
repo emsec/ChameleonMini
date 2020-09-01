@@ -4,6 +4,7 @@ int main(void) {
     SystemInit();
     SettingsLoad();
     LEDInit();
+    PinInit();
     MemoryInit();
     CodecInitCommon();
     ConfigurationInit();
@@ -17,6 +18,7 @@ int main(void) {
     while (1) {
         if (SystemTick100ms()) {
             LEDTick(); // this has to be the first function called here, since it is time-critical - the functions below may have non-negligible runtimes!
+            PinTick();
 
             RandomTick();
             TerminalTick();
