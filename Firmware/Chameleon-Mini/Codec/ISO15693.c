@@ -4,6 +4,25 @@
  *  Created on: 25.01.2017
  *      Author: Phillip Nash
  *      Modified by: ceres-c
+ *
+ *  Interrupts information
+ *      - Compare/Capture Channels are used as compare. They're used to sample the field in different moments of time
+ *      - Reader field demodulation events are routed on Event Channel 0, card data modulation on Event Channel 6
+ *      - Reader field demodulation uses Compare Channel C, card data modulation Compare Channel D (PORTB in both cases, of course)
+ *
+ *  Loadmod code flow:
+ *      Loadmodulation is performed via a state machine inside a ISR, triggered by a counter's (TCD0) overflow interrupt. The interrupt
+ *      is configured in StartISO15693Demod to have a PER (period) equal to ISO15693 t1 nominal time: 4352 carrier pulses.
+ *      (see ISO15693-3:2009, section 9.1).
+ *      Once a EOF is reached when demodulating data from the reader, TCD0's PERBUF register is configured with the period of
+ *      bit transmission (32 carrier pulses). This means that, once the first period overflow is reached (t1 expiration)
+ *      the ISR will output data at the frequency dictated by the standard. This is due to the behaviour of buffered registers, see
+ *      8045A-AVR-02/08 section 3.7.
+ *
+ *      Once t1 is reached (the counter overflowed), transmission of data should theoretically begin, but this is not guaranteed,
+ *      due to possible slowdowns of data generation in the currently running Application. Until the application is done,
+ *      the state machine will be stuck in LOADMOD_WAIT state, not outputting any data.
+ *      The ISR will now be invoked every 32 carrier pulses (see ISO15693-2:2006, section 8.2), even when waiting for data.
  */
 
 #include "ISO15693.h"
@@ -12,18 +31,20 @@
 #include "LEDHook.h"
 #include "AntennaLevel.h"
 #include "Terminal/Terminal.h"
-#include <util/delay.h>
-#include <avr/interrupt.h>
 #include <avr/io.h>
 
 
 #define SOC_1_OF_4_CODE         0x7B
 #define SOC_1_OF_256_CODE       0x7E
 #define EOC_CODE                0xDF
+#define REQ_SUBCARRIER_SINGLE   0x00
+#define REQ_SUBCARRIER_DUAL     0x01
+#define REQ_DATARATE_LOW        0x00
+#define REQ_DATARATE_HIGH       0x02
 #define ISO15693_SAMPLE_CLK     TC_CLKSEL_DIV2_gc // 13.56MHz
 #define ISO15693_SAMPLE_PERIOD  128 // 9.4us
+#define ISO15693_T1_TIME        4352 - 14 /* ISO t1 time - ISR prologue compensation */ // 4192 + 128 + 128 - 1
 
-#define WRITE_GRID_CYCLES       4096
 #define SUBCARRIER_1            32
 #define SUBCARRIER_2            28
 #define SUBCARRIER_OFF          0
@@ -43,7 +64,6 @@
 static volatile struct {
     volatile bool DemodFinished;
     volatile bool LoadmodFinished;
-    volatile bool DemodAborted;
 } Flags = { 0 };
 
 typedef enum {
@@ -78,27 +98,22 @@ static volatile uint8_t ByteCount;
 static volatile uint16_t BitRate1;
 static volatile uint16_t BitRate2;
 static volatile uint16_t SampleDataCount;
-static volatile uint16_t ReadCommandFromReader = 0;
-
-#ifdef CONFIG_VICINITY_SUPPORT
 
 /* This function implements CODEC_DEMOD_IN_INT0_VECT interrupt vector.
  * It is called when a pulse is detected in CODEC_DEMOD_IN_PORT (PORTB).
- * The relevatn interrupt vector is registered to CODEC_DEMOD_IN_MASK0 (PIN1) via:
+ * The relevant interrupt vector was registered to CODEC_DEMOD_IN_MASK0 (PIN1) via:
  * CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
  * and unregistered writing the INT0MASK to 0
  */
 ISR_SHARED isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void) {
-    /* Start sample timer CODEC_TIMER_SAMPLING (TCD0).
-     * Set Counter Channel C (CCC) with relevant bitmask (TC0_CCCIF_bm),
-     * the period for clock sampling is specified in StartISO15693Demod.
-     */
+    /* Clear Compare Channel C (CCC) interrupt Flags - From 14.12.10 [8331F–AVR–04/2013] */
     CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
-    /* Sets register INTCTRLB to TC_CCCINTLVL_HI_gc = (0x03<<4) to enable compare/capture for high level interrupts on Channel C (CCC) */
+    /* Enable compare/capture for high level interrupts on Capture Channel C for TCD0 - From 14.12.7 [8331F–AVR–04/2013] */
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_HI_gc;
 
-    /* Disable this interrupt as we've already sensed the relevant pulse and will use our internal clock from now on */
+    /* Disable this interrupt. From now on we will sample the field using our internal clock - From 13.13.11 [8331F–AVR–04/2013] */
     CODEC_DEMOD_IN_PORT.INT0MASK = 0;
+
 }
 
 /* This function is called from isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT
@@ -106,36 +121,50 @@ ISR_SHARED isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void) {
  */
 INLINE void ISO15693_EOC(void) {
     /* Set bitrate required by the reader on SOF for our following response */
-    BitRate1 = 256 * 4; // 256 * 4 - 1
-    if (CodecBuffer[0] & ISO15693_REQ_DATARATE_HIGH)
+    if (CodecBuffer[0] & REQ_DATARATE_HIGH) {
         BitRate1 = 256;
-
-    if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL) {
-        BitRate2 = 252 * 4; // 252 * 4 - 3
-        if (CodecBuffer[0] & ISO15693_REQ_DATARATE_HIGH)
-            BitRate2 = 252;
+        BitRate2 = 252; /* If single subcarrier mode is requested, BitRate2 is useless, but setting it nevertheless was still faster than checking */
     } else {
-        BitRate2 = BitRate1;
+        BitRate1 = 256 * 4; // Possible value: 256 * 4 - 1
+        BitRate2 = 252 * 4; // Possible value: 252 * 4 - 3
     }
 
-    /* Disable event action for CODEC_TIMER_LOADMOD (TCE0) as we're done receiving data */
-    CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_OFF_gc;
-    /* Set Counter Channel B (CCB) with relevant bitmask (TC0_CCBIF_bm), the period for clock sampling is specified below */
-    CODEC_TIMER_LOADMOD.INTFLAGS = TC0_CCBIF_bm; // TODO This might not be needed since commenting it does not break anything
-    /* Sets register INTCTRLB to TC_CCBINTLVL_HI_gc = (0x03<<2) to enable compare/capture for high level interrupts on channel B */
-    CODEC_TIMER_LOADMOD.INTCTRLB = TC_CCBINTLVL_HI_gc;
-    /* Set the period for CODEC_TIMER_LOADMOD (TCE0) to Bitrate - 1 because PERBUF is 0-based
-     *
-     * TODO Why are we using PERBUF instead of PER?
-     *      With PERBUF the period register will occur on the next overflow.
-     */
-    CODEC_TIMER_LOADMOD.PERBUF = BitRate1 - 1;
-
     Flags.DemodFinished = 1;
-    /* Sets timer off for CODEC_TIMER_SAMPLING (TCD0) disabling clock source */
+    /* Disable demodulation interrupt */
+    /* Sets timer off for TCD0, disabling clock source. We're done receiving data from reader and don't need to probe the antenna anymore - From 14.12.1 [8331F–AVR–04/2013] */
     CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
-    /* Sets register INTCTRLB to 0 to disable all compare/capture interrupts */
-    CODEC_TIMER_SAMPLING.INTCTRLB = 0;
+    /* Disable event action for CODEC_TIMER_SAMPLING (TCD0) - From 14.12.4 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
+    /* Disable compare/capture interrupts on Channel C - From 14.12.7 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
+    /* Clear Compare Channel C (CCC) interrupt Flags - From 14.12.10 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
+
+    /* Enable loadmodulation interrupt */
+    /* Disable the event action for TCE0 - From 14.12.4 [8331F–AVR–04/2013] */
+    CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_OFF_gc;
+    /* Enable compare/capture for high level interrupts on channel B for TCE0 - From 14.12.7 [8331F–AVR–04/2013] */
+    CODEC_TIMER_LOADMOD.INTCTRLB = TC_CCBINTLVL_HI_gc;
+    /* Clear TCE0 interrupt flags for Capture Channel B - From 14.12.10 [8331F–AVR–04/2013] */
+    CODEC_TIMER_LOADMOD.INTFLAGS = TC0_CCBIF_bm;
+    /* Set the BUFFERED PERIOD to Bitrate - 1 (because PERBUF is 0-based).
+     * The current PERIOD was set in StartISO15693Demod to ISO15693_T1_TIME, once ISO15693_T1_TIME is reached, this will be the new PERIOD.
+     * From 3.7 [8045A-AVR-02/08] */
+    CODEC_TIMER_LOADMOD.PERBUF = BitRate1 - 1;
+}
+
+/* Disable data demodulation interrupt and inform the codec to restart demodulation from scratch */
+INLINE void ISO15693_GARBAGE(void) {
+    Flags.DemodFinished = 1;
+
+    /* Sets timer off for TCD0, disabling clock source. We have demodulated rubbish and don't need to probe the antenna anymore - From 14.12.1 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
+    /* Disable event action for CODEC_TIMER_SAMPLING (TCD0) - From 14.12.4 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
+    /* Disable compare/capture interrupts on Channel C - From 14.12.7 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
+    /* Clear Compare Channel C (CCC) interrupt Flags - From 14.12.10 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
 }
 
 /* This function is registered to CODEC_TIMER_SAMPLING (TCD0)'s Counter Channel C (CCC).
@@ -143,7 +172,7 @@ INLINE void ISO15693_EOC(void) {
  *
  * It demodulates bits received from the reader and saves them in CodecBuffer.
  *
- * It disables its own interrupt when receives an EOF (calling ISO15693_EOC) or when it receives garbage
+ * It disables its own interrupt when an EOF is found (calling ISO15693_EOC) or when it receives garbage
  */
 ISR_SHARED isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void) {
     /* Shift demod data */
@@ -161,11 +190,7 @@ ISR_SHARED isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void) {
                     DemodState = DEMOD_1_OUT_OF_256_STATE;
                     SampleDataCount = 0;
                 } else { // No SOC. Restart and try again, we probably received garbage.
-                    Flags.DemodFinished = 1;
-                    /* Sets timer off for CODEC_TIMER_SAMPLING (TCD0) disabling clock source */
-                    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
-                    /* Sets register INTCTRLB to 0 to disable all compare/capture interrupts */
-                    CODEC_TIMER_SAMPLING.INTCTRLB = 0;
+                    ISO15693_GARBAGE();
                 }
                 break;
 
@@ -248,7 +273,6 @@ ISR_SHARED isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void) {
     SampleDataCount++;
 }
 
-
 /* This function is registered to CODEC_TIMER_LOADMOD (TCE0)'s Counter Channel B (CCB).
  * When the timer is enabled, this is called on counter's overflow
  *
@@ -256,9 +280,9 @@ ISR_SHARED isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void) {
  *
  * It disables its own interrupt when all data has been sent
  */
-//ISR(CODEC_TIMER_LOADMOD_CCB_VECT)
 ISR_SHARED isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
     static void *JumpTable[] = {
+        [LOADMOD_WAIT]          = && LOADMOD_WAIT_LABEL,
         [LOADMOD_START_SINGLE]  = && LOADMOD_START_SINGLE_LABEL,
         [LOADMOD_SOF_SINGLE]    = && LOADMOD_SOF_SINGLE_LABEL,
         [LOADMOD_BIT0_SINGLE]   = && LOADMOD_BIT0_SINGLE_LABEL,
@@ -272,11 +296,11 @@ ISR_SHARED isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
         [LOADMOD_FINISHED]      = && LOADMOD_FINISHED_LABEL
     };
 
-    if ((StateRegister >= LOADMOD_START_SINGLE) && (StateRegister <= LOADMOD_FINISHED)) {
-        goto *JumpTable[StateRegister];
-    } else {
-        return;
-    }
+    goto *JumpTable[StateRegister]; /* It takes 28 clock cycles to get here from function entry point */
+
+LOADMOD_WAIT_LABEL:
+    /* ISO t1 is over, but application is not done generating data yet */
+    return;
 
 LOADMOD_START_SINGLE_LABEL:
     /* Application produced data. With this interrupt we are aligned to the bit-grid. */
@@ -354,9 +378,7 @@ LOADMOD_EOF_SINGLE_LABEL: //End of Manchester encoding
     if ((BitSent % 8) == 0) {
         /* Last bit has been put out */
         StateRegister = LOADMOD_FINISHED;
-    } else {
-        StateRegister = LOADMOD_EOF_SINGLE;
-    }
+    } /* else: stay in this state. No changes needed */
     return;
 
     // -------------------------------------------------------------
@@ -444,24 +466,20 @@ LOADMOD_EOF_DUAL_LABEL: //End of Manchester encoding
     if ((BitSent % 8) == 0) {
         /* Last bit has been put out */
         StateRegister = LOADMOD_FINISHED;
-    } else {
-        StateRegister = LOADMOD_EOF_DUAL;
-    }
+    } /* else: stay in this state. No changes needed */
     return;
 
 LOADMOD_FINISHED_LABEL:
     /* Sets timer off for CODEC_TIMER_LOADMOD (TCE0) disabling clock source as we're done modulating */
     CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
-    /* Sets register INTCTRLB to 0 to disable all compare/capture interrupts */
-    CODEC_TIMER_LOADMOD.INTCTRLB = 0;
+    /* Disable compare/capture for all level interrupts on channel B for TCE0 - From 14.12.7 [8331F–AVR–04/2013] */
+    CODEC_TIMER_LOADMOD.INTCTRLB = TC_CCBINTLVL_OFF_gc;
     CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OFF, 0);
     Flags.LoadmodFinished = 1;
     return;
 }
 
-#endif /* CONFIG_VICINITY_SUPPORT */
-
-/* This functions resets all global variables used in the codec and enables interrupts to wait for reader data */
+/* Reset global variables/interrupts to demodulate incoming reader data via ISRs */
 void StartISO15693Demod(void) {
     /* Reset global variables to default values */
     CodecBufferPtr = CodecBuffer;
@@ -477,68 +495,84 @@ void StartISO15693Demod(void) {
     ByteCount = 0;
     ShiftRegister = 0;
 
-    /* Activate Power for demodulator */
-    CodecSetDemodPower(true);
-
-    /* Configure sampling-timer free running and sync to first modulation-pause. */
-    /* Resets the counter to 0 */
-    CODEC_TIMER_SAMPLING.CNT = 0;
-    /* Set the period for CODEC_TIMER_SAMPLING (TCD0) to ISO15693_SAMPLE_PERIOD - 1 because PER is 0-based */
-    CODEC_TIMER_SAMPLING.PER = ISO15693_SAMPLE_PERIOD - 1;
-    /* Set Counter Channel C (CCC) register with half bit period - 1. (- 14 to compensate ISR timing overhead) */
-    CODEC_TIMER_SAMPLING.CCC = ISO15693_SAMPLE_PERIOD / 2 - 14 - 1;
-    /* Set timer for CODEC_TIMER_SAMPLING (TCD0) to ISO15693_SAMPLE_CLK = TC_CLKSEL_DIV2_gc = System Clock / 2
-     *
-     * TODO Why system clock / 2 and not iso period?
+    /* Set clock source for TCD0 to ISO15693_SAMPLE_CLK = TC_CLKSEL_DIV2_gc = System Clock / 2.
+     * Since the Chameleon is clocked at 13.56*2 MHz (see Makefile), this counter will hit at the same frequency of reader field.
+     * From 14.12.1 [8331F–AVR–04/2013]
      */
     CODEC_TIMER_SAMPLING.CTRLA = ISO15693_SAMPLE_CLK;
-    /* Set event action for CODEC_TIMER_SAMPLING (TCD0) to restart and trigger CODEC_TIMER_MODSTART_EVSEL = TC_EVSEL_CH0_gc = Event Channel 0 */
+    /* Set up TCD0 action/source:
+     *  - Event Action: Restart waveform period (reset PER register)
+     *  - Event Source Select: trigger on CODEC_TIMER_MODSTART_EVSEL = TC_EVSEL_CH0_gc = Event Channel 0
+     * From 14.12.4 [8331F–AVR–04/2013]
+     */
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
-    /* Set Counter Channel C (CCC) with relevant bitmask (TC0_CCCIF_bm), the period for clock sampling is specified above */
-    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
-    /* Sets register INTCTRLB to TC_CCCINTLVL_OFF_gc = (0x00<<4) to disable compare/capture C interrupts
-     *
-     * TODO Why turn it off?
-     */
-    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
+    /* Resets the sampling counter (TCD0) to 0 - From 14.12.12 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.CNT = 0;
 
-    /* Set event action for CODEC_TIMER_LOADMOD (TCE0) to restart and trigger CODEC_TIMER_MODSTART_EVSEL = TC_EVSEL_CH0_gc = Event Channel 0 */
-    CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
-    /* Set the period for CODEC_TIMER_LOADMOD (TCE0) to... some magic numbers?
-     * Using PER instead of PERBUF breaks it when receiving ISO15693_APP_NO_RESPONSE from Application.
-     *
-     * TODO What are these numbers?
+    /* Set Clock Source for TCE0 to CODEC_TIMER_CARRIER_CLKSEL = TC_CLKSEL_EVCH6_gc = Event Channel 6 */
+    CODEC_TIMER_LOADMOD.CTRLA = CODEC_TIMER_CARRIER_CLKSEL;
+    /* Set up TCE0 action/source:
+     *  - Event Action: Restart waveform period (reset PER register)
+     *  - Event Source Select: trigger on CODEC_TIMER_MODSTART_EVSEL = TC_EVSEL_CH0_gc = Event Channel 0
+     * From 14.12.4 [8331F–AVR–04/2013]
      */
-    CODEC_TIMER_LOADMOD.PERBUF = 4192 + 128 + 128 - 1;
-    /* Sets register INTCTRLA to 0 to disable timer error or overflow interrupts */
-    CODEC_TIMER_LOADMOD.INTCTRLA = 0;
-    /* Sets register INTCTRLB to 0 to disable all compare/capture interrupts */
-    CODEC_TIMER_LOADMOD.INTCTRLB = 0;
-    /* Set timer for CODEC_TIMER_SAMPLING (TCD0) to TC_CLKSEL_EVCH6_gc = Event Channel 6 */
-    CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_EVCH6_gc;
+    CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
+    /* Temporarily disable compare/capture for all level interrupts on channel B for TCE0. They'll be enabled later when load modulation will be needed.
+     * From 14.12.7 [8331F–AVR–04/2013] */
+    CODEC_TIMER_LOADMOD.INTCTRLB = TC_CCBINTLVL_OFF_gc;
+    /* Set the period for CODEC_TIMER_LOADMOD (TCE0) ISO standard t1 time.
+     * Once this timer is enabled, it will wait for a time equal to t1 and then its ISR will be called.
+     * From 14.12.18 [8331F–AVR–04/2013]
+     */
+    CODEC_TIMER_LOADMOD.PER = ISO15693_T1_TIME;
 
     /* Start looking out for modulation pause via interrupt. */
-    /* Sets register INTFLAGS to PORT_INT0LVL_HI_gc = (0x03<<0) to enable compare/capture for high level interrupts on CODEC_DEMOD_IN_PORT (PORTB) */
-    CODEC_DEMOD_IN_PORT.INTFLAGS = PORT_INT0LVL_HI_gc;
-    /* Sets INT0MASK to CODEC_DEMOD_IN_MASK0 = PIN1_bm to use it as source for port interrupt 0 */
+    /* Clear PORTB interrupt flags - From 13.13.13 [8331F–AVR–04/2013] */
+    CODEC_DEMOD_IN_PORT.INTFLAGS = PORT_INT0IF_bm;
+    /* Use PIN1 as a source for modulation pauses. Will trigger PORTB Interrput 0 - From 13.13.11 [8331F–AVR–04/2013] */
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
 }
 
+/* Configure unvarying interrupts settings.
+ * All configured interrupts will still be disabled once this function is done, they'll be enabled one by one as the communication flow requires them.
+ */
 void ISO15693CodecInit(void) {
     CodecInitCommon();
 
-    /* Register isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT function
-     * to CODEC_TIMER_SAMPLING (TCD0)'s Counter Channel C (CCC)
-     */
+    /**************************************************
+     *    Register function handlers to shared ISR    *
+     **************************************************/
+    /* Register isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT function to CODEC_TIMER_SAMPLING (TCD0)'s Counter Channel C (CCC) */
     isr_func_TCD0_CCC_vect = &isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT;
-    /* Register isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT function
-     * to CODEC_DEMOD_IN_PORT (PORTB) interrupt 0
-     */
+    /* Register isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT function to CODEC_DEMOD_IN_PORT (PORTB) interrupt 0 */
     isr_func_CODEC_DEMOD_IN_INT0_VECT = &isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT;
-    /* Register isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT function
-     * to CODEC_TIMER_LOADMOD (TCE0)'s Counter Channel B (CCB)
-     */
+    /* Register isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT function to CODEC_TIMER_LOADMOD (TCE0)'s Counter Channel B (CCB) */
     isr_func_CODEC_TIMER_LOADMOD_CCB_VECT = &isr_ISO15693_CODEC_TIMER_LOADMOD_CCB_VECT;
+
+    /**************************************************
+     *           Configure demod interrupt            *
+     **************************************************/
+    /* Configure sampling-timer free running and sync to first modulation-pause */
+    /* Set the period for TCD0 to ISO15693_SAMPLE_PERIOD - 1 because PER is 0-based - From 14.12.14 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.PER = ISO15693_SAMPLE_PERIOD - 1;
+    /* Set Compare Channel C (CCC) period to half bit period - 1. (- 14 to compensate ISR timing overhead) - From 14.12.16 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.CCC = ISO15693_SAMPLE_PERIOD / 2 - 14 - 1;
+    /* Temporarily disable Compare Channel C (CCC) interrupts.
+     * They'll be enabled later in isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT once we sensed the reader is sending data and we're in sync with the pulses.
+     * From 14.12.7 [8331F–AVR–04/2013]
+     */
+    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
+    /* Clear Compare Channel C (CCC) interrupt Flags - From 14.12.10 [8331F–AVR–04/2013] */
+    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
+
+    /**************************************************
+     *          Configure loadmod interrupt           *
+     **************************************************/
+    /* Disable timer error and overflow interrupts - From 14.12.6 [8331F–AVR–04/2013] */
+    CODEC_TIMER_LOADMOD.INTCTRLA = 0;
+
+    /* Activate Power for demodulator */
+    CodecSetDemodPower(true);
 
     StartISO15693Demod();
 }
@@ -562,21 +596,21 @@ void ISO15693CodecDeInit(void) {
     ShiftRegister = 0;
 
     /* Disable sample timer */
-    /* Sets timer off for CODEC_TIMER_SAMPLING (TCD0) disabling clock source */
+    /* Sets timer off for TCD0, disabling clock source - From 14.12.1 [8331F–AVR–04/2013] */
     CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
-    /* Disable event action for CODEC_TIMER_SAMPLING (TCD0) */
+    /* Disable event action for CODEC_TIMER_SAMPLING (TCD0) - From 14.12.4 [8331F–AVR–04/2013] */
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
-    /* Sets register INTCTRLB to TC_CCCINTLVL_OFF_gc = (0x00<<4) to disable compare/capture C interrupts */
+    /* Disable Compare Channel C (CCC) interrupts - From 14.12.7 [8331F–AVR–04/2013] */
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCCINTLVL_OFF_gc;
-    /* Restore Counter Channel C (CCC) interrupt mask (TC0_CCCIF_bm) */
+    /* Clear Compare Channel C (CCC) interrupt Flags - From 14.12.10 [8331F–AVR–04/2013] */
     CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCCIF_bm;
 
     /* Disable load modulation */
-    /* Disable event action for CODEC_TIMER_LOADMOD (TCE0) */
+    /* Disable the event action for TCE0 - From 14.12.4 [8331F–AVR–04/2013] */
     CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_OFF_gc;
-    /* Sets register INTCTRLB to TC_CCBINTLVL_OFF_gc = (0x00<<2) to disable compare/capture B interrupts */
+    /* Disable compare/capture for all level interrupts on channel B for TCE0 - From 14.12.7 [8331F–AVR–04/2013] */
     CODEC_TIMER_LOADMOD.INTCTRLB = TC_CCBINTLVL_OFF_gc;
-    /* Restore Counter Channel B (CCB) interrupt mask (TC0_CCBIF_bm) */
+    /* Clear TCE0 interrupt flags for Capture Channel B - From 14.12.10 [8331F–AVR–04/2013] */
     CODEC_TIMER_LOADMOD.INTFLAGS = TC0_CCBIF_bm;
 
     CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OFF, 0);
@@ -596,7 +630,7 @@ void ISO15693CodecTask(void) {
             LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, DemodByteCount);
             LEDHook(LED_CODEC_RX, LED_PULSE);
 
-            if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL) {
+            if (CodecBuffer[0] & REQ_SUBCARRIER_DUAL) {
                 bDualSubcarrier = true;
             }
             AppReceivedByteCount = ApplicationProcess(CodecBuffer, DemodByteCount);
@@ -620,12 +654,15 @@ void ISO15693CodecTask(void) {
             }
 
         } else {
-            /* No data to process. Disable CODEC_TIMER_LOADMOD (TCE0) counter and start listening again */
-            /* Sets timer off for CODEC_TIMER_LOADMOD (TCE0) disabling clock source as we're done modulating */
-            CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
-            /* Sets register INTCTRLB to 0 to disable all compare/capture interrupts */
-            CODEC_TIMER_LOADMOD.INTCTRLB = 0;
-
+            /* Overwrite the PERBUF register, which was configured in ISO15693_EOC, with the new appropriate value.
+             * This is expecially needed because, since load modulation has not been performed, we're jumping here straight after
+             * ISO15693_EOC. This implies that the data stored in the PERBUF register by ISO15693_EOC still has to be copied
+             * in the PER register and that will happen on the next UPDATE event.
+             * The next UPDATE event will be timer/counter enablement in ISO15693_EOC, which is executed after StartISO15693Demod,
+             * effectively overwriting PER with an incorrect value.
+             * See 8045A-AVR-02/08 section 3.7 for information about buffered registers.
+             */
+            CODEC_TIMER_LOADMOD.PERBUF = ISO15693_T1_TIME;
             StartISO15693Demod();
         }
     }

@@ -10,12 +10,13 @@
 #include <avr/interrupt.h>
 
 ; Macro to call ISR functions
+; For development purposes: cycles penality before landing in the Shared ISR is 10
 .macro call_isr isr_address
-push r30
-push r31
-lds r30, \isr_address
-lds r31, \isr_address+1
-icall
+push r30                    ; 1
+push r31                    ; 1
+lds r30, \isr_address       ; 3
+lds r31, \isr_address+1     ; 3
+icall                       ; 2 (16 bit PC)
 pop r31
 pop r30
 reti
