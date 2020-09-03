@@ -18,6 +18,8 @@ static enum {
 
 uint16_t UserLockBits_Mask = 0;     /* Holds lock state of blocks */
 uint16_t FactoryLockBits_Mask = 0;  /* Holds lock state of blocks */
+uint8_t Uid[ISO15693_GENERIC_UID_SIZE];
+uint16_t ResponseByteCount;
 
 void TITagitstandardAppInit(void) {
     State = STATE_READY;
@@ -33,6 +35,7 @@ void TITagitstandardAppInit(void) {
     FrameInfo.Selected      = false;
 
     MemoryReadBlock(&MyAFI, TITAGIT_MEM_AFI_ADDRESS, 1);
+    TITagitstandardGetUid(Uid);
 }
 
 void TITagitstandardAppReset(void) {
@@ -44,6 +47,9 @@ void TITagitstandardAppReset(void) {
     FrameInfo.ParamLen      = 0;
     FrameInfo.Addressed     = false;
     FrameInfo.Selected      = false;
+
+    MemoryReadBlock(&MyAFI, TITAGIT_MEM_AFI_ADDRESS, 1);
+    TITagitstandardGetUid(Uid);
 }
 
 
@@ -56,9 +62,7 @@ void TITagitstandardAppTick(void) {
 }
 
 uint16_t TITagitstandardAppProcess(uint8_t *FrameBuf, uint16_t FrameBytes) {
-    uint16_t ResponseByteCount = ISO15693_APP_NO_RESPONSE;
-    uint8_t Uid[ActiveConfiguration.UidSize];
-    TITagitstandardGetUid(Uid);
+    ResponseByteCount = ISO15693_APP_NO_RESPONSE;
 
     if ((FrameBytes < ISO15693_MIN_FRAME_SIZE) || !ISO15693CheckCRC(FrameBuf, FrameBytes - ISO15693_CRC16_SIZE))
         /* malformed frame */
@@ -213,6 +217,7 @@ void TITagitstandardGetUid(ConfigurationUidType Uid) {
 }
 
 void TITagitstandardSetUid(ConfigurationUidType Uid) {
+    memcpy(Uid, NewUid, ActiveConfiguration.UidSize); // Update the local variable
     // Reverse UID before writing it
     TITagitstandardFlipUid(Uid);
 
