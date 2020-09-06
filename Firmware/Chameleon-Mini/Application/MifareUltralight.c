@@ -285,7 +285,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
         //Handle MF ULC counter
         if (CompatWritePageAddress == MF_ULC_COUNTER_ADDRESS && Flavor == UL_C) {
-            if (IncrementCounter(&Buffer[2])) {
+            if (IncrementCounter(&Buffer[0])) {
                 Buffer[0] = ACK_VALUE;
                 return ACK_FRAME_SIZE;
             } else {
@@ -294,7 +294,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             }
         }
 
-        AppWritePage(CompatWritePageAddress, &Buffer[2]);
+        AppWritePage(CompatWritePageAddress, &Buffer[0]);
         Buffer[0] = ACK_VALUE;
         return ACK_FRAME_SIZE;
     }
