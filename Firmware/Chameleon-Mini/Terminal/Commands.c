@@ -279,6 +279,23 @@ CommandStatusIdType CommandSetLedRed(char *OutMessage, const char *InParam) {
     }
 }
 
+CommandStatusIdType CommandGetPin(char *OutParam) {
+    PinGetFuncByName(OutParam, TERMINAL_BUFFER_SIZE);
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetPin(char *OutMessage, const char *InParam) {
+    if (COMMAND_IS_SUGGEST_STRING(InParam)) {
+        PinGetFuncList(OutMessage, TERMINAL_BUFFER_SIZE);
+        return COMMAND_INFO_OK_WITH_TEXT_ID;
+    } else if (PinSetFuncByName(InParam)) {
+        return COMMAND_INFO_OK_ID;
+    } else {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+}
+
 CommandStatusIdType CommandGetLogMode(char *OutParam) {
     /* Get Logmode */
     LogGetModeByName(OutParam, TERMINAL_BUFFER_SIZE);

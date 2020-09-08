@@ -113,6 +113,10 @@ CommandStatusIdType CommandSetLedGreen(char *OutMessage, const char *InParam);
 CommandStatusIdType CommandGetLedRed(char *OutParam);
 CommandStatusIdType CommandSetLedRed(char *OutMessage, const char *InParam);
 
+#define COMMAND_PIN         "PIN"
+CommandStatusIdType CommandGetPin(char *OutParam);
+CommandStatusIdType CommandSetPin(char *OutMessage, const char *InParam);
+
 #define COMMAND_LOGMODE     "LOGMODE"
 CommandStatusIdType CommandGetLogMode(char *OutParam);
 CommandStatusIdType CommandSetLogMode(char *OutMessage, const char *InParam);

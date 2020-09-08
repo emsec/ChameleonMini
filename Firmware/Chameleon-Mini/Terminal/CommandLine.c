@@ -156,6 +156,13 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .GetFunc    = CommandGetLedRed
     },
     {
+        .Command    = COMMAND_PIN,
+        .ExecFunc   = NO_FUNCTION,
+        .ExecParamFunc = NO_FUNCTION,
+        .SetFunc    = CommandSetPin,
+        .GetFunc    = CommandGetPin
+    },
+    {
         .Command    = COMMAND_LOGMODE,
         .ExecFunc   = NO_FUNCTION,
         .ExecParamFunc = NO_FUNCTION,
