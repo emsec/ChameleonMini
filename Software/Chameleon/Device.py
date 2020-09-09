@@ -7,6 +7,7 @@ import datetime
 import time
 import Chameleon
 
+
 class Device:
     COMMAND_VERSION = "VERSION"
     COMMAND_UPLOAD = "UPLOAD"
@@ -57,7 +58,7 @@ class Device:
     SET_CHAR = "="
     GET_CHAR = "?"
 
-    def __init__(self, verboseFunc = None):
+    def __init__(self, verboseFunc=None):
         self.verboseFunc = verboseFunc
         self.serial = serial.Serial(None, 9600, timeout=5.0)
         self.versionString = ""
@@ -130,6 +131,7 @@ class Device:
 
         # Get status response
         status = self.serial.readline().decode('ascii').rstrip()
+        self.verboseLog(status)
 
         if (len(status) == 0):
             self.verboseLog("Executing <{}>: Timeout".format(cmd))
@@ -140,10 +142,11 @@ class Device:
         statusCode, statusText = status.split(":")
         statusCode = int(statusCode)
 
-        result = {'statusCode': statusCode, 'statusText': statusText, 'response': None}
+        result = {'statusCode': statusCode,
+                  'statusText': statusText, 'response': None}
 
         if (statusCode == self.STATUS_CODE_OK_WITH_TEXT):
-            result['response'] =  self.readResponse()
+            result['response'] = self.readResponse()
         elif (statusCode == self.STATUS_CODE_TRUE):
             result['response'] = True
         elif (statusCode == self.STATUS_CODE_FALSE):
@@ -153,7 +156,11 @@ class Device:
 
     def readResponse(self):
         # Read response to command, if any
-        response = self.serial.readline().decode('ascii').rstrip()
+        response = ""
+        while self.serial.in_waiting:
+            line = self.serial.read().decode('ascii')
+            response += line
+        response = response.rstrip().replace('\t', ' ').replace('\r\n', ' | ')
         self.verboseLog("Response: {}".format(response))
         return response
 
@@ -214,10 +221,10 @@ class Device:
     def cmdVersion(self):
         return self.getSetCmd(self.COMMAND_VERSION)
 
-    def cmdSetting(self, newSetting = None):
+    def cmdSetting(self, newSetting=None):
         return self.getSetCmd(self.COMMAND_SETTING, newSetting)
 
-    def cmdUID(self, newUID = None):
+    def cmdUID(self, newUID=None):
         return self.getSetCmd(self.COMMAND_UID, newUID)
 
     def cmdGetUID(self):
@@ -229,43 +236,43 @@ class Device:
     def cmdDumpMFU(self):
         return self.returnCmd(self.COMMAND_DUMPMFU)
 
-    def cmdConfig(self, newConfig = None):
+    def cmdConfig(self, newConfig=None):
         if (newConfig == self.SUGGEST_CHAR):
             return self.getCmdSuggestions(self.COMMAND_CONFIG)
         else:
             return self.getSetCmd(self.COMMAND_CONFIG, newConfig)
 
-    def cmdLButton(self, newAction = None):
+    def cmdLButton(self, newAction=None):
         if (newAction == self.SUGGEST_CHAR):
             return self.getCmdSuggestions(self.COMMAND_LBUTTON)
         else:
             return self.getSetCmd(self.COMMAND_LBUTTON, newAction)
 
-    def cmdLButtonLong(self, newAction = None):
+    def cmdLButtonLong(self, newAction=None):
         if (newAction == self.SUGGEST_CHAR):
             return self.getCmdSuggestions(self.COMMAND_LBUTTONLONG)
         else:
             return self.getSetCmd(self.COMMAND_LBUTTONLONG, newAction)
 
-    def cmdRButton(self, newAction = None):
+    def cmdRButton(self, newAction=None):
         if (newAction == self.SUGGEST_CHAR):
             return self.getCmdSuggestions(self.COMMAND_RBUTTON)
         else:
             return self.getSetCmd(self.COMMAND_RBUTTON, newAction)
 
-    def cmdRButtonLong(self, newAction = None):
+    def cmdRButtonLong(self, newAction=None):
         if (newAction == self.SUGGEST_CHAR):
             return self.getCmdSuggestions(self.COMMAND_RBUTTONLONG)
         else:
             return self.getSetCmd(self.COMMAND_RBUTTONLONG, newAction)
 
-    def cmdGreenLED(self, newFunction = None):
+    def cmdGreenLED(self, newFunction=None):
         if (newFunction == self.SUGGEST_CHAR):
             return self.getCmdSuggestions(self.COMMAND_GREEN_LED)
         else:
             return self.getSetCmd(self.COMMAND_GREEN_LED, newFunction)
 
-    def cmdRedLED(self, newFunction = None):
+    def cmdRedLED(self, newFunction=None):
         if (newFunction == self.SUGGEST_CHAR):
             return self.getCmdSuggestions(self.COMMAND_RED_LED)
         else:
