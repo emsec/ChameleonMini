@@ -23,8 +23,6 @@ static enum {
 } State;
 
 bool loggedIn;
-uint8_t Uid[ISO15693_GENERIC_UID_SIZE];
-uint16_t ResponseByteCount;
 
 void EM4233AppInit(void) {
     State = STATE_READY;

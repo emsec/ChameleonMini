@@ -18,8 +18,6 @@ static enum {
 
 uint16_t UserLockBits_Mask = 0;     /* Holds lock state of blocks */
 uint16_t FactoryLockBits_Mask = 0;  /* Holds lock state of blocks */
-uint8_t Uid[ISO15693_GENERIC_UID_SIZE];
-uint16_t ResponseByteCount;
 
 void TITagitstandardAppInit(void) {
     State = STATE_READY;
@@ -216,7 +214,7 @@ void TITagitstandardGetUid(ConfigurationUidType Uid) {
     TITagitstandardFlipUid(Uid);
 }
 
-void TITagitstandardSetUid(ConfigurationUidType Uid) {
+void TITagitstandardSetUid(ConfigurationUidType NewUid) {
     memcpy(Uid, NewUid, ActiveConfiguration.UidSize); // Update the local variable
     // Reverse UID before writing it
     TITagitstandardFlipUid(Uid);
