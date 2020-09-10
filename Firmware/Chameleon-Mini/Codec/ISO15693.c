@@ -638,7 +638,13 @@ void ISO15693CodecTask(void) {
 
         /* This is only reached when we've received a valid frame */
         if (AppReceivedByteCount != ISO15693_APP_NO_RESPONSE) {
-            LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, AppReceivedByteCount);
+            if (AppReceivedByteCount > CODEC_BUFFER_SIZE - ISO15693_CRC16_SIZE) { /* CRC would be written outside codec buffer */
+                CodecBuffer[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+                CodecBuffer[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_NOT_SUPP;
+                AppReceivedByteCount = 2;
+                LogEntry(LOG_INFO_GENERIC, "Too much data requested - See PR #274", 38);
+            }
+
             LEDHook(LED_CODEC_TX, LED_PULSE);
 
             ByteCount = AppReceivedByteCount;
@@ -652,6 +658,11 @@ void ISO15693CodecTask(void) {
                 CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OOK, SUBCARRIER_1);
                 StateRegister = LOADMOD_START_SINGLE;
             }
+
+            /* Calculate the CRC while modulation is already ongoing */
+            ISO15693AppendCRC(CodecBuffer, AppReceivedByteCount);
+            ByteCount += ISO15693_CRC16_SIZE; /* Increase this variable as it will be read by the codec during loadmodulation */
+            LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, AppReceivedByteCount + ISO15693_CRC16_SIZE);
 
         } else {
             /* Overwrite the PERBUF register, which was configured in ISO15693_EOC, with the new appropriate value.

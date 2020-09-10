@@ -137,7 +137,7 @@ uint16_t EM4233_Read_Single(uint8_t *FrameBuf, uint16_t FrameBytes) {
     if (BlockAddress >= EM4233_NUMBER_OF_BLCKS) { /* check if the reader is requesting a sector out of bound */
         if (FrameInfo.Addressed) { /* If the request is addressed */
             FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-            FrameBuf[ISO15693_RES_ADDR_PARAM] = 0x0F; /* Magic number from real tag */
+            FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
             ResponseByteCount += 2; /* Copied this behaviour from real tag, not specified in ISO documents */
         }
         return ResponseByteCount; /* If not addressed real tag does not respond */
@@ -178,7 +178,7 @@ uint16_t EM4233_Read_Multiple(uint8_t *FrameBuf, uint16_t FrameBytes) {
     if (BlockAddress >= EM4233_NUMBER_OF_BLCKS) { /* the reader is requesting a block out of bound */
         if (FrameInfo.Addressed) { /* If the request is addressed */
             FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-            FrameBuf[ISO15693_RES_ADDR_PARAM] = 0x0F; /* Magic number from real tag */
+            FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_GENERIC;
             ResponseByteCount += 2; /* Copied this behaviour from real tag, not specified in ISO documents */
         }
         return ResponseByteCount; /* If not addressed real tag does not respond */
@@ -667,12 +667,6 @@ uint16_t EM4233AppProcess(uint8_t *FrameBuf, uint16_t FrameBytes) {
         if (*FrameInfo.Command == ISO15693_CMD_RESET_TO_READY) {
             ResponseByteCount = EM4233_Reset_To_Ready(FrameBuf, FrameBytes);
         }
-    }
-
-    if (ResponseByteCount > 0) {
-        /* There is data to send. Append CRC */
-        ISO15693AppendCRC(FrameBuf, ResponseByteCount);
-        ResponseByteCount += ISO15693_CRC16_SIZE;
     }
 
     return ResponseByteCount;
