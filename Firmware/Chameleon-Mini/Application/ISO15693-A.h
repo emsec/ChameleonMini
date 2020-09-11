@@ -85,6 +85,10 @@ typedef struct {
     bool Addressed;
     bool Selected;
 } CurrentFrame;
+extern CurrentFrame FrameInfo;  /* Holds current frame information */
+extern uint8_t Uid[];
+extern uint8_t MyAFI;           /* Holds current tag's AFI, used during inventory */
+extern uint16_t ResponseByteCount;  /* Length of response, used when building response frames */
 
 void ISO15693AppendCRC(uint8_t *FrameBuf, uint16_t FrameBufSize);
 bool ISO15693CheckCRC(void *FrameBuf, uint16_t FrameBufSize);

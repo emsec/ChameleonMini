@@ -2,6 +2,11 @@
 #include "../Common.h"
 #include <util/crc16.h>
 
+CurrentFrame FrameInfo;
+uint8_t Uid[ISO15693_GENERIC_UID_SIZE];
+uint8_t MyAFI;
+uint16_t ResponseByteCount;
+
 //Refer to ISO/IEC 15693-3:2001 page 41
 uint16_t calculateCRC(void *FrameBuf, uint16_t FrameBufSize) {
     uint16_t reg = ISO15693_CRC16_PRESET;

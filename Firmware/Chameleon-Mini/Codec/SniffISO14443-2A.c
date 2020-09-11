@@ -56,6 +56,8 @@ static volatile uint16_t ReaderBitCount;
 static volatile uint16_t CardBitCount;
 static volatile uint16_t rawBitCount;
 
+enum RCTraffic TrafficSource;
+
 INLINE void CardSniffInit(void);
 INLINE void CardSniffDeinit(void);
 
@@ -351,16 +353,13 @@ ISR(ACA_AC0_vect) { // this interrupt either finds the SOC or gets triggered bef
     StateRegister = PICC_FRAME;
 }
 
-ISR(CODEC_TIMER_LOADMOD_CCB_VECT) { // pause found
-    isr_func_CODEC_TIMER_LOADMOD_CCB_VECT();
-}
-
+// Called once a pause is found
 // Decode the Card -> Reader signal
 // according to the pause and modulated period
 // if the half bit duration is modulated, then add 1 to buffer
 // if the half bit duration is not modulated, then add 0 to buffer
 //ISR(CODEC_TIMER_LOADMOD_CCB_VECT) // pause found
-void isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
+ISR_SHARED isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT(void) {
     uint8_t tmp = CODEC_TIMER_TIMESTAMPS.CNTL;
     CODEC_TIMER_TIMESTAMPS.CNT = 0;
 
