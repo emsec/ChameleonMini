@@ -15,6 +15,7 @@
 #include "../AntennaLevel.h"
 #include "../Battery.h"
 #include "../Codec/Codec.h"
+#include "../Application/Reader14443A.h"
 
 extern Reader14443Command Reader14443CurrentCommand;
 extern Sniff14443Command Sniff14443CurrentCommand;

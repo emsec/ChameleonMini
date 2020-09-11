@@ -6,8 +6,8 @@
 
 #define CRC_INIT 0x6363
 
-uint8_t ReaderSendBuffer[CODEC_BUFFER_SIZE];
-uint16_t ReaderSendBitCount;
+extern uint8_t ReaderSendBuffer[];
+extern uint16_t ReaderSendBitCount;
 
 void Reader14443AAppInit(void);
 void Reader14443AAppReset(void);

@@ -141,12 +141,6 @@ uint16_t Sl2s2002AppProcess(uint8_t *FrameBuf, uint16_t FrameBytes) {
                     break;
             }
 
-            if (ResponseByteCount > 0) {
-                /* There is data to be sent. Append CRC */
-                ISO15693AppendCRC(FrameBuf, ResponseByteCount);
-                ResponseByteCount += ISO15693_CRC16_SIZE;
-            }
-
             return ResponseByteCount;
 
         } else { // Invalid CRC
