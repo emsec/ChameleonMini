@@ -581,87 +581,87 @@ uint16_t EM4233AppProcess(uint8_t *FrameBuf, uint16_t FrameBytes) {
 
     if (State == STATE_READY || State == STATE_SELECTED) {
         switch (*FrameInfo.Command) {
-        case ISO15693_CMD_INVENTORY:
-            if (FrameInfo.ParamLen == 0)
-                return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
+            case ISO15693_CMD_INVENTORY:
+                if (FrameInfo.ParamLen == 0)
+                    return ISO15693_APP_NO_RESPONSE; /* malformed: not enough or too much data */
 
-            if (ISO15693AntiColl(FrameBuf, FrameBytes, &FrameInfo, Uid)) {
-                FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
-                MemoryReadBlock(&FrameBuf[ISO15693_RES_ADDR_PARAM], EM4233_MEM_DSFID_ADDRESS, 1);
-                ISO15693CopyUid(&FrameBuf[ISO15693_RES_ADDR_PARAM + 0x01], Uid);
-                ResponseByteCount += 10;
-            }
-            break;
+                if (ISO15693AntiColl(FrameBuf, FrameBytes, &FrameInfo, Uid)) {
+                    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_NO_ERROR;
+                    MemoryReadBlock(&FrameBuf[ISO15693_RES_ADDR_PARAM], EM4233_MEM_DSFID_ADDRESS, 1);
+                    ISO15693CopyUid(&FrameBuf[ISO15693_RES_ADDR_PARAM + 0x01], Uid);
+                    ResponseByteCount += 10;
+                }
+                break;
 
-        case ISO15693_CMD_STAY_QUIET:
-            if (FrameInfo.Addressed)
-                State = STATE_QUIET;
-            break;
+            case ISO15693_CMD_STAY_QUIET:
+                if (FrameInfo.Addressed)
+                    State = STATE_QUIET;
+                break;
 
-        case ISO15693_CMD_READ_SINGLE:
-            ResponseByteCount = EM4233_Read_Single(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_READ_SINGLE:
+                ResponseByteCount = EM4233_Read_Single(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_WRITE_SINGLE:
-            ResponseByteCount = EM4233_Write_Single(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_WRITE_SINGLE:
+                ResponseByteCount = EM4233_Write_Single(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_LOCK_BLOCK:
-            ResponseByteCount = EM4233_Lock_Block(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_LOCK_BLOCK:
+                ResponseByteCount = EM4233_Lock_Block(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_READ_MULTIPLE:
-            ResponseByteCount = EM4233_Read_Multiple(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_READ_MULTIPLE:
+                ResponseByteCount = EM4233_Read_Multiple(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_WRITE_AFI:
-            ResponseByteCount = EM4233_Write_AFI(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_WRITE_AFI:
+                ResponseByteCount = EM4233_Write_AFI(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_LOCK_AFI:
-            ResponseByteCount = EM4233_Lock_AFI(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_LOCK_AFI:
+                ResponseByteCount = EM4233_Lock_AFI(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_WRITE_DSFID:
-            ResponseByteCount = EM4233_Write_DSFID(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_WRITE_DSFID:
+                ResponseByteCount = EM4233_Write_DSFID(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_LOCK_DSFID:
-            ResponseByteCount = EM4233_Lock_DSFID(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_LOCK_DSFID:
+                ResponseByteCount = EM4233_Lock_DSFID(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_GET_SYS_INFO:
-            ResponseByteCount = EM4233_Get_SysInfo(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_GET_SYS_INFO:
+                ResponseByteCount = EM4233_Get_SysInfo(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_GET_BLOCK_SEC:
-            ResponseByteCount = EM4233_Get_Multi_Block_Sec_Stat(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_GET_BLOCK_SEC:
+                ResponseByteCount = EM4233_Get_Multi_Block_Sec_Stat(FrameBuf, FrameBytes);
+                break;
 
-        case ISO15693_CMD_RESET_TO_READY:
-            ResponseByteCount = EM4233_Reset_To_Ready(FrameBuf, FrameBytes);
-            break;
+            case ISO15693_CMD_RESET_TO_READY:
+                ResponseByteCount = EM4233_Reset_To_Ready(FrameBuf, FrameBytes);
+                break;
 
-        case EM4233_CMD_LOGIN:
-            ResponseByteCount = EM4233_Login(FrameBuf, FrameBytes);
-            break;
+            case EM4233_CMD_LOGIN:
+                ResponseByteCount = EM4233_Login(FrameBuf, FrameBytes);
+                break;
 
-        case EM4233_CMD_AUTH1:
-            ResponseByteCount = EM4233_Auth1(FrameBuf, FrameBytes);
-            break;
+            case EM4233_CMD_AUTH1:
+                ResponseByteCount = EM4233_Auth1(FrameBuf, FrameBytes);
+                break;
 
-        case EM4233_CMD_AUTH2:
-            ResponseByteCount = EM4233_Auth2(FrameBuf, FrameBytes);
-            break;
+            case EM4233_CMD_AUTH2:
+                ResponseByteCount = EM4233_Auth2(FrameBuf, FrameBytes);
+                break;
 
-        default:
-            if (FrameInfo.Addressed) {
-                FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
-                FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_NOT_SUPP;
-                ResponseByteCount = 2;
-            } /* EM4233 respond with error flag only to addressed commands */
-            break;
-}
+            default:
+                if (FrameInfo.Addressed) {
+                    FrameBuf[ISO15693_ADDR_FLAGS] = ISO15693_RES_FLAG_ERROR;
+                    FrameBuf[ISO15693_RES_ADDR_PARAM] = ISO15693_RES_ERR_NOT_SUPP;
+                    ResponseByteCount = 2;
+                } /* EM4233 respond with error flag only to addressed commands */
+                break;
+        }
 
     } else if (State == STATE_QUIET) {
         if (*FrameInfo.Command == ISO15693_CMD_RESET_TO_READY) {

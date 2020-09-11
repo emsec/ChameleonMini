@@ -19,7 +19,7 @@ typedef enum PinFunctionEnum {
     PIN_ON,					/* Pin is ON (3 V) */
     PIN_OFF,				/* Pin is OFF (0 V) */
 
-    						/* Have to be sequentially ordered */
+    /* Have to be sequentially ordered */
     PIN_1_TICK,				/* Pin is ON for 1 Tick, afterwards OFF */
     PIN_2_TICKS,			/* Pin is ON for 2 Ticks, afterwards OFF */
     PIN_3_TICKS,			/* Pin is ON for 3 Ticks, afterwards OFF */

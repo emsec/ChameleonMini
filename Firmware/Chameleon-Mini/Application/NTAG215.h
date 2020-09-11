@@ -20,7 +20,7 @@ void NTAG215AppInit(void);
 void NTAG215AppReset(void);
 void NTAG215AppTask(void);
 
-uint16_t NTAG215AppProcess(uint8_t* Buffer, uint16_t BitCount);
+uint16_t NTAG215AppProcess(uint8_t *Buffer, uint16_t BitCount);
 
 void NTAG215GetUid(ConfigurationUidType Uid);
 void NTAG215SetUid(ConfigurationUidType Uid);

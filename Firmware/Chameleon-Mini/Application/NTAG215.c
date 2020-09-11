@@ -97,8 +97,7 @@ static bool ReadAccessProtected;
 static uint8_t Access;
 
 
-void NTAG215AppInit(void)
-{
+void NTAG215AppInit(void) {
 
     State = STATE_IDLE;
     FromHalt = false;
@@ -112,20 +111,17 @@ void NTAG215AppInit(void)
     ReadAccessProtected = !!(Access & CONF_ACCESS_PROT);
 }
 
-void NTAG215AppReset(void)
-{
+void NTAG215AppReset(void) {
     State = STATE_IDLE;
 }
 
-void NTAG215AppTask(void)
-{
+void NTAG215AppTask(void) {
 
 }
 
 
 //Verify authentication
-static bool VerifyAuthentication(uint8_t PageAddress)
-{
+static bool VerifyAuthentication(uint8_t PageAddress) {
     /* If authenticated, no verification needed */
     if (Authenticated) {
         return true;
@@ -135,8 +131,7 @@ static bool VerifyAuthentication(uint8_t PageAddress)
 }
 
 //Writes a page
-static uint8_t AppWritePage(uint8_t PageAddress, uint8_t* const Buffer)
-{
+static uint8_t AppWritePage(uint8_t PageAddress, uint8_t *const Buffer) {
     if (!ActiveConfiguration.ReadOnly) {
         MemoryWriteBlock(Buffer, PageAddress * NTAG215_PAGE_SIZE, NTAG215_PAGE_SIZE);
     } else {
@@ -147,9 +142,8 @@ static uint8_t AppWritePage(uint8_t PageAddress, uint8_t* const Buffer)
 }
 
 //Basic sketch of the command handling stuff
-static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
-{
-     uint8_t Cmd = Buffer[0];
+static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
+    uint8_t Cmd = Buffer[0];
 
     /* Handle the compatibility write command */
     if (ArmedForCompatWrite) {
@@ -160,7 +154,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
         return ACK_FRAME_SIZE;
     }
 
-      switch (Cmd) {
+    switch (Cmd) {
         case CMD_GET_VERSION: {
             /* Provide hardcoded version response */ //VERSION RESPONSE FOR NTAG 215
             Buffer[0] = 0x00;
@@ -179,14 +173,13 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             uint8_t PageAddress = Buffer[1];
             uint8_t PageLimit;
             uint8_t Offset;
-            
+
             PageLimit = PageCount;
-            
+
             /* if protected and not autenticated, ensure the wraparound is at the first protected page */
             if (ReadAccessProtected && !Authenticated) {
                 PageLimit = FirstAuthenticatedPage;
-            } 
-            else {
+            } else {
                 PageLimit = PageCount;
             }
 
@@ -206,49 +199,49 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             ISO14443AAppendCRCA(Buffer, BYTES_PER_READ);
             return (BYTES_PER_READ + ISO14443A_CRCA_SIZE) * 8;
         }
-        
+
         case CMD_FAST_READ: {
-                uint8_t StartPageAddress = Buffer[1];
-                uint8_t EndPageAddress = Buffer[2];
-                /* Validation */
-                if ((StartPageAddress > EndPageAddress) || (StartPageAddress >= PageCount) || (EndPageAddress >= PageCount)) {
-                    Buffer[0] = NAK_INVALID_ARG;
-                    return NAK_FRAME_SIZE;
-                }
+            uint8_t StartPageAddress = Buffer[1];
+            uint8_t EndPageAddress = Buffer[2];
+            /* Validation */
+            if ((StartPageAddress > EndPageAddress) || (StartPageAddress >= PageCount) || (EndPageAddress >= PageCount)) {
+                Buffer[0] = NAK_INVALID_ARG;
+                return NAK_FRAME_SIZE;
+            }
 
-                /* Check authentication only if protection is read&write (instead of only write protection) */
-                if (ReadAccessProtected) {
-                    if (!VerifyAuthentication(StartPageAddress) || !VerifyAuthentication(EndPageAddress)) {
-                        Buffer[0] = NAK_NOT_AUTHED;
-                        return NAK_FRAME_SIZE;
-                    }
-                }
-
-                ByteCount = (EndPageAddress - StartPageAddress + 1) * NTAG215_PAGE_SIZE;
-                MemoryReadBlock(Buffer, StartPageAddress * NTAG215_PAGE_SIZE, ByteCount);
-                ISO14443AAppendCRCA(Buffer, ByteCount);
-                return (ByteCount + ISO14443A_CRCA_SIZE) * 8;
-        }
-
-        case CMD_PWD_AUTH: {
-                uint8_t Password[4];
-
-                /* For now I don't care about bruteforce protection, so: */
-                /* TODO: IMPLEMENT COUNTER AUTHLIM */
-
-                /* Read and compare the password */
-                MemoryReadBlock(Password, CONFIG_AREA_START_ADDRESS + CONF_PASSWORD_OFFSET, 4);
-                if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
+            /* Check authentication only if protection is read&write (instead of only write protection) */
+            if (ReadAccessProtected) {
+                if (!VerifyAuthentication(StartPageAddress) || !VerifyAuthentication(EndPageAddress)) {
                     Buffer[0] = NAK_NOT_AUTHED;
                     return NAK_FRAME_SIZE;
                 }
-                /* Authenticate the user */
-		        //RESET AUTHLIM COUNTER, CURRENTLY NOT IMPLEMENTED 
-                Authenticated = 1;
-                /* Send the PACK value back */
-                MemoryReadBlock(Buffer, CONFIG_AREA_START_ADDRESS + CONF_PACK_OFFSET, 2);
-                ISO14443AAppendCRCA(Buffer, 2);
-                return (2 + ISO14443A_CRCA_SIZE) * 8;
+            }
+
+            ByteCount = (EndPageAddress - StartPageAddress + 1) * NTAG215_PAGE_SIZE;
+            MemoryReadBlock(Buffer, StartPageAddress * NTAG215_PAGE_SIZE, ByteCount);
+            ISO14443AAppendCRCA(Buffer, ByteCount);
+            return (ByteCount + ISO14443A_CRCA_SIZE) * 8;
+        }
+
+        case CMD_PWD_AUTH: {
+            uint8_t Password[4];
+
+            /* For now I don't care about bruteforce protection, so: */
+            /* TODO: IMPLEMENT COUNTER AUTHLIM */
+
+            /* Read and compare the password */
+            MemoryReadBlock(Password, CONFIG_AREA_START_ADDRESS + CONF_PASSWORD_OFFSET, 4);
+            if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
+                Buffer[0] = NAK_NOT_AUTHED;
+                return NAK_FRAME_SIZE;
+            }
+            /* Authenticate the user */
+            //RESET AUTHLIM COUNTER, CURRENTLY NOT IMPLEMENTED
+            Authenticated = 1;
+            /* Send the PACK value back */
+            MemoryReadBlock(Buffer, CONFIG_AREA_START_ADDRESS + CONF_PACK_OFFSET, 2);
+            ISO14443AAppendCRCA(Buffer, 2);
+            return (2 + ISO14443A_CRCA_SIZE) * 8;
         }
 
         case CMD_WRITE: {
@@ -290,32 +283,32 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
 
 
         case CMD_READ_SIG: {
-                /* Hardcoded response */
-                memset(Buffer, 0xCA, SIGNATURE_LENGTH);
-                ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
-                return (SIGNATURE_LENGTH + ISO14443A_CRCA_SIZE) * 8;
+            /* Hardcoded response */
+            memset(Buffer, 0xCA, SIGNATURE_LENGTH);
+            ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
+            return (SIGNATURE_LENGTH + ISO14443A_CRCA_SIZE) * 8;
         }
-        
+
         //PART OF ISO STANDARD, NOT OF NTAG DATASHEET
         case CMD_HALT: {
             /* Halts the tag. According to the ISO14443, the second
             * byte is supposed to be 0. */
-                if (Buffer[1] == 0) {
-                    /* According to ISO14443, we must not send anything
-                    * in order to acknowledge the HALT command. */
-                    State = STATE_HALT;
-                    return ISO14443A_APP_NO_RESPONSE;
-                } else {
-                    Buffer[0] = NAK_INVALID_ARG;
-                    return NAK_FRAME_SIZE;
-                }
+            if (Buffer[1] == 0) {
+                /* According to ISO14443, we must not send anything
+                * in order to acknowledge the HALT command. */
+                State = STATE_HALT;
+                return ISO14443A_APP_NO_RESPONSE;
+            } else {
+                Buffer[0] = NAK_INVALID_ARG;
+                return NAK_FRAME_SIZE;
             }
-        
+        }
+
 
         default: {
-                break;
+            break;
         }
-    
+
     }
     /* Command not handled. Switch to idle. */
 
@@ -326,93 +319,92 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
 
 
 //FINITE STATE MACHINE STUFF, SHOULD BE THE VERY SIMILAR TO Mifare Ultralight
-uint16_t NTAG215AppProcess(uint8_t* Buffer, uint16_t BitCount)
-{
+uint16_t NTAG215AppProcess(uint8_t *Buffer, uint16_t BitCount) {
     uint8_t Cmd = Buffer[0];
     uint16_t ByteCount;
 
-    switch(State) {
-    case STATE_IDLE:
-    case STATE_HALT:
-        FromHalt = State == STATE_HALT;
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
-            /* We received a REQA or WUPA command, so wake up. */
-            State = STATE_READY1;
-            return BitCount;
-        }
-        break;
-
-    case STATE_READY1:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
-            State = FromHalt ? STATE_HALT : STATE_IDLE;
-            return ISO14443A_APP_NO_RESPONSE;
-        } else if (Cmd == ISO14443A_CMD_SELECT_CL1) {
-            /* Load UID CL1 and perform anticollision. Since
-            * MF Ultralight use a double-sized UID, the first byte
-            * of CL1 has to be the cascade-tag byte. */
-            uint8_t UidCL1[ISO14443A_CL_UID_SIZE] = { [0] = ISO14443A_UID0_CT };
-
-            MemoryReadBlock(&UidCL1[1], UID_CL1_ADDRESS, UID_CL1_SIZE);
-
-            if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE)) {
-                /* CL1 stage has ended successfully */
-                State = STATE_READY2;
+    switch (State) {
+        case STATE_IDLE:
+        case STATE_HALT:
+            FromHalt = State == STATE_HALT;
+            if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+                /* We received a REQA or WUPA command, so wake up. */
+                State = STATE_READY1;
+                return BitCount;
             }
+            break;
 
-            return BitCount;
-        } else {
-            /* Unknown command. Enter halt state */
-            State = STATE_IDLE;
-        }
-        break;
+        case STATE_READY1:
+            if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+                State = FromHalt ? STATE_HALT : STATE_IDLE;
+                return ISO14443A_APP_NO_RESPONSE;
+            } else if (Cmd == ISO14443A_CMD_SELECT_CL1) {
+                /* Load UID CL1 and perform anticollision. Since
+                * MF Ultralight use a double-sized UID, the first byte
+                * of CL1 has to be the cascade-tag byte. */
+                uint8_t UidCL1[ISO14443A_CL_UID_SIZE] = { [0] = ISO14443A_UID0_CT };
 
-    case STATE_READY2:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
-            State = FromHalt ? STATE_HALT : STATE_IDLE;
-            return ISO14443A_APP_NO_RESPONSE;
-        } else if (Cmd == ISO14443A_CMD_SELECT_CL2) {
-            /* Load UID CL2 and perform anticollision */
-            uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
+                MemoryReadBlock(&UidCL1[1], UID_CL1_ADDRESS, UID_CL1_SIZE);
 
-            MemoryReadBlock(UidCL2, UID_CL2_ADDRESS, UID_CL2_SIZE);
+                if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE)) {
+                    /* CL1 stage has ended successfully */
+                    State = STATE_READY2;
+                }
 
-            if (ISO14443ASelect(Buffer, &BitCount, UidCL2, SAK_CL2_VALUE)) {
-                /* CL2 stage has ended successfully. This means
-                * our complete UID has been sent to the reader. */
-                State = STATE_ACTIVE;
+                return BitCount;
+            } else {
+                /* Unknown command. Enter halt state */
+                State = STATE_IDLE;
             }
+            break;
 
-            return BitCount;
-        } else {
-            /* Unknown command. Enter halt state */
-            State = STATE_IDLE;
-        }
-        break;
+        case STATE_READY2:
+            if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+                State = FromHalt ? STATE_HALT : STATE_IDLE;
+                return ISO14443A_APP_NO_RESPONSE;
+            } else if (Cmd == ISO14443A_CMD_SELECT_CL2) {
+                /* Load UID CL2 and perform anticollision */
+                uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
 
-    //Only ACTIVE state, no AUTHENTICATED state, PWD_AUTH is handled in commands.
-    case STATE_ACTIVE:
-        /* Preserve incoming data length */
-        ByteCount = (BitCount + 7) >> 3;
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
-            State = FromHalt ? STATE_HALT : STATE_IDLE;
-            return ISO14443A_APP_NO_RESPONSE;
-        }
-        /* At the very least, there should be 3 bytes in the buffer. */
-        if (ByteCount < (1 + ISO14443A_CRCA_SIZE)) {
-            State = STATE_IDLE;
-            return ISO14443A_APP_NO_RESPONSE;
-        }
-        /* All commands here have CRCA appended; verify it right away */
-        ByteCount -= 2;
-        if (!ISO14443ACheckCRCA(Buffer, ByteCount)) {
-            Buffer[0] = NAK_CRC_ERROR;
-            return NAK_FRAME_SIZE;
-        }
-        return AppProcess(Buffer, ByteCount);
+                MemoryReadBlock(UidCL2, UID_CL2_ADDRESS, UID_CL2_SIZE);
 
-    default:
-        /* Unknown state? Should never happen. */
-        break;
+                if (ISO14443ASelect(Buffer, &BitCount, UidCL2, SAK_CL2_VALUE)) {
+                    /* CL2 stage has ended successfully. This means
+                    * our complete UID has been sent to the reader. */
+                    State = STATE_ACTIVE;
+                }
+
+                return BitCount;
+            } else {
+                /* Unknown command. Enter halt state */
+                State = STATE_IDLE;
+            }
+            break;
+
+        //Only ACTIVE state, no AUTHENTICATED state, PWD_AUTH is handled in commands.
+        case STATE_ACTIVE:
+            /* Preserve incoming data length */
+            ByteCount = (BitCount + 7) >> 3;
+            if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+                State = FromHalt ? STATE_HALT : STATE_IDLE;
+                return ISO14443A_APP_NO_RESPONSE;
+            }
+            /* At the very least, there should be 3 bytes in the buffer. */
+            if (ByteCount < (1 + ISO14443A_CRCA_SIZE)) {
+                State = STATE_IDLE;
+                return ISO14443A_APP_NO_RESPONSE;
+            }
+            /* All commands here have CRCA appended; verify it right away */
+            ByteCount -= 2;
+            if (!ISO14443ACheckCRCA(Buffer, ByteCount)) {
+                Buffer[0] = NAK_CRC_ERROR;
+                return NAK_FRAME_SIZE;
+            }
+            return AppProcess(Buffer, ByteCount);
+
+        default:
+            /* Unknown state? Should never happen. */
+            break;
     }
 
     /* No response has been sent, when we reach here */
@@ -420,15 +412,13 @@ uint16_t NTAG215AppProcess(uint8_t* Buffer, uint16_t BitCount)
 }
 
 //HELPER FUNCTIONS
-void NTAG215GetUid(ConfigurationUidType Uid)
-{
+void NTAG215GetUid(ConfigurationUidType Uid) {
     /* Read UID from memory */
     MemoryReadBlock(&Uid[0], UID_CL1_ADDRESS, UID_CL1_SIZE);
     MemoryReadBlock(&Uid[UID_CL1_SIZE], UID_CL2_ADDRESS, UID_CL2_SIZE);
 }
 
-void NTAG215SetUid(ConfigurationUidType Uid)
-{
+void NTAG215SetUid(ConfigurationUidType Uid) {
     /* Calculate check bytes and write everything into memory */
     uint8_t BCC1 = ISO14443A_UID0_CT ^ Uid[0] ^ Uid[1] ^ Uid[2];
     uint8_t BCC2 = Uid[3] ^ Uid[4] ^ Uid[5] ^ Uid[6];
