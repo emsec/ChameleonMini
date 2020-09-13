@@ -1,0 +1,52 @@
+name: Firmware Build (master Branch Push, Pre-release with Artifacts)
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Make a firmware build folder
+      run: mkdir FirmwareBuild
+    - name: Print Kernel Ver
+      run: uname -a
+    - name: Update APT
+      run: sudo apt-get update -yqq
+    - name: Install AVR GCC Suite
+      run: sudo apt-get install -yqq make autoconf build-essential ca-certificates pkg-config libreadline-dev gcc-avr binutils-avr gdb-avr avr-libc avrdude
+    - name: Make Firmware
+      run: make
+      working-directory: Firmware/Chameleon-Mini/
+    - name: Move hex file to FirmwareBuild
+      run: mv Chameleon*.hex $GITHUB_WORKSPACE/FirmwareBuild/
+      working-directory: Firmware/Chameleon-Mini/
+    - name: Move eep file to FirmwareBuild
+      run: mv Chameleon*.eep $GITHUB_WORKSPACE/FirmwareBuild/
+      working-directory: Firmware/Chameleon-Mini/
+    - name: Upload Build Artifact to Action
+      uses: actions/upload-artifact@v2.1.4
+      with:
+        name: "ChameleonBuild"
+        path: "FirmwareBuild/**"
+    - name: Create a Pre-release
+      uses: actions/create-release@v1.1.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: "${{ format('Build-{0}', github.sha) }}"
+        release_name: Firmware Build ${{ github.sha }}
+        body: Built at commit ${{ github.sha }} from ${{ github.actor }}
+        draft: false
+        prerelease: true
+    - name: Upload Pre-release Artifacts
+      uses: linuxgemini/github-upload-release-artifacts-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        created_tag: "${{ format('Build-{0}', github.sha) }}"
+        args: "FirmwareBuild/"
