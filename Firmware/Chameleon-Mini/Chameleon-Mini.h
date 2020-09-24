@@ -18,6 +18,7 @@
 #include "Random.h"
 #include "Button.h"
 #include "Log.h"
+#include "LiveLogTick.h"
 #include "AntennaLevel.h"
 #include "Settings.h"
 

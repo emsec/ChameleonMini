@@ -19,22 +19,19 @@ int main(void) {
         if (SystemTick100ms()) {
             LEDTick(); // this has to be the first function called here, since it is time-critical - the functions below may have non-negligible runtimes!
             PinTick();
-
             RandomTick();
             TerminalTick();
             ButtonTick();
-            LogTick();
             ApplicationTick();
+            LogTick();
             CommandLineTick();
             AntennaLevelTick();
-
             LEDHook(LED_POWERED, LED_ON);
         }
-
-        TerminalTask();
-        LogTask();
         ApplicationTask();
         CodecTask();
+        LogTask();
+        TerminalTask();
     }
 }
 
