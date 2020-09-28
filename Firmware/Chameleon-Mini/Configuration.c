@@ -19,6 +19,7 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
     { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,   .Text = "MF_ULTRALIGHT_EV1_80B" },
     { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,   .Text = "MF_ULTRALIGHT_EV1_164B" },
     {.Id = CONFIG_MF_ULTRALIGHT_C, .Text = "MF_ULTRALIGHT_C"},
+    { .Id = CONFIG_MF_ULTRALIGHT_NTAG_215,  .Text = "MF_ULTRALIGHT_NTAG_215" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_MINI_4B_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_MINI_4B, 	.Text = "MF_CLASSIC_MINI_4B" },
@@ -156,6 +157,22 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = MifareUltralightSetUid,
         .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
         .MemorySize = MIFARE_ULTRALIGHT_EV12_MEM_SIZE,
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO14443A
+    },
+    [CONFIG_MF_ULTRALIGHT_NTAG_215] = {
+        .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
+        .CodecTaskFunc = ISO14443ACodecTask,
+        .ApplicationInitFunc = MifareUltralightNTAG215AppInit,
+        .ApplicationResetFunc = MifareUltralightAppReset,
+        .ApplicationTaskFunc = MifareUltralightAppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
+        .ApplicationProcessFunc = MifareUltralightAppProcess,
+        .ApplicationGetUidFunc = MifareUltralightGetUid,
+        .ApplicationSetUidFunc = MifareUltralightSetUid,
+        .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
+        .MemorySize = MIFARE_ULTRALIGHT_NTAG_215_MEM_SIZE,
         .ReadOnly = false,
         .TagFamily = TAG_FAMILY_ISO14443A
     },

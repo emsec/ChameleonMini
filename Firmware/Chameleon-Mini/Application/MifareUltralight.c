@@ -21,12 +21,13 @@
 #define ACK_FRAME_SIZE          4 /* Bits */
 #define NAK_INVALID_ARG         0x00
 #define NAK_CRC_ERROR           0x01
-#define NAK_CTR_ERROR           0x04
+#define NAK_CTR_ERROR           0x04 /* counter overflow for EV1 */
+#define NAK_NOT_AUTHED          0x04 /* invalid authentication & counter overflow for NATG */
 #define NAK_EEPROM_ERROR        0x05
 #define NAK_OTHER_ERROR         0x06
 /* NOTE: the spec is not crystal clear which error is returned */
-#define NAK_AUTH_REQUIRED       NAK_OTHER_ERROR
-#define NAK_AUTH_FAILED         NAK_OTHER_ERROR
+#define NAK_AUTH_REQUIRED       NAK_OTHER_ERROR /* probably is NAK_NOT_AUTHED 0x04 */
+#define NAK_AUTH_FAILED         NAK_OTHER_ERROR /* probably is NAK_NOT_AUTHED 0x04 */
 #define NAK_FRAME_SIZE          4
 
 /* ISO commands */
@@ -93,6 +94,7 @@ static enum {
     UL_EV0,
     UL_C,
     UL_EV1,
+    UL_NTAG_215
 } Flavor;
 
 static enum {
@@ -190,11 +192,24 @@ void MifareUltralightAppInit(void) {
 }
 
 static void AppInitEV1Common(void) {
-    uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
+    uint16_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
     uint8_t Access;
 
     /* Set up the emulation flavor */
     Flavor = UL_EV1;
+    /* Fetch some of the configuration into RAM */
+    MemoryReadBlock(&FirstAuthenticatedPage, ConfigAreaAddress + CONF_AUTH0_OFFSET, 1);
+    MemoryReadBlock(&Access, ConfigAreaAddress + CONF_ACCESS_OFFSET, 1);
+    ReadAccessProtected = !!(Access & CONF_ACCESS_PROT);
+    AppInitCommon();
+}
+
+static void AppInitNTAG215Common(void) {
+    uint16_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
+    uint8_t Access;
+
+    /* Set up the emulation flavor */
+    Flavor = UL_NTAG_215;
     /* Fetch some of the configuration into RAM */
     MemoryReadBlock(&FirstAuthenticatedPage, ConfigAreaAddress + CONF_AUTH0_OFFSET, 1);
     MemoryReadBlock(&Access, ConfigAreaAddress + CONF_ACCESS_OFFSET, 1);
@@ -210,6 +225,11 @@ void MifareUltralightEV11AppInit(void) {
 void MifareUltralightEV12AppInit(void) {
     PageCount = MIFARE_ULTRALIGHT_EV12_PAGES;
     AppInitEV1Common();
+}
+
+void MifareUltralightNTAG215AppInit(void) {
+    PageCount = MIFARE_ULTRALIGHT_NTAG_215_PAGES;
+    AppInitNTAG215Common();
 }
 
 void MifareUltralightAppReset(void) {
@@ -414,14 +434,26 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
             case CMD_GET_VERSION: {
                 /* Provide hardcoded version response */
-                Buffer[0] = 0x00;
-                Buffer[1] = 0x04;
-                Buffer[2] = 0x03;
-                Buffer[3] = 0x01; /**/
-                Buffer[4] = 0x01;
-                Buffer[5] = 0x00;
-                Buffer[6] = PageCount == MIFARE_ULTRALIGHT_EV11_PAGES ? 0x0B : 0x0E;
-                Buffer[7] = 0x03;
+                if (Flavor == UL_EV1) { //VERSION RESPONSE FOR EV1
+                    Buffer[0] = 0x00;
+                    Buffer[1] = 0x04;
+                    Buffer[2] = 0x03;
+                    Buffer[3] = 0x01; /**/
+                    Buffer[4] = 0x01;
+                    Buffer[5] = 0x00;
+                    Buffer[6] = PageCount == MIFARE_ULTRALIGHT_EV11_PAGES ? 0x0B : 0x0E;
+                    Buffer[7] = 0x03;
+                } else { //VERSION RESPONSE FOR NTAG 215
+                    /* Provide hardcoded version response */ 
+                    Buffer[0] = 0x00;
+                    Buffer[1] = 0x04;
+                    Buffer[2] = 0x04;
+                    Buffer[3] = 0x02;
+                    Buffer[4] = 0x01;
+                    Buffer[5] = 0x00;
+                    Buffer[6] = 0x11;
+                    Buffer[7] = 0x03;
+                }
                 ISO14443AAppendCRCA(Buffer, VERSION_INFO_LENGTH);
                 return (VERSION_INFO_LENGTH + ISO14443A_CRCA_SIZE) * 8;
             }
@@ -449,7 +481,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             }
 
             case CMD_PWD_AUTH: {
-                uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
+                uint16_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
                 uint8_t Password[4];
 
                 /* Verify value and increment authentication attempt counter */
@@ -522,7 +554,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 return (1 + ISO14443A_CRCA_SIZE) * 8;
 
             case CMD_VCSL: {
-                uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
+                uint16_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
                 /* Input is ignored completely */
                 /* Read out the value */
                 MemoryReadBlock(Buffer, ConfigAreaAddress + CONF_VCTID_OFFSET, 1);
