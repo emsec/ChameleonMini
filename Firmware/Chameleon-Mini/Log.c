@@ -1,22 +1,29 @@
 #include "Log.h"
+#include "LiveLogTick.h"
 #include "Settings.h"
 #include "Terminal/Terminal.h"
 #include "System.h"
 #include "Map.h"
 #include "LEDHook.h"
 
-static uint8_t LogMem[LOG_SIZE];
-static uint8_t *LogMemPtr;
-static uint16_t LogMemLeft;
+uint8_t LogMem[LOG_SIZE];
+uint8_t *LogMemPtr;
+uint16_t LogMemLeft;
+
 static uint16_t LogFRAMAddr = FRAM_LOG_START_ADDR;
 static uint8_t EEMEM LogFRAMAddrValid = false;
 static bool EnableLogSRAMtoFRAM = false;
 LogFuncType CurrentLogFunc;
 
+LogBlockListNode *LogBlockListBegin = NULL;
+LogBlockListNode *LogBlockListEnd = NULL;
+uint8_t LogBlockListElementCount = 0;
+uint8_t LiveLogModePostTickCount = 0;
+
 static const MapEntryType PROGMEM LogModeMap[] = {
     { .Id = LOG_MODE_OFF, 		.Text = "OFF" 		},
     { .Id = LOG_MODE_MEMORY, 	.Text = "MEMORY" 	},
-    { .Id = LOG_MODE_LIVE, 	.Text = "LIVE" 	}
+    { .Id = LOG_MODE_LIVE, 	    .Text = "LIVE" 	    }
 };
 
 static void LogFuncOff(LogEntryEnum Entry, const void *Data, uint8_t Length) {
@@ -50,12 +57,12 @@ static void LogFuncMemory(LogEntryEnum Entry, const void *Data, uint8_t Length) 
 
 static void LogFuncLive(LogEntryEnum Entry, const void *Data, uint8_t Length) {
     uint16_t SysTick = SystemGetSysTick();
-
-    TerminalSendByte((uint8_t) Entry);
-    TerminalSendByte((uint8_t) Length);
-    TerminalSendByte((uint8_t)(SysTick >> 8));
-    TerminalSendByte((uint8_t)(SysTick >> 0));
-    TerminalSendBlock(Data, Length);
+    //TerminalSendByte((uint8_t) Entry);
+    //TerminalSendByte((uint8_t) Length);
+    //TerminalSendByte((uint8_t)(SysTick >> 8));
+    //TerminalSendByte((uint8_t)(SysTick >> 0));
+    //TerminalSendBlock(Data, Length);
+    AtomicAppendLogBlock(Entry, SysTick, Data, Length);
 }
 
 void LogInit(void) {
@@ -79,6 +86,9 @@ void LogInit(void) {
 }
 
 void LogTick(void) {
+    if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE &&  
+        (++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0)
+        AtomicLiveLogTick();
     if (EnableLogSRAMtoFRAM)
         LogSRAMToFRAM();
 }

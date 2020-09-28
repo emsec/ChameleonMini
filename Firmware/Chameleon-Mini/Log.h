@@ -8,6 +8,10 @@
 #define FRAM_LOG_START_ADDR	0x4002 // directly after the address
 #define FRAM_LOG_SIZE		0x3FFE // the whole second half (minus the 2 Bytes of Address)
 
+extern uint8_t LogMem[LOG_SIZE];
+extern uint8_t *LogMemPtr;
+extern uint16_t LogMemLeft;
+
 /** Enum for log entry type. \note Every entry type has a specific integer value, which can be found in the source code. */
 typedef enum {
     /* Generic */
