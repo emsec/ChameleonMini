@@ -1,0 +1,36 @@
+name: Firmware Build (Pull Request, Firmware Modified, Artifact in build job)
+
+on:
+  pull_request:
+    paths:
+      - "Firmware/**"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Make a firmware build folder
+      run: mkdir FirmwareBuild
+    - name: Print Kernel Ver
+      run: uname -a
+    - name: Update APT
+      run: sudo apt-get update -yqq
+    - name: Install AVR GCC Suite
+      run: sudo apt-get install -yqq make autoconf build-essential ca-certificates pkg-config libreadline-dev gcc-avr binutils-avr gdb-avr avr-libc avrdude
+    - name: Make Firmware
+      run: make
+      working-directory: Firmware/Chameleon-Mini/
+    - name: Move hex file to FirmwareBuild
+      run: mv Chameleon*.hex $GITHUB_WORKSPACE/FirmwareBuild/
+      working-directory: Firmware/Chameleon-Mini/
+    - name: Move eep file to FirmwareBuild
+      run: mv Chameleon*.eep $GITHUB_WORKSPACE/FirmwareBuild/
+      working-directory: Firmware/Chameleon-Mini/
+    - name: Upload Build Artifact to Action
+      uses: actions/upload-artifact@v2.1.4
+      with:
+        name: "ChameleonBuild"
+        path: "FirmwareBuild/**"
