@@ -86,8 +86,8 @@ void LogInit(void) {
 }
 
 void LogTick(void) {
-    if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE &&  
-        (++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0)
+    if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE &&
+            (++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0)
         AtomicLiveLogTick();
     if (EnableLogSRAMtoFRAM)
         LogSRAMToFRAM();

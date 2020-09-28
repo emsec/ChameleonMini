@@ -73,7 +73,7 @@
 #define FIXED_NUM_CONFIGURATIONS         1
 //        #define CONTROL_ONLY_DEVICE
 #ifndef MAX_ENDPOINT_INDEX
-    #define MAX_ENDPOINT_INDEX               4 // 5
+#define MAX_ENDPOINT_INDEX               4 // 5
 #endif
 //        #define NO_DEVICE_REMOTE_WAKEUP
 //        #define NO_DEVICE_SELF_POWER
