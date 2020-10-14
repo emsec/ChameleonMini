@@ -253,6 +253,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .SetFunc 	= NO_FUNCTION,
         .GetFunc 	= CommandGetSysTick
     },
+#ifdef CONFIG_ISO14443A_READER_SUPPORT
     {
         .Command	= COMMAND_SEND_RAW,
         .ExecFunc 	= NO_FUNCTION,
@@ -295,6 +296,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .SetFunc 	= NO_FUNCTION,
         .GetFunc 	= NO_FUNCTION
     },
+#endif
     {
         .Command	= COMMAND_TIMEOUT,
         .ExecFunc 	= NO_FUNCTION,
@@ -323,6 +325,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .SetFunc    = CommandSetField,
         .GetFunc    = CommandGetField
     },
+#ifdef CONFIG_ISO14443A_READER_SUPPORT
     {
         .Command        = COMMAND_CLONE,
         .ExecFunc       = CommandExecClone,
@@ -330,6 +333,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .SetFunc        = NO_FUNCTION,
         .GetFunc        = NO_FUNCTION
     },
+#endif
     {
         /* This has to be last element */
         .Command    = COMMAND_LIST_END,
