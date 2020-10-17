@@ -1,5 +1,7 @@
 /* CryptoTests.c */
 
+#ifdef ENABLE_CRYPTO_TESTS
+
 #include "CryptoTests.h"
 
 bool CryptoTDEATestCase1(char *OutParam, uint16_t MaxOutputLength) {
@@ -134,3 +136,5 @@ bool CryptoAESTestCase2(char *OutParam, uint16_t MaxOutputLength) {
      }
      return true;
 }
+
+#endif /* ENABLE_CRYPTO_TESTS */
