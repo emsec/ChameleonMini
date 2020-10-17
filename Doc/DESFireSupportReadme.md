@@ -27,10 +27,34 @@ Support for DESFire tag emulation on the Chameleon Mini is complicated for at le
 The firmware has been tested and known to work with the KAOS manufactured RevG Chameleon devices. 
 Unfortunately, formative RevE device support is not available due to the memory requirements to 
 run this firmware emulation. The device responds well using the ``libnfc``-based utility 
-``nfc-anticol``. More testing needs to be done to fine tune support for interfacing the Chameleon 
+``nfc-anticol``:
+```bash
+NFC reader: SCM Micro / SCL3711-NFC&RW opened
+
+Sent bits:     26 (7 bits)
+Received bits: 03  44  
+Sent bits:     93  20  
+Received bits: 88  23  77  00  dc  
+Sent bits:     93  70  88  23  77  00  dc  4b  b3  
+Received bits: 04  
+Sent bits:     95  20  
+Received bits: 0b  99  bf  98  b5  
+Sent bits:     95  70  0b  99  bf  98  b5  2f  24  
+Received bits: 20  
+Sent bits:     e0  50  bc  a5  
+Received bits: 75  77  81  02  80  
+Sent bits:     50  00  57  cd  
+
+Found tag with
+ UID: 2377000b99bf98
+ATQA: 4403
+ SAK: 20
+ ATS: 75  77  81  02  80
+```
+More testing needs to be done to fine tune support for interfacing the Chameleon 
 with live, in-the-wild DESFire tag readers in practice. It has been verified to work with the 
 Proxmark3 NFC devices: 
-```
+```bash
 [usb] pm3 --> hf 14a read
 [+]  UID: 4A D9 BA 11 B9 97 57
 [+] ATQA: 44 03
