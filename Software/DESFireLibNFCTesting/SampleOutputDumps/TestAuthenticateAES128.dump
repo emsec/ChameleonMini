@@ -1,0 +1,26 @@
+>>> TestAESEncryptionRoutines [non-DESFire command]:
+    -- : PT = 00 11 22 33 44 55 66 77 | 88 99 aa bb cc dd ee ff 
+    -- : CT = c8 a3 31 ff 8e dd 3d b1 | 75 e1 54 5d be fb 76 0b 
+    -- : CT = c8 a3 31 ff 8e dd 3d b1 | 75 e1 54 5d be fb 76 0b 
+    -- : PT = 00 11 22 33 44 55 66 77 | 88 99 aa bb cc dd ee ff 
+    -- CT matches.
+    -- Decrypted PT from CT matches.
+
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> GetApplicationIds command:
+    -> 90 6a 00 00 00 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- 90 b0 af a1 81 cd 4d e0 | 71 08 87 98 13 76 79 a6 | 91 af 
+    -- RNDA = 44 73 6e 84 3a 67 2a 0b 
+    -- RNDB = 0f 8b 8c e2 ab a7 e1 db 
+    -- CHAL = 44 73 6e 84 3a 67 2a 0b | db 0f 8b 8c e2 ab a7 e1 
+    -> 90 af 00 00 10 a2 b3 ac | ee db 24 1c 8f a1 c8 d1 | 3d c6 53 d3 4d 00 
+    <- 2c 0e 98 da 53 ab c4 74 | 38 d2 14 56 b3 d8 60 a0 | 91 00 
+       ... AUTH OK! :)
+

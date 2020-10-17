@@ -1,0 +1,40 @@
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- 1f 97 25 a3 ee 58 29 04 | f1 b9 d3 da fa 61 a9 2d | 91 af 
+    -- RNDA = df 08 08 09 5b 23 86 64 
+    -- RNDB = 5a c6 93 65 5e 5c 62 40 
+    -- CHAL = df 08 08 09 5b 23 86 64 | 40 5a c6 93 65 5e 5c 62 
+    -> 90 af 00 00 10 ca 3a df | 84 8e 24 5d 8e 1a 3d 61 | 3f 81 25 2b 62 00 
+    <- ca f1 0f 36 8f a5 34 31 | 87 b5 fc dd 2c 7d 1a b7 | 91 00 
+       ... AUTH OK! :)
+
+>>> ChangeKey command:
+    -> 90 c4 00 00 11 00 00 00 | 00 00 00 00 00 00 00 00 | 00 00 00 00 00 00 00 
+    <- 91 00 
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- ea 32 f1 97 06 1d d8 99 | ed 6b bc ca 71 d6 d5 13 | 91 af 
+    -- RNDA = f6 22 c3 ea 73 14 ae 01 
+    -- RNDB = 0d d7 4d 8f cf c8 56 4b 
+    -- CHAL = f6 22 c3 ea 73 14 ae 01 | 4b 0d d7 4d 8f cf c8 56 
+    -> 90 af 00 00 10 3f 4b 03 | 28 cc 22 9b cc 8a 5e 32 | 9e b9 44 4a 60 00 
+    <- 4d 5f da 4e 47 7a 58 a2 | 6a 6f b3 69 2d f0 8b ea | 91 00 
+       ... AUTH OK! :)
+
+>>> GetKeySettings command:
+    -> 90 45 00 00 00 00 
+    <- 0f 03 91 00 
+>>> ChangeKeySettings command:
+    -> 90 54 00 00 01 0f 00 
+    <- 91 00 
+>>> GetKeyVersion command:
+    -> 90 64 00 00 01 00 00 
+    <- 02 91 00 

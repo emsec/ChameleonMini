@@ -1,0 +1,34 @@
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- 80 0c 5f 5e e9 2f 35 48 | a8 0d 8f 43 b4 55 c9 0e | 91 af 
+    -- RNDA = f7 1f f5 f7 a1 61 ef 78 
+    -- RNDB = 0f a9 d4 69 b3 0c 27 28 
+    -- CHAL = f7 1f f5 f7 a1 61 ef 78 | 28 0f a9 d4 69 b3 0c 27 
+    -> 90 af 00 00 10 3e 8d 0f | da 96 23 6d 0b a8 f2 a5 | c3 6d 75 98 ca 00 
+    <- 6a c2 de 15 64 a2 62 91 | 2e 4c 7b a5 66 e4 84 94 | 91 00 
+       ... AUTH OK! :)
+
+>>> GetVersion command:
+    -> 90 60 00 00 00 00 
+    <- 04 01 01 00 01 18 05 91 | af 
+    -> 90 af 00 00 00 00 
+    <- 04 01 01 00 01 18 05 91 | af 
+    -> 90 af 00 00 00 00 
+    <- 3f 0f 20 82 5e eb 16 ff | ff ff ff ff ff ff 91 00 
+>>> FormatPICC command:
+    -> 90 fc 00 00 00 00 
+    <- 91 00 
+>>> GetCardUID command:
+    -> 90 51 00 00 00 00 
+    <- 3f 0f 20 82 5e eb 16 91 | 00 
+>>> SetConfiguration command:
+    -> 90 5c 00 00 00 00 
+    <- 91 1c 
+    -- !! TODO: NOT IMPLEMENTED !!
+>>> FreeMemory command:
+    -> 90 6e 00 00 00 00 
+    <- 60 00 91 0c 
