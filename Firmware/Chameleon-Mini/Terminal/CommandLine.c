@@ -330,6 +330,9 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .SetFunc        = NO_FUNCTION,
         .GetFunc        = NO_FUNCTION
     },
+    #ifdef ENABLE_RUNTESTS_TERMINAL_COMMAND
+    #include "../Tests/ChameleonTerminalInclude.c"
+    #endif
     {
         /* This has to be last element */
         .Command    = COMMAND_LIST_END,

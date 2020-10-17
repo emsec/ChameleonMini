@@ -194,6 +194,10 @@ CommandStatusIdType CommandGetField(char *OutMessage);
 #define COMMAND_CLONE  "CLONE"
 CommandStatusIdType CommandExecClone(char *OutMessage);
 
+#ifdef ENABLE_RUNTESTS_TERMINAL_COMMAND
+    #include "../Tests/ChameleonTerminal.h"
+#endif
+
 #define COMMAND_LIST_END    ""
 /* Defines the end of command list. This is no actual command */
 

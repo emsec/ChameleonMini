@@ -8,7 +8,7 @@ SHELL = /bin/sh
 SETTINGS    += -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
 #SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
-SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
+#SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
 #SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT
 SETTINGS	+= -DCONFIG_ISO14443A_SNIFF_SUPPORT
@@ -17,7 +17,7 @@ SETTINGS	+= -DCONFIG_ISO14443A_READER_SUPPORT
 #SETTINGS	+= -DCONFIG_VICINITY_SUPPORT
 #SETTINGS	+= -DCONFIG_SL2S2002_SUPPORT
 #SETTINGS	+= -DCONFIG_TITAGITSTANDARD_SUPPORT
-SETTINGS	+= -DCONFIG_ISO15693_SNIFF_SUPPORT
+#SETTINGS	+= -DCONFIG_ISO15693_SNIFF_SUPPORT
 #SETTINGS	+= -DCONFIG_EM4233_SUPPORT
 
 #Support magic mode on mifare classic configuration
@@ -77,6 +77,13 @@ SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
 #Use EEPROM to store settings
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
+#Enable tests for DES/2KTDEA/3DES/AES128 crypto schemes:
+#SETTINGS  += -DENABLE_CRYPTO_TESTS
+
+#Enable a command to run any tests added by developers, e.g., the 
+#crypto scheme tests that can be enabled above:
+#SETTINGS  += -DENABLE_RUNTESTS_TERMINAL_COMMAND
+
 #Memory definitions and objcopy flags to include sections in binaries
 #FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
 #FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
@@ -103,8 +110,11 @@ OPTIMIZATION = s
 SRC         += $(TARGET).c LUFADescriptors.c System.c ISRSharing.S Configuration.c Random.c Common.c Memory.c MemoryAsm.S Button.c Log.c Settings.c LED.c Pin.c Map.c AntennaLevel.c
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S
-SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c Application/CryptoTDEA.S
-SRC			+= Application/NTAG215.c
+SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c \
+			Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c \
+			Application/CryptoTDEA-HWAccelerated.S Application/CryptoTDEA.c Application/CryptoAES128.c \
+			Tests/CryptoTests.c Tests/ChameleonTerminal.c
+SRC		  += Application/NTAG215.c
 SRC         += Codec/ISO15693.c
 SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/ISO15693-A.c Application/EM4233.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
@@ -115,7 +125,8 @@ CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR)
 			   -std=gnu99 -Werror=implicit-function-declaration \
 			   -fno-inline-small-functions -fshort-enums -fpack-struct \
                   -ffunction-sections -Wl,--gc-sections --data-sections -ffunction-sections \
-                  -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop
+                  -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
+			   -fno-aggressive-loop-optimizations
 LD_FLAGS     = $(CC_FLAGS) -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES =
