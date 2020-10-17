@@ -23,6 +23,10 @@
 #define INLINE \
     static inline __attribute__((always_inline))
 
+#ifndef STRINGIFY
+#define STRINGIFY(x) #x
+#endif
+
 #define ARRAY_COUNT(x) \
     (sizeof(x) / sizeof(x[0]))
 

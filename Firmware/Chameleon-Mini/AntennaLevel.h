@@ -22,6 +22,11 @@
 #define ANTENNA_LEVEL_NUMERATOR	((uint32_t) (ANTENNA_LEVEL_MILLIVOLT * ANTENNA_LEVEL_FACTOR * ANTENNA_LEVEL_SCALE + .5))
 #define ANTENNA_LEVEL_DENOMINATOR (ANTENNA_LEVEL_SCALE)
 
+#define ANTENNA_LEVEL_LOG_RDRDETECT_INTERVAL     (15)
+extern uint8_t AntennaLevelLogReaderDetectCount;
+
+#define FIELD_MIN_RSSI 500
+
 static inline
 void AntennaLevelInit(void) {
     ADCA.CTRLA = ADC_ENABLE_bm;

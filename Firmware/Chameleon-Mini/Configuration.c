@@ -5,11 +5,13 @@
  *      Author: skuser
  */
 
+#include <avr/pgmspace.h>
+
 #include "Configuration.h"
 #include "Settings.h"
-#include <avr/pgmspace.h>
 #include "Map.h"
 #include "AntennaLevel.h"
+#include "LEDHook.h"
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
      #include "Application/MifareDESFire.h"
@@ -441,10 +443,21 @@ void ConfigurationSetById(ConfigurationEnum Configuration) {
 
     CodecInit();
     ApplicationInit();
+
+    /* Notify LED. blink according to current setting */
+    LEDHook(LED_SETTING_CHANGE, LED_BLINK + Configuration);
 }
 
 void ConfigurationGetByName(char *Configuration, uint16_t BufferSize) {
     MapIdToText(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), GlobalSettings.ActiveSettingPtr->Configuration, Configuration, BufferSize);
+}
+
+MapIdType ConfigurationCheckByName(const char *Configuration) {
+    MapIdType Id; 
+    if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
+        return Id; 
+    }   
+    return 0xff;
 }
 
 bool ConfigurationSetByName(const char *Configuration) {

@@ -56,7 +56,6 @@ INLINE void SettingUpdate(const void *addr, uint16_t size) {
         default:
             eeprom_update_block((uint8_t *)addr, (uint8_t *)EEAddr, size);
     }
-
 #endif
 }
 

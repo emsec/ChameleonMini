@@ -30,6 +30,7 @@ typedef enum {
     LOG_INFO_CODEC_SNI_READER_DATA_W_PARITY      = 0x45, //< Sniffing codec receive data from reader
     LOG_INFO_CODEC_SNI_CARD_DATA                 = 0x46, //< Sniffing codec receive data from card
     LOG_INFO_CODEC_SNI_CARD_DATA_W_PARITY        = 0x47, //< Sniffing codec receive data from card
+    LOG_INFO_CODEC_READER_FIELD_DETECTED         = 0x48, ///< Add logging of the LEDHook case for FIELD_DETECTED
 
     /* App */
     LOG_INFO_APP_CMD_READ		              = 0x80, ///< Application processed read command.

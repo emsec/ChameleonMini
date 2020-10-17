@@ -1,9 +1,12 @@
-#include "Random.h"
-
 #include <stdlib.h>
 
-void RandomInit(void) {
+#include "Random.h"
+#include "System.h"
 
+void RandomInit(void) {
+    uint32_t randomSeed = (uint32_t) ((uint32_t) (SystemGetSysTick() + 768) | 
+                                      ((uint32_t) (SystemGetSysTick() % 512) << 20));
+    srand(randomSeed);
 }
 
 uint8_t RandomGetByte(void) {

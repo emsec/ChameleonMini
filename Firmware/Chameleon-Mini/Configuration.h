@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "Map.h"
+
 #define CONFIGURATION_NAME_LENGTH_MAX   32
 #define CONFIGURATION_UID_SIZE_MAX      16
 
@@ -167,6 +169,7 @@ extern ConfigurationType ActiveConfiguration;
 
 void ConfigurationInit(void);
 void ConfigurationSetById(ConfigurationEnum Configuration);
+MapIdType ConfigurationCheckByName(const char *Configuration);
 void ConfigurationGetByName(char *Configuration, uint16_t BufferSize);
 bool ConfigurationSetByName(const char *Configuration);
 void ConfigurationGetList(char *ConfigurationList, uint16_t BufferSize);
