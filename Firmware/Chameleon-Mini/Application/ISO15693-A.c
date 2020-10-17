@@ -1,3 +1,5 @@
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+
 #include "ISO15693-A.h"
 #include "../Common.h"
 #include <util/crc16.h>
@@ -158,3 +160,5 @@ bool ISO15693AntiColl(uint8_t *FrameBuf, uint16_t FrameBytes, CurrentFrame *Fram
 
     return true;
 }
+
+#endif /* CONFIG_ISO15693_SNIFF_SUPPORT */

@@ -5,6 +5,8 @@
  *      Author: skuser
  */
 
+#ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
+
 #include "MifareUltralight.h"
 #include "ISO14443-3A.h"
 #include "../Codec/ISO14443-2A.h"
@@ -673,3 +675,4 @@ void MifareUltralightSetUid(ConfigurationUidType Uid) {
     MemoryWriteBlock(&BCC2, UID_BCC2_ADDRESS, ISO14443A_CL_BCC_SIZE);
 }
 
+#endif /* CONFIG_MF_ULTRALIGHT_SUPPORT */

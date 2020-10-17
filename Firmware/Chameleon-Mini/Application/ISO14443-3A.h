@@ -36,6 +36,7 @@
 
 #define ISO14443A_ATQA_FRAME_SIZE   (2 * 8) /* Bit */
 #define ISO14443A_SAK_FRAME_SIZE    (3 * 8) /* Bit */
+#define ISO14443A_HLTA_FRAME_SIZE   (2 * 8) /* Bit */
 
 #define ISO14443A_UID0_RANDOM       0x08
 #define ISO14443A_UID0_CT           0x88
