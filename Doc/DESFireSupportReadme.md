@@ -131,8 +131,6 @@ using ``libfreefare``.
 
 * Check to figure out where possibly encrypted transfers (AES CMAC) come into play after the initial
   authentication procedure?
-* See note on [CBC ciphering for AES/3DES](https://stackoverflow.com/q/20943305/10661959). Note that
-  currently the AES is in ECB mode (per the Arduino crypto libs).
 * Need to handle encrypted transfer modes invoked after authenticate (term: SAM?)?
 * Need to replace the DES/3DES encryption library for something faster?
 * When setting the key data via a set command, need to initialize the key addresses, update the
@@ -284,7 +282,7 @@ SETTINGS  += -DDESFIRE_RANDOMIZE_UIDS_PREAUTH
 SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_APPS=8
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_KEYS=6
-#SETTINGS   += -DDESFIRE_CUSTOM_MAX_FILES=6
+#SETTINGS += -DDESFIRE_CUSTOM_MAX_FILES=6
 #SETTINGS += -DDESFIRE_USE_FACTORY_SIZES
 #SETTINGS += -DDESFIRE_MAXIMIZE_SIZES_FOR_STORAGE
 
@@ -292,12 +290,6 @@ SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
 #Chameleon Mini logs to much by logging everything:
 SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
 SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
-
-#If we are planning on logging mostly to a live debugging console at runtime,
-#there is *a lot* of data space to be saved by minimizing the LogMem
-#buffer size. Define the following to optimize this space in the event of
-#live logging sessions:
-SETTINGS  += -DDESFIRE_OPTIMIZE_LIVE_LOGGING_SPACE
 
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
