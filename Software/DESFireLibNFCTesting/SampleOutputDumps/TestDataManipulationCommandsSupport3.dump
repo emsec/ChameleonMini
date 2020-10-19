@@ -1,0 +1,47 @@
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- cd bd cd e3 bf 95 a6 a4 | 83 62 24 fe 31 46 5b 78 | 91 af 
+    -- RNDA = 15 58 8d 10 14 e8 f7 e8 
+    -- RNDB = 08 7c f3 00 f7 03 a7 88 
+    -- CHAL = 15 58 8d 10 14 e8 f7 e8 | 88 08 7c f3 00 f7 03 a7 
+    -> 90 af 00 00 10 a3 4d 2c | d1 05 44 38 19 c1 02 be | dc a4 50 16 e0 00 
+    <- b9 b2 b2 e8 f5 2c 02 dd | a3 8e 50 42 fa 49 47 77 | 91 00 
+       ... AUTH OK! :)
+
+>>> CreateApplication command:
+    -> 90 ca 00 00 05 f4 a5 34 | 0f 03 00 
+    <- 91 de 
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 f4 a5 34 | 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- d7 7c b1 9f 2e 43 72 e6 | e6 17 e1 6b b8 41 b3 b7 | 91 af 
+    -- RNDA = 34 1a bf 46 ce c1 95 29 
+    -- RNDB = 00 f8 a3 48 8d b6 10 48 
+    -- CHAL = 34 1a bf 46 ce c1 95 29 | 48 00 f8 a3 48 8d b6 10 
+    -> 90 af 00 00 10 7b 75 e9 | 99 97 e1 5c fb ea 3c 6e | 53 7b b5 b1 a9 00 
+    <- 9e bf 9a e6 d3 c4 ca 67 | ae ad 47 54 c7 12 9b a9 | 91 00 
+       ... AUTH OK! :)
+
+>>> CreateLinearRecordFile command:
+    -> 90 c1 00 00 0a 01 00 0f | 00 02 00 00 06 00 00 00 
+    <- 91 de 
+
+>>> GetFileIds command:
+    -> 90 6f 00 00 00 00 
+    <- 01 91 00 
+>>> ReadRecords command:
+    -> 90 bb 00 00 07 01 00 00 | 00 06 00 00 00 
+    <- 00 00 00 e5 b9 b2 91 00 
+>>> WriteRecords command:
+    -> 90 3b 00 00 0a 01 00 00 | 00 03 00 00 00 00 00 00 
+    <- 91 00 
+>>> ReadRecords command:
+    -> 90 bb 00 00 07 01 00 00 | 00 06 00 00 00 
+    <- 00 00 00 e5 b9 b2 91 00 

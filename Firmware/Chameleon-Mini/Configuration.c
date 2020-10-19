@@ -5,59 +5,68 @@
  *      Author: skuser
  */
 
+#include <avr/pgmspace.h>
+
 #include "Configuration.h"
 #include "Settings.h"
-#include <avr/pgmspace.h>
 #include "Map.h"
 #include "AntennaLevel.h"
+#include "LEDHook.h"
+
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+     #include "Application/MifareDESFire.h"
+#endif
 
 /* Map IDs to text */
 static const MapEntryType PROGMEM ConfigurationMap[] = {
-    { .Id = CONFIG_NONE, 			.Text = "NONE" },
+    { .Id = CONFIG_NONE, 			        .Text = "NONE" },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
-    { .Id = CONFIG_MF_ULTRALIGHT, 	.Text = "MF_ULTRALIGHT" },
-    { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,   .Text = "MF_ULTRALIGHT_EV1_80B" },
-    { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,   .Text = "MF_ULTRALIGHT_EV1_164B" },
-    {.Id = CONFIG_MF_ULTRALIGHT_C, .Text = "MF_ULTRALIGHT_C"},
+    { .Id = CONFIG_MF_ULTRALIGHT, 	             .Text = "MF_ULTRALIGHT" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,       .Text = "MF_ULTRALIGHT_EV1_80B" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,      .Text = "MF_ULTRALIGHT_EV1_164B" },
+    { .Id = CONFIG_MF_ULTRALIGHT_C,             .Text = "MF_ULTRALIGHT_C"},
 #endif
 #ifdef CONFIG_MF_CLASSIC_MINI_4B_SUPPORT
-    { .Id = CONFIG_MF_CLASSIC_MINI_4B, 	.Text = "MF_CLASSIC_MINI_4B" },
+    { .Id = CONFIG_MF_CLASSIC_MINI_4B, 	        .Text = "MF_CLASSIC_MINI_4B" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
-    { .Id = CONFIG_MF_CLASSIC_1K, 	.Text = "MF_CLASSIC_1K" },
+    { .Id = CONFIG_MF_CLASSIC_1K, 	             .Text = "MF_CLASSIC_1K" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
-    { .Id = CONFIG_MF_CLASSIC_1K_7B, 	.Text = "MF_CLASSIC_1K_7B" },
+    { .Id = CONFIG_MF_CLASSIC_1K_7B, 	        .Text = "MF_CLASSIC_1K_7B" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
-    { .Id = CONFIG_MF_CLASSIC_4K, 	.Text = "MF_CLASSIC_4K" },
+    { .Id = CONFIG_MF_CLASSIC_4K, 	             .Text = "MF_CLASSIC_4K" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
-    { .Id = CONFIG_MF_CLASSIC_4K_7B, 	.Text = "MF_CLASSIC_4K_7B" },
+    { .Id = CONFIG_MF_CLASSIC_4K_7B, 	        .Text = "MF_CLASSIC_4K_7B" },
 #endif
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
-    { .Id = CONFIG_ISO14443A_SNIFF,	.Text = "ISO14443A_SNIFF" },
+    { .Id = CONFIG_ISO14443A_SNIFF,	        .Text = "ISO14443A_SNIFF" },
 #endif
 #ifdef CONFIG_ISO14443A_READER_SUPPORT
-    { .Id = CONFIG_ISO14443A_READER,	.Text = "ISO14443A_READER" },
+    { .Id = CONFIG_ISO14443A_READER,	        .Text = "ISO14443A_READER" },
 #endif
 #ifdef CONFIG_NTAG215_SUPPORT
-    { .Id = CONFIG_NTAG215,	.Text = "NTAG215" },
+    { .Id = CONFIG_NTAG215,	                  .Text = "NTAG215" },
 #endif
 #ifdef CONFIG_VICINITY_SUPPORT
-    { .Id = CONFIG_VICINITY,	.Text = "VICINITY" },
+    { .Id = CONFIG_VICINITY,	                  .Text = "VICINITY" },
 #endif
 #ifdef CONFIG_ISO15693_SNIFF_SUPPORT
-    { .Id = CONFIG_ISO15693_SNIFF,	.Text = "ISO15693_SNIFF" },
+    { .Id = CONFIG_ISO15693_SNIFF,	             .Text = "ISO15693_SNIFF" },
 #endif
 #ifdef CONFIG_SL2S2002_SUPPORT
-    { .Id = CONFIG_SL2S2002,	.Text = "SL2S2002" },
+    { .Id = CONFIG_SL2S2002,	                  .Text = "SL2S2002" },
 #endif
 #ifdef CONFIG_TITAGITSTANDARD_SUPPORT
-    { .Id = CONFIG_TITAGITSTANDARD,	.Text = "TITAGITSTANDARD" },
+    { .Id = CONFIG_TITAGITSTANDARD,	        .Text = "TITAGITSTANDARD" },
 #endif
 #ifdef CONFIG_EM4233_SUPPORT
-    { .Id = CONFIG_EM4233,	.Text = "EM4233" },
+    { .Id = CONFIG_EM4233,	                  .Text = "EM4233" },
+#endif
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+     { .Id = CONFIG_MF_DESFIRE,                 .Text = "MF_DESFIRE" },
 #endif
 };
 
@@ -393,6 +402,23 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ReadOnly = false,
     },
 #endif
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+     [CONFIG_MF_DESFIRE] = {
+          .CodecInitFunc = ISO14443ACodecInit,
+          .CodecDeInitFunc =ISO14443ACodecDeInit,
+          .CodecTaskFunc = ISO14443ACodecTask,
+          .ApplicationInitFunc = MifareDesfireEV0AppInit,
+          .ApplicationResetFunc = MifareDesfireAppReset,
+          .ApplicationTaskFunc = MifareDesfireAppTask,
+          .ApplicationTickFunc = MifareDesfireAppTick,
+          .ApplicationProcessFunc = MifareDesfireAppProcess,
+          .ApplicationGetUidFunc = MifareDesfireGetUid,
+          .ApplicationSetUidFunc = MifareDesfireSetUid,
+          .UidSize = ISO14443A_UID_SIZE_DOUBLE,
+          .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+          .ReadOnly = false
+     },
+#endif
 };
 
 ConfigurationType ActiveConfiguration;
@@ -417,10 +443,21 @@ void ConfigurationSetById(ConfigurationEnum Configuration) {
 
     CodecInit();
     ApplicationInit();
+
+    /* Notify LED. blink according to current setting */
+    LEDHook(LED_SETTING_CHANGE, LED_BLINK + Configuration);
 }
 
 void ConfigurationGetByName(char *Configuration, uint16_t BufferSize) {
     MapIdToText(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), GlobalSettings.ActiveSettingPtr->Configuration, Configuration, BufferSize);
+}
+
+MapIdType ConfigurationCheckByName(const char *Configuration) {
+    MapIdType Id; 
+    if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
+        return Id; 
+    }   
+    return 0xff;
 }
 
 bool ConfigurationSetByName(const char *Configuration) {

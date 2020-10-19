@@ -1,0 +1,108 @@
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- f9 ad 11 6f 9b 92 0a 6f | 55 27 40 62 03 44 c1 04 | 91 af 
+    -- RNDA = 8e 6e 70 63 4c fc b9 f8 
+    -- RNDB = 3c d4 63 9e bb 9c 31 e5 
+    -- CHAL = 8e 6e 70 63 4c fc b9 f8 | e5 3c d4 63 9e bb 9c 31 
+    -> 90 af 00 00 10 8e 0d 1f | 30 60 79 93 a3 c7 c3 70 | c7 4d 6e 17 4d 00 
+    <- c7 58 9e 3c 91 c5 89 fd | ef d4 87 d7 9b c7 0c c0 | 91 00 
+       ... AUTH OK! :)
+
+>>> CreateApplication command:
+    -> 90 ca 00 00 05 f3 12 34 | 0f 03 00 
+    <- 91 de 
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 f3 12 34 | 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- fe 83 da f3 52 5f b3 80 | 18 51 bd cb 70 86 40 c1 | 91 af 
+    -- RNDA = cf 05 19 fe 6f 88 c7 db 
+    -- RNDB = ba 8d 15 6d 95 50 48 95 
+    -- CHAL = cf 05 19 fe 6f 88 c7 db | 95 ba 8d 15 6d 95 50 48 
+    -> 90 af 00 00 10 c6 f5 be | 4f 37 83 4a 24 52 7d aa | 1c 42 77 3d 2a 00 
+    <- 36 1d a2 18 e9 fd ee bd | 9a 86 dd 9a c2 fa 68 e1 | 91 00 
+       ... AUTH OK! :)
+
+>>> CreateValueFile command:
+    -> 90 cc 00 00 11 02 00 0f | 00 00 00 00 00 00 01 00 | 00 80 00 00 00 01 00 
+    <- 91 de 
+
+>>> GetFileIds command:
+    -> 90 6f 00 00 00 00 
+    <- 02 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 02 00 
+    <- a0 00 00 00 91 00 
+>>> Credit(ValueFile) command:
+    -> 90 0c 00 00 05 02 40 00 | 00 00 00 
+    <- 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 02 00 
+    <- a0 00 00 00 91 00 
+>>> Debit(ValueFile) command:
+    -> 90 dc 00 00 05 02 40 00 | 00 00 00 
+    <- 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 02 00 
+    <- a0 00 00 00 91 00 
+>>> LimitedCredit(ValueFile) command:
+    -> 90 1c 00 00 05 02 20 00 | 00 00 00 
+    <- 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 02 00 
+    <- a0 00 00 00 91 00 
+>>> CommitTransaction command:
+    -> 90 c7 00 00 00 00 
+    <- 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 02 00 
+    <- c0 00 00 00 91 00 
+>>> Debit(ValueFile) command:
+    -> 90 dc 00 00 05 02 c8 00 | 00 00 00 
+    <- 91 be 
+>>> CommitTransaction command:
+    -> 90 c7 00 00 00 00 
+    <- 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 02 00 
+    <- c0 00 00 00 91 00 
+>>> CreateValueFile command:
+    -> 90 cc 00 00 11 03 00 0f | 00 00 00 00 00 00 01 00 | 00 80 00 00 00 00 00 
+    <- 91 00 
+
+>>> GetFileIds command:
+    -> 90 6f 00 00 00 00 
+    <- 02 03 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 03 00 
+    <- 80 00 00 00 91 00 
+>>> Credit(ValueFile) command:
+    -> 90 0c 00 00 05 03 40 00 | 00 00 00 
+    <- 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 03 00 
+    <- 80 00 00 00 91 00 
+>>> Debit(ValueFile) command:
+    -> 90 dc 00 00 05 03 40 00 | 00 00 00 
+    <- 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 03 00 
+    <- 80 00 00 00 91 00 
+>>> LimitedCredit(ValueFile) command:
+    -> 90 1c 00 00 05 03 20 00 | 00 00 00 
+    <- 91 9d 
+>>> GetValue command:
+    -> 90 6c 00 00 01 03 00 
+    <- 80 00 00 00 91 00 
+>>> AbortTransaction command:
+    -> 90 a7 00 00 00 00 
+    <- 91 00 
+>>> GetValue command:
+    -> 90 6c 00 00 01 03 00 
+    <- 80 00 00 00 91 00 

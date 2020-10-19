@@ -1,0 +1,72 @@
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- 94 9d 92 97 8e 5f ec 4a | 83 a3 0d 86 f7 d9 fc 03 | 91 af 
+    -- RNDA = 7c 46 0c f2 bb 47 8a 5b 
+    -- RNDB = e3 60 84 00 34 42 b2 ff 
+    -- CHAL = 7c 46 0c f2 bb 47 8a 5b | ff e3 60 84 00 34 42 b2 
+    -> 90 af 00 00 10 69 9e 02 | 57 ac c5 94 23 fa a5 06 | 7b 82 31 8c ab 00 
+    <- 46 01 9f 3c 4d b6 36 aa | f2 2f 13 da 29 02 af e9 | 91 00 
+       ... AUTH OK! :)
+
+>>> CreateApplication command:
+    -> 90 ca 00 00 05 01 00 34 | 0f 03 00 
+    <- 91 00 
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 01 00 34 | 00 
+    <- 91 00 
+
+>>> Start AES Authenticate:
+    -> 90 aa 00 00 01 00 00 
+    <- c8 d6 4e ee 3a d2 7c 1b | 44 71 76 62 b6 ec 9d 0a | 91 af 
+    -- RNDA = fa e7 26 1e 5e 18 c3 8e 
+    -- RNDB = a0 99 d5 98 68 5d 88 0f 
+    -- CHAL = fa e7 26 1e 5e 18 c3 8e | 0f a0 99 d5 98 68 5d 88 
+    -> 90 af 00 00 10 a8 d0 f8 | ae 30 64 ae 23 e5 20 18 | 38 e5 1d 1d 33 00 
+    <- a5 22 c2 3b 5f f2 bc 9e | 18 0e 87 c0 71 ca ef 69 | 91 00 
+       ... AUTH OK! :)
+
+>>> CreateStdDataFile command:
+    -> 90 cd 00 00 07 00 00 0f | 00 04 00 00 00 
+    <- 91 00 
+
+>>> CreateBackupDataFile command:
+    -> 90 cb 00 00 07 01 00 0f | 00 08 00 00 00 
+    <- 91 00 
+
+>>> CreateValueFile command:
+    -> 90 cc 00 00 11 02 00 0f | 00 00 00 00 00 00 01 00 | 00 80 00 00 00 01 00 
+    <- 91 00 
+
+>>> CreateLinearRecordFile command:
+    -> 90 c1 00 00 0a 03 00 0f | 00 04 00 00 0c 00 00 00 
+    <- 91 00 
+
+>>> CreateCyclicRecordFile command:
+    -> 90 c0 00 00 0a 04 00 0f | 00 01 00 00 05 00 00 00 
+    <- 91 00 
+
+>>> GetFileIds command:
+    -> 90 6f 00 00 00 00 
+    <- 00 01 02 03 04 91 00 
+>>> DeleteFile command:
+    -> 90 df 00 00 01 01 00 
+    <- 91 00 
+>>> GetFileIds command:
+    -> 90 6f 00 00 00 00 
+    <- 00 02 03 04 91 00 
+>>> GetFileSettings command:
+    -> 90 f5 00 00 01 00 00 
+    <- 00 00 0f 00 04 00 00 91 | 00 
+>>> GetFileSettings command:
+    -> 90 f5 00 00 01 02 00 
+    <- 02 00 0f 00 00 00 00 00 | 00 01 00 00 80 00 00 00 | 01 91 00 
+>>> GetFileSettings command:
+    -> 90 f5 00 00 01 03 00 
+    <- 03 00 0f 00 04 00 00 0c | 00 00 00 00 00 91 00 
+>>> GetFileSettings command:
+    -> 90 f5 00 00 01 04 00 
+    <- 04 00 0f 00 01 00 00 05 | 00 00 00 00 00 91 00 

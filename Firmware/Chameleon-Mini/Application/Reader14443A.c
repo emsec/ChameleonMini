@@ -1,3 +1,6 @@
+#if defined(CONFIG_ISO14443A_READER_SUPPORT) || \
+     defined(CONFIG_ISO14443A_SNIFF_SUPPORT)
+
 #include "Reader14443A.h"
 #include "LEDHook.h"
 #include "Application.h"
@@ -907,3 +910,5 @@ uint16_t ISO14443_CRCA(uint8_t *Buffer, uint8_t ByteCount) {
     }
     return crc;
 }
+
+#endif

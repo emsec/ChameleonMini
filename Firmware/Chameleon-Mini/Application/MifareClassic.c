@@ -5,6 +5,11 @@
  *      Author: skuser
  */
 
+#if defined(CONFIG_MF_CLASSIC_1K_SUPPORT) || \
+     defined(CONFIG_MF_CLASSIC_1K_7B_SUPPORT) || \
+     defined(CONFIG_MF_CLASSIC_4K_SUPPORT) || \
+     defined(CONFIG_MF_CLASSIC_4K_7B_SUPPORT)
+
 #include "MifareClassic.h"
 
 #include "ISO14443-3A.h"
@@ -1072,3 +1077,5 @@ void MifareClassicSetUid(ConfigurationUidType Uid) {
         MemoryWriteBlock(&BCC, MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
     }
 }
+
+#endif

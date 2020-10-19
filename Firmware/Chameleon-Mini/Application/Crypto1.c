@@ -162,13 +162,20 @@
  }))
 #endif
 
+#ifdef DESFIRE_CRYPTO1_SAVE_SPACE
+    #define C1MEM    PROGMEM
+#else
+    #define C1MEM
+#endif
+
 /* Space/speed tradoff. */
 /* We want speed, so we have to pay with size. */
 /* If we combine the A und B Filtertables and precalculate the values */
 /* for each state byte, we get the following tables which gives a */
 /* faster calculation of the filter output */
 /* Table of the filter A/B output per byte */
-static const uint8_t abFilterTable[3][256] = {
+#define AB_FILTER_TABLE_ENTRY_SIZE                 (256)
+static const uint8_t C1MEM abFilterTable[3][AB_FILTER_TABLE_ENTRY_SIZE] = {
     /* for Odd[0] */
     {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -277,7 +284,7 @@ static const uint8_t abFilterTable[3][256] = {
 };
 
 /* Standard FC  table, feedback at bit 0 */
-static const uint8_t TableC0[32] = {
+static const uint8_t C1MEM TableC0[32] = {
     /* fc with Input {4,3,2,1,0} = (0,0,0,0,0) to (1,1,1,1,1) */
     FC(0, 0, 0, 0, 0), FC(0, 0, 0, 0, 1), FC(0, 0, 0, 1, 0), FC(0, 0, 0, 1, 1),
     FC(0, 0, 1, 0, 0), FC(0, 0, 1, 0, 1), FC(0, 0, 1, 1, 0), FC(0, 0, 1, 1, 1),
@@ -290,7 +297,7 @@ static const uint8_t TableC0[32] = {
 };
 
 /* Special table for byte processing, feedback at bit 7 */
-static const uint8_t TableC7[32] = {
+static const uint8_t C1MEM TableC7[32] = {
     /* fc with Input {4,3,2,1,0} = (0,0,0,0,0) to (1,1,1,1,1) */
     FC(0, 0, 0, 0, 0) << 7, FC(0, 0, 0, 0, 1) << 7, FC(0, 0, 0, 1, 0) << 7, FC(0, 0, 0, 1, 1) << 7,
     FC(0, 0, 1, 0, 0) << 7, FC(0, 0, 1, 0, 1) << 7, FC(0, 0, 1, 1, 0) << 7, FC(0, 0, 1, 1, 1) << 7,
@@ -303,7 +310,7 @@ static const uint8_t TableC7[32] = {
 };
 
 /* Special table for nibble processing (e.g. ack), feedback at bit 3 */
-static const uint8_t TableC3[32] = {
+static const uint8_t C1MEM TableC3[32] = {
     /* fc with Input {4,3,2,1,0} = (0,0,0,0,0) to (1,1,1,1,1) */
     FC(0, 0, 0, 0, 0) << 3, FC(0, 0, 0, 0, 1) << 3, FC(0, 0, 0, 1, 0) << 3, FC(0, 0, 0, 1, 1) << 3,
     FC(0, 0, 1, 0, 0) << 3, FC(0, 0, 1, 0, 1) << 3, FC(0, 0, 1, 1, 0) << 3, FC(0, 0, 1, 1, 1) << 3,
@@ -316,20 +323,39 @@ static const uint8_t TableC3[32] = {
 };
 
 /* Filter Output Macros */
-/* Output at bit 7 for optimized byte processing */
-#define CRYPTO1_FILTER_OUTPUT_B7_24(__O0, __O1, __O2) TableC7[ abFilterTable[0][__O0] | \
-                    abFilterTable[1][__O1] | \
-                    abFilterTable[2][__O2]]
-
-/* Output at bit 3 for optimized nibble processing */
-#define CRYPTO1_FILTER_OUTPUT_B3_24(__O0, __O1, __O2) TableC3[ abFilterTable[0][__O0] | \
-                    abFilterTable[1][__O1] | \
-                    abFilterTable[2][__O2]]
-
-/* Output at bit 0 for general purpose */
-#define CRYPTO1_FILTER_OUTPUT_B0_24(__O0, __O1, __O2) TableC0[ abFilterTable[0][__O0] | \
-                    abFilterTable[1][__O1] | \
-                    abFilterTable[2][__O2]]
+#ifdef DESFIRE_CRYPTO1_SAVE_SPACE
+    #define CRYPTO1_FILTER_OUTPUT_B0_24(__O0, __O1, __O2) \
+        pgm_read_byte(TableC0 + \
+            (pgm_read_byte(abFilterTable + __O0) | \
+            pgm_read_byte(abFilterTable + AB_FILTER_TABLE_ENTRY_SIZE + __O1) | \
+            pgm_read_byte(abFilterTable + 2 * AB_FILTER_TABLE_ENTRY_SIZE + __O2)) \
+        )
+    #define CRYPTO1_FILTER_OUTPUT_B3_24(__O0, __O1, __O2) \
+        pgm_read_byte(TableC3 + \
+            (pgm_read_byte(abFilterTable + __O0) | \
+            pgm_read_byte(abFilterTable + AB_FILTER_TABLE_ENTRY_SIZE + __O1) | \
+            pgm_read_byte(abFilterTable + 2 * AB_FILTER_TABLE_ENTRY_SIZE + __O2)) \
+        )
+    #define CRYPTO1_FILTER_OUTPUT_B7_24(__O0, __O1, __O2) \
+        pgm_read_byte(TableC7 + \
+            (pgm_read_byte(abFilterTable + __O0) | \
+            pgm_read_byte(abFilterTable + AB_FILTER_TABLE_ENTRY_SIZE + __O1) | \
+            pgm_read_byte(abFilterTable + 2 * AB_FILTER_TABLE_ENTRY_SIZE + __O2)) \
+        )
+#else
+    /* Output at bit 0 for general purpose */
+    #define CRYPTO1_FILTER_OUTPUT_B0_24(__O0, __O1, __O2) TableC0[ abFilterTable[0][__O0] | \
+                        abFilterTable[1][__O1] | \
+                        abFilterTable[2][__O2]]
+    /* Output at bit 7 for optimized byte processing */
+    #define CRYPTO1_FILTER_OUTPUT_B7_24(__O0, __O1, __O2) TableC7[ abFilterTable[0][__O0] | \
+                        abFilterTable[1][__O1] | \
+                        abFilterTable[2][__O2]]
+    /* Output at bit 3 for optimized nibble processing */
+    #define CRYPTO1_FILTER_OUTPUT_B3_24(__O0, __O1, __O2) TableC3[ abFilterTable[0][__O0] | \
+                        abFilterTable[1][__O1] | \
+                        abFilterTable[2][__O2]]
+#endif
 
 /* Split Crypto1 state into even and odd bits            */
 /* to speed up the output filter network                 */
