@@ -11,6 +11,7 @@ SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
 #SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT
+
 SETTINGS	+= -DCONFIG_ISO14443A_SNIFF_SUPPORT
 SETTINGS	+= -DCONFIG_ISO14443A_READER_SUPPORT
 #SETTINGS	+= -DCONFIG_NTAG215_SUPPORT
@@ -133,6 +134,7 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
 
+.PHONY: program program-latest dfu-flip dfu-prog check_size style
 
 # Default target
 all:
@@ -163,26 +165,40 @@ spmhelper: $(TARGET).elf
 	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
 
 # Program the device using avrdude
-program: $(TARGET).hex $(TARGET).eep
+program: $(TARGET).hex $(TARGET).eep check_size
 	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP) $(AVRDUDE_WRITE_EEPROM)
 
 # Program the device using avrdude with the latest official firmware
-program-latest:
+program-latest: check_size
 	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP_LATEST) $(AVRDUDE_WRITE_EEPROM_LATEST)
 
 # Program the device using batchisp and the DFU bootloader
 # Note that the device has to be in bootloader mode already
-dfu-flip: $(TARGET).hex $(TARGET).eep
+dfu-flip: $(TARGET).hex $(TARGET).eep check_size
 	cp $(TARGET).eep EEPROM.hex
 	batchisp -hardware usb -device $(MCU) -operation erase f memory FLASH loadbuffer $(TARGET).hex program verify memory EEPROM loadbuffer EEPROM.hex program verify start reset 0
 	rm EEPROM.hex
 
 # Program the device using dfu-programmer
-dfu-prog: $(TARGET).hex $(TARGET).eep
+dfu-prog: $(TARGET).hex $(TARGET).eep check_size
 	dfu-programmer $(MCU) erase
 	dfu-programmer $(MCU) flash-eeprom $(TARGET).eep
 	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) reset
+
+check_size:
+	@{ \
+	set -e; \
+	if [ ! -f $(TARGET).elf ]; then \
+		exit 0; \
+	fi; \
+	PROGMEM_SIZE=$$(avr-size $(TARGET).elf | grep -oP "\d+" | sed -n 4p); \
+	MAX_PRGMEM_SIZE=$$(printf "%d\n" $(FLASH_DATA_ADDR)); \
+	if [ $$PROGMEM_SIZE -gt $$MAX_PRGMEM_SIZE ]; then \
+		echo "make: *** $(TARGET).elf Application Section size $$PROGMEM_SIZE excedes maximum allowed $$MAX_PRGMEM_SIZE. Please disable some features in Makefile"; \
+		exit 1; \
+	fi; \
+	}
 
 style:
 	# Make sure astyle is installed
