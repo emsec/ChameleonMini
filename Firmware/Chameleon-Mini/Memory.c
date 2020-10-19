@@ -362,11 +362,28 @@ void MemoryReadBlock(void *Buffer, uint16_t Address, uint16_t ByteCount) {
     FRAMRead(Buffer, Address, ByteCount);
 }
 
+void MemoryReadBlockInSetting(void* Buffer, uint16_t Address, uint16_t ByteCount)
+{
+    if (ByteCount == 0 || Address >= MEMORY_SIZE_PER_SETTING)
+        return;
+    uint16_t ActualFRAMAddress = Address + GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING;
+    FRAMRead(Buffer, ActualFRAMAddress, ByteCount);
+}
+
 void MemoryWriteBlock(const void *Buffer, uint16_t Address, uint16_t ByteCount) {
     if (ByteCount == 0)
         return;
     FRAMWrite(Buffer, Address, ByteCount);
 
+    LEDHook(LED_MEMORY_CHANGED, LED_ON);
+}
+
+void MemoryWriteBlockInSetting(const void* Buffer, uint16_t Address, uint16_t ByteCount)
+{
+    if (ByteCount == 0 || Address >= MEMORY_SIZE_PER_SETTING)
+        return;
+    uint16_t ActualFRAMAddress = Address + GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING;
+    FRAMWrite(Buffer, ActualFRAMAddress, ByteCount);
     LEDHook(LED_MEMORY_CHANGED, LED_ON);
 }
 

@@ -7,18 +7,19 @@ SHELL = /bin/sh
 #Supported configurations
 SETTINGS    += -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
-SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
+#SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
-SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
+#SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT
-# SETTINGS	+= -DCONFIG_ISO14443A_SNIFF_SUPPORT
-# SETTINGS	+= -DCONFIG_ISO14443A_READER_SUPPORT
-SETTINGS	+= -DCONFIG_NTAG215_SUPPORT
-SETTINGS	+= -DCONFIG_VICINITY_SUPPORT
-SETTINGS	+= -DCONFIG_SL2S2002_SUPPORT
-SETTINGS	+= -DCONFIG_TITAGITSTANDARD_SUPPORT
-# SETTINGS	+= -DCONFIG_ISO15693_SNIFF_SUPPORT
-SETTINGS	+= -DCONFIG_EM4233_SUPPORT
+
+SETTINGS	+= -DCONFIG_ISO14443A_SNIFF_SUPPORT
+SETTINGS	+= -DCONFIG_ISO14443A_READER_SUPPORT
+#SETTINGS	+= -DCONFIG_NTAG215_SUPPORT
+#SETTINGS	+= -DCONFIG_VICINITY_SUPPORT
+#SETTINGS	+= -DCONFIG_SL2S2002_SUPPORT
+#SETTINGS	+= -DCONFIG_TITAGITSTANDARD_SUPPORT
+SETTINGS	+= -DCONFIG_ISO15693_SNIFF_SUPPORT
+#SETTINGS	+= -DCONFIG_EM4233_SUPPORT
 
 #Support magic mode on mifare classic configuration
 SETTINGS	+= -DSUPPORT_MF_CLASSIC_MAGIC_MODE
@@ -78,8 +79,10 @@ SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Memory definitions and objcopy flags to include sections in binaries
+#FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
+#FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
 FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
-FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
+FLASH_DATA_SIZE = 0x0FFFF #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
@@ -107,10 +110,13 @@ SRC         += Codec/ISO15693.c
 SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/ISO15693-A.c Application/EM4233.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
-CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) \
+CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) \
 			   -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
 			   -D__AVR_ATxmega128A4U__ -D__PROG_TYPES_COMPAT__ -DMAX_ENDPOINT_INDEX=4 \
-			   -std=gnu99 -Werror=implicit-function-declaration
+			   -std=gnu99 -Werror=implicit-function-declaration \
+			   -fno-inline-small-functions -fshort-enums -fpack-struct \
+                  -ffunction-sections -Wl,--gc-sections --data-sections -ffunction-sections \
+                  -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop
 LD_FLAGS     = $(CC_FLAGS) -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES =
@@ -132,7 +138,6 @@ AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
 
 # Default target
 all:
-	$(CROSS)-size --mcu=atmega128 -C $(TARGET).elf
 
 # Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk
