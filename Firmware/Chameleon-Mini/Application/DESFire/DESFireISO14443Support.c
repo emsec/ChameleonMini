@@ -347,7 +347,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
                 Uid[1] = Uid[0];
                 Uid[0] = ISO14443A_UID0_CT;
             }
-            if (ISO14443ASelect(Buffer, &BitCount, Uid, SAK_CL1_VALUE)) {
+            if (ISO14443ASelectDesfire(Buffer, &BitCount, Uid, SAK_CL1_VALUE)) {
                 /* CL1 stage has ended successfully */
                 const char *debugPrintStr = PSTR("ISO14443-4: Select OK");
 	            LogDebuggingMsg(debugPrintStr);
@@ -372,7 +372,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
             /* Load UID CL2 and perform anticollision */
             ConfigurationUidType Uid;
             ApplicationGetUid(Uid);
-            if (ISO14443ASelect(Buffer, &BitCount, &Uid[3], SAK_CL2_VALUE)) {
+            if (ISO14443ASelectDesfire(Buffer, &BitCount, &Uid[3], SAK_CL2_VALUE)) {
                 /* CL2 stage has ended successfully. This means
                  * our complete UID has been sent to the reader. */
                 ISO144433ASwitchState(ISO14443_3A_STATE_ACTIVE);

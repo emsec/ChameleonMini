@@ -10,6 +10,10 @@
 #define CRC_INIT		0x6363
 #define CRC_INIT_R		0xC6C6 /* Bit reversed */
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+uint8_t FirstUidCL[4] = { 0 };
+#endif
+
 #define USE_HW_CRC
 
 #ifdef USE_HW_CRC
