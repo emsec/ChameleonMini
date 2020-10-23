@@ -15,6 +15,7 @@ var searchData=
   ['log_5finfo_5fapp_5fcmd_5ftransfer',['LOG_INFO_APP_CMD_TRANSFER',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a3ff2f7a4ed2f210bb42e3d0a2ba45dc8',1,'Log.h']]],
   ['log_5finfo_5fapp_5fcmd_5funknown',['LOG_INFO_APP_CMD_UNKNOWN',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a51365dd939423069d8fe2c09f51c805b',1,'Log.h']]],
   ['log_5finfo_5fapp_5fcmd_5fwrite',['LOG_INFO_APP_CMD_WRITE',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0abb646871507173fe4978b1342f238b7c',1,'Log.h']]],
+  ['log_5finfo_5fcodec_5freader_5ffield_5fdetected',['LOG_INFO_CODEC_READER_FIELD_DETECTED',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0acfa9b06016b1d273136c33818355b8ca',1,'Log.h']]],
   ['log_5finfo_5fcodec_5frx_5fdata',['LOG_INFO_CODEC_RX_DATA',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a3b67fcd03ff3cc80231df3b7d9211380',1,'Log.h']]],
   ['log_5finfo_5fcodec_5frx_5fdata_5fw_5fparity',['LOG_INFO_CODEC_RX_DATA_W_PARITY',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a84aebf39984089d411b7e12158cfbcfd',1,'Log.h']]],
   ['log_5finfo_5fcodec_5ftx_5fdata',['LOG_INFO_CODEC_TX_DATA',['../_log_8h.html#a34112fbd78128ae58dc7801690dfa6e0a40884a5af2a5bfa73ab4824a3adc71af',1,'Log.h']]],
