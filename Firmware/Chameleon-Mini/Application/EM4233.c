@@ -4,7 +4,7 @@
  *  Created on: 12-05-2018
  *      Author: ceres-c & MrMoDDoM
  *  Notes:
- *      - In EM4233.h you can find the define EM4233_LOGIN_YES_CARD that has to be uncommnted
+ *      - In EM4233.h you can find the define EM4233_LOGIN_YES_CARD that has to be uncommented
  *        to allow any login request without checking the password.
  *
  *  TODO:
