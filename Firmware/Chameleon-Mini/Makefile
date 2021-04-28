@@ -17,6 +17,7 @@ CONFIG_SETTINGS  += -DCONFIG_ISO14443A_READER_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_VICINITY_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_SL2S2002_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_TITAGITSTANDARD_SUPPORT
+#CONFIG_SETTINGS += -DCONFIG_TITAGITPLUS_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_ISO15693_SNIFF_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_EM4233_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_MF_DESFIRE_SUPPORT
@@ -162,7 +163,7 @@ SRC         += Application/MifareUltralight.c Application/MifareClassic.c Applic
 			Tests/CryptoTests.c Tests/ChameleonTerminal.c
 SRC		  += Application/NTAG215.c
 SRC         += Codec/ISO15693.c
-SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/ISO15693-A.c Application/EM4233.c
+SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/TITagitplus.c Application/ISO15693-A.c Application/EM4233.c
 SRC	       += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
                $(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
                $(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \

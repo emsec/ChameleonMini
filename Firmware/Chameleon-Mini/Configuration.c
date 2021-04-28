@@ -62,6 +62,9 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_TITAGITSTANDARD_SUPPORT
     { .Id = CONFIG_TITAGITSTANDARD,	        .Text = "TITAGITSTANDARD" },
 #endif
+#ifdef CONFIG_TITAGITPLUS_SUPPORT
+    { .Id = CONFIG_TITAGITPLUS,                 .Text = "TITAGITPLUS" },
+#endif
 #ifdef CONFIG_EM4233_SUPPORT
     { .Id = CONFIG_EM4233,	                  .Text = "EM4233" },
 #endif
@@ -363,6 +366,24 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationSetUidFunc = TITagitstandardSetUid,
         .UidSize = TITAGIT_STD_UID_SIZE,
         .MemorySize = TITAGIT_STD_MEM_SIZE,
+        .ReadOnly = false,
+        .TagFamily = TAG_FAMILY_ISO15693
+    },
+#endif
+#ifdef CONFIG_TITAGITPLUS_SUPPORT
+    [CONFIG_TITAGITPLUS] = {
+        .CodecInitFunc = ISO15693CodecInit,
+        .CodecDeInitFunc = ISO15693CodecDeInit,
+        .CodecTaskFunc = ISO15693CodecTask,
+        .ApplicationInitFunc = TITagitplusAppInit,
+        .ApplicationResetFunc = TITagitplusAppReset,
+        .ApplicationTaskFunc = TITagitplusAppTask,
+        .ApplicationTickFunc = TITagitplusAppTick,
+        .ApplicationProcessFunc = TITagitplusAppProcess,
+        .ApplicationGetUidFunc = TITagitplusGetUid,
+        .ApplicationSetUidFunc = TITagitplusSetUid,
+        .UidSize = TITAGIT_PLUS_UID_SIZE,
+        .MemorySize = TITAGIT_PLUS_MEM_SIZE,
         .ReadOnly = false,
         .TagFamily = TAG_FAMILY_ISO15693
     },
