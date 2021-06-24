@@ -21,7 +21,7 @@
 #include "TITagitstandard.h"
 #include "TITagitplus.h"
 #include "Sniff14443A.h"
-#include "NTAG215.h"
+#include "NTAG21x.h"
 #include "EM4233.h"
 
 /* Function wrappers */
