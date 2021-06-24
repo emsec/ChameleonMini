@@ -12,6 +12,7 @@
 
 #define ISO14443A_APP_NO_RESPONSE       0x0000
 #define ISO14443A_APP_CUSTOM_PARITY     0x1000
+#define ISO14443A_APP_DELAYED_RESPONSE	0x2000
 
 #define ISO14443A_BUFFER_PARITY_OFFSET    (CODEC_BUFFER_SIZE/2)
 
@@ -19,6 +20,7 @@
 void ISO14443ACodecInit(void);
 void ISO14443ACodecDeInit(void);
 void ISO14443ACodecTask(void);
+void ISO14443ASendResponse(const uint8_t *buffer, uint16_t bitCount);
 
 
 
