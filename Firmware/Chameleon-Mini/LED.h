@@ -12,8 +12,15 @@
 #include "Common.h"
 
 #define LED_PORT 		PORTA
+
+#ifndef CHAMELEON_TINY_SUPPORT
 #define LED_GREEN		PIN4_bm
 #define LED_RED			PIN3_bm
+#else
+#define LED_GREEN		PIN3_bm
+#define LED_RED			PIN4_bm
+#endif
+
 #define LED_MASK		(LED_GREEN | LED_RED)
 
 typedef enum LEDFunctionEnum {

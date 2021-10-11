@@ -2,6 +2,9 @@
 #include "Terminal.h"
 #include "../System.h"
 #include "../LEDHook.h"
+#ifdef CHAMELEON_TINY_UART_MODE
+#include "../Uart.h"
+#endif
 
 #include "../LUFADescriptors.h"
 
@@ -27,13 +30,26 @@ USB_ClassInfo_CDC_Device_t TerminalHandle = {
     }
 };
 
+#ifdef CHAMELEON_TINY_UART_MODE
+uint8_t bUSBTerminal = 0;
+#endif
 uint8_t TerminalBuffer[TERMINAL_BUFFER_SIZE] = { 0x00 };
 TerminalStateEnum TerminalState = TERMINAL_UNINITIALIZED;
 static uint8_t TerminalInitDelay = INIT_DELAY;
 
+#ifndef CHAMELEON_TINY_UART_MODE
 void TerminalSendString(const char *s) {
     CDC_Device_SendString(&TerminalHandle, s);
 }
+#else
+void TerminalSendString(const char *s) {
+    if (bUSBTerminal) {
+        CDC_Device_SendString(&TerminalHandle, s);
+    } else {
+        TerminalSendBlock(s, strlen(s));
+    }
+}
+#endif
 
 void TerminalSendStringP(const char *s) {
     char c;
@@ -55,16 +71,36 @@ void TerminalSendHex(void* Buffer, uint16_t ByteCount)
 
 */
 
-
+#ifndef CHAMELEON_TINY_UART_MODE
 void TerminalSendBlock(const void *Buffer, uint16_t ByteCount) {
     CDC_Device_SendData(&TerminalHandle, Buffer, ByteCount);
 }
+#else
+void TerminalSendBlock(const void *Buffer, uint16_t ByteCount) {
+    if (bUSBTerminal) {
+        CDC_Device_SendData(&TerminalHandle, Buffer, ByteCount);
+    } else {
+        UartFIFOPut((uint8_t *)Buffer, ByteCount);
+    }
+}
+
+void TerminalSendByte(uint8_t Byte) {
+    if (bUSBTerminal) {
+        CDC_Device_SendByte(&TerminalHandle, Byte);
+    } else {
+        UartFIFOPut(&Byte, 1);
+    }
+}
+#endif
 
 
 static void ProcessByte(void) {
     int16_t Byte = CDC_Device_ReceiveByte(&TerminalHandle);
 
     if (Byte >= 0) {
+#ifdef CHAMELEON_TINY_UART_MODE
+        bUSBTerminal = 1;
+#endif
         /* Byte received */
         LEDHook(LED_TERMINAL_RXTX, LED_PULSE);
 
@@ -99,6 +135,9 @@ static void SenseVBus(void) {
                 /* Initialized and VBUS sense low */
                 TerminalInitDelay = INIT_DELAY;
                 TerminalState = TERMINAL_UNITIALIZING;
+#ifdef CHAMELEON_TINY_UART_MODE
+                bUSBTerminal = 1;
+#endif
             }
             break;
 

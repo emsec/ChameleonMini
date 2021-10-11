@@ -130,6 +130,12 @@ SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 #in PROGMEM. Note that this will slow down the read times when accessing these tables:
 #SETTINGS  += -DDESFIRE_CRYPTO1_SAVE_SPACE
 
+#Chameleon Tiny support - 8 LEDs
+#CONFIG_SETTINGS  += -DCHAMELEON_TINY_SUPPORT
+# Chameleon Tiny Pro support: bluetooth connection via app.
+#CONFIG_SETTINGS  += -DCHAMELEON_TINY_UART_SUPPORT
+
+
 DESFIRE_MAINSRC = Application/DESFire
 
 #Memory definitions and objcopy flags to include sections in binaries
@@ -154,7 +160,8 @@ F_USB        = 48000000
 TARGET       = Chameleon-Mini
 OPTIMIZATION = s
 SRC         += $(TARGET).c LUFADescriptors.c System.c ISRSharing.S Configuration.c Random.c Common.c \
-			Memory.c MemoryAsm.S Button.c Log.c Settings.c LED.c Pin.c Map.c AntennaLevel.c
+			Memory.c MemoryAsm.S Button.c Log.c Settings.c LED.c Pin.c Map.c AntennaLevel.c \
+			Uart.c UartCmd.c
 SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S
 SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c \

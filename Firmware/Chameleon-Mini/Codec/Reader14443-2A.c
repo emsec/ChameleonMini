@@ -195,7 +195,9 @@ ISR_SHARED isr_Reader14443_2A_TCD0_CCC_vect(void) {
     BitCountUp = 0;
 
     State = STATE_IDLE;
+#ifndef CHAMELEON_TINY_UART_MODE
     PORTE.OUTTGL = PIN3_bm;
+#endif
 }
 
 // Reader -> card send bits finished
@@ -205,7 +207,9 @@ void Reader14443AMillerEOC(void) {
     CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCBIF_bm | TC0_CCCIF_bm;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCBINTLVL_OFF_gc | TC_CCCINTLVL_HI_gc;
     CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES - 1;
+#ifndef CHAMELEON_TINY_UART_MODE
     PORTE.OUTTGL = PIN3_bm;
+#endif
 }
 
 // EOC of Card->Reader found

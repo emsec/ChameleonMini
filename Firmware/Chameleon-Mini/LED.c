@@ -24,6 +24,70 @@ static const MapEntryType PROGMEM LEDFunctionMap[] = {
     { .Id = LED_LOG_MEM_FULL,	.Text = "LOGMEM_FULL"		},
 };
 
+#ifdef CHAMELEON_TINY_SUPPORT
+// Code below imported from RfidResearchGroup/ChameleonMini and authored by
+// @willok
+uint8_t LedConfig[] = {
+    1,    0,    2,    2,    2,        //    1
+    0,    1,    2,    2,    2,
+    0,    0,    1,    2,    2,
+    0,    0,    0,    2,    2,
+    0,    0,    2,    1,    2,
+    0,    0,    2,    0,    2,
+    0,    0,    2,    2,    1,
+    0,    0,    2,    2,    0,
+    0,    0,    0,    1,    2,        //    9
+};
+
+void Led8Map(uint8_t LedNo) {
+    if (LedNo > SETTINGS_COUNT) {
+        return;
+    }
+
+    if (LedConfig[LedNo * 5])
+        LED_PORT.OUTSET = PIN4_bm;
+    else
+        LED_PORT.OUTCLR = PIN4_bm;
+
+    if (LedConfig[LedNo * 5 + 1])
+        LED_PORT.OUTSET = PIN3_bm;
+    else
+        LED_PORT.OUTCLR = PIN3_bm;
+
+    if (0 == LedConfig[LedNo * 5 + 2]) {
+        PORTA.OUTCLR = PIN0_bm;
+        PORTA.DIRSET = PIN0_bm;
+    } else if (1 == LedConfig[LedNo * 5 + 2]) {
+        PORTA.OUTSET = PIN0_bm;
+        PORTA.DIRSET = PIN0_bm;
+    } else {
+        PORTA.DIRCLR = PIN0_bm;
+    }
+
+    if (0 == LedConfig[LedNo * 5 + 3]) {
+        PORTE.OUTCLR = PIN1_bm;
+        PORTE.DIRSET = PIN1_bm;
+    } else if (1 == LedConfig[LedNo * 5 + 3]) {
+        PORTE.OUTSET = PIN1_bm;
+        PORTE.DIRSET = PIN1_bm;
+    } else {
+        PORTE.DIRCLR = PIN1_bm;
+    }
+
+    if (0 == LedConfig[LedNo * 5 + 4]) {
+        PORTE.OUTCLR = PIN0_bm;
+        PORTE.DIRSET = PIN0_bm;
+    } else if (1 == LedConfig[LedNo * 5 + 4]) {
+        PORTE.OUTSET = PIN0_bm;
+        PORTE.DIRSET = PIN0_bm;
+    } else {
+        PORTE.DIRCLR = PIN0_bm;
+    }
+}
+
+#endif
+
+
 INLINE void Tick(uint8_t Mask, LEDActionEnum *Action) {
     static uint8_t LEDRedBlinkPrescaler = 0;
     static uint8_t LEDGreenBlinkPrescaler = 0;
@@ -94,8 +158,18 @@ void LEDInit(void) {
 
 
 void LEDTick(void) {
+#ifndef CHAMELEON_TINY_SUPPORT
     Tick(LED_RED, &LEDRedAction);
     Tick(LED_GREEN, &LEDGreenAction);
+#else
+// Code below imported from RfidResearchGroup/ChameleonMini and authored by
+// @willok
+    static uint8_t LastLed = 0xFF;
+    if (LastLed != GlobalSettings.ActiveSettingIdx) {
+	LastLed = GlobalSettings.ActiveSettingIdx;
+	Led8Map(LastLed);
+    }
+#endif
 }
 
 void LEDGetFuncList(char *List, uint16_t BufferSize) {

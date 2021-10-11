@@ -1,4 +1,8 @@
 #include "Chameleon-Mini.h"
+#ifdef CHAMELEON_TINY_UART_MODE
+#include "Uart.h"
+#include "UartCmd.h"
+#endif
 
 int main(void) {
     SystemInit();
@@ -14,6 +18,10 @@ int main(void) {
     AntennaLevelInit();
     LogInit();
     SystemInterruptInit();
+#ifdef CHAMELEON_TINY_UART_MODE
+    UartInit();
+    UartCmdInit();
+#endif
 
     while (1) {
         if (SystemTick100ms()) {
@@ -27,12 +35,18 @@ int main(void) {
             LogTick();
             CommandLineTick();
             AntennaLevelTick();
+#ifdef CHAMELEON_TINY_UART_MODE
+	    UartCmdTick();
+#endif
             LEDHook(LED_POWERED, LED_ON);
         }
+#ifdef CHAMELEON_TINY_UART_MODE
+	UartTask();
+	UartCmdTask();
+#endif
         ApplicationTask();
         CodecTask();
         LogTask();
         TerminalTask();
     }
 }
-
