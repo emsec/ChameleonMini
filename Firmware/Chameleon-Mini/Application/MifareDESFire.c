@@ -41,6 +41,12 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFire/DESFireLogging.h"
 #include "DESFire/DESFireUtils.h"
 
+/* Quick fix to the problem pointed out by @colinoflynn in 
+ * emsec/ChameleonMini issue #302: 
+ * (see new usages below in the function MifareDesfireAppProcess(., .))
+ */
+#define __DESFire_RoundToBytes(bitCount)       ((unsigned int) (bitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE) 
+
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
@@ -222,12 +228,12 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     //LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
-         return MifareDesfireProcess(Buffer, BitCount);
+         return __DESFire_RoundToBytes(MifareDesfireProcess(Buffer, BitCount));
     }
     else if(ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
             Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) { 
          // Native wrapped command send without CRCA checksum bytes appended: 
-         return MifareDesfireProcess(Buffer, BitCount);
+         return __DESFire_RoundToBytes(MifareDesfireProcess(Buffer, BitCount));
     }
     else {
          return ISO144433APiccProcess(Buffer, BitCount);
