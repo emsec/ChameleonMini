@@ -12,7 +12,7 @@ CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_1K_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_MF_ULTRALIGHT_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_ISO14443A_SNIFF_SUPPORT
-CONFIG_SETTINGS  += -DCONFIG_ISO14443A_READER_SUPPORT
+#CONFIG_SETTINGS  += -DCONFIG_ISO14443A_READER_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_NTAG215_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_VICINITY_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_SL2S2002_SUPPORT
@@ -62,7 +62,7 @@ SETTINGS	+= -DLED_SETTING_GLOBAL
 #Default logging mode
 SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_OFF
 #SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_MEMORY
-#SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_TERMINAL
+#SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_LIVE
 
 #Define if log settings should be global
 SETTINGS	+= -DLOG_SETTING_GLOBAL
@@ -93,8 +93,8 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Set a default logging mode for debugging with the DESFire 
 #emulation code:
-SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
-#SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
+#SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
+SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
 SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
@@ -132,9 +132,12 @@ SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 
 DESFIRE_MAINSRC = Application/DESFire
 
+DESFIRE_CONFIG_SETTINGS_BASE = $(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DDESFIRE_CRYPTO1_SAVE_SPACE -UDEFAULT_CONFIGURATION
+
 #Memory definitions and objcopy flags to include sections in binaries
-FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
+FLASH_DATA_ADDR = 0x10000  #Start of data section in flash
 FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
+#FLASH_DATA_SIZE = 0x0FFFF  #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
@@ -291,9 +294,15 @@ local-clean:
 	@rm -rf $(OBJDIR)
 	@mkdir $(OBJDIR)
 
-desfire: CONFIG_SETTINGS:= -DCONFIG_MF_DESFIRE_SUPPORT -DDEFAULT_CONFIGURATION=CONFIG_NONE -DDESFIRE_CRYPTO1_SAVE_SPACE
-desfire: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep
+## Defining custom targets for the DESFire build (normal/user mode) and 
+## developer mode for use with the Android CMLD application that enables 
+## the printing of LIVE logs to the phone's console by default:
+desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
 	@avr-size $(TARGET).elf
+desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_NONE
+desfire: desfire-build
+desfire-dev: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_MF_DESFIRE_SUPPORT
+desfire-dev: desfire-build
 

@@ -42,7 +42,8 @@ This notice must be retained at the top of all source files where indicated.
 
 #define ISO14443A_CMD_RATS                  0xE0
 #define ISO14443A_RATS_FRAME_SIZE           (6 * BITS_PER_BYTE) //(4 * 8) /* Bit */
-#define ISO14443A_CRC_BYTES_FRAME_SIZE      (ISO14443A_CRCA_SIZE * BITS_PER_BYTE)
+#define ISO14443A_CMD_RNAK                  0xB2
+#define ISO14443A_CRC_FRAME_SIZE           (ISO14443A_CRCA_SIZE * BITS_PER_BYTE)
 
 #define ISO14443_PCB_BLOCK_TYPE_MASK        0xC0
 #define ISO14443_PCB_I_BLOCK                0x00
@@ -89,7 +90,7 @@ extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
-#define MAX_STATE_RETRY_COUNT        (2)
+#define MAX_STATE_RETRY_COUNT               (3)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault); 
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging); 
@@ -101,13 +102,27 @@ void ISO144434SwitchState(Iso144434StateType NewState);
 void ISO144434SwitchState2(Iso144434StateType NewState, bool performLogging);
 
 void ISO144434Reset(void);
-uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t BitCount);
+static uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t BitCount);
 
 /*
  * ISO/IEC 14443-3A implementation
  */
 
-#define ISO14443A_CRCA_INIT      ((uint16_t) 0x6363)
+//#define ISO14443A_CRCA_INIT      ((uint16_t) 0x6363)
+#define ISO14443A_CRCA_INIT        ((uint16_t) 0xC6C6)
+
+#define GetAndSetBufferCRCA(Buffer, ByteCount)     ({                                \
+     uint16_t fullReturnBits = 0;                                                    \
+     ISO14443AUpdateCRCA(Buffer, ByteCount, ISO14443A_CRCA_INIT);                    \
+     fullReturnBits = ByteCount * BITS_PER_BYTE + ISO14443A_CRC_FRAME_SIZE;          \
+     fullReturnBits;                                                                 \
+     }) 
+#define GetAndSetNoResponseCRCA(Buffer)            ({                                \
+     uint16_t fullReturnBits = 0;                                                    \
+     ISO14443AUpdateCRCA(Buffer, 0, ISO14443A_CRCA_INIT);                            \
+     fullReturnBits = ISO14443A_CRC_FRAME_SIZE;                                      \
+     fullReturnBits;                                                                 \
+     }) 
 
 uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t InitCRCA);
 

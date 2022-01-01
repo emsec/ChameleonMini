@@ -11,11 +11,88 @@
 #define CRC_INIT_R		0xC6C6 /* Bit reversed */
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-uint8_t FirstUidCL[4] = { 0 };
+
+//uint8_t FirstUidCL[4] = { 0 };
+
+#include "DESFire/DESFireISO14443Support.h"
+
+bool ISO14443ASelectDesfire(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue) {
+    uint8_t* DataPtr = (uint8_t*) Buffer;
+    uint8_t NVB = DataPtr[1];
+
+    switch (NVB) {
+    case ISO14443A_NVB_AC_START:
+        /* Start of anticollision procedure.
+         * Send whole UID CLn + BCC          */
+        DataPtr[0] = UidCL[0];
+        DataPtr[1] = UidCL[1];
+        DataPtr[2] = UidCL[2];
+        DataPtr[3] = UidCL[3];
+        DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
+        //ISO14443AUpdateCRCA(Buffer, 5, ISO14443A_CRCA_INIT);
+	//memcpy(FirstUidCL, UidCL, ISO14443A_CL_UID_SIZE); // TODO: Is this actually needed / used ???
+        *BitCount = ISO14443A_CL_FRAME_SIZE; //+ ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
+        return false;
+
+    case ISO14443A_NVB_AC_END:
+        /* End of anticollision procedure.
+         * Send SAK CLn if we are selected. */
+        if (    (DataPtr[2] == UidCL[0]) &&
+                (DataPtr[3] == UidCL[1]) &&
+                (DataPtr[4] == UidCL[2]) &&
+                (DataPtr[5] == UidCL[3]) ) {
+             DataPtr[0] = SAKValue;
+             //DataPtr[1] = UidCL[4];
+	     //DataPtr[2] = UidCL[5];
+	     //DataPtr[3] = UidCL[6];
+	     //ISO14443AUpdateCRCA(Buffer, 4, ISO14443A_CRCA_INIT);
+             //DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
+	     //*BitCount = ISO14443A_CL_FRAME_SIZE;
+             *BitCount = 1 * BITS_PER_BYTE; //+ ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
+	     return true;
+        }
+        else {
+            /* We have not been selected. Don't send anything. */
+            *BitCount = 0;
+            return false;
+        }
+    default:
+    {
+        uint8_t CollisionByteCount = ((NVB >> 4) & 0x0f) - 2;
+        uint8_t CollisionBitCount  = (NVB >> 0) & 0x0f;
+        uint8_t mask = 0xFF >> (8 - CollisionBitCount);
+        // Since the UidCL does not contain the BCC, we have to distinguish here
+        if (
+                ((CollisionByteCount == 5 || (CollisionByteCount == 4 && CollisionBitCount > 0)) &&
+           memcmp(UidCL, &DataPtr[2], 4) == 0 && (ISO14443A_CALC_BCC(UidCL) & mask) == (DataPtr[6] & mask))
+                ||
+                (CollisionByteCount == 4 && CollisionBitCount == 0 && memcmp(UidCL, &DataPtr[2], 4) == 0)
+                ||
+                (CollisionByteCount < 4 && memcmp(UidCL, &DataPtr[2], CollisionByteCount) == 0 &&
+           (UidCL[CollisionByteCount] & mask) == (DataPtr[CollisionByteCount + 2] & mask))
+        )
+        {
+            DataPtr[0] = UidCL[0];
+            DataPtr[1] = UidCL[1];
+            DataPtr[2] = UidCL[2];
+            DataPtr[3] = UidCL[3];
+            DataPtr[4] = ISO14443A_CALC_BCC(DataPtr);
+
+            *BitCount = ISO14443A_CL_FRAME_SIZE;
+        } else {
+            *BitCount = 0;
+        }
+        return false;
+    }
+    /* No anticollision supported */
+        *BitCount = 0;
+        return false;
+    }
+}
+
 #endif
 
 #define USE_HW_CRC
-
 #ifdef USE_HW_CRC
 void ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount) {
     uint8_t *DataPtr = (uint8_t *) Buffer;

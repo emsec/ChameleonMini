@@ -29,6 +29,7 @@ This notice must be retained at the top of all source files where indicated.
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
 
+#include "../Common.h"
 #include "Reader14443A.h"
 
 #include "MifareDESFire.h"
@@ -46,6 +47,15 @@ This notice must be retained at the top of all source files where indicated.
  * (see new usages below in the function MifareDesfireAppProcess(., .))
  */
 #define __DESFire_RoundToBytes(bitCount)       ((unsigned int) (bitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE) 
+
+#define __DESFireTruncateCRCA(rawBitCount, truncQ)                                                ({ \
+     uint16_t resultingBitCount = rawBitCount;                                                       \
+     do {                                                                                            \
+          if(truncQ)                                                                                 \
+	       resultingBitCount = MAX(0, (int) (rawBitCount - ISO14443A_CRC_FRAME_SIZE));           \
+     } while(0);                                                                                     \
+     resultingBitCount;                                                                              \
+     })
 
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
@@ -228,15 +238,20 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     //LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if(ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
-         return __DESFire_RoundToBytes(MifareDesfireProcess(Buffer, BitCount));
+         return MifareDesfireProcess(Buffer, BitCount);
+
     }
     else if(ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
             Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) { 
          // Native wrapped command send without CRCA checksum bytes appended: 
-         return __DESFire_RoundToBytes(MifareDesfireProcess(Buffer, BitCount));
+         return MifareDesfireProcess(Buffer, BitCount);
     }
     else {
-         return ISO144433APiccProcess(Buffer, BitCount);
+         uint8_t Cmd = Buffer[0];
+	 bool truncateCRCA = (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA || Cmd == ISO14443A_CMD_RNAK) 
+	                     || IsCmdSelect1(Buffer) || IsCmdSelect2(Buffer);
+	 uint16_t ProcessedBitCount = ISO144433APiccProcess(Buffer, ByteCount);
+	 return __DESFireTruncateCRCA(ProcessedBitCount, truncateCRCA); 
     }
 }
 
