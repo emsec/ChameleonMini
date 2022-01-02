@@ -86,11 +86,17 @@ void LogInit(void) {
 }
 
 void LogTick(void) {
-    if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE &&
-            (++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0)
-        AtomicLiveLogTick();
-    if (EnableLogSRAMtoFRAM)
-        LogSRAMToFRAM();
+    // The logging functionality slows down the timings of data exchanges between 
+    // Chameleon emulated tags and readers, so schedule the logging writes to 
+    // happen only on intervals that will be outside of timing windows for individual xfers
+    // initiated from PICC <--> PCD (e.g., currently approximately every 600ms):
+    if((++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0) {
+        if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE)
+            AtomicLiveLogTick();
+        if (EnableLogSRAMtoFRAM)
+            LogSRAMToFRAM();
+        LiveLogModePostTickCount = 0;
+    }
 }
 
 void LogTask(void) {
