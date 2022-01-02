@@ -135,7 +135,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     else if(Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
         if(ReturnBytes > 0) {
-            //LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
+            LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
         }
         return ReturnBytes;
     }
@@ -223,7 +223,7 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
             ISO14443AAppendCRCA(Buffer, BitCount);
             BitCount += 2;
         }
-        //LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, BitCount);
+        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, BitCount);
         return BitCount * BITS_PER_BYTE;
     }
     else {
@@ -248,7 +248,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     else {
          uint8_t Cmd = Buffer[0];
 	 bool truncateCRCA = (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA || Cmd == ISO14443A_CMD_RNAK || 
-	                      IsCmdSelectRound1(Buffer)); // || IsCmdSelectRound2(Buffer));
+	                      IsCmdSelectRound1(Buffer)); 
 	 uint16_t ProcessedBitCount = ISO144433APiccProcess(Buffer, BitCount);
 	 truncateCRCA = truncateCRCA && (ProcessedBitCount != 0);
 	 return __DESFireTruncateCRCA(ProcessedBitCount, truncateCRCA); 

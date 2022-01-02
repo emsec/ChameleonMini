@@ -118,7 +118,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint1
      }) 
 #define GetAndSetNoResponseCRCA(Buffer)            ({                                \
      uint16_t fullReturnBits = 0;                                                    \
-     ISO14443AAppendCRCA(Buffer, 0);                            \
+     ISO14443AAppendCRCA(Buffer, 0);                                                 \
      fullReturnBits = ISO14443A_CRC_FRAME_SIZE;                                      \
      fullReturnBits;                                                                 \
      }) 

@@ -27,9 +27,7 @@ bool ISO14443ASelectDesfire(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, ui
         DataPtr[2] = UidCL[2];
         DataPtr[3] = UidCL[3];
         DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
-        //ISO14443AUpdateCRCA(Buffer, 5, ISO14443A_CRCA_INIT);
-	//memcpy(FirstUidCL, UidCL, ISO14443A_CL_UID_SIZE); // TODO: Is this actually needed / used ???
-        *BitCount = ISO14443A_CL_FRAME_SIZE; //+ ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
+        *BitCount = ISO14443A_CL_FRAME_SIZE; 
         return false;
 
     case ISO14443A_NVB_AC_END:
@@ -40,20 +38,8 @@ bool ISO14443ASelectDesfire(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, ui
                 (DataPtr[4] == UidCL[2]) &&
                 (DataPtr[5] == UidCL[3]) ) {
              DataPtr[0] = SAKValue;
-             //DataPtr[1] = UidCL[4];
-	     //DataPtr[2] = UidCL[5];
-	     //DataPtr[3] = UidCL[6];
-	     //DataPtr[0] = UidCL[4];
-	     //DataPtr[1] = UidCL[5];
-	     //DataPtr[2] = UidCL[6];
-	     //DataPtr[3] = UidCL[7];
 	     ISO14443AUpdateCRCA(Buffer, 1, ISO14443A_CRCA_INIT);
-	     //*BitCount = ISO14443A_SAK_FRAME_SIZE;
 	     *BitCount = BITS_PER_BYTE;
-	     //ISO14443AUpdateCRCA(Buffer, 4, ISO14443A_CRCA_INIT);
-             //DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
-	     //*BitCount = ISO14443A_CL_FRAME_SIZE;
-             //*BitCount = 4 * BITS_PER_BYTE; //+ ISO14443A_CRCA_SIZE * BITS_PER_BYTE;
 	     return true;
         }
         else {

@@ -63,8 +63,6 @@ INLINE
 bool ISO14443ASelect(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t SAKValue) {
     uint8_t *DataPtr = (uint8_t *) Buffer;
     uint8_t NVB = DataPtr[1];
-    //uint8_t CollisionByteCount = (NVB >> 4) & 0x0F;
-    //uint8_t CollisionBitCount =  (NVB >> 0) & 0x0F;
 
     switch (NVB) {
         case ISO14443A_NVB_AC_START:

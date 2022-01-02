@@ -24,10 +24,10 @@ CONFIG_SETTINGS  += -DCONFIG_ISO14443A_READER_SUPPORT
 
 #Default configuration
 #CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_MINI_4B
-#CONFIG_SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K
-#CONFIG_SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
-#CONFIG_SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
-#CONFIG_SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_READER
+#CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K
+#CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
+#CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
+#CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_READER
 CONFIG_SETTINGS     += -DDEFAULT_CONFIGURATION=CONFIG_NONE
 
 #Support magic mode on mifare classic configuration
@@ -93,8 +93,8 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Set a default logging mode for debugging with the DESFire 
 #emulation code:
-SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
-#SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
+#SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
+SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
 SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
@@ -121,8 +121,8 @@ SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
 
 #Set a minimum incoming/outgoing log size so we do not spam the 
 #Chameleon Mini logs to much by logging everything:
-SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
-SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
+SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
+SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
 
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
@@ -149,7 +149,7 @@ BUILD_DATE   = "\"$(shell date /t)\""
 else
 BUILD_DATE   = $(shell date +'\"%y%m%d\"')
 endif
-COMMIT_ID	 = $(shell git rev-parse --short HEAD)
+COMMIT_ID    = $(shell git rev-parse --short HEAD)
 MCU          = atxmega128a4u
 ARCH         = XMEGA
 BOARD        = NONE
@@ -165,7 +165,7 @@ SRC         += Application/MifareUltralight.c Application/MifareClassic.c Applic
 			Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c \
 			Application/CryptoTDEA-HWAccelerated.S Application/CryptoTDEA.c Application/CryptoAES128.c \
 			Tests/CryptoTests.c Tests/ChameleonTerminal.c
-SRC		  += Application/NTAG215.c
+SRC         += Application/NTAG215.c
 SRC         += Codec/ISO15693.c
 SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/TITagitplus.c Application/ISO15693-A.c Application/EM4233.c
 SRC	       += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
@@ -189,8 +189,8 @@ CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR)
 			   -D__AVR_ATxmega128A4U__ -D__PROG_TYPES_COMPAT__ -DMAX_ENDPOINT_INDEX=4 \
 			   -std=gnu99 -Werror=implicit-function-declaration \
 			   -fno-inline-small-functions -fshort-enums -fpack-struct \
-                  -ffunction-sections -Wl,--gc-sections --data-sections -ffunction-sections \
-                  -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
+                  	   -ffunction-sections -Wl,--gc-sections --data-sections -ffunction-sections \
+                           -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
 			   -fno-aggressive-loop-optimizations
 LD_FLAGS     = $(CC_FLAGS) -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
@@ -294,6 +294,9 @@ local-clean:
 	@rm -f $(TARGET)*.{elf,hex,eep,bin,lss,map}
 	@rm -rf $(OBJDIR)
 	@mkdir $(OBJDIR)
+
+git-add-dev:
+	@git add Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
 
 ## Defining custom targets for the DESFire build (normal/user mode) and 
 ## developer mode for use with the Android CMLD application that enables 
