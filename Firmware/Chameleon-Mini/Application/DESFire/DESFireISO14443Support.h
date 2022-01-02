@@ -108,8 +108,8 @@ static uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint1
  * ISO/IEC 14443-3A implementation
  */
 
-//#define ISO14443A_CRCA_INIT      ((uint16_t) 0x6363)
-#define ISO14443A_CRCA_INIT        ((uint16_t) 0xC6C6)
+#define ISO14443A_CRCA_INIT      ((uint16_t) 0x6363)
+//#define ISO14443A_CRCA_INIT        ((uint16_t) 0xC6C6)
 
 #define GetAndSetBufferCRCA(Buffer, ByteCount)     ({                                \
      uint16_t fullReturnBits = 0;                                                    \

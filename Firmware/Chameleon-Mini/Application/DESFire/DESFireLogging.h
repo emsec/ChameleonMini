@@ -125,6 +125,7 @@ void DebugPrintP(const char *fmt, ...);
     strBuffer;                                                  \
     })
 
+#if defined(DESFIRE_DEFAULT_LOGGING_MODE) && DESFIRE_DEFAULT_LOGGING_MODE != 0
 #define LogDebuggingMsg(msg)                                                                        ({ \
     do {                                                                                               \
          strncpy_P((char *) __InternalStringBuffer, msg, STRING_BUFFER_SIZE);                          \
@@ -133,6 +134,9 @@ void DebugPrintP(const char *fmt, ...);
                   sbufLength);                                                                         \
     } while(0);                                                                                        \
     })
+#else
+#define LogDebuggingMsg(msg)      ({})
+#endif
 
 /*#define DesfireLogIncoming(incBuf, bitCount)                                             ({ \
     uint8_t logLength = 0;                                                                   \

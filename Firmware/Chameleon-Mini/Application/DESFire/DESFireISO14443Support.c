@@ -362,7 +362,8 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
                 Uid[2] = Uid[1];
                 Uid[1] = Uid[0];
                 Uid[0] = ISO14443A_SAK_INCOMPLETE; //ISO14443A_UID0_CT;
-            }
+                //Uid[0] = ISO14443A_UID0_CT;
+	    }
 	    if (ISO14443ASelectDesfire(Buffer, &BitCount, Uid, SAK_CL1_VALUE)) {
                 /* CL1 stage has ended successfully */
                 const char *debugPrintStr = PSTR("ISO14443-4: Select OK");
