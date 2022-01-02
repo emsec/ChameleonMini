@@ -12,8 +12,6 @@
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
 
-//uint8_t FirstUidCL[4] = { 0 };
-
 #include "DESFire/DESFireISO14443Support.h"
 
 bool ISO14443ASelectDesfire(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue) {
@@ -49,8 +47,9 @@ bool ISO14443ASelectDesfire(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, ui
 	     //DataPtr[1] = UidCL[5];
 	     //DataPtr[2] = UidCL[6];
 	     //DataPtr[3] = UidCL[7];
-	     ISO14443AAppendCRCA(Buffer, 1);
-	     *BitCount = ISO14443A_SAK_FRAME_SIZE;
+	     ISO14443AUpdateCRCA(Buffer, 1, ISO14443A_CRCA_INIT);
+	     //*BitCount = ISO14443A_SAK_FRAME_SIZE;
+	     *BitCount = BITS_PER_BYTE;
 	     //ISO14443AUpdateCRCA(Buffer, 4, ISO14443A_CRCA_INIT);
              //DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
 	     //*BitCount = ISO14443A_CL_FRAME_SIZE;

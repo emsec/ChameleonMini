@@ -90,7 +90,7 @@ extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
-#define MAX_STATE_RETRY_COUNT               (3)
+#define MAX_STATE_RETRY_COUNT               (1)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault); 
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging); 
@@ -107,19 +107,18 @@ static uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint1
 /*
  * ISO/IEC 14443-3A implementation
  */
-
 #define ISO14443A_CRCA_INIT      ((uint16_t) 0x6363)
 //#define ISO14443A_CRCA_INIT        ((uint16_t) 0xC6C6)
 
 #define GetAndSetBufferCRCA(Buffer, ByteCount)     ({                                \
      uint16_t fullReturnBits = 0;                                                    \
-     ISO14443AUpdateCRCA(Buffer, ByteCount, ISO14443A_CRCA_INIT);                    \
+     ISO14443AAppendCRCA(Buffer, ByteCount);                    \
      fullReturnBits = ByteCount * BITS_PER_BYTE + ISO14443A_CRC_FRAME_SIZE;          \
      fullReturnBits;                                                                 \
      }) 
 #define GetAndSetNoResponseCRCA(Buffer)            ({                                \
      uint16_t fullReturnBits = 0;                                                    \
-     ISO14443AUpdateCRCA(Buffer, 0, ISO14443A_CRCA_INIT);                            \
+     ISO14443AAppendCRCA(Buffer, 0);                            \
      fullReturnBits = ISO14443A_CRC_FRAME_SIZE;                                      \
      fullReturnBits;                                                                 \
      }) 

@@ -25,8 +25,11 @@
 #define ISO14443A_NVB_AC_START      0x20
 #define ISO14443A_NVB_AC_END        0x70
 
-#define IsCmdSelect1(Buffer)        ((Buffer[0] == ISO14443A_CMD_SELECT_CL1)) //&& (Buffer[1] == ISO14443A_NVB_AC_START))
-#define IsCmdSelect2(Buffer)        ((Buffer[0] == ISO14443A_CMD_SELECT_CL2)) //&& (Buffer[1] == ISO14443A_NVB_AC_END))
+#define IsSelectCmd(Buffer)         ((Buffer[0] == ISO14443A_CMD_SELECT_CL1) || \
+				     (Buffer[0] == ISO14443A_CMD_SELECT_CL2) || \
+				     (Buffer[0] == ISO14443A_CMD_SELECT_CL3)) 
+#define IsCmdSelectRound1(Buffer)   (IsSelectCmd(Buffer) && (Buffer[1] == ISO14443A_NVB_AC_START))
+#define IsCmdSelectRound2(Buffer)   (IsSelectCmd(Buffer) && (Buffer[1] == ISO14443A_NVB_AC_END))
 
 #define ISO14443A_CL_UID_OFFSET     0
 #define ISO14443A_CL_UID_SIZE       4
@@ -122,7 +125,6 @@ bool ISO14443ASelect(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t S
 }
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-//extern uint8_t FirstUidCL[4];
 bool ISO14443ASelectDesfire(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
 #endif
 

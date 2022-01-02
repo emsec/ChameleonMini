@@ -268,8 +268,8 @@ uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t
         uint8_t Byte = *DataPtr++;
         Checksum = _crc_ccitt_update(Checksum, Byte);
     }
-    DataPtr[0] = (Checksum >> 8) & 0x00FF;
-    DataPtr[1] = Checksum & 0x00FF;
+    DataPtr[1] = (Checksum >> 8) & 0x00FF;
+    DataPtr[0] = Checksum & 0x00FF;
     return Checksum;
 }
 
@@ -308,7 +308,21 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
     
     uint8_t Cmd = Buffer[0];
     
-    /* Wakeup and Request may occur in all states */
+    /* Wakeup and Request may occure in all states */
+    /*if ((BitCount == 7) &&
+            // precheck of WUP/REQ because ISO14443AWakeUp destroys BitCount:
+            (((Iso144433AState != ISO14443_3A_STATE_HALT) && (Cmd == ISO14443A_CMD_REQA)) || (Cmd == ISO14443A_CMD_WUPA))) {
+        bool FromHalt = Iso144433AState == ISO14443_3A_STATE_HALT;
+        uint16_t PriorBitCount = BitCount;
+	if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+            ISO144433ASwitchState(ISO14443_3A_STATE_READY1);
+	    return BitCount;
+        }
+	else{
+	    BitCount = PriorBitCount;
+	    ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
+	}
+    }*/
     if (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA) {
         ISO144433ASwitchState(ISO14443_3A_STATE_IDLE); 
     }
@@ -346,7 +360,6 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         ISO144433ASwitchState(ISO14443_3A_STATE_READY1);
         Buffer[0] = (ATQA_VALUE >> 8) & 0x00FF; // TODO: Swapped these ... 
         Buffer[1] = (ATQA_VALUE >> 0) & 0x00FF;
-        //ISO14443AAppendCRCA(Buffer, 2);
         const char *debugPrintStr = PSTR("ISO14443-4 (IDLE): ATQA");
 	LogDebuggingMsg(debugPrintStr);
         //return ISO14443A_ATQA_FRAME_SIZE; //+ ISO14443A_CRC_BYTES_FRAME_SIZE;
@@ -361,8 +374,8 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
                 Uid[3] = Uid[2];
                 Uid[2] = Uid[1];
                 Uid[1] = Uid[0];
-                Uid[0] = ISO14443A_SAK_INCOMPLETE; //ISO14443A_UID0_CT;
                 //Uid[0] = ISO14443A_UID0_CT;
+		Uid[0] = ISO14443A_UID0_RANDOM;
 	    }
 	    if (ISO14443ASelectDesfire(Buffer, &BitCount, Uid, SAK_CL1_VALUE)) {
                 /* CL1 stage has ended successfully */
@@ -438,7 +451,7 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
     }
 
     /* Unknown command. Reset back to idle/halt state. */
-    bool defaultReset = Iso144433AState != ISO14443_3A_STATE_IDLE;
+    bool defaultReset = false; //Iso144433AState != ISO14443_3A_STATE_IDLE;
     if(!CheckStateRetryCount(defaultReset)) {
         const char *logMsg = PSTR("ISO14443-3: RESET TO IDLE 0x%02x");
         DEBUG_PRINT_P(logMsg, Cmd);
@@ -447,8 +460,9 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
     const char *debugPrintStr = PSTR("ISO14443-4: UNK-CMD NO_RESP");
     LogDebuggingMsg(debugPrintStr);
     //return ISO14443A_APP_NO_RESPONSE;
-    Buffer[0] = ISO14443A_CMD_RNAK;
-    return GetAndSetBufferCRCA(Buffer, 1);
+    //Buffer[0] = ISO14443A_CMD_RNAK;
+    //return GetAndSetBufferCRCA(Buffer, 1);
+    return GetAndSetNoResponseCRCA(Buffer);
 
 }
 
