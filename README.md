@@ -12,7 +12,7 @@ Note to the manufacturers: Some of the third-party ChameleonMini are violating t
 
 First Steps
 -----------
-To upgrade the firmware of your ChameleonMini, please visit the [Getting Started page](https://cdn.statically.io/gh/emsec/ChameleonMini/master/Doc/Doxygen/html/_page__getting_started.html) from the [doxygen documentation](https://cdn.statically.io/gh/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
+To upgrade the firmware of your ChameleonMini, please visit the [Getting Started page](https://cdn.statically.io/gh/emsec/ChameleonMini/master/Doc/Doxygen/html/Page_GettingStarted.html) from the [doxygen documentation](https://cdn.statically.io/gh/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
 
 Supported Cards and Codecs
 --------------------------
