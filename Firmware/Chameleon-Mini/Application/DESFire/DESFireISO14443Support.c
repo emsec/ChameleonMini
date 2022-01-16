@@ -353,8 +353,8 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
         }
         Iso144433AIdleState = Iso144433AState;
         ISO144433ASwitchState(ISO14443_3A_STATE_READY1);
-        Buffer[0] = (ATQA_VALUE >> 8) & 0x00FF; // TODO: Swapped these ... 
-        Buffer[1] = (ATQA_VALUE >> 0) & 0x00FF;
+        Buffer[0] = (ATQA_VALUE) & 0x00FF; 
+        Buffer[1] = (ATQA_VALUE >> 8) & 0x00FF;
         const char *debugPrintStr = PSTR("ISO14443-4 (IDLE): ATQA");
 	LogDebuggingMsg(debugPrintStr);
         return ISO14443A_ATQA_FRAME_SIZE_BYTES * BITS_PER_BYTE;
