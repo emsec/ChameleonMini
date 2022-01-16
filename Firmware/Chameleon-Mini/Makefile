@@ -122,7 +122,8 @@ SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
 #Set a minimum incoming/outgoing log size so we do not spam the 
 #Chameleon Mini logs to much by logging everything:
 SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
-SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
+#SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
+SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE

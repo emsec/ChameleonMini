@@ -48,15 +48,6 @@ This notice must be retained at the top of all source files where indicated.
  */
 #define __DESFire_RoundToBytes(bitCount)       ((unsigned int) (bitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE) 
 
-#define __DESFireTruncateCRCA(rawBitCount, truncQ)                                                ({ \
-     uint16_t resultingBitCount = rawBitCount;                                                       \
-     do {                                                                                            \
-          if(truncQ)                                                                                 \
-	       resultingBitCount = MAX(0, (int) (rawBitCount - ISO14443A_CRC_FRAME_SIZE));           \
-     } while(0);                                                                                     \
-     resultingBitCount;                                                                              \
-     })
-
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
@@ -246,18 +237,12 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
          return MifareDesfireProcess(Buffer, BitCount);
     }
     else {
-	 /* TODO: Clean up this code !!! */
-         //uint8_t Cmd = Buffer[0];
-	 //bool truncateCRCA = (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA || Cmd == ISO14443A_CMD_RNAK || 
-	 //                     IsCmdSelectRound1(Buffer)); 
-	 bool truncateCRCA = false;
 	 uint16_t ProcessedBitCount = ISO144433APiccProcess(Buffer, BitCount);
 	 if(ProcessedBitCount == ISO14443A_APP_NO_RESPONSE) {
               const char *debugNoResponse = PSTR("APP_NO_RESP");
 	      LogDebuggingMsg(debugNoResponse);
 	 }
-	 //truncateCRCA = truncateCRCA && (ProcessedBitCount != 0);
-	 return __DESFireTruncateCRCA(ProcessedBitCount, truncateCRCA); 
+	 return ProcessedBitCount; 
     }
 }
 
