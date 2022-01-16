@@ -302,6 +302,10 @@ void FactoryFormatPiccEV0(void) {
     BYTE uidData[DESFIRE_UID_SIZE];
     RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
     memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
+    /* Conform to NXP Application Note AN10927 about the first 
+     * byte of a randomly generated UID (refer to section 2.1.1).
+     */
+    Picc.Uid[0] = ISO14443A_UID0_RANDOM;
     /* Initialize params to look like EV0 */
     Picc.StorageSize = DESFIRE_STORAGE_SIZE_4K;
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV0;

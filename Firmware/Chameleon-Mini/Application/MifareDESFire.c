@@ -229,7 +229,6 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     if(ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
          return MifareDesfireProcess(Buffer, BitCount);
-
     }
     else if(ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
             Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) { 
