@@ -246,11 +246,17 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
          return MifareDesfireProcess(Buffer, BitCount);
     }
     else {
-         uint8_t Cmd = Buffer[0];
-	 bool truncateCRCA = (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA || Cmd == ISO14443A_CMD_RNAK || 
-	                      IsCmdSelectRound1(Buffer)); 
+	 /* TODO: Clean up this code !!! */
+         //uint8_t Cmd = Buffer[0];
+	 //bool truncateCRCA = (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA || Cmd == ISO14443A_CMD_RNAK || 
+	 //                     IsCmdSelectRound1(Buffer)); 
+	 bool truncateCRCA = false;
 	 uint16_t ProcessedBitCount = ISO144433APiccProcess(Buffer, BitCount);
-	 truncateCRCA = truncateCRCA && (ProcessedBitCount != 0);
+	 if(ProcessedBitCount == ISO14443A_APP_NO_RESPONSE) {
+              const char *debugNoResponse = PSTR("APP_NO_RESP");
+	      LogDebuggingMsg(debugNoResponse);
+	 }
+	 //truncateCRCA = truncateCRCA && (ProcessedBitCount != 0);
 	 return __DESFireTruncateCRCA(ProcessedBitCount, truncateCRCA); 
     }
 }

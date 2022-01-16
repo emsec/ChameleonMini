@@ -38,7 +38,7 @@ bool ISO14443ASelectDesfire(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, ui
                 (DataPtr[4] == UidCL[2]) &&
                 (DataPtr[5] == UidCL[3]) ) {
              DataPtr[0] = SAKValue;
-	     ISO14443AUpdateCRCA(Buffer, 1, ISO14443A_CRCA_INIT);
+	     //ISO14443AUpdateCRCA(Buffer, 1, ISO14443A_CRCA_INIT);
 	     *BitCount = BITS_PER_BYTE;
 	     return true;
         }

@@ -55,11 +55,11 @@ This notice must be retained at the top of all source files where indicated.
 #define SAK_CL2_VALUE           (ISO14443A_SAK_COMPLETE_COMPLIANT)
 #define SAK_UID_NOT_FINISHED    0x04
 
-#define STATUS_FRAME_SIZE           (1 * 8) /* Bits */
+#define STATUS_FRAME_SIZE       (1 * 8) /* Bits */
 
 #define DESFIRE_EV0_ATS_TL_BYTE 0x06 /* TL: ATS length, 6 bytes */
 #define DESFIRE_EV0_ATS_T0_BYTE 0x75 /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
-#define DESFIRE_EV0_ATS_TA_BYTE 0x77 /* TA: Only the lowest bit rate is supported */
+#define DESFIRE_EV0_ATS_TA_BYTE 0x00 /* TA: Only the lowest bit rate is supported (normal is 0x77) */
 #define DESFIRE_EV0_ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
 #define DESFIRE_EV0_ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
 

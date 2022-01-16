@@ -67,7 +67,7 @@ bool ISO14443ASelect(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t S
     switch (NVB) {
         case ISO14443A_NVB_AC_START:
             /* Start of anticollision procedure.
-            * Send whole UID CLn + BCC */
+             * Send whole UID CLn + BCC */
             DataPtr[0] = UidCL[0];
             DataPtr[1] = UidCL[1];
             DataPtr[2] = UidCL[2];
@@ -78,7 +78,7 @@ bool ISO14443ASelect(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t S
 
         case ISO14443A_NVB_AC_END:
             /* End of anticollision procedure.
-            * Send SAK CLn if we are selected. */
+             * Send SAK CLn if we are selected. */
             if ((DataPtr[2] == UidCL[0]) &&
                     (DataPtr[3] == UidCL[1]) &&
                     (DataPtr[4] == UidCL[2]) &&

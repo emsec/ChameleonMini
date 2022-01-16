@@ -21,9 +21,9 @@ uint8_t LogBlockListElementCount = 0;
 uint8_t LiveLogModePostTickCount = 0;
 
 static const MapEntryType PROGMEM LogModeMap[] = {
-    { .Id = LOG_MODE_OFF, 		.Text = "OFF" 		},
+    { .Id = LOG_MODE_OFF, 	.Text = "OFF" 		},
     { .Id = LOG_MODE_MEMORY, 	.Text = "MEMORY" 	},
-    { .Id = LOG_MODE_LIVE, 	    .Text = "LIVE" 	    }
+    { .Id = LOG_MODE_LIVE, 	.Text = "LIVE" 	        }
 };
 
 static void LogFuncOff(LogEntryEnum Entry, const void *Data, uint8_t Length) {
@@ -57,11 +57,6 @@ static void LogFuncMemory(LogEntryEnum Entry, const void *Data, uint8_t Length) 
 
 static void LogFuncLive(LogEntryEnum Entry, const void *Data, uint8_t Length) {
     uint16_t SysTick = SystemGetSysTick();
-    //TerminalSendByte((uint8_t) Entry);
-    //TerminalSendByte((uint8_t) Length);
-    //TerminalSendByte((uint8_t)(SysTick >> 8));
-    //TerminalSendByte((uint8_t)(SysTick >> 0));
-    //TerminalSendBlock(Data, Length);
     AtomicAppendLogBlock(Entry, SysTick, Data, Length);
 }
 

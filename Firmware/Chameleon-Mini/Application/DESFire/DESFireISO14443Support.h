@@ -65,7 +65,9 @@ This notice must be retained at the top of all source files where indicated.
 #define ISO14443_R_BLOCK_SIZE               1 /* Bytes */
 
 #define ISO14443_PCB_S_DESELECT             (ISO14443_PCB_S_BLOCK_STATIC)
+#define ISO14443_PCB_S_DESELECT_V2          0xCA
 #define ISO14443_PCB_S_WTX                  (ISO14443_PCB_S_BLOCK_STATIC | 0x30)
+#define ISO14443A_CMD_PPS                   0xD0
 
 #define IS_ISO14443A_4_COMPLIANT(buf)       (buf[0] & 0x20)
 #define MAKE_ISO14443A_4_COMPLIANT(buf)     (buf[0] |= 0x20)
@@ -88,9 +90,10 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 extern Iso144434StateType Iso144434State;
 extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
+extern uint8_t LastReaderSentCmd;
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
-#define MAX_STATE_RETRY_COUNT               (1)
+#define MAX_STATE_RETRY_COUNT               (4)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault); 
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging); 
@@ -108,14 +111,14 @@ static uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint1
  * ISO/IEC 14443-3A implementation
  */
 #define ISO14443A_CRCA_INIT      ((uint16_t) 0x6363)
-//#define ISO14443A_CRCA_INIT        ((uint16_t) 0xC6C6)
 
 #define GetAndSetBufferCRCA(Buffer, ByteCount)     ({                                \
      uint16_t fullReturnBits = 0;                                                    \
-     ISO14443AAppendCRCA(Buffer, ByteCount);                    \
+     ISO14443AAppendCRCA(Buffer, ByteCount);                                         \
      fullReturnBits = ByteCount * BITS_PER_BYTE + ISO14443A_CRC_FRAME_SIZE;          \
      fullReturnBits;                                                                 \
      }) 
+/* TODO: Should we return CRC bytes when giving a NO_RESPONSE ??? ... Apparently "No". */
 #define GetAndSetNoResponseCRCA(Buffer)            ({                                \
      uint16_t fullReturnBits = 0;                                                    \
      ISO14443AAppendCRCA(Buffer, 0);                                                 \

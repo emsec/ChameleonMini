@@ -54,7 +54,7 @@ typedef enum {
     #endif
 
     LOG_INFO_SYSTEM_BOOT		                    = 0xFF, ///< Chameleon boots
-    LOG_EMPTY 					               = 0x00  ///< Empty Log Entry. This is not followed by a length byte 
+    LOG_EMPTY 					            = 0x00  ///< Empty Log Entry. This is not followed by a length byte 
                                                           ///< nor the two systick bytes nor any data.
 } LogEntryEnum;
 
