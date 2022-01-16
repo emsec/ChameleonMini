@@ -311,24 +311,33 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
     uint8_t Cmd = Buffer[0];
     
     /* Wakeup and Request may occure in all states */
-    if ((Cmd == ISO14443A_CMD_REQA) && (LastReaderSentCmd == ISO14443A_CMD_REQA) && 
-	CheckStateRetryCount(false)) {} /* Catch timing issues where the reader sends multiple 
-					   REQA bytes, in between which we would have already sent 
-					   back a response, so that we should not reset. */
+    bool checkStateRetryStatus = CheckStateRetryCount(false);
+    bool decrementRetryCount = true;
+    if ((Cmd == ISO14443A_CMD_REQA) && (LastReaderSentCmd == ISO14443A_CMD_REQA) && !checkStateRetryStatus) {
+         /* Catch timing issues where the reader sends multiple 
+	    REQA bytes, in between which we would have already sent 
+	    back a response, so that we should not reset. */
+	 decrementRetryCount = false;
+    } 
     else if (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA) {
         ISO144433ASwitchState(ISO14443_3A_STATE_IDLE); 
 	CheckStateRetryCount(true);
+	decrementRetryCount = false;
     }
-    else if(ISO144433AIsHalt(Buffer, BitCount)) {
+    else if (ISO144433AIsHalt(Buffer, BitCount)) {
         LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
         ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
         LastReaderSentCmd = Cmd;
+	CheckStateRetryCount(true);
 	const char *logMsg = PSTR("ISO14443-3: HALTING");
         LogDebuggingMsg(logMsg);
         return ISO14443A_APP_NO_RESPONSE;
 	//return GetAndSetNoResponseCRCA(Buffer);
     }
     LastReaderSentCmd = Cmd;
+    if (decrementRetryCount && StateRetryCount > 0) {
+        StateRetryCount -= 1;
+    }
 
     /* This implements ISO 14443-3A state machine */
     /* See: ISO/IEC 14443-3, clause 6.2 */
@@ -406,8 +415,9 @@ uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount) {
                 const char *debugPrintStr = PSTR("Incorrect Select value (R2)");
                 LogDebuggingMsg(debugPrintStr);
 	    }
-            uint16_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-            return GetAndSetBufferCRCA(Buffer, ByteCount);
+            return BitCount;
+	    //uint16_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+            //return GetAndSetBufferCRCA(Buffer, ByteCount);
 	}
         const char *debugPrintStr3 = PSTR("RDY2, NOT SLCT CMD");
         LogDebuggingMsg(debugPrintStr3);
