@@ -30,6 +30,7 @@ This notice must be retained at the top of all source files where indicated.
 #define Iso7816CLA(cmdCode) \
     (cmdCode == DESFIRE_ISO7816_CLA)
 
+#define ISO7816_PROLOGUE_SIZE                        (2)
 #define ISO7816_STATUS_RESPONSE_SIZE                 (0x02)
 #define ISO7816_EF_NOT_SPECIFIED                     (0xff)
 #define ISO7816_EFID_NUMBER_MAX                      (0x0f)
@@ -79,6 +80,7 @@ extern bool Iso7816FileSelected;
 extern uint8_t Iso7816FileOffset;
 extern uint8_t Iso7816EfIdNumber;
 
+bool IsWrappedISO7816CommandType(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount);
 
 #endif

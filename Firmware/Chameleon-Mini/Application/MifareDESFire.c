@@ -38,6 +38,7 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFire/DESFirePICCControl.h"
 #include "DESFire/DESFireCrypto.h"
 #include "DESFire/DESFireISO14443Support.h"
+#include "DESFire/DESFireISO7816Support.h"
 #include "DESFire/DESFireStatusCodes.h"
 #include "DESFire/DESFireLogging.h"
 #include "DESFire/DESFireUtils.h"
@@ -173,11 +174,18 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
 
 uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-    if(ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 && 
-       Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) { // Wrapped native command structure: 
+    bool IsISO7816Cmd = IsWrappedISO7816CommandType(Buffer, ByteCount);
+    uint8_t ISO7816PrologueBytes[2] = { 0x00, 0x00 };
+    if(IsISO7816Cmd) {
+        memcpy(&ISO7816PrologueBytes[0], Buffer, 2);
+	memmove(&Buffer[0], &Buffer[2], ByteCount - 2);
+    }
+    if((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 && 
+        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) || IsISO7816Cmd) { // Wrapped native command structure: 
         /* Unwrap the PDU from ISO 7816-4 */
         // Check CRC bytes appended to the buffer:
-        // -- Actually, just ignore parity problems if they exist
+        // -- Actually, just ignore parity problems if they exist, 
+	// -- except for in the wrapped ISO7816 command cases
         DesfireCmdCLA = Buffer[0];
         if(Iso7816CLA(DesfireCmdCLA)) {
             uint16_t iso7816ParamsStatus = SetIso7816WrappedParametersType(Buffer, ByteCount);
@@ -207,12 +215,19 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
             BitCount += 2;
         }
         else {
-            /* Re-wrap into ISO 7816-4 */
-            Buffer[BitCount] = Buffer[0];
+	    /* Re-wrap into ISO 7816-4 */
+	    Buffer[BitCount] = Buffer[0];
             Buffer[BitCount + 1] = Buffer[1];
             memmove(&Buffer[0], &Buffer[2], BitCount - 2);
             ISO14443AAppendCRCA(Buffer, BitCount);
             BitCount += 2;
+            /* Append the same ISO7816 prologue bytes to the response: */
+	    if(IsISO7816Cmd) {
+                 memmove(&Buffer[2], &Buffer[0], BitCount);
+		 memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
+		 BitCount += 2;
+                 ISO14443AAppendCRCA(Buffer, BitCount);
+	    }
         }
         LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, BitCount);
         return BitCount * BITS_PER_BYTE;
