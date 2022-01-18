@@ -43,12 +43,6 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFire/DESFireLogging.h"
 #include "DESFire/DESFireUtils.h"
 
-/* Quick fix to the problem pointed out by @colinoflynn in 
- * emsec/ChameleonMini issue #302: 
- * (see new usages below in the function MifareDesfireAppProcess(., .))
- */
-#define __DESFire_RoundToBytes(bitCount)       ((unsigned int) (bitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE) 
-
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
@@ -118,7 +112,7 @@ void MifareDesfireAppTask(void)
 
 uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     if(ByteCount == 0) {
-         return ISO14443A_APP_NO_RESPONSE;
+         return ISO14443A_APP_NO_RESPONSE;//
     } 
     else if((DesfireCmdCLA != DESFIRE_NATIVE_CLA) && 
             (DesfireCmdCLA != DESFIRE_ISO7816_CLA)) {
@@ -126,9 +120,9 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     }
     else if(Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
-        if(ReturnBytes > 0) {
-            LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
-        }
+        //if(ReturnBytes > 0) {
+        //    LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
+        //}
         return ReturnBytes;
     }
    
@@ -174,23 +168,16 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
 
 uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-    bool IsISO7816Cmd = IsWrappedISO7816CommandType(Buffer, ByteCount);
-    uint8_t ISO7816PrologueBytes[2] = { 0x00, 0x00 };
-    if(IsISO7816Cmd) {
-        memcpy(&ISO7816PrologueBytes[0], Buffer, 2);
-	memmove(&Buffer[0], &Buffer[2], ByteCount - 2);
-    }
+    DesfireCmdCLA = Buffer[0]; 
     if((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 && 
-        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) || IsISO7816Cmd) { // Wrapped native command structure: 
+        Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) || Iso7816CLA(DesfireCmdCLA)) { // Wrapped native command structure: 
         /* Unwrap the PDU from ISO 7816-4 */
         // Check CRC bytes appended to the buffer:
         // -- Actually, just ignore parity problems if they exist, 
-	// -- except for in the wrapped ISO7816 command cases
-        DesfireCmdCLA = Buffer[0];
         if(Iso7816CLA(DesfireCmdCLA)) {
             uint16_t iso7816ParamsStatus = SetIso7816WrappedParametersType(Buffer, ByteCount);
             if(iso7816ParamsStatus != ISO7816_CMD_NO_ERROR) {
-                Buffer[0] = (uint8_t) ((iso7816ParamsStatus >> 8) & 0xff);
+                Buffer[0] = (uint8_t) ((iso7816ParamsStatus >> 8) & 0x00ff);
                 Buffer[1] = (uint8_t) (iso7816ParamsStatus & 0x00ff);
                 ISO14443AAppendCRCA(Buffer, 2);
                 ByteCount = 2 + 2;
@@ -204,33 +191,26 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
         /* TODO: Where are we deciphering wrapped payload data? 
          *       This should depend on the CommMode standard? 
          */
-        BitCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
+        ByteCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
         /* TODO: Where are we re-wrapping the data according to the CommMode standards? */
-        if((BitCount && !Iso7816CLA(DesfireCmdCLA)) || (BitCount == 1)) {
+        if((ByteCount != 0 && !Iso7816CLA(DesfireCmdCLA)) || (ByteCount == 1)) {
             /* Re-wrap into padded APDU form */
-            Buffer[BitCount] = Buffer[0];
-            memmove(&Buffer[0], &Buffer[1], BitCount - 1);
-            Buffer[BitCount - 1] = 0x91;
-            ISO14443AAppendCRCA(Buffer, ++BitCount);
-            BitCount += 2;
+            Buffer[ByteCount] = Buffer[0];
+            memmove(&Buffer[0], &Buffer[1], ByteCount - 1);
+            Buffer[ByteCount - 1] = 0x91;
+            ISO14443AAppendCRCA(Buffer, ++ByteCount);
+            ByteCount += 2;
         }
         else {
 	    /* Re-wrap into ISO 7816-4 */
-	    Buffer[BitCount] = Buffer[0];
-            Buffer[BitCount + 1] = Buffer[1];
-            memmove(&Buffer[0], &Buffer[2], BitCount - 2);
-            ISO14443AAppendCRCA(Buffer, BitCount);
-            BitCount += 2;
-            /* Append the same ISO7816 prologue bytes to the response: */
-	    if(IsISO7816Cmd) {
-                 memmove(&Buffer[2], &Buffer[0], BitCount);
-		 memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
-		 BitCount += 2;
-                 ISO14443AAppendCRCA(Buffer, BitCount);
-	    }
+	    //Buffer[ByteCount] = Buffer[0];
+            //Buffer[ByteCount + 1] = Buffer[1];
+            //memmove(&Buffer[0], &Buffer[2], ByteCount - 2);
+            ISO14443AAppendCRCA(Buffer, ByteCount);
+            ByteCount += 2;
         }
-        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, BitCount);
-        return BitCount * BITS_PER_BYTE;
+        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
+        return ByteCount * BITS_PER_BYTE;
     }
     else {
         /* ISO/IEC 14443-4 PDUs: No extra work */
@@ -249,6 +229,17 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) { 
          // Native wrapped command send without CRCA checksum bytes appended: 
          return MifareDesfireProcess(Buffer, BitCount);
+    }
+    else if(IsWrappedISO7816CommandType(Buffer, ByteCount)) {
+        uint8_t ISO7816PrologueBytes[2];
+        memcpy(&ISO7816PrologueBytes[0], Buffer, 2);
+	memmove(&Buffer[0], &Buffer[2], ByteCount - 2);
+	uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, BitCount);
+	uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+        /* Append the same ISO7816 prologue bytes to the response: */
+	memmove(&Buffer[2], &Buffer[0], ProcessedByteCount);
+	memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
+	return ProcessedBitCount;
     }
     else {
 	 uint16_t ProcessedBitCount = ISO144433APiccProcess(Buffer, BitCount);
