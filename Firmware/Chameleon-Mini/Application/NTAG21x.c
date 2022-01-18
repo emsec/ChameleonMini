@@ -5,7 +5,6 @@
  *  Author: Giovanni Cammisa (gcammisa)
  *  Still missing support for:
  *      -The management of both static and dynamic lock bytes
- *      -Bruteforce protection (AUTHLIM COUNTER)
  *  Thanks to skuser for the MifareUltralight code used as a starting point
  */
 
@@ -40,7 +39,7 @@
 #define CMD_FAST_READ 0x3A
 #define CMD_WRITE 0xA2
 #define CMD_COMPAT_WRITE 0xA0
-#define CMD_READ_CNT 0x39 //TODO: IMPLEMENT
+#define CMD_READ_CNT 0x39
 #define CMD_PWD_AUTH 0x1B
 #define CMD_READ_SIG 0x3C //TODO: CHECK IMPLEMENTATION TO MAKE IT VALID?
 
@@ -54,9 +53,20 @@
 #define UID_CL2_SIZE            4
 #define UID_BCC2_ADDRESS        0x08
 
-//LockBytes stuff
-#define STATIC_LOCKBYTE_0_ADDRESS   0x0A //TODO: CHECK THIS
-#define STATIC_LOCKBYTE_1_ADDRESS   0x0B //TODO: CHECK THIS
+//Static Lockbytes (common on all ntag21x variants)
+#define STATIC_LOCKBYTE_0_ADDRESS   0x0A
+#define STATIC_LOCKBYTE_1_ADDRESS   0x0B 
+
+//Dynamic Lockbytes (different depending on which ntag21x we're working with) //TODO: IMPLEMENT
+//There are 3 consecutive lockbytes, just add 0x01 to the address to get the next one
+//NTAG213 
+#define NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS NTAG21x_PAGE_SIZE * 0x28
+
+//NTAG215
+#define NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS NTAG21x_PAGE_SIZE * 0x82
+
+//NTAG216
+#define NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS NTAG21x_PAGE_SIZE * 0xE2
 
 //CONFIG stuff
 #define CONFIG_AREA_START_ADDRESS_NTAG213   NTAG21x_PAGE_SIZE * 0x29
@@ -72,12 +82,18 @@
 #define CONF_PASSWORD_OFFSET    0x08
 #define CONF_PACK_OFFSET        0x0C
 
+//ACCESS bitmasks
+#define AUTHLIM_BITMASK         0x7 //0b00000111
+#define NFC_CNT_EN_BITMASK      0x10 //0b00010000
+#define NFC_CNT_PWD_PROT_BITMASK 0x8 //0b00001000
+#define CFGLCK_BITMASK          0x40 //0b01000000
+#define PROT_BITMASK            0x80 //0b10000000
+
 //WRITE STUFF
 #define BYTES_PER_WRITE         4
 #define PAGE_WRITE_MIN          0x02
 
 //CONFIG masks to check individual needed bits
-#define CONF_ACCESS_PROT        0x80
 
 #define VERSION_INFO_LENGTH 8 //8 bytes info lenght + crc
 
@@ -85,6 +101,11 @@
 
 //SIGNATURE Lenght
 #define SIGNATURE_LENGTH        32
+
+//ADDRESSES FOR CONFIGS AFTER THE DUMP
+#define AUTHLIM_COUNTER_AFTER_DUMP_OFFSET 0x00
+#define NFC_CNT_AFTER_DUMP_OFFSET 0x01
+
 
 static enum {
     NTAG213,
@@ -106,14 +127,28 @@ static bool ArmedForCompatWrite;
 static uint8_t CompatWritePageAddress;
 static bool Authenticated;
 static uint8_t FirstAuthenticatedPage;
-static bool ReadAccessProtected;
+static bool ReadAccessProtected; //CHECK IF THIS CRAP IS ACTUALLY INVERTED
 static uint8_t Access;
+static bool NfcCntEnabled;
+static bool NfcCntPwdProt;
 
+static bool IsFirstReadAfterReset;
 
 /* TAG INIT FUNCTIONS */
 //NTAG21x common
 void NTAG21xAppReset(void) {
     State = STATE_IDLE;
+    switch(Ntag_type){
+        case NTAG213:
+            NTAG213AppInit();
+            break;
+        case NTAG215:
+            NTAG215AppInit();
+            break;
+        case NTAG216:
+            NTAG216AppInit();
+            break;
+    }
 }
 
 void NTAG21xAppInit(void) {
@@ -121,6 +156,7 @@ void NTAG21xAppInit(void) {
     FromHalt = false;
     ArmedForCompatWrite = false;
     Authenticated = false;
+    IsFirstReadAfterReset = true;
 }
 
 void NTAG21xAppTask(void) {
@@ -135,7 +171,9 @@ void NTAG213AppInit(void) {
     /* Fetch some of the configuration into RAM */
     MemoryReadBlock(&FirstAuthenticatedPage, CONFIG_AREA_START_ADDRESS_NTAG213 + CONF_AUTH0_OFFSET, 1);
     MemoryReadBlock(&Access, CONFIG_AREA_START_ADDRESS_NTAG213 + CONF_ACCESS_OFFSET, 1);
-    ReadAccessProtected = !!(Access & CONF_ACCESS_PROT);
+    ReadAccessProtected = !!(Access & PROT_BITMASK);
+    NfcCntEnabled = !!(Access & NFC_CNT_EN_BITMASK);
+    NfcCntPwdProt = !!(Access & NFC_CNT_PWD_PROT_BITMASK);
 }
 
 //NTAG215
@@ -146,7 +184,9 @@ void NTAG215AppInit(void) {
     /* Fetch some of the configuration into RAM */
     MemoryReadBlock(&FirstAuthenticatedPage, CONFIG_AREA_START_ADDRESS_NTAG215 + CONF_AUTH0_OFFSET, 1);
     MemoryReadBlock(&Access, CONFIG_AREA_START_ADDRESS_NTAG215 + CONF_ACCESS_OFFSET, 1);
-    ReadAccessProtected = !!(Access & CONF_ACCESS_PROT);
+    ReadAccessProtected = !!(Access & PROT_BITMASK);
+    NfcCntEnabled = !!(Access & NFC_CNT_EN_BITMASK);
+    NfcCntPwdProt = !!(Access & NFC_CNT_PWD_PROT_BITMASK);
 }
 
 //NTAG216
@@ -157,10 +197,26 @@ void NTAG216AppInit(void) {
     /* Fetch some of the configuration into RAM */
     MemoryReadBlock(&FirstAuthenticatedPage, CONFIG_AREA_START_ADDRESS_NTAG216 + CONF_AUTH0_OFFSET, 1);
     MemoryReadBlock(&Access, CONFIG_AREA_START_ADDRESS_NTAG216 + CONF_ACCESS_OFFSET, 1);
-    ReadAccessProtected = !!(Access & CONF_ACCESS_PROT);
+    ReadAccessProtected = !!(Access & PROT_BITMASK);
+    NfcCntEnabled = !!(Access & NFC_CNT_EN_BITMASK);
+    NfcCntPwdProt = !!(Access & NFC_CNT_PWD_PROT_BITMASK);
 }
 
-
+static uint16_t GetNFCCNTAddress() {
+    uint16_t CounterAddr;
+    switch(Ntag_type) {
+        case NTAG213:
+            CounterAddr = NTAG213_MEM_SIZE + NFC_CNT_AFTER_DUMP_OFFSET;
+            break;
+        case NTAG215:
+            CounterAddr = NTAG215_MEM_SIZE + NFC_CNT_AFTER_DUMP_OFFSET;
+            break;
+        case NTAG216:
+            CounterAddr = NTAG215_MEM_SIZE + NFC_CNT_AFTER_DUMP_OFFSET;
+            break;
+        }
+    return CounterAddr;
+}
 
 //Verify authentication
 static bool VerifyAuthentication(uint8_t PageAddress) {
@@ -237,7 +293,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                     break;
 
                 default:
-                    //TODO: REMOVE, THIS IS FOR DEBUG PURPOSE
+                    //TODO: REMOVE, THIS IS FOR DEBUG PURPOSE, WE SHOULD NEVER GET HERE
                     Buffer[0] = 0x00;
                     Buffer[1] = 0x04;
                     Buffer[2] = 0x04;
@@ -253,6 +309,16 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
         }
 
         case CMD_READ: {
+            //We're incrementing the counter at the first read after a reset
+            if (IsFirstReadAfterReset && NfcCntEnabled) {
+                    uint16_t CounterAddr = GetNFCCNTAddress();
+                    uint16_t CurrentCounterValue; //TODO: The counter is 24 bits long, but I'm currently using only 16 bits for testing. Might need to define a new data type (uint24_t ???) or do some hacks with a uint32_t. Also keep in mind little endian / big endian stuff
+                    MemoryReadBlock(&CurrentCounterValue, CounterAddr, 3);
+                    CurrentCounterValue++;
+                    MemoryWriteBlock(&CurrentCounterValue, CounterAddr, 3);
+                    IsFirstReadAfterReset = false;
+            }
+
             uint8_t PageAddress = Buffer[1];
             uint8_t PageLimit;
             uint8_t Offset;
@@ -260,7 +326,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             PageLimit = PageCount;
 
             /* if protected and not autenticated, ensure the wraparound is at the first protected page */
-            if (ReadAccessProtected && !Authenticated) {
+            if (!ReadAccessProtected && !Authenticated) {
                 PageLimit = FirstAuthenticatedPage;
             } else {
                 PageLimit = PageCount;
@@ -271,6 +337,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 Buffer[0] = NAK_INVALID_ARG;
                 return NAK_FRAME_SIZE;
             }
+
             /* Read out, emulating the wraparound */
             for (Offset = 0; Offset < BYTES_PER_READ; Offset += 4) {
                 MemoryReadBlock(&Buffer[Offset], PageAddress * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE);
@@ -284,6 +351,16 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
         }
 
         case CMD_FAST_READ: {
+            //We're incrementing the counter at the first read after a reset
+            if (IsFirstReadAfterReset && NfcCntEnabled) {
+                    uint16_t CounterAddr = GetNFCCNTAddress();
+                    uint16_t CurrentCounterValue; //TODO: The counter is 24 bits long, but I'm currently using only 16 bits for testing. Might need to define a new data type (uint24_t ???) or do some hacks with a uint32_t. Also keep in mind little endian / big endian stuff
+                    MemoryReadBlock(&CurrentCounterValue, CounterAddr, 3);
+                    CurrentCounterValue++;
+                    MemoryWriteBlock(&CurrentCounterValue, CounterAddr, 3);
+                    IsFirstReadAfterReset = false;
+            }
+
             uint8_t StartPageAddress = Buffer[1];
             uint8_t EndPageAddress = Buffer[2];
             /* Validation */
@@ -293,7 +370,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             }
 
             /* Check authentication only if protection is read&write (instead of only write protection) */
-            if (ReadAccessProtected) {
+            if (!ReadAccessProtected) {
                 if (!VerifyAuthentication(StartPageAddress) || !VerifyAuthentication(EndPageAddress)) {
                     Buffer[0] = NAK_NOT_AUTHED;
                     return NAK_FRAME_SIZE;
@@ -306,43 +383,60 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             return (ByteCount + ISO14443A_CRCA_SIZE) * 8;
         }
 
-        case CMD_PWD_AUTH: {
+        case CMD_PWD_AUTH: { //TODO: Check if the implementation is correct
             uint8_t Password[4];
+            
+            uint8_t AuthLim = Access & AUTHLIM_BITMASK;
+            uint8_t CurrentAuthLimCounterValue;
 
-            /* For now I don't care about bruteforce protection, so: */
-            /* TODO: IMPLEMENT COUNTER AUTHLIM */
+            uint16_t PwdAddr;
+            uint16_t AuthLimCounterAddr;
+            uint16_t PACKAddr;
 
-            /* Read and compare the password */
+            uint8_t ZeroValue = 0x00;
+
+            //Get all the addresses that are dependant on the type of tag at once, makes the code a bit more readable
             switch(Ntag_type) {
                 case NTAG213:
-                    MemoryReadBlock(Password, CONFIG_AREA_START_ADDRESS_NTAG213 + CONF_PASSWORD_OFFSET, 4);
+                    PwdAddr = CONFIG_AREA_START_ADDRESS_NTAG213 + CONF_PASSWORD_OFFSET;
+                    AuthLimCounterAddr = NTAG213_MEM_SIZE + AUTHLIM_COUNTER_AFTER_DUMP_OFFSET;
+                    PACKAddr = CONFIG_AREA_START_ADDRESS_NTAG213 + CONF_PACK_OFFSET;
                     break;
                 case NTAG215:
-                    MemoryReadBlock(Password, CONFIG_AREA_START_ADDRESS_NTAG215 + CONF_PASSWORD_OFFSET, 4);
+                    PwdAddr = CONFIG_AREA_START_ADDRESS_NTAG215 + CONF_PASSWORD_OFFSET;
+                    AuthLimCounterAddr = NTAG215_MEM_SIZE + AUTHLIM_COUNTER_AFTER_DUMP_OFFSET;
+                    PACKAddr = CONFIG_AREA_START_ADDRESS_NTAG215 + CONF_PACK_OFFSET;
                     break;
                 case NTAG216:
-                    MemoryReadBlock(Password, CONFIG_AREA_START_ADDRESS_NTAG216 + CONF_PASSWORD_OFFSET, 4);
+                    PwdAddr = CONFIG_AREA_START_ADDRESS_NTAG215 + CONF_PASSWORD_OFFSET;
+                    AuthLimCounterAddr = NTAG215_MEM_SIZE + AUTHLIM_COUNTER_AFTER_DUMP_OFFSET;
+                    PACKAddr = CONFIG_AREA_START_ADDRESS_NTAG215 + CONF_PACK_OFFSET;
                     break;
             }
+
+            /* Read and compare the password */
+            MemoryReadBlock(&CurrentAuthLimCounterValue, AuthLimCounterAddr, 1);
+            MemoryReadBlock(&Password, PwdAddr, 4);
+         
+            if (CurrentAuthLimCounterValue > AuthLim){ //If the counter is bigger than the limit, we should not be able to authenticate ever again
+                Buffer[0] = NAK_NOT_AUTHED;
+                return NAK_FRAME_SIZE;
+            }
+
             if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
+                CurrentAuthLimCounterValue++;
+                MemoryWriteBlock(&CurrentAuthLimCounterValue,AuthLimCounterAddr,1); //?& TODO: CHECK THIS
                 Buffer[0] = NAK_NOT_AUTHED;
                 return NAK_FRAME_SIZE;
             }
             /* Authenticate the user */
-            //RESET AUTHLIM COUNTER, CURRENTLY NOT IMPLEMENTED
-            Authenticated = 1;
-            /* Send the PACK value back */
-            switch(Ntag_type) {
-                case NTAG213:
-                    MemoryReadBlock(Buffer, CONFIG_AREA_START_ADDRESS_NTAG213 + CONF_PACK_OFFSET, 2);
-                    break;
-                case NTAG215:
-                    MemoryReadBlock(Buffer, CONFIG_AREA_START_ADDRESS_NTAG215 + CONF_PACK_OFFSET, 2);
-                    break;
-                case NTAG216:
-                    MemoryReadBlock(Buffer, CONFIG_AREA_START_ADDRESS_NTAG216 + CONF_PACK_OFFSET, 2);
-                    break;
-            }
+            Authenticated = true;
+
+            //after a successful authentication, we need to reset the counter
+            MemoryWriteBlock(&ZeroValue,AuthLimCounterAddr,1);
+
+            /* Send the PACK value back */ 
+            MemoryReadBlock(Buffer, PACKAddr, 2);
             ISO14443AAppendCRCA(Buffer, 2);
             return (2 + ISO14443A_CRCA_SIZE) * 8;
         }
@@ -384,13 +478,29 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             return ACK_FRAME_SIZE;
         }
 
-
-        case CMD_READ_SIG: {
+        case CMD_READ_SIG: { //TODO: IMPLEMENT SOME KIND OF ABILITY TO WRITE SIGNATURE, MIGHT NEED FOR A BIGGER DUMP FILE TO BE UPLOADED WITH THE SIGNATURE APPENDED
             /* Hardcoded response */
-            memset(Buffer, 0xCA, SIGNATURE_LENGTH);
+            memset(Buffer, 0xCA, SIGNATURE_LENGTH); //replace this with code to read signature from extended memory dump
             ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
             return (SIGNATURE_LENGTH + ISO14443A_CRCA_SIZE) * 8;
         }
+
+        case CMD_READ_CNT: {
+            
+            //If the NFCCNT is not protected, OR if the NFCCNT is protected BUT we're authenticated, then we can read the NFCCNT
+            if (!NfcCntPwdProt || (NfcCntPwdProt && Authenticated)) {
+                uint16_t CounterAddr = GetNFCCNTAddress();
+                MemoryReadBlock(&Buffer[0], CounterAddr, 3);
+
+                ISO14443AAppendCRCA(Buffer, 3);
+                return (3 + ISO14443A_CRCA_SIZE) * 8;
+            }
+
+            //If we don't have authentication and the NFCCNT is protected, we can't read the NFCCNT so we return NAK_NOT_AUTHED
+            Buffer[0] = NAK_NOT_AUTHED;
+            return NAK_FRAME_SIZE;
+        }
+
 
         //PART OF ISO STANDARD, NOT OF NTAG DATASHEET
         case CMD_HALT: {
@@ -406,7 +516,6 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 return NAK_FRAME_SIZE;
             }
         }
-
 
         default: {
             break;
