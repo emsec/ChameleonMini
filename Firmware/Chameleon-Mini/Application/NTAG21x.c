@@ -4,7 +4,7 @@
  *  Created on: 20.02.2019
  *  Author: Giovanni Cammisa (gcammisa)
  *  Still missing support for:
- *      -The management of both static and dynamic lock bytes
+ *      -Still missing the BL bits, that basically are lockbytes for the lockbytes
  *  Thanks to skuser for the MifareUltralight code used as a starting point
  */
 
@@ -42,7 +42,6 @@
 #define CMD_READ_CNT 0x39
 #define CMD_PWD_AUTH 0x1B
 #define CMD_READ_SIG 0x3C //TODO: CHECK IMPLEMENTATION TO MAKE IT VALID?
-
 
 //MEMORY LAYOUT STUFF, addresses and sizes in bytes
 //UID stuff
@@ -226,6 +225,95 @@ static bool VerifyAuthentication(uint8_t PageAddress) {
     }
     /* Otherwise, verify the accessed page is below the limit */
     return PageAddress < FirstAuthenticatedPage;
+}
+
+static int GetNthBit(uint8_t value, uint8_t n) {
+    return (value & ( 1 << n )) >> n;
+}
+
+//Verify lockbytes: returns true if authorized, false if not authorized
+static bool VerifyDynamicLockbytes(uint8_t PageAddress) { //TODO: CHECK IF THE IMPLEMENTATION IS CORRECT
+    if (PageAddress >= 16) {
+        uint8_t DynLockByte0;
+        uint8_t DynLockByte1;
+        uint8_t DynLockByte2; //TODO: IMPLEMENT BL
+
+        switch(Ntag_type) {
+            case NTAG213:
+                if (PageAddress > 39) { //After page 39 we can't lock stuff, so we're always authorized
+                    return true;
+                }
+                else {
+                    if (PageAddress <=31) { //Pages 0-31 refer to lockbyte 0
+                        MemoryReadBlock(&DynLockByte0, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
+                        if (GetNthBit(DynLockByte0, (PageAddress>>1)-8) == 1){
+                            return false;
+                        }
+                    }
+                    else {  //Pages 32-39 refer to lockbyte 1
+                        MemoryReadBlock(&DynLockByte1, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS + 1, 1);
+                        if (GetNthBit(DynLockByte1, (PageAddress>>1)-16) == 1){
+                            return false;
+                        }
+                    }
+                }
+                return true;
+        
+            case NTAG215:
+                if (PageAddress > 129) { //After page 129 we can't lock stuff, so we're always authorized
+                    return true;
+                } else { //On the NTAG215 only the DynLockbyte0 is used
+                    MemoryReadBlock(&DynLockByte0, NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
+                    if (GetNthBit(DynLockByte0, (PageAddress>>4)-1) == 1){
+                        return false;
+                    }
+                }
+                return true;
+            
+            case NTAG216:
+                if (PageAddress > 225) { //After page 225 we can't lock stuff, so we're always authorized
+                    return true;
+                }
+                else {
+                    if (PageAddress <=143) { //Pages 0-143 refer to lockbyte 0
+                    MemoryReadBlock(&DynLockByte0, NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
+                        if (GetNthBit(DynLockByte0, (PageAddress>>4)-1) == 1){
+                            return false;
+                        }
+                    }
+                    else { //Pages 144-225 refer to lockbyte 1
+                    MemoryReadBlock(&DynLockByte1, NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS + 1, 1);
+                        if (GetNthBit(DynLockByte1, (PageAddress>>4)-9) == 1){
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            
+        }
+    }
+}
+
+static bool VerifyStaticLockbytes(uint8_t PageAddress) { //TODO: CHECK IF THE IMPLEMENTATION IS CORRECT
+    uint8_t StaticLockByte0;
+    uint8_t StaticLockByte1; //TODO: IMPLEMENT BL
+
+    if(PageAddress<3 || PageAddress>15) { //Static lockbytes only deal with pages 3-15
+        return true;
+    }
+
+    if (PageAddress <=7) { //Pages 3-7 refer to lockbyte 0
+        MemoryReadBlock(&StaticLockByte0, STATIC_LOCKBYTE_0_ADDRESS, 1);
+        if (GetNthBit(StaticLockByte0, PageAddress) == 1){
+            return false;
+        }
+    }
+    else { //Pages 8-15 refer to lockbyte 1
+        MemoryReadBlock(&StaticLockByte1, STATIC_LOCKBYTE_1_ADDRESS, 1);
+        if (GetNthBit(StaticLockByte1, (PageAddress-8)) == 1){
+            return false;
+        }
+    }
 }
 
 //Writes a page
@@ -454,6 +542,16 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 Buffer[0] = NAK_NOT_AUTHED;
                 return NAK_FRAME_SIZE;
             }
+            if(!VerifyStaticLockbytes(PageAddress)) { //If false the static lockbytes are set in such a way that does not allow writing to this page
+                Buffer[0] = NAK_NOT_AUTHED;
+                return NAK_FRAME_SIZE;
+            }
+            if (!VerifyDynamicLockbytes(PageAddress)) { //If false the dynamic lockbytes are set in such a way that does not allow writing to this page
+                Buffer[0] = NAK_NOT_AUTHED;
+                return NAK_FRAME_SIZE;
+            }
+            
+
             AppWritePage(PageAddress, &Buffer[2]);
             Buffer[0] = ACK_VALUE;
             return ACK_FRAME_SIZE;
@@ -470,6 +568,17 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 Buffer[0] = NAK_NOT_AUTHED;
                 return NAK_FRAME_SIZE;
             }
+            if (!VerifyStaticLockbytes(PageAddress)) { //If false the static lockbytes are set in such a way that does not allow writing to this page
+                Buffer[0] = NAK_NOT_AUTHED;
+                return NAK_FRAME_SIZE;
+            }
+            if (!VerifyDynamicLockbytes(PageAddress)) { //If false the dynamic lockbytes are set in such a way that does not allow writing to this page
+                Buffer[0] = NAK_NOT_AUTHED;
+                return NAK_FRAME_SIZE;
+            }
+
+            //TODO: check for static lock bytes
+
             /* CRC check passed and page-address is within bounds.
             * Store address and proceed to receiving the data. */
             CompatWritePageAddress = PageAddress;

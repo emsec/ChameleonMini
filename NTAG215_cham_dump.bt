@@ -1,0 +1,64 @@
+//------------------------------------------------
+//--- 010 Editor v7.0.2 Binary Template
+//
+//      File: NTAG215_chameleon_mini.bt
+//   Authors: Giovanni Cammisa (gcammisa)
+//   Version: 1.0
+//   Purpose: NTAG215 dump for chameleon mini structure parsing
+//  Category: Electronics
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//   1.0   2019-02-23 Giovanni Cammisa (gcammisa): First release
+//------------------------------------------------
+struct FILE {
+        struct Manufacturer_pages {
+            char    UID_Part_1[3] <fgcolor=cDkGreen>;
+            char    Check_Byte_0[1] <fgcolor=cLtRed>;
+            char    UID_Part_2[4] <fgcolor=cLtAqua>;
+            char    Check_Byte_1[1] <fgcolor=cLtRed>;
+            char    Internal[1] <fgcolor=cLtBlue>;
+            char    Static_Lock_Bytes[2] <fgcolor=cDkRed>;
+            char    Capability_Container[4] <fgcolor=cPurple>;
+        } manufacturer_pages <bgcolor=cSilver>;
+
+        struct User_memory {
+            char Data[4];
+        } pages[126];
+
+        struct Dynamic_lock_bytes {
+            char Dynamic_lock_byte_1[1] <fgcolor=cDkRed>;
+            char Dynamic_lock_byte_2[1] <fgcolor=cDkRed>;
+            char Dynamic_lock_byte_3[1] <fgcolor=cDkRed>;
+            char RFUI[1];
+        } dynamic_lock_bytes <bgcolor=cSilver>;
+
+        struct Config {
+            char MIRROR[1] <fgcolor=cLtBlue>;
+            char RFUI[1] <fgcolor=cLtBlue>;
+            char MIRROR_PAGE[1] <fgcolor=cLtBlue>;
+            char AUHT0[1] <fgcolor=cLtBlue>;
+
+            char ACCESS[1] <fgcolor=cLtBlue>;
+            char RFUI_1[3] <fgcolor=cLtBlue>;
+        } config <bgcolor=cSilver>;
+
+        struct Pwd {
+            char PWD[4] <fgcolor=cDkGreen>;
+        } pwd <bgcolor=cSilver>;
+
+        struct Pack {
+            char PACK[2] <fgcolor=cLtAqua>;
+        } pack <bgcolor=cSilver>;
+
+        struct Rfui {
+            char RFUI[2] <fgcolor=cLtAqua>;
+        } rfui <bgcolor=cSilver>;
+
+        struct Added_data {
+            char AUTHLIM_COUNTER[1] <fgcolor=cDkRed>;
+            char NFCCNT[3] <fgcolor=cLtBlue>;
+        } rfui <bgcolor=cSilver>;
+
+
+    } file <bgcolor=cDkGray>;

@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="description" content="dfu-programmer man page" />
+    <meta name="author" content="Simon Large" />
+    <title>dfu-programmer</title>
+<style>
+body { background: #003366; color:#404040; font:76% Verdana,Tahoma,Arial,sans-serif; margin:0 auto; padding:0;}
+#wrap {background:#fff; color:#404040; margin:0 auto; margin-top:10px; margin-bottom:10px; padding:10px; width:760px;}
+a {background-color:inherit; color:#286ea0; font-weight:700; text-decoration:none;}
+a:hover {background-color:inherit; color:#286ea0; text-decoration:underline;}
+a img {border:0;}
+p {margin:0 0 1.4em;}
+#content {line-height:1.5em; margin:20px 50px 5px; padding:0 10px;}
+#content h2 {font-size:1.6em; margin:0 0 10px;}
+#content h3 {font-size:1.1em; margin:0 0 4px;}
+#content h4 {font-size:1.0em; font-weight:normal; margin:0;}
+#content hr {margin-bottom: 20px;}
+</style>
+</head>
+<body>
+<div id="wrap">
+<div id="content">
+<h1><a href="http://sourceforge.net/projects/dfu-programmer/">dfu-programmer</a></h1>
+<h2>USB firmware upgrading for Atmel microcontrollers</h2>
+<hr />
+<h2>SYNOPSIS</h2>
+<p>
+<b>dfu-programmer</b> target[:usb-bus,usb-addr] command [options] [parameters]
+<br />
+<b>dfu-programmer</b> --help
+<br />
+<b>dfu-programmer</b> --targets
+<br />
+<b>dfu-programmer</b> --version
+</p>
+<h2>DESCRIPTION</h2>
+<p>
+<b>dfu-programmer</b>
+is a multi-platform command line Device Firmware Upgrade (DFU) based programmer
+for the flash memory on Atmel AVR, AVR32, XMEGA and 8051 based microcontrollers
+which ship with a USB boot loader.
+It supports In System Programming (ISP) for developers and potentially
+product updates in the field.
+Those boot loaders are patterned after the standard USB DFU 1.0 class
+specification, but depend on extensions defined by Atmel to the extent
+that standard DFU drivers will not work.
+</p>
+<p>
+To use it, first connect the device to be programmed and ensure that it
+comes up in DFU mode.
+The microcontrollers come up in that mode as shipped by Atmel;
+or they may reenter that mode after a special hardware reset.
+Then invoke this program to issue one or more DFU commands.
+You will normally need to start by issuing the "erase" command;
+the default security policies prevent extracting firmware, to prevent
+reverse engineering of what is usually proprietary code.
+</p>
+<h2>SUPPORTED MICROCONTROLLERS</h2>
+<p>
+These chip names are used as the command line "target" parameter.
+</p>
+<h3>8051 based controllers:</h3>
+<p>
+at89c51snd1c, at89c51snd2c, at89c5130, at89c5131,
+at89c5132
+</p>
+<h3>AVR based controllers:</h3>
+<p>
+at90usb1287, at90usb1286, at90usb1287-4k, at90usb1286-4k,
+at90usb647, at90usb646, at90usb162, at90usb82,
+atmega32u6, atmega32u4, atmega32u2, atmega16u4,
+atmega16u2, atmega8u2
+</p>
+<h3>AVR32 based controllers:</h3>
+<p>
+at32uc3a0128, at32uc3a1128, at32uc3a0256, at32uc3a1256,
+at32uc3a0512, at32uc3a1512, at32uc3a0512es, at32uc3a1512es,
+at32uc3a364, at32uc3a364s, at32uc3a3128, at32uc3a3128s,
+at32uc3a3256, at32uc3a3256s, at32uc3a4256s, at32uc3b064,
+at32uc3b164, at32uc3b0128, at32uc3b1128, at32uc3b0256,
+at32uc3b1256, at32uc3b0256es, at32uc3b1256es, at32uc3b0512,
+at32uc3b1512, at32uc3c064, at32uc3c0128, at32uc3c0256,
+at32uc3c0512, at32uc3c164, at32uc3c1128, at32uc3c1256,
+at32uc3c1512, at32uc3c264, at32uc3c2128, at32uc3c2256,
+at32uc3c2512
+</p>
+<h3>XMEGA based controllers:</h3>
+<p>
+atxmega64a1u, atxmega128a1u, atxmega64a3u, atxmega128a3u,
+atxmega192a3u, atxmega256a3u, atxmega16a4u, atxmega32a4u,
+atxmega64a4u, atxmega128a4u, atxmega256a3bu, atxmega64b1,
+atxmega128b1, atxmega64b3, atxmega128b3, atxmega64c3,
+atxmega128c3, atxmega256c3, atxmega384c3, atxmega16c4,
+atxmega32c4
+</p>
+
+<h2>USAGE</h2>
+<p>
+There are no mechanisms to implement gang programming.
+By default, the first device that matches the id codes for the
+given target is selected. Many targets share the same id codes.
+Accordingly, you will usually avoid connecting more than one
+device of a given family (AVR, XMEGA, AVR32 or 8051) at a time.
+</p>
+<p>
+The target may be qualified with the USB bus and address number
+of the device you wish to program. This allows programming multiple
+devices of the same family at the same time.
+</p>
+<p>
+All of these commands support the "global options".
+Unless you override it,
+commands which write to the microcontroller will perform
+a validation step that rereads the data which was written,
+compares it to the expected result, and reports any errors.
+</p>
+<p>
+Note that unlike Atmel's BatchISP program, dfu-programmer will
+only perform a single operation at a time. Erasing and programming
+require separate commands.
+</p>
+
+<h4><b>configure</b> register [--suppress-validation] data</h4>
+<p>
+Bootloaders for 8051 based controllers support writing certain
+configuration bytes.
+</p>
+<h4><b>dump</b> [--force] [--bin] [(flash)|--user|--eeprom]</h4>
+<p>
+Reads the program memory in flash and output non-blank pages in ihex format
+to stdout.  Use --force to output the entire memory and --bin for binary
+output.  User page and eeprom are selected using --user and --eeprom.
+</p>
+<h4><b>erase</b> [--force]</h4>
+<p>
+Erases all the flash memory.  For AT90 and ATmega type devices a
+chip erase must be performed before other commands become available.
+Erase first checks if the memory is blank unless --force flag is set.
+</p>
+<h4><b>flash</b> [--force] [(flash)|--user|--eeprom] [--suppress-validation] 
+[--suppress-bootloader-mem]<br /> [--serial=hexbytes:offset] file or STDIN</h4>
+<p>
+Writes flash memory.  The input file (or stdin) must use the "ihex" file
+format convention for a memory image. --suppress-bootloader-mem
+ignores any data written to the bootloader memory space when flashing
+the device.  This option is particularly useful for the AVR32 chips.
+The --force flag tells the program to ignore whether memory inside
+the program region is blank.
+User page and eeprom are selected using --user and --eeprom.
+The user space flash on AVR32 chips lies outside of the normal range
+of flash blocks and is designed to contain configuration parameters.
+Bootloader configuration uses the last 4 to 8 bytes of the user page.
+If this data is corrupted, the device will restart into the
+bootloader until valid data is used (see atmel doc7745 or doc32166).
+--force is always required here.
+</p>
+<p>
+--serial provides a way to inject a serial number or other unique
+sequence of bytes into the memory image programmed into the
+device. This allows using a single .ihex file to program multiple
+devices, and still give each device its own unique serial number. For
+example, --serial=ABCDEF01:0x6000 would program the byte at 0x6000
+with the hex value AB, the byte at 0x6001 with the value CD, and so
+on. There must be an even number of hex digits, but the sequence can
+be any length. The offset is assumed to be given in hex if it starts
+with a "0x" prefix, octal if it begins with a "0", otherwise is it
+assumed to be decimal.
+</p>
+<h4><b>setsecure</b></h4>
+<p>
+Sets the security bit on AVR32 chips.  This prevents the content being
+read back from the chip, except in the same session in which it was
+programmed.  When the security fuse is set, almost nothing will work
+without first executing the erase command.  The only way to clear the
+security fuse once set is to use a JTAG chip erase, which will also
+erase the bootloader.
+</p>
+<h4><b>get</b> register</h4>
+<p>
+Displays various product identifier bytes.
+</p>
+</p>
+<h4><b>launch</b> [--no-reset]</h4>
+<p>
+Launch the application by resetting the device. The --no-reset flag
+can be used to launch the device without a reset (jump to the start
+address of the program).
+</p>
+<h3>Global Options</h3>
+<h4><b>--quiet</b></h4>
+<p>
+minimizes the output
+</p>
+<h4><b>--debug</b> level</h4>
+<p>
+enables verbose output at the specified level
+</p>
+
+<h3>Configure Registers</h3>
+<p>
+The standard bootloader for 8051 based chips supports writing
+data bytes which are not relevant for the AVR based chips.
+</p>
+<p>
+BSB - boot status byte
+<br />
+SBV - software boot vector
+<br />
+SSB - software security byte
+<br />
+EB  - extra byte
+<br />
+HSB - hardware security byte
+</p>
+
+<h3>Get Register</h3>
+<p>
+bootloader-version - currently flashed bootloader version
+<br />
+ID1 - device boot identification 1
+<br />
+ID2 - device boot identification 2
+<br />
+manufacturer - the hardware manufacturer code
+<br />
+family - the product family code
+<br />
+product-name - the product name
+<br />
+product-revision - the product revision
+<br />
+HSB - same as the configure_register version
+<br />
+BSB - same as the configure_register version
+<br />
+SBV - same as the configure_register version
+<br />
+SSB - same as the configure_register version
+<br />
+EB  - same as the configure_register version
+</p>
+
+<h2>BUGS</h2>
+<p>
+None known.
+</p>
+
+<h2>KNOWN ISSUES</h2>
+<p>
+The at90usb series chips do not make available any read/write protect
+flags so the
+<b>dump</b>
+or
+<b>flash</b>
+command may fail with a less than helpful error message.
+To remove
+<b>any</b>
+write or read protection from any chips, a full chip erasure is required.
+For AVR32 chips an erase operation over USB will remove protection until the
+device is rebooted. To remove the protection more permanently requires a
+JTAG erase (which will also erase the bootloader).
+</p>
+<p>
+You may need to be a member of the
+<b>uucp</b>
+group in order to have access to the device without needing to be root.
+</p>
+
+<h2>AUTHOR</h2>
+<p>
+Weston Schmidt &lt;weston_schmidt@alumni.purdue.edu&gt;
+</p>
+
+<h2>SEE ALSO</h2>
+<p>
+<a href="http://dfu-programmer.sourceforge.net">dfu-programmer.sourceforge.net</a>,<br />
+<a href="http://www.atmel.com/Images/doc7618.pdf">USB DFU Bootloader Datasheet (8051, AVR)</a>,<br />
+<a href="http://www.atmel.com/Images/doc32131.pdf">AVR32 UC3 USB DFU Bootloader Protocol</a>,<br />
+<a href="http://www.atmel.com/Images/doc8457.pdf">FLIP USB DFU Protocol</a>,<br />
+<a href="http://www.atmel.com/Images/doc7745.pdf">AVR32 UC3 USB DFU Bootloader</a>
+</p>
+
+<h2>COPYRIGHT</h2>
+<p>
+Copyright &copy; 2005-2014 Weston Schmidt
+</p>
+<p>
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+</p>
+<p>
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+</p>
+<p>
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+</p>
+
+</div>
+</div>
+</body>
+</html>
