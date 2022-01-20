@@ -209,7 +209,7 @@ uint16_t MifareDesfireProcess(uint8_t* Buffer, uint16_t BitCount) {
             ISO14443AAppendCRCA(Buffer, ByteCount);
             ByteCount += 2;
         }
-        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
+        //LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
         return ByteCount * BITS_PER_BYTE;
     }
     else {
@@ -239,6 +239,7 @@ uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount) {
         /* Append the same ISO7816 prologue bytes to the response: */
 	memmove(&Buffer[2], &Buffer[0], ProcessedByteCount);
 	memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
+	ProcessedBitCount += 2 * BITS_PER_BYTE;
 	return ProcessedBitCount;
     }
     else {
