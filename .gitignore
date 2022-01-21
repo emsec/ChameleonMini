@@ -1,0 +1,16 @@
+Dumps/failed_rosco_amiibo.bin
+Dumps/test_amiibo/broken_after_fix_dump.bim
+Dumps/test_amiibo/broken_dump.bim
+Dumps/test_amiibo/fixed.bin
+Dumps/test_amiibo/working_dump.bim
+Software/ChamTool/Chameleon/__pycache__/__init__.cpython-39.pyc
+Software/ChamTool/Chameleon/__pycache__/Device.cpython-39.pyc
+Software/ChamTool/Chameleon/__pycache__/ISO14443.cpython-39.pyc
+Software/ChamTool/Chameleon/__pycache__/Log.cpython-39.pyc
+Software/ChamTool/Chameleon/__pycache__/MFDESFire.cpython-39.pyc
+Software/ChamTool/Chameleon/__pycache__/utils.cpython-39.pyc
+Software/ChamTool/Chameleon/__pycache__/XModem.cpython-39.pyc
+Firmware/Chameleon-Mini/.vscode/
+Firmware/Chameleon-Mini/dfu-prog-usb-1.2.2/
+Firmware/Chameleon-Mini/dfu-programmer.exe
+Firmware/Chameleon-Mini/dfu-programmer.html

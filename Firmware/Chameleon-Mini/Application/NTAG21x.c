@@ -4,7 +4,7 @@
  *  Created on: 20.02.2019
  *  Author: Giovanni Cammisa (gcammisa)
  *  Still missing support for:
- *      -Still missing the BL bits, that basically are lockbytes for the lockbytes
+ *      -Still missing some minor nuances. but most of the things are implemented
  *  Thanks to skuser for the MifareUltralight code used as a starting point
  */
 
@@ -41,7 +41,7 @@
 #define CMD_COMPAT_WRITE 0xA0
 #define CMD_READ_CNT 0x39
 #define CMD_PWD_AUTH 0x1B
-#define CMD_READ_SIG 0x3C //TODO: CHECK IMPLEMENTATION TO MAKE IT VALID?
+#define CMD_READ_SIG 0x3C //TODO: CHECK IMPLEMENTATION TO MAKE IT VALID
 
 //MEMORY LAYOUT STUFF, addresses and sizes in bytes
 //UID stuff
@@ -56,16 +56,22 @@
 #define STATIC_LOCKBYTE_0_ADDRESS   0x0A
 #define STATIC_LOCKBYTE_1_ADDRESS   0x0B 
 
-//Dynamic Lockbytes (different depending on which ntag21x we're working with) //TODO: IMPLEMENT
+//Capability Container
+#define CC_ADDRESS                NTAG21x_PAGE_SIZE * 0x03
+
+//Dynamic Lockbytes (different depending on which ntag21x we're working with)
 //There are 3 consecutive lockbytes, just add 0x01 to the address to get the next one
-//NTAG213 
-#define NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS NTAG21x_PAGE_SIZE * 0x28
+//NTAG213
+#define NTAG213_DYNAMIC_LOCKBYTE_PAGE   0x28
+#define NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS NTAG21x_PAGE_SIZE * NTAG213_DYNAMIC_LOCKBYTE_PAGE
 
 //NTAG215
-#define NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS NTAG21x_PAGE_SIZE * 0x82
+#define NTAG215_DYNAMIC_LOCKBYTE_PAGE   0x82
+#define NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS NTAG21x_PAGE_SIZE * NTAG215_DYNAMIC_LOCKBYTE_PAGE
 
 //NTAG216
-#define NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS NTAG21x_PAGE_SIZE * 0xE2
+#define NTAG216_DYNAMIC_LOCKBYTE_PAGE   0xE2
+#define NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS NTAG21x_PAGE_SIZE * NTAG216_DYNAMIC_LOCKBYTE_PAGE
 
 //CONFIG stuff
 #define CONFIG_AREA_START_ADDRESS_NTAG213   NTAG21x_PAGE_SIZE * 0x29
@@ -91,8 +97,6 @@
 //WRITE STUFF
 #define BYTES_PER_WRITE         4
 #define PAGE_WRITE_MIN          0x02
-
-//CONFIG masks to check individual needed bits
 
 #define VERSION_INFO_LENGTH 8 //8 bytes info lenght + crc
 
@@ -126,7 +130,7 @@ static bool ArmedForCompatWrite;
 static uint8_t CompatWritePageAddress;
 static bool Authenticated;
 static uint8_t FirstAuthenticatedPage;
-static bool ReadAccessProtected; //CHECK IF THIS CRAP IS ACTUALLY INVERTED
+static bool ReadAccessProtected;
 static uint8_t Access;
 static bool NfcCntEnabled;
 static bool NfcCntPwdProt;
@@ -201,7 +205,7 @@ void NTAG216AppInit(void) {
     NfcCntPwdProt = !!(Access & NFC_CNT_PWD_PROT_BITMASK);
 }
 
-static uint16_t GetNFCCNTAddress() {
+static uint16_t GetNFCCNTAddress(void) {
     uint16_t CounterAddr;
     switch(Ntag_type) {
         case NTAG213:
@@ -231,12 +235,233 @@ static int GetNthBit(uint8_t value, uint8_t n) {
     return (value & ( 1 << n )) >> n;
 }
 
+//Need to check write operations on lockbytes: these are handled differently (see page 13 of ntag21x datasheet)
+//Basically they are ||ed, so that you can't unset a lockbit by writing 0
+//We might also need to ignore the first 2 byte of a write to page 02 and only consider the last 2 bytes
+static void HandleWriteOnStaticLockbytes(uint8_t *const Buffer){
+    uint8_t staticLockbyte0;
+    uint8_t staticLockbyte1;
+
+    MemoryReadBlock(&staticLockbyte0, STATIC_LOCKBYTE_0_ADDRESS, 1);
+    MemoryReadBlock(&staticLockbyte1, STATIC_LOCKBYTE_1_ADDRESS, 1);
+
+    //Checking for the lockbit's lockbits (BL)
+    bool BLCC = GetNthBit(staticLockbyte0, 0); //Same names used in the datasheet at page 13
+    bool BL94 = GetNthBit(staticLockbyte0, 1);
+    bool BL1510 = GetNthBit(staticLockbyte0, 2);
+
+    uint8_t lockByte0ToWrite = Buffer[2];
+    uint8_t lockByte1ToWrite = Buffer[3];
+
+    //IF BLCC=1 I'm setting the bit 3 of lockByte0ToWrite to 0
+    if (BLCC){
+        lockByte0ToWrite &= ~(1 << 3);
+    }
+
+    //IF BL94=1 I'm setting the bits 4 to 7 of lockByte0ToWrite to 0
+    //ALSO IF BL94=1 I'm setting the bits 0 to 1 of lockByte1ToWrite to 0
+    if (BL94){
+        lockByte0ToWrite &= ~(0b11110000);
+        lockByte1ToWrite &= ~(0b00000011);
+    }
+
+    //IF BL1510=1 I'm setting the bits 2 to 7 of lockByte1ToWrite to 0
+    if (BL1510){
+        lockByte1ToWrite &= ~(0b11111100);
+    }
+
+    staticLockbyte0 = staticLockbyte0 | lockByte0ToWrite;
+    staticLockbyte1 = staticLockbyte1 | lockByte1ToWrite;
+
+    MemoryWriteBlock(&staticLockbyte0, STATIC_LOCKBYTE_0_ADDRESS, 1);
+    MemoryWriteBlock(&staticLockbyte1, STATIC_LOCKBYTE_1_ADDRESS, 1);
+}
+
+static void HandleWriteOnCapabilityContainer(uint8_t *const Buffer){
+    uint8_t currentCC[4];
+    MemoryReadBlock(&currentCC, CC_ADDRESS , 4);
+
+    uint8_t toWriteOnCC[4];
+    toWriteOnCC[0] = Buffer[0] | currentCC[0];
+    toWriteOnCC[1] = Buffer[1] | currentCC[1];
+    toWriteOnCC[2] = Buffer[2] | currentCC[2];
+    toWriteOnCC[3] = Buffer[3] | currentCC[3];
+
+    MemoryWriteBlock(&toWriteOnCC[0], CC_ADDRESS, 1);
+    MemoryWriteBlock(&toWriteOnCC[1], CC_ADDRESS + 1, 1);
+    MemoryWriteBlock(&toWriteOnCC[2], CC_ADDRESS + 2, 1);
+    MemoryWriteBlock(&toWriteOnCC[3], CC_ADDRESS + 3, 1);
+}
+
+static bool HandleWriteOnDynamicLockbytes(uint8_t *const Buffer){
+    uint8_t dynamicLockbyte0;
+    uint8_t dynamicLockbyte1;
+    uint8_t dynamicLockbyte2;
+
+    uint8_t lockByte0ToWrite = Buffer[0];
+    uint8_t lockByte1ToWrite = Buffer[1];
+    uint8_t lockByte2ToWrite = Buffer[2];
+    uint8_t RFUIToWrite = Buffer[3];
+
+    //The last byte of the dynamic lockbytes is RFUI, so it MUST be 0x00. If it's not, we don't write anything
+    /* //TODO: Are we sure this is actually how it works??? UNDOCUMENTED STUFF SUCKS. Seems like some stuff in the wild tries to write different stuff to the RFUI byte, gotta do more checks IRL
+    if (RFUIToWrite != 0x00){
+        return false;
+    }*/
+
+    switch(Ntag_type) {
+        case NTAG213:
+            MemoryReadBlock(&dynamicLockbyte0, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
+            MemoryReadBlock(&dynamicLockbyte1, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS + 1, 1);
+            MemoryReadBlock(&dynamicLockbyte2, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS + 2, 1);
+
+            //Checking for the lockbit's lockbits (BL) //USING THE SAME NAMES AS IN THE DATASHEET AT PAGE 14
+            //if BL1619=1 I'm setting the bits 0 to 1 of lockByte0ToWrite to 0
+            bool BL1619 = GetNthBit(dynamicLockbyte2, 0);
+            if (BL1619){
+                lockByte0ToWrite &= ~(0b00000011);
+            }
+            //if BL2023=1 I'm setting the bits 2 to 3 of lockByte0ToWrite to 0
+            bool BL2023 = GetNthBit(dynamicLockbyte2, 1);
+            if (BL2023){
+                lockByte0ToWrite &= ~(0b00001100);
+            }
+            //if BL2427=1 I'm setting the bits 4 to 5 of lockByte0ToWrite to 0
+            bool BL2427 = GetNthBit(dynamicLockbyte2, 2);
+            if (BL2427){
+                lockByte0ToWrite &= ~(0b00110000);
+            }
+            //if BL2831=1 I'm setting the bits 6 to 7 of lockByte0ToWrite to 0
+            bool BL2831 = GetNthBit(dynamicLockbyte2, 3);
+            if (BL2831){
+                lockByte0ToWrite &= ~(0b11000000);
+            }
+            //if BL3235=1 I'm setting the bits 0 to 1 of lockByte1ToWrite to 0
+            bool BL3235 = GetNthBit(dynamicLockbyte2, 4);
+            if (BL3235){
+                lockByte1ToWrite &= ~(0b00000011);
+            }
+            bool BL3639 = GetNthBit(dynamicLockbyte2, 5);
+            //if BL3639=1 I'm setting the bits 2 to 3 of lockByte1ToWrite to 0
+            if (BL3639){
+                lockByte1ToWrite &= ~(0b00001100);
+            }
+
+            dynamicLockbyte0 = dynamicLockbyte0 | lockByte0ToWrite;
+            dynamicLockbyte1 = dynamicLockbyte1 | lockByte1ToWrite;
+            dynamicLockbyte2 = dynamicLockbyte2 | lockByte2ToWrite;
+
+            //Now we can do the writes to the dynamic lockbytes
+            MemoryWriteBlock(&dynamicLockbyte0, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
+            MemoryWriteBlock(&dynamicLockbyte1, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS + 1, 1);
+            MemoryWriteBlock(&dynamicLockbyte2, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS + 2, 1);
+            MemoryWriteBlock(&RFUIToWrite, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS + 3, 1);
+            //We've written successfully, we can return true
+            return true;
+
+        case NTAG215:
+            MemoryReadBlock(&dynamicLockbyte0, NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
+            MemoryReadBlock(&dynamicLockbyte1, NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS + 1, 1);
+            MemoryReadBlock(&dynamicLockbyte2, NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS + 2, 1);
+
+            //Checking for the lockbit's lockbits (BL) //USING THE SAME NAMES AS IN THE DATASHEET AT PAGE 14
+            //if BL1647=1 I'm setting the bits 0 to 1 of lockByte0ToWrite to 0
+            bool BL1647 = GetNthBit(dynamicLockbyte2, 0);
+            if (BL1647){
+                lockByte0ToWrite &= ~(0b00000011);
+            }
+            //if BL4879=1 I'm setting the bits 2 to 3 of lockByte0ToWrite to 0
+            bool BL4879 = GetNthBit(dynamicLockbyte2, 1);
+            if (BL4879){
+                lockByte0ToWrite &= ~(0b00001100);
+            }
+            //if BL80111=1 I'm setting the bits 4 to 5 of lockByte0ToWrite to 0
+            bool BL80111 = GetNthBit(dynamicLockbyte2, 2);
+            if (BL80111){
+                lockByte0ToWrite &= ~(0b00110000);
+            }
+            //if BL112129=1 I'm setting the bits 6 to 7 of lockByte0ToWrite to 0
+            bool BL112129 = GetNthBit(dynamicLockbyte2, 3);
+            if (BL112129){
+                lockByte0ToWrite &= ~(0b11000000);
+            }
+
+            dynamicLockbyte0 = dynamicLockbyte0 | lockByte0ToWrite;
+            dynamicLockbyte1 = dynamicLockbyte1 | lockByte1ToWrite;
+            dynamicLockbyte2 = dynamicLockbyte2 | lockByte2ToWrite;
+
+            //Now we can do the writes to the dynamic lockbytes
+            MemoryWriteBlock(&dynamicLockbyte0, NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
+            MemoryWriteBlock(&dynamicLockbyte1, NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS + 1, 1);
+            MemoryWriteBlock(&dynamicLockbyte2, NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS + 2, 1);
+            MemoryWriteBlock(&RFUIToWrite, NTAG215_DYNAMIC_LOCKBYTE_0_ADDRESS + 3, 1);
+
+            //We've written successfully, we can return true
+            return true;
+
+        case NTAG216:
+            MemoryReadBlock(&dynamicLockbyte0, NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
+            MemoryReadBlock(&dynamicLockbyte1, NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS + 1, 1);
+            MemoryReadBlock(&dynamicLockbyte2, NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS + 2, 1);
+
+            //Checking for the lockbit's lockbits (BL) //USING THE SAME NAMES AS IN THE DATASHEET AT PAGE 15
+            //if BL1647=1 I'm setting the bits 0 to 1 of lockByte0ToWrite to 0
+            bool BL1647_216 = GetNthBit(dynamicLockbyte2, 0);
+            if (BL1647_216){
+                lockByte0ToWrite &= ~(0b00000011);
+            }
+            //if BL4879=1 I'm setting the bits 2 to 3 of lockByte0ToWrite to 0
+            bool BL4879_216 = GetNthBit(dynamicLockbyte2, 1);
+            if (BL4879_216){
+                lockByte0ToWrite &= ~(0b00001100);
+            }
+            //if BL80111=1 I'm setting the bits 4 to 5 of lockByte0ToWrite to 0
+            bool BL80111_216 = GetNthBit(dynamicLockbyte2, 2);
+            if (BL80111_216){
+                lockByte0ToWrite &= ~(0b00110000);
+            }
+            //if BL112143=1 I'm setting the bits 6 to 7 of lockByte0ToWrite to 0
+            bool BL112143_216 = GetNthBit(dynamicLockbyte2, 3);
+            if (BL112143_216){
+                lockByte0ToWrite &= ~(0b11000000);
+            }
+            //if BL144175=1 I'm setting the bits 0 to 1 of lockByte1ToWrite to 0
+            bool BL144175_216 = GetNthBit(dynamicLockbyte2, 4);
+            if (BL144175_216){
+                lockByte1ToWrite &= ~(0b00000011);
+            }
+            //if BL176207=1 I'm setting the bits 2 to 3 of lockByte1ToWrite to 0
+            bool BL176207_216 = GetNthBit(dynamicLockbyte2, 5);
+            if (BL176207_216){
+                lockByte1ToWrite &= ~(0b00001100);
+            }
+            //if BL208225=1 I'm setting the bits 4 to 5 of lockByte1ToWrite to 0
+            bool BL208225_216 = GetNthBit(dynamicLockbyte2, 6);
+            if (BL208225_216){
+                lockByte1ToWrite &= ~(0b00110000);
+            }
+            
+            dynamicLockbyte0 = dynamicLockbyte0 | lockByte0ToWrite;
+            dynamicLockbyte1 = dynamicLockbyte1 | lockByte1ToWrite;
+            dynamicLockbyte2 = dynamicLockbyte2 | lockByte2ToWrite;
+
+            //Now we can do the writes to the dynamic lockbytes
+            MemoryWriteBlock(&dynamicLockbyte0, NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
+            MemoryWriteBlock(&dynamicLockbyte1, NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS + 1, 1);
+            MemoryWriteBlock(&dynamicLockbyte2, NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS + 2, 1);
+            MemoryWriteBlock(&RFUIToWrite, NTAG216_DYNAMIC_LOCKBYTE_0_ADDRESS + 3, 1);
+
+            //We've written successfully, we can return true
+            return true;
+    }
+    return false; //We shouldn't reach this point, but if we do something went wrong so we're returning false
+}
+
 //Verify lockbytes: returns true if authorized, false if not authorized
 static bool VerifyDynamicLockbytes(uint8_t PageAddress) { //TODO: CHECK IF THE IMPLEMENTATION IS CORRECT
     if (PageAddress >= 16) {
         uint8_t DynLockByte0;
         uint8_t DynLockByte1;
-        uint8_t DynLockByte2; //TODO: IMPLEMENT BL
 
         switch(Ntag_type) {
             case NTAG213:
@@ -289,14 +514,15 @@ static bool VerifyDynamicLockbytes(uint8_t PageAddress) { //TODO: CHECK IF THE I
                     }
                 }
                 return true;
-            
         }
     }
+
+    return true; //something went wrong?
 }
 
-static bool VerifyStaticLockbytes(uint8_t PageAddress) { //TODO: CHECK IF THE IMPLEMENTATION IS CORRECT
+static bool VerifyStaticLockbytes(uint8_t PageAddress) {
     uint8_t StaticLockByte0;
-    uint8_t StaticLockByte1; //TODO: IMPLEMENT BL
+    uint8_t StaticLockByte1;
 
     if(PageAddress<3 || PageAddress>15) { //Static lockbytes only deal with pages 3-15
         return true;
@@ -314,6 +540,8 @@ static bool VerifyStaticLockbytes(uint8_t PageAddress) { //TODO: CHECK IF THE IM
             return false;
         }
     }
+
+    return true;
 }
 
 //Writes a page
@@ -335,7 +563,26 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
     if (ArmedForCompatWrite) {
         ArmedForCompatWrite = false;
 
-        AppWritePage(CompatWritePageAddress, &Buffer[2]);
+        if (CompatWritePageAddress==0x02){ //If the page is 0x02 we're writing on the static lockbytes page, we need to handle it differently
+            HandleWriteOnStaticLockbytes(&Buffer[2]);
+        }
+        else if(CompatWritePageAddress==0x03){ //If the page is 0x03 we're writing on the Capabilty Container lockbytes page, we need to handle it differently 
+            HandleWriteOnCapabilityContainer(&Buffer[2]);
+        }
+        else if((CompatWritePageAddress==NTAG213_DYNAMIC_LOCKBYTE_PAGE && Ntag_type==NTAG213) || //If we're writing on the dynamic lockbytes page, we need to handle it differently
+                (CompatWritePageAddress==NTAG215_DYNAMIC_LOCKBYTE_PAGE && Ntag_type==NTAG215) || 
+                (CompatWritePageAddress==NTAG216_DYNAMIC_LOCKBYTE_PAGE && Ntag_type==NTAG216))
+        { 
+            if (!HandleWriteOnDynamicLockbytes(&Buffer[2]))
+            {
+                Buffer[0] = NAK_INVALID_ARG; //TODO: check on an actual tag what the error code is, the datasheet does not specify it
+                return NAK_FRAME_SIZE;
+            }
+        }
+        else {
+            AppWritePage(CompatWritePageAddress, &Buffer[2]);
+        }
+
         Buffer[0] = ACK_VALUE;
         return ACK_FRAME_SIZE;
     }
@@ -381,15 +628,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                     break;
 
                 default:
-                    //TODO: REMOVE, THIS IS FOR DEBUG PURPOSE, WE SHOULD NEVER GET HERE
-                    Buffer[0] = 0x00;
-                    Buffer[1] = 0x04;
-                    Buffer[2] = 0x04;
-                    Buffer[3] = 0x02;
-                    Buffer[4] = 0x01;
-                    Buffer[5] = 0x00;
-                    Buffer[6] = 0x00;
-                    Buffer[7] = 0x00;
+                    /* Unknown tag type? Should never happen. */
                     break;
             }
             ISO14443AAppendCRCA(Buffer, VERSION_INFO_LENGTH);
@@ -414,7 +653,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             PageLimit = PageCount;
 
             /* if protected and not autenticated, ensure the wraparound is at the first protected page */
-            if (!ReadAccessProtected && !Authenticated) {
+            if (ReadAccessProtected && !Authenticated) {
                 PageLimit = FirstAuthenticatedPage;
             } else {
                 PageLimit = PageCount;
@@ -429,6 +668,27 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             /* Read out, emulating the wraparound */
             for (Offset = 0; Offset < BYTES_PER_READ; Offset += 4) {
                 MemoryReadBlock(&Buffer[Offset], PageAddress * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE);
+                //Here I need to handle the fact that the last byte of the dynamic lockbytes page is always 0xBD when read: CFR Page 15 of the datasheet
+                if ((Ntag_type == NTAG213 && PageAddress == 0x28) ||
+                    (Ntag_type == NTAG215 && PageAddress == 0x82) ||
+                    (Ntag_type == NTAG216 && PageAddress == 0xE2)) 
+                    {  
+                        Buffer[Offset + 3] = 0xBD;
+                    }
+
+                //Here I need to handle the fact that the PWD and the PACK should return all 0x00 when read //TODO:CHECK IF IT WORKS CORRECTLY
+                if ((Ntag_type == NTAG213 && (PageAddress == 0x2B || PageAddress == 0x2C)) ||
+                    (Ntag_type == NTAG215 && (PageAddress == 0x85 || PageAddress == 0x86)) ||
+                    (Ntag_type == NTAG216 && (PageAddress == 0xE5 || PageAddress == 0xE6))) 
+                    {
+                        uint8_t tmpOffset = Offset;
+                        uint8_t counter;
+                        for (counter = 0; counter < 4; counter++) {
+                            Buffer[tmpOffset] = 0x00;
+                            tmpOffset++;
+                    }
+                }
+
                 PageAddress++;
                 if (PageAddress == PageLimit) { // if arrived at the last page, start reading from page 0
                     PageAddress = 0;
@@ -458,20 +718,22 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             }
 
             /* Check authentication only if protection is read&write (instead of only write protection) */
-            if (!ReadAccessProtected) {
+            if (ReadAccessProtected) {
                 if (!VerifyAuthentication(StartPageAddress) || !VerifyAuthentication(EndPageAddress)) {
                     Buffer[0] = NAK_NOT_AUTHED;
                     return NAK_FRAME_SIZE;
                 }
             }
-
+            
             ByteCount = (EndPageAddress - StartPageAddress + 1) * NTAG21x_PAGE_SIZE;
+            //TODO: Here I need to handle the fact that the last byte of the dynamic lockbytes page is always 0xBD when read: CFR Page 15 of the datasheet
+            //TODO: Here I need to handle the fact that the PWD and the PACK should return all 0x00 when read
             MemoryReadBlock(Buffer, StartPageAddress * NTAG21x_PAGE_SIZE, ByteCount);
             ISO14443AAppendCRCA(Buffer, ByteCount);
             return (ByteCount + ISO14443A_CRCA_SIZE) * 8;
         }
 
-        case CMD_PWD_AUTH: { //TODO: Check if the implementation is correct
+        case CMD_PWD_AUTH: {
             uint8_t Password[4];
             
             uint8_t AuthLim = Access & AUTHLIM_BITMASK;
@@ -513,12 +775,16 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
             if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
                 CurrentAuthLimCounterValue++;
-                MemoryWriteBlock(&CurrentAuthLimCounterValue,AuthLimCounterAddr,1); //?& TODO: CHECK THIS
+                MemoryWriteBlock(&CurrentAuthLimCounterValue,AuthLimCounterAddr,1);
                 Buffer[0] = NAK_NOT_AUTHED;
                 return NAK_FRAME_SIZE;
             }
             /* Authenticate the user */
             Authenticated = true;
+
+            //char tmpBuf[10]; //TODO: REMOVE, THIS IS DEBUG
+            //snprintf(tmpBuf, 10, "Auth: %d\n", Authenticated);
+            //TerminalSendString(tmpBuf);
 
             //after a successful authentication, we need to reset the counter
             MemoryWriteBlock(&ZeroValue,AuthLimCounterAddr,1);
@@ -532,6 +798,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
         case CMD_WRITE: {
             /* This is a write command containing 4 bytes of data that
             * should be written to the given page address. */
+
             uint8_t PageAddress = Buffer[1];
             /* Validation */
             if ((PageAddress < PAGE_WRITE_MIN) || (PageAddress >= PageCount)) {
@@ -550,14 +817,31 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 Buffer[0] = NAK_NOT_AUTHED;
                 return NAK_FRAME_SIZE;
             }
-            
+            if (PageAddress==0x02){ //If the page is 0x02 we're writing on the static lockbytes page, we need to handle it differently
+                HandleWriteOnStaticLockbytes(&Buffer[2]);
+            }
+            else if(PageAddress==0x03){ //If the page is 0x03 we're writing on the Capabilty Container lockbytes page, we need to handle it differently
+                HandleWriteOnCapabilityContainer(&Buffer[2]);
+            }
+            else if((PageAddress==NTAG213_DYNAMIC_LOCKBYTE_PAGE && Ntag_type==NTAG213) || //If we're writing on the dynamic lockbytes page, we need to handle it differently
+                    (PageAddress==NTAG215_DYNAMIC_LOCKBYTE_PAGE && Ntag_type==NTAG215) || 
+                    (PageAddress==NTAG216_DYNAMIC_LOCKBYTE_PAGE && Ntag_type==NTAG216))
+            { 
+                if (!HandleWriteOnDynamicLockbytes(&Buffer[2]))
+                {
+                    Buffer[0] = NAK_INVALID_ARG; //TODO: check on an actual tag what the error code is, the datasheet does not specify it
+                    return NAK_FRAME_SIZE;
+                }
+            }
+            else {
+                AppWritePage(PageAddress, &Buffer[2]);
+            }
 
-            AppWritePage(PageAddress, &Buffer[2]);
             Buffer[0] = ACK_VALUE;
             return ACK_FRAME_SIZE;
         }
 
-        case CMD_COMPAT_WRITE: {
+        case CMD_COMPAT_WRITE: { //TODO: CHECK IMPLEMENTATION
             uint8_t PageAddress = Buffer[1];
             /* Validation */
             if ((PageAddress < PAGE_WRITE_MIN) || (PageAddress >= PageCount)) {
@@ -577,8 +861,6 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 return NAK_FRAME_SIZE;
             }
 
-            //TODO: check for static lock bytes
-
             /* CRC check passed and page-address is within bounds.
             * Store address and proceed to receiving the data. */
             CompatWritePageAddress = PageAddress;
@@ -587,7 +869,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             return ACK_FRAME_SIZE;
         }
 
-        case CMD_READ_SIG: { //TODO: IMPLEMENT SOME KIND OF ABILITY TO WRITE SIGNATURE, MIGHT NEED FOR A BIGGER DUMP FILE TO BE UPLOADED WITH THE SIGNATURE APPENDED
+        case CMD_READ_SIG: { //TODO: IMPLEMENT SOME KIND OF ABILITY TO READ SIGNATURE, MIGHT NEED FOR A BIGGER DUMP FILE TO BE UPLOADED WITH THE SIGNATURE APPENDED
             /* Hardcoded response */
             memset(Buffer, 0xCA, SIGNATURE_LENGTH); //replace this with code to read signature from extended memory dump
             ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
@@ -661,7 +943,7 @@ uint16_t NTAG21xAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                 return ISO14443A_APP_NO_RESPONSE;
             } else if (Cmd == ISO14443A_CMD_SELECT_CL1) {
                 /* Load UID CL1 and perform anticollision. Since
-                * MF Ultralight use a double-sized UID, the first byte
+                * NTAG21x use a double-sized UID, the first byte
                 * of CL1 has to be the cascade-tag byte. */
                 uint8_t UidCL1[ISO14443A_CL_UID_SIZE] = { [0] = ISO14443A_UID0_CT };
 
