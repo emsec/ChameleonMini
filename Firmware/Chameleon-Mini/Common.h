@@ -44,34 +44,6 @@
 uint16_t BufferToHexString(char *HexOut, uint16_t MaxChars, const void *Buffer, uint16_t ByteCount);
 uint16_t HexStringToBuffer(void *Buffer, uint16_t MaxBytes, const char *HexIn);
 
-/* The next code to reverse the order of the bytes in an array of 
- * length at most 256 is taken from the LUFA sources in 
- * "../LUFA/Common/Endianness.h" to avoid compilation issues without 
- * all of the overhead of pre-processing the LUFA setup on all sources:
- */
-#if 0
-INLINE void SwapEndian_n_LUFA(void* const Data, uint8_t Length) {
-     uint8_t* CurrDataPos = (uint8_t*)Data;
-     while (Length > 1) {
-          uint8_t Temp = *CurrDataPos;
-	  *CurrDataPos = *(CurrDataPos + Length - 1);
-	  *(CurrDataPos + Length - 1) = Temp;
-          CurrDataPos++;
-	  Length -= 2;
-     }
-}
-
-INLINE void ReverseByteArray(void *Buffer, uint16_t ByteCount) {
-     uint16_t numRounds = (ByteCount + 255) / 256;
-     void *ActiveRoundBuffer = Buffer;
-     while(--numRounds >= 0) {
-          SwapEndian_n_LUFA(ActiveRoundBuffer, ByteCount);
-	  ActiveRoundBuffer += 256;
-	  ByteCount -= 256;
-     }
-}
-#endif
-
 INLINE uint8_t BitReverseByte(uint8_t Byte) {
     extern const uint8_t PROGMEM BitReverseByteTable[];
 
