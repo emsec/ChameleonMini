@@ -108,6 +108,7 @@
 //ADDRESSES FOR CONFIGS AFTER THE DUMP
 #define AUTHLIM_COUNTER_AFTER_DUMP_OFFSET 0x00
 #define NFC_CNT_AFTER_DUMP_OFFSET 0x01
+#define ECC_SIGNATURE_AFTER_DUMP_OFFSET 0x04
 
 
 static enum {
@@ -943,9 +944,20 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             return ACK_FRAME_SIZE;
         }
 
-        case CMD_READ_SIG: { //TODO: IMPLEMENT SOME KIND OF ABILITY TO READ SIGNATURE, MIGHT NEED FOR A BIGGER DUMP FILE TO BE UPLOADED WITH THE SIGNATURE APPENDED
-            /* Hardcoded response */
-            memset(Buffer, 0xCA, SIGNATURE_LENGTH); //replace this with code to read signature from extended memory dump
+        case CMD_READ_SIG: {
+            uint16_t signatureAddr;
+            switch(Ntag_type) {
+                case NTAG213:
+                    signatureAddr = NTAG213_MEM_SIZE + ECC_SIGNATURE_AFTER_DUMP_OFFSET;
+                    break;
+                case NTAG215:
+                    signatureAddr = NTAG215_MEM_SIZE + ECC_SIGNATURE_AFTER_DUMP_OFFSET;
+                    break;
+                case NTAG216:
+                    signatureAddr = NTAG215_MEM_SIZE + ECC_SIGNATURE_AFTER_DUMP_OFFSET;
+                    break;
+                }
+            MemoryReadBlock(&Buffer[0], signatureAddr, SIGNATURE_LENGTH);
             ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
             return (SIGNATURE_LENGTH + ISO14443A_CRCA_SIZE) * 8;
         }
