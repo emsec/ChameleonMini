@@ -41,7 +41,7 @@
 #define CMD_COMPAT_WRITE 0xA0
 #define CMD_READ_CNT 0x39
 #define CMD_PWD_AUTH 0x1B
-#define CMD_READ_SIG 0x3C //TODO: CHECK IMPLEMENTATION TO MAKE IT VALID
+#define CMD_READ_SIG 0x3C
 
 //MEMORY LAYOUT STUFF, addresses and sizes in bytes
 //UID stuff
@@ -459,7 +459,7 @@ static bool HandleWriteOnDynamicLockbytes(uint8_t *const Buffer){
 }
 
 //Verify lockbytes: returns true if authorized, false if not authorized
-static bool VerifyDynamicLockbytes(uint8_t PageAddress) { //TODO: CHECK IF THE IMPLEMENTATION IS CORRECT
+static bool VerifyDynamicLockbytes(uint8_t PageAddress) {
     if (PageAddress >= 16) {
         uint8_t DynLockByte0;
         uint8_t DynLockByte1;
@@ -677,7 +677,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                         Buffer[Offset + 3] = 0xBD;
                     }
 
-                //Here I need to handle the fact that the PWD and the PACK should return all 0x00 when read //TODO:CHECK IF IT WORKS CORRECTLY
+                //Here I need to handle the fact that the PWD and the PACK should return all 0x00 when read
                 if ((Ntag_type == NTAG213 && (PageAddress == 0x2B || PageAddress == 0x2C)) ||
                     (Ntag_type == NTAG215 && (PageAddress == 0x85 || PageAddress == 0x86)) ||
                     (Ntag_type == NTAG216 && (PageAddress == 0xE5 || PageAddress == 0xE6))) 
@@ -916,7 +916,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             return ACK_FRAME_SIZE;
         }
 
-        case CMD_COMPAT_WRITE: { //TODO: CHECK IMPLEMENTATION
+        case CMD_COMPAT_WRITE: {
             uint8_t PageAddress = Buffer[1];
             /* Validation */
             if ((PageAddress < PAGE_WRITE_MIN) || (PageAddress >= PageCount)) {
@@ -939,7 +939,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             /* CRC check passed and page-address is within bounds.
             * Store address and proceed to receiving the data. */
             CompatWritePageAddress = PageAddress;
-            ArmedForCompatWrite = true; //TODO:IMPLEMENT ARMED COMPAT WRITE
+            ArmedForCompatWrite = true;
             Buffer[0] = ACK_VALUE;
             return ACK_FRAME_SIZE;
         }
