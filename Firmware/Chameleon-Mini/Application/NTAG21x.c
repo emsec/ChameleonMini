@@ -669,9 +669,9 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             for (Offset = 0; Offset < BYTES_PER_READ; Offset += 4) {
                 MemoryReadBlock(&Buffer[Offset], PageAddress * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE);
                 //Here I need to handle the fact that the last byte of the dynamic lockbytes page is always 0xBD when read: CFR Page 15 of the datasheet
-                if ((Ntag_type == NTAG213 && PageAddress == 0x28) ||
-                    (Ntag_type == NTAG215 && PageAddress == 0x82) ||
-                    (Ntag_type == NTAG216 && PageAddress == 0xE2)) 
+                if ((Ntag_type == NTAG213 && PageAddress == NTAG213_DYNAMIC_LOCKBYTE_PAGE) ||
+                    (Ntag_type == NTAG215 && PageAddress == NTAG215_DYNAMIC_LOCKBYTE_PAGE) ||
+                    (Ntag_type == NTAG216 && PageAddress == NTAG216_DYNAMIC_LOCKBYTE_PAGE)) 
                     {  
                         Buffer[Offset + 3] = 0xBD;
                     }
@@ -726,9 +726,83 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             }
             
             ByteCount = (EndPageAddress - StartPageAddress + 1) * NTAG21x_PAGE_SIZE;
-            //TODO: Here I need to handle the fact that the last byte of the dynamic lockbytes page is always 0xBD when read: CFR Page 15 of the datasheet
-            //TODO: Here I need to handle the fact that the PWD and the PACK should return all 0x00 when read
+
             MemoryReadBlock(Buffer, StartPageAddress * NTAG21x_PAGE_SIZE, ByteCount);
+
+            //Here I need to handle the fact that the last byte of the dynamic lockbytes page is always 0xBD when read: CFR Page 15 of the datasheet
+            if ((Ntag_type == NTAG213 && NTAG213_DYNAMIC_LOCKBYTE_PAGE >= StartPageAddress && NTAG213_DYNAMIC_LOCKBYTE_PAGE <= EndPageAddress) ||
+                (Ntag_type == NTAG215 && NTAG215_DYNAMIC_LOCKBYTE_PAGE >= StartPageAddress && NTAG215_DYNAMIC_LOCKBYTE_PAGE <= EndPageAddress) ||
+                (Ntag_type == NTAG216 && NTAG216_DYNAMIC_LOCKBYTE_PAGE >= StartPageAddress && NTAG216_DYNAMIC_LOCKBYTE_PAGE <= EndPageAddress)) 
+                {  
+                    uint8_t pageDiff;
+                    //Calculate buffer address for the last byte of the dynamic lockbytes page
+                    switch(Ntag_type){
+                        case(NTAG213):
+                            pageDiff = NTAG213_DYNAMIC_LOCKBYTE_PAGE - StartPageAddress;
+                            break;
+                        case(NTAG215):
+                            pageDiff = NTAG215_DYNAMIC_LOCKBYTE_PAGE - StartPageAddress;
+                            break;
+                        case(NTAG216):
+                            pageDiff = NTAG216_DYNAMIC_LOCKBYTE_PAGE - StartPageAddress;
+                            break;
+                    }
+
+                    uint8_t lastByteAddress = (pageDiff * NTAG21x_PAGE_SIZE) + 3;
+
+                    Buffer[lastByteAddress] = 0xBD;
+                }
+
+            //Here I need to handle the fact that PWD should return all 0x00 when read 
+            if ((Ntag_type == NTAG213 && 0x2B >= StartPageAddress && 0x2B <= EndPageAddress) ||
+                (Ntag_type == NTAG215 && 0x85 >= StartPageAddress && 0x85 <= EndPageAddress) ||
+                (Ntag_type == NTAG216 && 0xE5 >= StartPageAddress && 0xE5 <= EndPageAddress)) 
+                {
+                    uint8_t pageDiff;
+                    //Calculate buffer address for the last byte of the dynamic lockbytes page
+                    switch(Ntag_type){
+                        case(NTAG213):
+                            pageDiff = 0x2B - StartPageAddress;
+                            break;
+                        case(NTAG215):
+                            pageDiff = 0x85 - StartPageAddress;
+                            break;
+                        case(NTAG216):
+                            pageDiff = 0xE5 - StartPageAddress;
+                            break;
+                    }
+
+                    for (uint8_t counter = 0; counter < 4; counter++) {
+                        uint8_t PWDByteAddress = (pageDiff * NTAG21x_PAGE_SIZE) + counter;
+                        Buffer[PWDByteAddress] = 0x00;
+                    }
+                }
+                
+            //Here I need to handle the fact that PACK should return all 0x00 when read 
+            if ((Ntag_type == NTAG213 && 0x2C >= StartPageAddress && 0x2C <= EndPageAddress) ||
+                (Ntag_type == NTAG215 && 0x86 >= StartPageAddress && 0x86 <= EndPageAddress) ||
+                (Ntag_type == NTAG216 && 0xE6 >= StartPageAddress && 0xE6 <= EndPageAddress))
+                {
+                    uint8_t pageDiff;
+                    //Calculate buffer address for the last byte of the dynamic lockbytes page
+                    switch(Ntag_type){
+                        case(NTAG213):
+                            pageDiff = 0x2C - StartPageAddress;
+                            break;
+                        case(NTAG215):
+                            pageDiff = 0x86 - StartPageAddress;
+                            break;
+                        case(NTAG216):
+                            pageDiff = 0xE6 - StartPageAddress;
+                            break;
+                    }
+
+                    for (uint8_t counter = 0; counter < 4; counter++) {
+                        uint8_t PWDByteAddress = (pageDiff * NTAG21x_PAGE_SIZE) + counter;
+                        Buffer[PWDByteAddress] = 0x00;
+                    }
+                }
+
             ISO14443AAppendCRCA(Buffer, ByteCount);
             return (ByteCount + ISO14443A_CRCA_SIZE) * 8;
         }
