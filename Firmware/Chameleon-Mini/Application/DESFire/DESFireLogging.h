@@ -1,26 +1,26 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFireLogging.h : 
+/*
+ * DESFireLogging.h :
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
@@ -33,35 +33,35 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireMemoryOperations.h"
 
 #ifndef DESFIRE_MIN_INCOMING_LOGSIZE
-     #define DESFIRE_MIN_INCOMING_LOGSIZE       (1)
+#define DESFIRE_MIN_INCOMING_LOGSIZE       (1)
 #endif
 #ifndef DESFIRE_MIN_OUTGOING_LOGSIZE
-     #define DESFIRE_MIN_OUTGOING_LOGSIZE       (1)
+#define DESFIRE_MIN_OUTGOING_LOGSIZE       (1)
 #endif
 
 INLINE void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize) {
-     if(DESFIRE_MIN_OUTGOING_LOGSIZE <= BufSize) {
-          LogEntry(LogCode, (void *) LogDataBuffer, BufSize);
-     }
+    if (DESFIRE_MIN_OUTGOING_LOGSIZE <= BufSize) {
+        LogEntry(LogCode, (void *) LogDataBuffer, BufSize);
+    }
 }
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-     OFF         = 0, 
-     NORMAL      = 1, 
-     VERBOSE     = 2, 
-     DEBUGGING   = 3, 
+    OFF         = 0,
+    NORMAL      = 1,
+    VERBOSE     = 2,
+    DEBUGGING   = 3,
 } DESFireLoggingMode;
 
 extern DESFireLoggingMode LocalLoggingMode;
 
-/* 
- * This variable can be toggled to indicated whether to employ 
- * testable pseudo-randomness in the encrypted transfers. 
- * When this value id non-zero, then any random session numbers 
- * (e.g., RndB) and IV salt vectors should default back to 
- * predictable constant values for testing purposes. 
+/*
+ * This variable can be toggled to indicated whether to employ
+ * testable pseudo-randomness in the encrypted transfers.
+ * When this value id non-zero, then any random session numbers
+ * (e.g., RndB) and IV salt vectors should default back to
+ * predictable constant values for testing purposes.
  */
-extern BYTE LocalTestingMode; 
+extern BYTE LocalTestingMode;
 
 void DESFireLogErrorMessage(char *fmtMsg, ...);
 void DESFireLogStatus(BYTE *bufMsg, SIZET bufSize);

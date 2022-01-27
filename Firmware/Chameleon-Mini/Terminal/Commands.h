@@ -195,11 +195,11 @@ CommandStatusIdType CommandGetField(char *OutMessage);
 CommandStatusIdType CommandExecClone(char *OutMessage);
 
 #ifdef ENABLE_RUNTESTS_TERMINAL_COMMAND
-    #include "../Tests/ChameleonTerminal.h"
+#include "../Tests/ChameleonTerminal.h"
 #endif
 
 #if defined(CONFIG_MF_DESFIRE_SUPPORT) && !defined(DISABLE_DESFIRE_TERMINAL_COMMANDS)
-     #include "../Application/DESFire/DESFireChameleonTerminal.h"
+#include "../Application/DESFire/DESFireChameleonTerminal.h"
 #endif
 
 #define COMMAND_LIST_END    ""

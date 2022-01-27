@@ -1,26 +1,26 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFireISO14443Support.h 
+/*
+ * DESFireISO14443Support.h
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
@@ -95,8 +95,8 @@ extern uint8_t LastReaderSentCmd;
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
 #define MAX_STATE_RETRY_COUNT               (4)
 extern uint8_t StateRetryCount;
-bool CheckStateRetryCount(bool resetByDefault); 
-bool CheckStateRetryCount2(bool resetByDefault, bool performLogging); 
+bool CheckStateRetryCount(bool resetByDefault);
+bool CheckStateRetryCount2(bool resetByDefault, bool performLogging);
 
 #define IGNORE_ACK_BYTE               (0x92)
 
@@ -105,7 +105,7 @@ void ISO144434SwitchState(Iso144434StateType NewState);
 void ISO144434SwitchState2(Iso144434StateType NewState, bool performLogging);
 
 void ISO144434Reset(void);
-static uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint16_t BitCount);
+static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t BitCount);
 
 /*
  * ISO/IEC 14443-3A implementation
@@ -117,14 +117,14 @@ static uint16_t ISO144434ProcessBlock(uint8_t* Buffer, uint16_t ByteCount, uint1
      ISO14443AAppendCRCA(Buffer, ByteCount);                                         \
      fullReturnBits = ByteCount * BITS_PER_BYTE + ISO14443A_CRC_FRAME_SIZE;          \
      fullReturnBits;                                                                 \
-     }) 
+     })
 /* TODO: Should we return CRC bytes when giving a NO_RESPONSE ??? ... Apparently "No". */
 #define GetAndSetNoResponseCRCA(Buffer)            ({                                \
      uint16_t fullReturnBits = 0;                                                    \
      ISO14443AAppendCRCA(Buffer, 0);                                                 \
      fullReturnBits = ISO14443A_CRC_FRAME_SIZE;                                      \
      fullReturnBits;                                                                 \
-     }) 
+     })
 
 uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t InitCRCA);
 
@@ -147,7 +147,7 @@ extern Iso144433AStateType Iso144433AIdleState;
 void ISO144433ASwitchState(Iso144433AStateType NewState);
 void ISO144433AReset(void);
 void ISO144433AHalt(void);
-bool ISO144433AIsHalt(const uint8_t* Buffer, uint16_t BitCount);
-uint16_t ISO144433APiccProcess(uint8_t* Buffer, uint16_t BitCount);
+bool ISO144433AIsHalt(const uint8_t *Buffer, uint16_t BitCount);
+uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount);
 
 #endif

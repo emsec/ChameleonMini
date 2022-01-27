@@ -1,27 +1,27 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFireFile.h : 
- * Maxie D. Schmidt (github.com/maxieds) 
+/*
+ * DESFireFile.h :
+ * Maxie D. Schmidt (github.com/maxieds)
  */
 
 #ifndef __DESFIRE_EFFILE_H__
@@ -33,7 +33,7 @@ This notice must be retained at the top of all source files where indicated.
 #define EFFILE_DATA_CHUNK_SIZE            (4)
 #define EFFILE_DATA_CHUNK_ALIGNAT         __attribute__((align(EFFILE_DATA_CHUNK_SIZE)))
 
-// TODO: See type 4 tags on CC and NTAG AIDs and FIDs 
+// TODO: See type 4 tags on CC and NTAG AIDs and FIDs
 #define ISO7816_4_CURRENT_EF_FILE_ID      0x0000
 #define ISO7816_4_CURRENT_DF_FILE_ID      0x3FFF
 #define ISO7816_4_MASTER_FILE_ID          0x3F00
@@ -101,21 +101,21 @@ uint8_t ReadFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
 uint8_t WriteFileControlBlock(uint8_t FileNum, DESFireFileTypeSettings *File);
 
 /* Creation and deletion */
-uint8_t CreateFileHeaderData(uint8_t FileNum, uint8_t CommSettings, 
+uint8_t CreateFileHeaderData(uint8_t FileNum, uint8_t CommSettings,
                              uint16_t AccessRights, DESFireFileTypeSettings *File);
 uint8_t CreateStandardFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
 uint8_t CreateBackupFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, uint16_t FileSize);
-uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, 
+uint8_t CreateValueFile(uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights,
                         int32_t LowerLimit, int32_t UpperLimit, int32_t Value, bool LimitedCreditEnabled);
-uint8_t CreateRecordFile(uint8_t FileType, uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights, 
+uint8_t CreateRecordFile(uint8_t FileType, uint8_t FileNum, uint8_t CommSettings, uint16_t AccessRights,
                          uint8_t *RecordSize, uint8_t *MaxRecordSize);
 uint8_t DeleteFile(uint8_t FileIndex);
 
 /* Transactions */
 
 /* File transfers */
-TransferStatus ReadDataFileTransfer(uint8_t* Buffer);
-uint8_t WriteDataFileTransfer(uint8_t* Buffer, uint8_t ByteCount);
+TransferStatus ReadDataFileTransfer(uint8_t *Buffer);
+uint8_t WriteDataFileTransfer(uint8_t *Buffer, uint8_t ByteCount);
 uint8_t ReadDataFileSetup(uint8_t FileIndex, uint8_t CommSettings, uint16_t Offset, uint16_t Length);
 uint8_t WriteDataFileSetup(uint8_t FileIndex, uint8_t FileType, uint8_t CommSettings, uint16_t Offset, uint16_t Length);
 uint16_t ReadDataFileIterator(uint8_t *Buffer);
@@ -136,8 +136,8 @@ uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 #define VALIDATED_ACCESS_GRANTED           1
 #define VALIDATED_ACCESS_GRANTED_PLAINTEXT 2
 
-/* 
- * [READ (4 bits) | WRITE | READ-WRITE | CHANGE] 
+/*
+ * [READ (4 bits) | WRITE | READ-WRITE | CHANGE]
  * Stored in little endian format from memory:
  */
 #define GetReadPermissions(AccessRights) \
@@ -149,7 +149,7 @@ uint16_t WriteDataFileIterator(uint8_t *Buffer, uint16_t ByteCount);
 #define GetChangePermissions(AccessRights) \
      (BYTE) (((0xf000 & AccessRights) >> 12) & 0x000f)
 
-const char * GetFileAccessPermissionsDesc(uint16_t fileAccessRights);
+const char *GetFileAccessPermissionsDesc(uint16_t fileAccessRights);
 
 /*
  * There are also command/instruction-wise

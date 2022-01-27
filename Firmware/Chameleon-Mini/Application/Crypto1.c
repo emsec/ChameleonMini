@@ -163,9 +163,9 @@
 #endif
 
 #ifdef DESFIRE_CRYPTO1_SAVE_SPACE
-    #define C1MEM    PROGMEM
+#define C1MEM    PROGMEM
 #else
-    #define C1MEM
+#define C1MEM
 #endif
 
 /* Space/speed tradoff. */
@@ -300,59 +300,59 @@ static const uint8_t C1MEM TableC0[32] = {
 static const uint8_t C1MEM TableC7[32] = {
     /* fc with Input {4,3,2,1,0} = (0,0,0,0,0) to (1,1,1,1,1) */
     FC(0, 0, 0, 0, 0) << 7, FC(0, 0, 0, 0, 1) << 7, FC(0, 0, 0, 1, 0) << 7, FC(0, 0, 0, 1, 1) << 7,
-    FC(0, 0, 1, 0, 0) << 7, FC(0, 0, 1, 0, 1) << 7, FC(0, 0, 1, 1, 0) << 7, FC(0, 0, 1, 1, 1) << 7,
-    FC(0, 1, 0, 0, 0) << 7, FC(0, 1, 0, 0, 1) << 7, FC(0, 1, 0, 1, 0) << 7, FC(0, 1, 0, 1, 1) << 7,
-    FC(0, 1, 1, 0, 0) << 7, FC(0, 1, 1, 0, 1) << 7, FC(0, 1, 1, 1, 0) << 7, FC(0, 1, 1, 1, 1) << 7,
-    FC(1, 0, 0, 0, 0) << 7, FC(1, 0, 0, 0, 1) << 7, FC(1, 0, 0, 1, 0) << 7, FC(1, 0, 0, 1, 1) << 7,
-    FC(1, 0, 1, 0, 0) << 7, FC(1, 0, 1, 0, 1) << 7, FC(1, 0, 1, 1, 0) << 7, FC(1, 0, 1, 1, 1) << 7,
-    FC(1, 1, 0, 0, 0) << 7, FC(1, 1, 0, 0, 1) << 7, FC(1, 1, 0, 1, 0) << 7, FC(1, 1, 0, 1, 1) << 7,
-    FC(1, 1, 1, 0, 0) << 7, FC(1, 1, 1, 0, 1) << 7, FC(1, 1, 1, 1, 0) << 7, FC(1, 1, 1, 1, 1) << 7
+                      FC(0, 0, 1, 0, 0) << 7, FC(0, 0, 1, 0, 1) << 7, FC(0, 0, 1, 1, 0) << 7, FC(0, 0, 1, 1, 1) << 7,
+                      FC(0, 1, 0, 0, 0) << 7, FC(0, 1, 0, 0, 1) << 7, FC(0, 1, 0, 1, 0) << 7, FC(0, 1, 0, 1, 1) << 7,
+                      FC(0, 1, 1, 0, 0) << 7, FC(0, 1, 1, 0, 1) << 7, FC(0, 1, 1, 1, 0) << 7, FC(0, 1, 1, 1, 1) << 7,
+                      FC(1, 0, 0, 0, 0) << 7, FC(1, 0, 0, 0, 1) << 7, FC(1, 0, 0, 1, 0) << 7, FC(1, 0, 0, 1, 1) << 7,
+                      FC(1, 0, 1, 0, 0) << 7, FC(1, 0, 1, 0, 1) << 7, FC(1, 0, 1, 1, 0) << 7, FC(1, 0, 1, 1, 1) << 7,
+                      FC(1, 1, 0, 0, 0) << 7, FC(1, 1, 0, 0, 1) << 7, FC(1, 1, 0, 1, 0) << 7, FC(1, 1, 0, 1, 1) << 7,
+                      FC(1, 1, 1, 0, 0) << 7, FC(1, 1, 1, 0, 1) << 7, FC(1, 1, 1, 1, 0) << 7, FC(1, 1, 1, 1, 1) << 7
 };
 
 /* Special table for nibble processing (e.g. ack), feedback at bit 3 */
 static const uint8_t C1MEM TableC3[32] = {
     /* fc with Input {4,3,2,1,0} = (0,0,0,0,0) to (1,1,1,1,1) */
     FC(0, 0, 0, 0, 0) << 3, FC(0, 0, 0, 0, 1) << 3, FC(0, 0, 0, 1, 0) << 3, FC(0, 0, 0, 1, 1) << 3,
-    FC(0, 0, 1, 0, 0) << 3, FC(0, 0, 1, 0, 1) << 3, FC(0, 0, 1, 1, 0) << 3, FC(0, 0, 1, 1, 1) << 3,
-    FC(0, 1, 0, 0, 0) << 3, FC(0, 1, 0, 0, 1) << 3, FC(0, 1, 0, 1, 0) << 3, FC(0, 1, 0, 1, 1) << 3,
-    FC(0, 1, 1, 0, 0) << 3, FC(0, 1, 1, 0, 1) << 3, FC(0, 1, 1, 1, 0) << 3, FC(0, 1, 1, 1, 1) << 3,
-    FC(1, 0, 0, 0, 0) << 3, FC(1, 0, 0, 0, 1) << 3, FC(1, 0, 0, 1, 0) << 3, FC(1, 0, 0, 1, 1) << 3,
-    FC(1, 0, 1, 0, 0) << 3, FC(1, 0, 1, 0, 1) << 3, FC(1, 0, 1, 1, 0) << 3, FC(1, 0, 1, 1, 1) << 3,
-    FC(1, 1, 0, 0, 0) << 3, FC(1, 1, 0, 0, 1) << 3, FC(1, 1, 0, 1, 0) << 3, FC(1, 1, 0, 1, 1) << 3,
-    FC(1, 1, 1, 0, 0) << 3, FC(1, 1, 1, 0, 1) << 3, FC(1, 1, 1, 1, 0) << 3, FC(1, 1, 1, 1, 1) << 3
+                      FC(0, 0, 1, 0, 0) << 3, FC(0, 0, 1, 0, 1) << 3, FC(0, 0, 1, 1, 0) << 3, FC(0, 0, 1, 1, 1) << 3,
+                      FC(0, 1, 0, 0, 0) << 3, FC(0, 1, 0, 0, 1) << 3, FC(0, 1, 0, 1, 0) << 3, FC(0, 1, 0, 1, 1) << 3,
+                      FC(0, 1, 1, 0, 0) << 3, FC(0, 1, 1, 0, 1) << 3, FC(0, 1, 1, 1, 0) << 3, FC(0, 1, 1, 1, 1) << 3,
+                      FC(1, 0, 0, 0, 0) << 3, FC(1, 0, 0, 0, 1) << 3, FC(1, 0, 0, 1, 0) << 3, FC(1, 0, 0, 1, 1) << 3,
+                      FC(1, 0, 1, 0, 0) << 3, FC(1, 0, 1, 0, 1) << 3, FC(1, 0, 1, 1, 0) << 3, FC(1, 0, 1, 1, 1) << 3,
+                      FC(1, 1, 0, 0, 0) << 3, FC(1, 1, 0, 0, 1) << 3, FC(1, 1, 0, 1, 0) << 3, FC(1, 1, 0, 1, 1) << 3,
+                      FC(1, 1, 1, 0, 0) << 3, FC(1, 1, 1, 0, 1) << 3, FC(1, 1, 1, 1, 0) << 3, FC(1, 1, 1, 1, 1) << 3
 };
 
 /* Filter Output Macros */
 #ifdef DESFIRE_CRYPTO1_SAVE_SPACE
-    #define CRYPTO1_FILTER_OUTPUT_B0_24(__O0, __O1, __O2) \
+#define CRYPTO1_FILTER_OUTPUT_B0_24(__O0, __O1, __O2) \
         pgm_read_byte(TableC0 + \
             (pgm_read_byte(abFilterTable + __O0) | \
             pgm_read_byte(abFilterTable + AB_FILTER_TABLE_ENTRY_SIZE + __O1) | \
             pgm_read_byte(abFilterTable + 2 * AB_FILTER_TABLE_ENTRY_SIZE + __O2)) \
         )
-    #define CRYPTO1_FILTER_OUTPUT_B3_24(__O0, __O1, __O2) \
+#define CRYPTO1_FILTER_OUTPUT_B3_24(__O0, __O1, __O2) \
         pgm_read_byte(TableC3 + \
             (pgm_read_byte(abFilterTable + __O0) | \
             pgm_read_byte(abFilterTable + AB_FILTER_TABLE_ENTRY_SIZE + __O1) | \
             pgm_read_byte(abFilterTable + 2 * AB_FILTER_TABLE_ENTRY_SIZE + __O2)) \
         )
-    #define CRYPTO1_FILTER_OUTPUT_B7_24(__O0, __O1, __O2) \
+#define CRYPTO1_FILTER_OUTPUT_B7_24(__O0, __O1, __O2) \
         pgm_read_byte(TableC7 + \
             (pgm_read_byte(abFilterTable + __O0) | \
             pgm_read_byte(abFilterTable + AB_FILTER_TABLE_ENTRY_SIZE + __O1) | \
             pgm_read_byte(abFilterTable + 2 * AB_FILTER_TABLE_ENTRY_SIZE + __O2)) \
         )
 #else
-    /* Output at bit 0 for general purpose */
-    #define CRYPTO1_FILTER_OUTPUT_B0_24(__O0, __O1, __O2) TableC0[ abFilterTable[0][__O0] | \
+/* Output at bit 0 for general purpose */
+#define CRYPTO1_FILTER_OUTPUT_B0_24(__O0, __O1, __O2) TableC0[ abFilterTable[0][__O0] | \
                         abFilterTable[1][__O1] | \
                         abFilterTable[2][__O2]]
-    /* Output at bit 7 for optimized byte processing */
-    #define CRYPTO1_FILTER_OUTPUT_B7_24(__O0, __O1, __O2) TableC7[ abFilterTable[0][__O0] | \
+/* Output at bit 7 for optimized byte processing */
+#define CRYPTO1_FILTER_OUTPUT_B7_24(__O0, __O1, __O2) TableC7[ abFilterTable[0][__O0] | \
                         abFilterTable[1][__O1] | \
                         abFilterTable[2][__O2]]
-    /* Output at bit 3 for optimized nibble processing */
-    #define CRYPTO1_FILTER_OUTPUT_B3_24(__O0, __O1, __O2) TableC3[ abFilterTable[0][__O0] | \
+/* Output at bit 3 for optimized nibble processing */
+#define CRYPTO1_FILTER_OUTPUT_B3_24(__O0, __O1, __O2) TableC3[ abFilterTable[0][__O0] | \
                         abFilterTable[1][__O1] | \
                         abFilterTable[2][__O2]]
 #endif

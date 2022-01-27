@@ -27,7 +27,7 @@ static enum {
 
 static uint16_t tmp_th = CODEC_THRESHOLD_CALIBRATE_MIN;
 static uint8_t Thresholds[(CODEC_THRESHOLD_CALIBRATE_MAX - CODEC_THRESHOLD_CALIBRATE_MIN) /
-                          CODEC_THRESHOLD_CALIBRATE_STEPS] = {0};
+                                                                                          CODEC_THRESHOLD_CALIBRATE_STEPS] = {0};
 
 void Sniff14443AAppInit(void) {
     SniffState = STATE_REQA;

@@ -82,16 +82,16 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 #Enable tests for DES/2KTDEA/3DES/AES128 crypto schemes:
 #SETTINGS  += -DENABLE_CRYPTO_TESTS
 
-#Enable a command to run any tests added by developers, e.g., the 
+#Enable a command to run any tests added by developers, e.g., the
 #crypto scheme tests that can be enabled above:
 #SETTINGS  += -DENABLE_RUNTESTS_TERMINAL_COMMAND
 
-#Whether or not to allow users Chameleon terminal access to change the DESFire configuration's 
+#Whether or not to allow users Chameleon terminal access to change the DESFire configuration's
 #sensitive settings like manufacturer, serial number, etc.
 #SETTINGS += -DDISABLE_PERMISSIVE_DESFIRE_SETTINGS
 #SETTINGS += -DDISABLE_DESFIRE_TERMINAL_COMMANDS
 
-#Set a default logging mode for debugging with the DESFire 
+#Set a default logging mode for debugging with the DESFire
 #emulation code:
 SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
 #SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
@@ -100,17 +100,17 @@ SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
 SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
 #SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
 
-#Feature: Use randomized UIDs that mask the actual secret UID until 
-#the tag has been issued a successful authentication sequence: 
+#Feature: Use randomized UIDs that mask the actual secret UID until
+#the tag has been issued a successful authentication sequence:
 #SETTINGS += -DDESFIRE_RANDOMIZE_UIDS_PREAUTH
 
-#Anticipating that the implementation overhead is high with the 
-#maximum storage allocations for the number of possible keys per 
-#application directory, and/or the total number of AID numbered 
-#directory slots, the following options will tweak this limitation: 
-# -> Set DESFIRE_MEMORY_LIMITED_TESTING to shrink the defaults 
-# -> Or explicitly define DESFIRE_CUSTOM_MAX_KEYS=##UINT## (per AID), 
-# -> And/Or define DESFIRE_CUSTOM_MAX_APPS=##UINT## 
+#Anticipating that the implementation overhead is high with the
+#maximum storage allocations for the number of possible keys per
+#application directory, and/or the total number of AID numbered
+#directory slots, the following options will tweak this limitation:
+# -> Set DESFIRE_MEMORY_LIMITED_TESTING to shrink the defaults
+# -> Or explicitly define DESFIRE_CUSTOM_MAX_KEYS=##UINT## (per AID),
+# -> And/Or define DESFIRE_CUSTOM_MAX_APPS=##UINT##
 #    (total number of AID spaces available, not including the master 0x00)
 SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_APPS=8
@@ -119,7 +119,7 @@ SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS += -DDESFIRE_USE_FACTORY_SIZES
 #SETTINGS += -DDESFIRE_MAXIMIZE_SIZES_FOR_STORAGE
 
-#Set a minimum incoming/outgoing log size so we do not spam the 
+#Set a minimum incoming/outgoing log size so we do not spam the
 #Chameleon Mini logs to much by logging everything:
 SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
 SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
@@ -128,7 +128,7 @@ SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
 
-#Option to save space with the "Application/Crypto1.c" code by storing large tables 
+#Option to save space with the "Application/Crypto1.c" code by storing large tables
 #in PROGMEM. Note that this will slow down the read times when accessing these tables:
 #SETTINGS  += -DDESFIRE_CRYPTO1_SAVE_SPACE
 
@@ -299,8 +299,8 @@ local-clean:
 git-add-dev:
 	@git add Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
 
-## Defining custom targets for the DESFire build (normal/user mode) and 
-## developer mode for use with the Android CMLD application that enables 
+## Defining custom targets for the DESFire build (normal/user mode) and
+## developer mode for use with the Android CMLD application that enables
 ## the printing of LIVE logs to the phone's console by default:
 desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex

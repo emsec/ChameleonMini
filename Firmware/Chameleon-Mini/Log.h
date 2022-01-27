@@ -48,14 +48,14 @@ typedef enum {
     LOG_ERR_APP_CHECKSUM_FAIL	                   = 0xC1, ///< Application had a checksum fail.
     LOG_ERR_APP_NOT_AUTHED		              = 0xC2, ///< Application is not authenticated.
 
-    /* DESFire emulation and development related logging messages (0xEx): */ 
-    #ifdef CONFIG_MF_DESFIRE_SUPPORT
-         #include "Application/DESFire/DESFireLoggingCodesInclude.c" 
-    #endif
+    /* DESFire emulation and development related logging messages (0xEx): */
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+#include "Application/DESFire/DESFireLoggingCodesInclude.c"
+#endif
 
     LOG_INFO_SYSTEM_BOOT		                    = 0xFF, ///< Chameleon boots
-    LOG_EMPTY 					            = 0x00  ///< Empty Log Entry. This is not followed by a length byte 
-                                                          ///< nor the two systick bytes nor any data.
+    LOG_EMPTY 					            = 0x00  ///< Empty Log Entry. This is not followed by a length byte
+                                              ///< nor the two systick bytes nor any data.
 } LogEntryEnum;
 
 typedef enum {

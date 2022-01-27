@@ -1,27 +1,27 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFireCrypto.h 
- * Maxie D. Schmidt (github.com/maxieds) 
+/*
+ * DESFireCrypto.h
+ * Maxie D. Schmidt (github.com/maxieds)
  */
 
 #ifndef __DESFIRE_CRYPTO_H__
@@ -31,12 +31,12 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "DESFireFirmwareSettings.h"
 
-/* Communication modes: 
+/* Communication modes:
  * Define the modes of communication over the RFID channel
- * 
- * Note there is also an AES wrapped COMMS variant called 
- * LRP Secure Messaging detailed starting on page 37 
- * (Section 7.2) of 
+ *
+ * Note there is also an AES wrapped COMMS variant called
+ * LRP Secure Messaging detailed starting on page 37
+ * (Section 7.2) of
  * https://www.nxp.com/docs/en/application-note/AN12343.pdf
  */
 #define DESFIRE_COMMS_PLAINTEXT            (0x00)
@@ -49,7 +49,7 @@ This notice must be retained at the top of all source files where indicated.
 #define CRYPTO_TYPE_DES         (0x01)
 #define CRYPTO_TYPE_2KTDEA      (0x0A)
 #define CRYPTO_TYPE_3K3DES      (0x1A)
-#define CRYPTO_TYPE_AES128      (0x4A) 
+#define CRYPTO_TYPE_AES128      (0x4A)
 
 #define CryptoTypeDES(ct) \
     ((ct == CRYPTO_TYPE_DES) || (ct == CRYPTO_TYPE_ANY))
@@ -82,7 +82,7 @@ extern uint8_t CryptoAuthMethod;
 extern uint8_t ActiveCommMode;
 
 /* Need to invalidate the authentication state after:
- * 1) Selecting a new application; 
+ * 1) Selecting a new application;
  * 2) Changing the active key used in the authentication;
  * 3) A failed authentication;
  */
@@ -91,8 +91,8 @@ bool IsAuthenticated(void);
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType);
 BYTE GetCryptoMethodCommSettings(uint8_t cryptoType);
-const char * GetCryptoMethodDesc(uint8_t cryptoType);
-const char * GetCommSettingsDesc(uint8_t cryptoType);
+const char *GetCryptoMethodDesc(uint8_t cryptoType);
+const char *GetCommSettingsDesc(uint8_t cryptoType);
 
 #define DESFIRE_MAC_LENGTH          4
 #define DESFIRE_CMAC_LENGTH         8    // in bytes
@@ -113,7 +113,7 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
      (cryptoBits / BITS_PER_BYTE)
 
 /*********************************************************
- * AES (128) crypto routines: 
+ * AES (128) crypto routines:
  *********************************************************/
 
 #include "../CryptoAES128.h"
@@ -126,17 +126,17 @@ extern DesfireAESCryptoKey AESCryptoIVBuffer;
 
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData);
 
-typedef void (*CryptoAESCBCFuncType)(uint16_t, void*, void*, uint8_t*, uint8_t*);
+typedef void (*CryptoAESCBCFuncType)(uint16_t, void *, void *, uint8_t *, uint8_t *);
 
-typedef uint8_t (*CryptoTransferSendFunc)(uint8_t*, uint8_t);
-typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t*, uint8_t);
+typedef uint8_t (*CryptoTransferSendFunc)(uint8_t *, uint8_t);
+typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t *, uint8_t);
 uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8_t *Key);
 uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const uint8_t *Key);
 
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
 
 /*********************************************************
- * TripleDES crypto routines: 
+ * TripleDES crypto routines:
  *********************************************************/
 
 #include "../CryptoTDEA.h"

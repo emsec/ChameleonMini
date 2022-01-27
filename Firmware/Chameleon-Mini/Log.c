@@ -81,11 +81,11 @@ void LogInit(void) {
 }
 
 void LogTick(void) {
-    // The logging functionality slows down the timings of data exchanges between 
-    // Chameleon emulated tags and readers, so schedule the logging writes to 
+    // The logging functionality slows down the timings of data exchanges between
+    // Chameleon emulated tags and readers, so schedule the logging writes to
     // happen only on intervals that will be outside of timing windows for individual xfers
     // initiated from PICC <--> PCD (e.g., currently approximately every 600ms):
-    if((++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0) {
+    if ((++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0) {
         if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE)
             AtomicLiveLogTick();
         if (EnableLogSRAMtoFRAM)
@@ -163,9 +163,9 @@ uint16_t LogMemFree(void) {
 void LogSetModeById(LogModeEnum Mode) {
 #ifdef LOG_SETTING_GLOBAL
     /* Write Log settings globally */
-    for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
-         GlobalSettings.Settings[i].LogMode = Mode;
-    }   
+    for (uint8_t i = 0; i < SETTINGS_COUNT; i++) {
+        GlobalSettings.Settings[i].LogMode = Mode;
+    }
 #endif
     GlobalSettings.ActiveSettingPtr->LogMode = Mode;
     switch (Mode) {

@@ -27,7 +27,7 @@
 
 #define IsSelectCmd(Buffer)         ((Buffer[0] == ISO14443A_CMD_SELECT_CL1) || \
 				     (Buffer[0] == ISO14443A_CMD_SELECT_CL2) || \
-				     (Buffer[0] == ISO14443A_CMD_SELECT_CL3)) 
+				     (Buffer[0] == ISO14443A_CMD_SELECT_CL3))
 #define IsCmdSelectRound1(Buffer)   (IsSelectCmd(Buffer) && (Buffer[1] == ISO14443A_NVB_AC_START))
 #define IsCmdSelectRound2(Buffer)   (IsSelectCmd(Buffer) && (Buffer[1] == ISO14443A_NVB_AC_END))
 
@@ -84,7 +84,7 @@ bool ISO14443ASelect(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t S
                     (DataPtr[4] == UidCL[2]) &&
                     (DataPtr[5] == UidCL[3])) {
                 DataPtr[0] = SAKValue;
-		ISO14443AAppendCRCA(Buffer, 1);
+                ISO14443AAppendCRCA(Buffer, 1);
                 *BitCount = ISO14443A_SAK_FRAME_SIZE;
                 return true;
             } else {
@@ -123,7 +123,7 @@ bool ISO14443ASelect(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t S
 }
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-bool ISO14443ASelectDesfire(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
+bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t SAKValue);
 #endif
 
 INLINE

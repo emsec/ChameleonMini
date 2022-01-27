@@ -1,26 +1,26 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFireInstructions.h : 
+/*
+ * DESFireInstructions.h :
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
@@ -30,7 +30,7 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireFirmwareSettings.h"
 #include "DESFireCrypto.h"
 
-#define DESFIRE_VERSION1_BYTES_PROCESSED     (8) 
+#define DESFIRE_VERSION1_BYTES_PROCESSED     (8)
 #define DESFIRE_VERSION2_BYTES_PROCESSED     (8)
 #define DESFIRE_VERSION3_BYTES_PROCESSED     (15)
 
@@ -49,7 +49,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
 } TransferStatus;
 
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-    
+
     /* DESFire native command support: */
     NO_COMMAND_TO_CONTINUE = 0x00,
     CMD_AUTHENTICATE = 0x0A,               /* Authenticate Legacy */
@@ -93,18 +93,18 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_COMMIT_TRANSACTION = 0xC7,
     CMD_ABORT_TRANSACTION = 0xA7,
     CMD_CONTINUE =  0xAF,
-    
+
     /* ISO7816 Command Set Support: */
-    CMD_ISO7816_SELECT = 0xA4, 
-    CMD_ISO7816_GET_CHALLENGE = 0x84, 
-    CMD_ISO7816_EXTERNAL_AUTHENTICATE = 0x82, 
-    CMD_ISO7816_INTERNAL_AUTHENTICATE = 0x88, 
-    CMD_ISO7816_READ_BINARY = 0xB0, 
-    CMD_ISO7816_UPDATE_BINARY = 0xD6, 
+    CMD_ISO7816_SELECT = 0xA4,
+    CMD_ISO7816_GET_CHALLENGE = 0x84,
+    CMD_ISO7816_EXTERNAL_AUTHENTICATE = 0x82,
+    CMD_ISO7816_INTERNAL_AUTHENTICATE = 0x88,
+    CMD_ISO7816_READ_BINARY = 0xB0,
+    CMD_ISO7816_UPDATE_BINARY = 0xD6,
     CMD_ISO7816_READ_RECORDS = 0xB2,
-    CMD_ISO7816_APPEND_RECORD = 0xE2, 
-    
-    /* Space for undocumented command codes -- 
+    CMD_ISO7816_APPEND_RECORD = 0xE2,
+
+    /* Space for undocumented command codes --
      * Need command codes and parameters to make these work moving forward: */
     //CMD_READ_SIGNATURE /* See page 87 of AN12343.pdf (for Mifare DESFire Light tags) */
 
@@ -113,9 +113,9 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 typedef uint16_t (*InsCodeHandlerFunc)(uint8_t *Buffer, uint16_t ByteCount);
 
 typedef struct {
-     DESFireCommandType  insCode;
-     InsCodeHandlerFunc  insFunc;
-     const __flash char *insDesc;
+    DESFireCommandType  insCode;
+    InsCodeHandlerFunc  insFunc;
+    const __flash char *insDesc;
 } DESFireCommand;
 
 extern const __flash DESFireCommand DESFireCommandSet[];
@@ -164,7 +164,7 @@ uint16_t EV0CmdGetFileSettings(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdChangeFileSettings(uint8_t *Buffer, uint16_t ByteCount);
 
 /* Data manipulation commands */
-// NOTE: Page 57: Read file functions: 
+// NOTE: Page 57: Read file functions:
 uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdGetValue(uint8_t *Buffer, uint16_t ByteCount);

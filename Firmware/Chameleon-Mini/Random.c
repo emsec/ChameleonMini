@@ -4,8 +4,8 @@
 #include "System.h"
 
 void RandomInit(void) {
-    uint32_t randomSeed = (uint32_t) ((uint32_t) (SystemGetSysTick() + 768) | 
-                                      ((uint32_t) (SystemGetSysTick() % 512) << 20));
+    uint32_t randomSeed = (uint32_t)((uint32_t)(SystemGetSysTick() + 768) |
+                                     ((uint32_t)(SystemGetSysTick() % 512) << 20));
     srand(randomSeed);
 }
 
