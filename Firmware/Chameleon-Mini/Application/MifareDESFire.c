@@ -120,9 +120,6 @@ uint16_t MifareDesfireProcessCommand(uint8_t* Buffer, uint16_t ByteCount) {
     }
     else if(Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
-        //if(ReturnBytes > 0) {
-        //    LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnBytes);
-        //}
         return ReturnBytes;
     }
    

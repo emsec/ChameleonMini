@@ -1956,13 +1956,13 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t ISO7816CmdSelect(uint8_t *Buffer, uint16_t ByteCount) {
      if(ByteCount == 0) {
           Buffer[0] = ISO7816_ERROR_SW1;
-          Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+          Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
           return ISO7816_STATUS_RESPONSE_SIZE; 
      }
      else if(Iso7816P1Data == ISO7816_UNSUPPORTED_MODE || 
              Iso7816P2Data == ISO7816_UNSUPPORTED_MODE) {
           Buffer[0] = ISO7816_ERROR_SW1;
-          Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+          Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
           return ISO7816_STATUS_RESPONSE_SIZE; 
      }
      else if(Iso7816P1Data == ISO7816_SELECT_EF) {
@@ -1971,8 +1971,8 @@ uint16_t ISO7816CmdSelect(uint8_t *Buffer, uint16_t ByteCount) {
      else if(Iso7816P1Data == ISO7816_SELECT_DF) {
           return ISO7816CmdSelectDF(Buffer, ByteCount);
      }
-     Buffer[0] = ISO7816_ERROR_SW1;
-     Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+     Buffer[0] = ISO7816_ERROR_SW1_INS_UNSUPPORTED;
+     Buffer[1] = ISO7816_ERROR_SW2_INS_UNSUPPORTED;
      return ISO7816_STATUS_RESPONSE_SIZE;
 }
 
@@ -2054,7 +2054,7 @@ uint16_t ISO7816CmdInternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
     if(ByteCount == 0) {
          Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
     uint8_t maxBytesToRead = ByteCount - 1;
@@ -2084,7 +2084,7 @@ uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, SelectedFile.File.FileNumber);
     if (fileIndex >= DESFIRE_MAX_FILES) {
          Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
     uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
@@ -2147,7 +2147,7 @@ uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount) {
     if(ByteCount < 1 + 1) {
          Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
     uint8_t maxBytesToRead = ByteCount - 1;
@@ -2177,7 +2177,7 @@ uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, SelectedFile.File.FileNumber);
     if (fileIndex >= DESFIRE_MAX_FILES) {
          Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
     uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
@@ -2241,7 +2241,7 @@ uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {
     if(ByteCount == 0) {
          Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
     uint8_t maxBytesToRead = ByteCount - 1;
@@ -2271,7 +2271,7 @@ uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, SelectedFile.File.FileNumber);
     if (fileIndex >= DESFIRE_MAX_FILES) {
          Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
     uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
@@ -2350,12 +2350,12 @@ uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount) {
     if(ByteCount < 1 + 1) {
          Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_SELECT_ERROR_SW2_UNSUPPORTED;
+         Buffer[1] = ISO7816_SELECT_ERROR_SW2_FUNC_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
     else if(!Iso7816FileSelected) {
          Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE; 
     }
     else if((SelectedFile.File.FileType != DESFIRE_FILE_LINEAR_RECORDS) && 
@@ -2367,7 +2367,7 @@ uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, SelectedFile.File.FileNumber);
     if (fileIndex >= DESFIRE_MAX_FILES) {
          Buffer[0] = ISO7816_ERROR_SW1;
-         Buffer[1] = ISO7816_ERROR_SW2_UNSUPPORTED;
+         Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
          return ISO7816_STATUS_RESPONSE_SIZE;
     }
     uint16_t AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);

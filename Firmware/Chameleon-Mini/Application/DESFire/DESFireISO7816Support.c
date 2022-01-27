@@ -51,7 +51,7 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
     if(ByteCount < 8 || !Iso7816CLA(Buffer[0])) {
         Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
         Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-        return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+        return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_FUNC_UNSUPPORTED);
     }
     else {
         Iso7816P1Data = ISO7816_NO_DATA;
@@ -68,7 +68,7 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
             }
             else {
                 Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-                return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+                return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_FUNC_UNSUPPORTED);
             }
         }
         else if((P1 & 0xf9) == 0) { // Select by DF/AID name:
@@ -77,12 +77,12 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
              }
              else {
                  Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-                 return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+                 return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_FUNC_UNSUPPORTED);
              }
         }
         else {
              Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
-             return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+             return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_FUNC_UNSUPPORTED);
         }
         if((P2 & 0xf0) == 0) {
             switch(P2 & 0x03) {
@@ -100,19 +100,19 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
                     break;
                 default:
                     Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-                    return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+                    return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_FUNC_UNSUPPORTED);
             }
         }
         else {
             Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_FUNC_UNSUPPORTED);
         }
     }
     else if(insCode == CMD_ISO7816_GET_CHALLENGE) {
         if((P1 != 0) || (P2 != 0)) {
             Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
             Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_UNSUPPORTED);
+            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_SELECT_ERROR_SW2_FUNC_UNSUPPORTED);
         }
         Iso7816P1Data = ISO7816_NO_DATA;
         Iso7816P2Data = ISO7816_NO_DATA;
@@ -155,14 +155,14 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
          }
          else {
               Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-              return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_UNSUPPORTED);
+              return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_FUNC_UNSUPPORTED);
          }
     }
     else if(insCode == CMD_ISO7816_APPEND_RECORD) {
          if((P1 != 0) || (P2 != 0)) {
             Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
             Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_UNSUPPORTED);
+            return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_FUNC_UNSUPPORTED);
          }
          Iso7816P1Data = Iso7816P2Data = ISO7816_NO_DATA;
     }
@@ -171,7 +171,7 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
               if((P1 & 0x30) != 0) {
                    Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
                    Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-                   return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_UNSUPPORTED);
+                   return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_FUNC_UNSUPPORTED);
               }
               Iso7816EfIdNumber = P1 & 0x03;
               Iso7816FileSelected = false;
@@ -189,7 +189,7 @@ uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {
     else {
         Iso7816P1Data = ISO7816_UNSUPPORTED_MODE;
         Iso7816P2Data = ISO7816_UNSUPPORTED_MODE;
-        return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_UNSUPPORTED);
+        return AppendSW12Bytes(ISO7816_ERROR_SW1, ISO7816_ERROR_SW2_FUNC_UNSUPPORTED);
     }
     return ISO7816_CMD_NO_ERROR;
 }
