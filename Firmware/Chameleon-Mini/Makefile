@@ -5,13 +5,13 @@
 SHELL = /bin/sh
 
 #Supported configurations
-CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT
+#CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_1K_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_MF_ULTRALIGHT_SUPPORT
-CONFIG_SETTINGS  += -DCONFIG_ISO14443A_SNIFF_SUPPORT
+#CONFIG_SETTINGS  += -DCONFIG_ISO14443A_SNIFF_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_ISO14443A_READER_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_NTAG215_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_VICINITY_SUPPORT
@@ -162,8 +162,8 @@ SRC         += Application/MifareUltralight.c Application/MifareClassic.c Applic
 			Application/CryptoTDEA-HWAccelerated.S Application/CryptoTDEA.c Application/CryptoAES128.c \
 			Tests/CryptoTests.c Tests/ChameleonTerminal.c
 SRC		  += Application/NTAG215.c
-SRC         += Codec/ISO15693.c
-SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/TITagitplus.c Application/ISO15693-A.c Application/EM4233.c
+SRC         += Codec/ISO15693.c Codec/SniffISO15693.c
+SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/TITagitplus.c Application/ISO15693-A.c Application/EM4233.c Application/Sniff15693.c
 SRC	       += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
                $(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
                $(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
@@ -205,7 +205,7 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
 
-.PHONY: program program-latest dfu-flip dfu-prog check_size style
+.PHONY: program program-latest dfu-flip dfu-prog dfu-reset check_size style
 
 # Default target
 all:
@@ -255,6 +255,10 @@ dfu-prog: $(TARGET).hex $(TARGET).eep check_size
 	dfu-programmer $(MCU) erase
 	dfu-programmer $(MCU) flash-eeprom $(TARGET).eep
 	dfu-programmer $(MCU) flash $(TARGET).hex
+	dfu-programmer $(MCU) reset
+
+# Reset the device after firmware upgrade
+dfu-reset:
 	dfu-programmer $(MCU) reset
 
 check_size:

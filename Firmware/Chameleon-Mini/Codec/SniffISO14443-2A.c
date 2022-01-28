@@ -344,8 +344,7 @@ INLINE void Insert1(void) {
 }
 
 // This interrupt find Card -> Reader SOC
-ISR(ACA_AC0_vect) { // this interrupt either finds the SOC or gets triggered before
-
+ISR_SHARED isr_SniffISO14443_2A_ACA_AC0_VECT (void) { // this interrupt either finds the SOC or gets triggered before
     ACA.AC0CTRL &= ~AC_INTLVL_HI_gc; // disable this interrupt
     // enable the pause-finding timer
     CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH2_gc;
@@ -475,6 +474,7 @@ void Sniff14443ACodecInit(void) {
     PORTE.DIRSET = PIN3_bm | PIN2_bm;
     // Common Codec Register settings
     CodecInitCommon();
+    isr_func_ACA_AC0_vect = &isr_SniffISO14443_2A_ACA_AC0_VECT;
     isr_func_CODEC_TIMER_LOADMOD_CCB_VECT = &isr_SniffISO14443_2A_CODEC_TIMER_LOADMOD_CCB_VECT;
     // Enable demodulator power
     CodecSetDemodPower(true);
