@@ -1,22 +1,22 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
 /*
@@ -37,8 +37,8 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFire/DESFireISO7816Support.h"
 #include "DESFire/DESFireInstructions.h"
 
-/* The core functions used outside of this implementation 
- * to describe the DESFire emulation to the Chameleon firmware: 
+/* The core functions used outside of this implementation
+ * to describe the DESFire emulation to the Chameleon firmware:
  */
 void ResetLocalStructureData(void);
 void MifareDesfireReset(void);
@@ -52,14 +52,14 @@ void MifareDesfireAppTask(void);
 
 uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t MifareDesfireAppProcess(uint8_t* Buffer, uint16_t BitCount);
+uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount);
 
 void MifareDesfireGetUid(ConfigurationUidType Uid);
 void MifareDesfireSetUid(ConfigurationUidType Uid);
 
-/* Helper function definitions since we need them 
- * elsewhere in the backend, and so we do not need to 
- * declare them as static in the source. 
+/* Helper function definitions since we need them
+ * elsewhere in the backend, and so we do not need to
+ * declare them as static in the source.
  */
 #define DesfireCLA(cmdCode) \
     ((cmdCode == DESFIRE_NATIVE_CLA) || Iso7816CLA(cmdCode))

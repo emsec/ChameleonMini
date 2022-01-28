@@ -1,26 +1,26 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFireFirmwareSettings.h : 
+/*
+ * DESFireFirmwareSettings.h :
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
@@ -62,16 +62,16 @@ typedef uint32_t UINT;
 #define IsTrue(rcond)                                (rcond != FALSE)
 #define IsFalse(rcond)                               (rcond == FALSE)
 
-/* Allow users to modify typically reserved and protected read-only data on the tag 
+/* Allow users to modify typically reserved and protected read-only data on the tag
    like the manufacturer bytes and the serial number (set in Makefile)? */
 #ifdef ENABLE_PERMISSIVE_DESFIRE_SETTINGS
-     #define DESFIRE_ALLOW_PROTECTED_MODIFY         (1)
+#define DESFIRE_ALLOW_PROTECTED_MODIFY         (1)
 #else
-     #define DESFIRE_ALLOW_PROTECTED_MODIFY         (0)
+#define DESFIRE_ALLOW_PROTECTED_MODIFY         (0)
 #endif
 
-/* Whether to auto select application ID and file before the user (input system) 
+/* Whether to auto select application ID and file before the user (input system)
    even invokes an ISO SELECT APPLICATION [0x00 0xa4 0x04] command? */
 #define DESFIRE_LEGACY_SUPPORT                      (0)
 
-#endif 
+#endif

@@ -28,7 +28,7 @@ bool CryptoTDEATestCase2(char *OutParam, uint16_t MaxOutputLength);
 /* Test AES-128 encrypt/decrypt for a single block (ECB mode): */
 bool CryptoAESTestCase1(char *OutParam, uint16_t MaxOutputLength);
 
-/* Test AES-128 encrypt/decrypt for a single-block buffer (CBC mode, with an IV) -- Version 1: 
+/* Test AES-128 encrypt/decrypt for a single-block buffer (CBC mode, with an IV) -- Version 1:
  * Adapted from: https://github.com/eewiki/asf/blob/master/xmega/drivers/aes/example2/aes_example2.c
  */
 bool CryptoAESTestCase2(char *OutParam, uint16_t MaxOutputLength);

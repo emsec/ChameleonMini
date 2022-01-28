@@ -1,26 +1,26 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFireStatusCodes.h 
+/*
+ * DESFireStatusCodes.h
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
@@ -36,7 +36,7 @@ extern BYTE INIT[];
 
 #define DESFIRE_STATUS_RESPONSE_SIZE 1
 
-// NOTE: See p. 72 of the datasheet for descriptions of these response codes: 
+// NOTE: See p. 72 of the datasheet for descriptions of these response codes:
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     STATUS_OPERATION_OK = 0x00,
     STATUS_NO_CHANGES = 0x0C,
@@ -60,7 +60,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     STATUS_PICC_INTEGRITY_ERROR = 0xC1,
     STATUS_WRONG_VALUE_ERROR = 0x6E,
 } DesfireStatusCodeType;
-    
+
 #define SW_NO_ERROR                                    ((uint16_t) 0x9000)
 #define SW_BYTES_REMAINING_00                          ((uint16_t) 0x6100)
 #define SW_WRONG_LENGTH                                ((uint16_t) 0x6700)
@@ -84,7 +84,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 #define SW_LOGICAL_CHANNEL_NOT_SUPPORTED               ((uint16_t) 0x6881)
 #define SW_SECURE_MESSAGING_NOT_SUPPORTED              ((uint16_t) 0x6882)
 #define SW_WARNING_STATE_UNCHANGED                     ((uint16_t) 0x6200)
-#define SW_REFERENCE_DATA_NOT_FOUND                    ((uint16_t) 0x6a88)	
+#define SW_REFERENCE_DATA_NOT_FOUND                    ((uint16_t) 0x6a88)
 #define SW_INTERNAL_ERROR                              ((uint16_t) 0x6d66)
 
 #endif

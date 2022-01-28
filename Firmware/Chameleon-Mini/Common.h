@@ -39,6 +39,7 @@
 #define SYSTICK_DIFF_100MS(since) (SYSTICK_DIFF(since) / 100)
 
 #define BITS_PER_BYTE 8
+#define ARCH_BIG_ENDIAN
 
 uint16_t BufferToHexString(char *HexOut, uint16_t MaxChars, const void *Buffer, uint16_t ByteCount);
 uint16_t HexStringToBuffer(void *Buffer, uint16_t MaxBytes, const char *HexIn);

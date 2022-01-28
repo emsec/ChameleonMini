@@ -45,8 +45,8 @@ typedef void (*CryptoTDEAFuncType)(const void *PlainText, void *Ciphertext, cons
 
 void CryptoEncryptDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecryptDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
-void EncryptDESBuffer(uint16_t Count, const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void DecryptDESBuffer(uint16_t Count, void* Plaintext, const void* Ciphertext, const uint8_t* Keys);
+void EncryptDESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
+void DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *Keys);
 
 /** Performs the Triple DEA enciphering in ECB mode (single block)
  *
@@ -57,11 +57,11 @@ void DecryptDESBuffer(uint16_t Count, void* Plaintext, const void* Ciphertext, c
 void CryptoEncrypt2KTDEA(const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecrypt2KTDEA(const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 
-void CryptoEncrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void CryptoDecrypt3KTDEA(void* Plaintext, void* Ciphertext, const uint8_t* Keys);
+void CryptoEncrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
+void CryptoDecrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 
-void Encrypt3DESBuffer(uint16_t Count, const void* Plaintext, void* Ciphertext, const uint8_t* Keys);
-void Decrypt3DESBuffer(uint16_t Count, void* Plaintext, const void* Ciphertext, const uint8_t* Keys);
+void Encrypt3DESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
+void Decrypt3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *Keys);
 
 
 /** Performs the 2-key Triple DES en/deciphering in the CBC "send" mode (xor-then-crypt)
@@ -104,10 +104,10 @@ typedef struct {
     uint16_t           blockSize;
 } CryptoTDEA_CBCSpec;
 
-void CryptoTDEA_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext,
-                        void *IV, const uint8_t* Keys, CryptoTDEA_CBCSpec CryptoSpec);
-void CryptoTDEA_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext,
-                        void *IV, const uint8_t* Keys, CryptoTDEA_CBCSpec CryptoSpec);
+void CryptoTDEA_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
+                        void *IV, const uint8_t *Keys, CryptoTDEA_CBCSpec CryptoSpec);
+void CryptoTDEA_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
+                        void *IV, const uint8_t *Keys, CryptoTDEA_CBCSpec CryptoSpec);
 
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count);

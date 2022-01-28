@@ -7,7 +7,7 @@
 #include "../Terminal/CommandLine.h"
 #include "../Terminal/Terminal.h"
 
-typedef bool (*ChameleonTestType)(char*, uint16_t);
+typedef bool (*ChameleonTestType)(char *, uint16_t);
 
 #define COMMAND_RUNTESTS                 "RUNTESTS"
 CommandStatusIdType CommandRunTests(char *OutParam);

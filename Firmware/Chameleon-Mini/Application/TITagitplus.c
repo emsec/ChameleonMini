@@ -86,12 +86,12 @@ uint16_t TITagitplusAppProcess(uint8_t *FrameBuf, uint16_t FrameBytes) {
                 if (*FrameInfo.Command == ISO15693_CMD_READ_SINGLE) {
                     if (FrameInfo.ParamLen != 1) {
                         break; /* malformed: not enough or too much data */
-                    }       
+                    }
                 } else {
                     if (FrameInfo.ParamLen != 2) {
                         break; /* malformed: not enough or too much data */
                     }
-                    PageAddressCount = *(FrameInfo.Parameters+1)+1;
+                    PageAddressCount = *(FrameInfo.Parameters + 1) + 1;
                 }
 
                 if (PageAddress >= TITAGIT_PLUS_NUMBER_OF_USER_SECTORS) { /* the reader is requesting a sector out of bound */
@@ -114,7 +114,7 @@ uint16_t TITagitplusAppProcess(uint8_t *FrameBuf, uint16_t FrameBytes) {
                             *(FramePtr) = 0x01; /* return bit 0 set as 1 (user locked) */
                         } else {
                             *(FramePtr) = 0x00; /* return lock status 00 (unlocked) */
-                        }      
+                        }
 
                         FramePtr++;
                         ResponseByteCount++;

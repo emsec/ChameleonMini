@@ -14,7 +14,7 @@
 #include "LEDHook.h"
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-     #include "Application/MifareDESFire.h"
+#include "Application/MifareDESFire.h"
 #endif
 
 /* Map IDs to text */
@@ -69,7 +69,7 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
     { .Id = CONFIG_EM4233,	                  .Text = "EM4233" },
 #endif
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-     { .Id = CONFIG_MF_DESFIRE,                 .Text = "MF_DESFIRE" },
+    { .Id = CONFIG_MF_DESFIRE,                 .Text = "MF_DESFIRE" },
 #endif
 };
 
@@ -424,21 +424,21 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     },
 #endif
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-     [CONFIG_MF_DESFIRE] = {
-          .CodecInitFunc = ISO14443ACodecInit,
-          .CodecDeInitFunc =ISO14443ACodecDeInit,
-          .CodecTaskFunc = ISO14443ACodecTask,
-          .ApplicationInitFunc = MifareDesfireEV0AppInit,
-          .ApplicationResetFunc = MifareDesfireAppReset,
-          .ApplicationTaskFunc = MifareDesfireAppTask,
-          .ApplicationTickFunc = MifareDesfireAppTick,
-          .ApplicationProcessFunc = MifareDesfireAppProcess,
-          .ApplicationGetUidFunc = MifareDesfireGetUid,
-          .ApplicationSetUidFunc = MifareDesfireSetUid,
-          .UidSize = ISO14443A_UID_SIZE_DOUBLE,
-          .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
-          .ReadOnly = false
-     },
+    [CONFIG_MF_DESFIRE] = {
+        .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
+        .CodecTaskFunc = ISO14443ACodecTask,
+        .ApplicationInitFunc = MifareDesfireEV0AppInit,
+        .ApplicationResetFunc = MifareDesfireAppReset,
+        .ApplicationTaskFunc = MifareDesfireAppTask,
+        .ApplicationTickFunc = MifareDesfireAppTick,
+        .ApplicationProcessFunc = MifareDesfireAppProcess,
+        .ApplicationGetUidFunc = MifareDesfireGetUid,
+        .ApplicationSetUidFunc = MifareDesfireSetUid,
+        .UidSize = ISO14443A_UID_SIZE_DOUBLE,
+        .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+        .ReadOnly = false
+    },
 #endif
 };
 
@@ -474,10 +474,10 @@ void ConfigurationGetByName(char *Configuration, uint16_t BufferSize) {
 }
 
 MapIdType ConfigurationCheckByName(const char *Configuration) {
-    MapIdType Id; 
+    MapIdType Id;
     if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
-        return Id; 
-    }   
+        return Id;
+    }
     return 0xff;
 }
 

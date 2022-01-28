@@ -1,26 +1,26 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFireApplicationDirectory.h : 
+/*
+ * DESFireApplicationDirectory.h :
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
@@ -36,45 +36,45 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_MAX_FILES_EV1             32
 
 #if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_APPS)
-     #define DESFIRE_MAX_APPS                       (6)
+#define DESFIRE_MAX_APPS                       (6)
 #elif defined(DESFIRE_CUSTOM_MAX_APPS)
-     #define DESFIRE_MAX_APPS                       (DESFIRE_CUSTOM_MAX_APPS)
+#define DESFIRE_MAX_APPS                       (DESFIRE_CUSTOM_MAX_APPS)
 #else
-     #define DESFIRE_MAX_APPS                       (28)
-#endif 
+#define DESFIRE_MAX_APPS                       (28)
+#endif
 
 #define DESFIRE_MAX_SLOTS                           (DESFIRE_MAX_APPS + 1)
 
 #if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_FILES)
-     #define DESFIRE_MAX_FILES                      (6)
+#define DESFIRE_MAX_FILES                      (6)
 #elif defined(DESFIRE_CUSTOM_MAX_FILES)
-     #define DESFIRE_MAX_FILES                      (DESFIRE_CUSTOM_MAX_FILES)
+#define DESFIRE_MAX_FILES                      (DESFIRE_CUSTOM_MAX_FILES)
 #else
-     #define DESFIRE_MAX_FILES                      (DESFIRE_MAX_FILES_EV1)
+#define DESFIRE_MAX_FILES                      (DESFIRE_MAX_FILES_EV1)
 #endif
 
 #if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_KEYS)
-     #define DESFIRE_MAX_KEYS                       (4)
+#define DESFIRE_MAX_KEYS                       (4)
 #elif defined(DESFIRE_CUSTOM_MAX_KEYS)
-     #define DESFIRE_MAX_KEYS                       (DESFIRE_CUSTOM_MAX_KEYS)
+#define DESFIRE_MAX_KEYS                       (DESFIRE_CUSTOM_MAX_KEYS)
 #else
-     #define DESFIRE_MAX_KEYS                       (14)
+#define DESFIRE_MAX_KEYS                       (14)
 #endif
 
 #ifdef DESFIRE_USE_FACTORY_SIZES
-     #undef  DESFIRE_CUSTOM_MAX_APPS
-     #define DESFIRE_CUSTOM_MAX_APPS                (28)
-     #undef  DESFIRE_CUSTOM_MAX_KEYS
-     #define DESFIRE_CUSTOM_MAX_KEYS                (14)
-     #undef  DESFIRE_CUSTOM_MAX_FILES
-     #define DESFIRE_CUSTOM_MAX_FILES               (DESFIRE_MAX_FILES_EV1)
+#undef  DESFIRE_CUSTOM_MAX_APPS
+#define DESFIRE_CUSTOM_MAX_APPS                (28)
+#undef  DESFIRE_CUSTOM_MAX_KEYS
+#define DESFIRE_CUSTOM_MAX_KEYS                (14)
+#undef  DESFIRE_CUSTOM_MAX_FILES
+#define DESFIRE_CUSTOM_MAX_FILES               (DESFIRE_MAX_FILES_EV1)
 #elif defined(DESFIRE_MAXIMIZE_SIZES_FOR_STORAGE)
-     #undef  DESFIRE_CUSTOM_MAX_APPS
-     #define DESFIRE_CUSTOM_MAX_APPS                (DESFIRE_EEPROM_BLOCK_SIZE - 1)
-     #undef  DESFIRE_CUSTOM_MAX_KEYS
-     #define DESFIRE_CUSTOM_MAX_KEYS                (DESFIRE_EEPROM_BLOCK_SIZE)
-     #undef  DESFIRE_CUSTOM_MAX_FILES
-     #define DESFIRE_CUSTOM_MAX_FILES               (DESFIRE_EEPROM_BLOCK_SIZE)
+#undef  DESFIRE_CUSTOM_MAX_APPS
+#define DESFIRE_CUSTOM_MAX_APPS                (DESFIRE_EEPROM_BLOCK_SIZE - 1)
+#undef  DESFIRE_CUSTOM_MAX_KEYS
+#define DESFIRE_CUSTOM_MAX_KEYS                (DESFIRE_EEPROM_BLOCK_SIZE)
+#undef  DESFIRE_CUSTOM_MAX_FILES
+#define DESFIRE_CUSTOM_MAX_FILES               (DESFIRE_EEPROM_BLOCK_SIZE)
 #endif
 
 /* Mifare DESFire EV1 Application crypto operations */
@@ -88,19 +88,19 @@ This notice must be retained at the top of all source files where indicated.
 
 typedef BYTE DESFireAidType[DESFIRE_AID_SIZE];
 
-/* 
+/*
  * Defines the application directory contents.
  * The application directory maps AIDs to application slots:
  * the AID's index in `AppIds` is the slot number.
- * 
- * This is the "global" structure that gets stored in the header 
- * data for the directory. To see the actual byte-for-byte storage 
- * of the accounting data for each instantiated AID slot, refer to the 
+ *
+ * This is the "global" structure that gets stored in the header
+ * data for the directory. To see the actual byte-for-byte storage
+ * of the accounting data for each instantiated AID slot, refer to the
  * `DesfireApplicationDataType` structure from above.
  */
 typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE           FirstFreeSlot;
-    DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; 
+    DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT;
     SIZET          AppCacheStructBlockOffset[DESFIRE_MAX_SLOTS];
 } DESFireAppDirType;
 
@@ -113,14 +113,14 @@ void SynchronizePICCInfo(void);
 /* PICC / Application master key settings */
 /* Mifare DESFire master key settings
    bit 7 - 4: Always 0.
-   bit 3: PICC master key settings frozen = 0 (WARNING - this is irreversible); 
+   bit 3: PICC master key settings frozen = 0 (WARNING - this is irreversible);
           PICC master key settings changeable when authenticated with PICC master key = 1
-   bit 2: PICC master key authentication required for creating or deleting applications = 0; 
+   bit 2: PICC master key authentication required for creating or deleting applications = 0;
           Authentication not required = 1
-   bit 1: PICC master key authentication required for listing of applications or 
-          reading key settings = 0; 
+   bit 1: PICC master key authentication required for listing of applications or
+          reading key settings = 0;
           Free listing of applications and reading key settings = 1
-   bit 0: PICC master key frozen (reversible with configuration change or when formatting card) = 0; 
+   bit 0: PICC master key frozen (reversible with configuration change or when formatting card) = 0;
           PICC master key changeable = 1
 */
 #define DESFIRE_ALLOW_MASTER_KEY_CHANGE  (0x01) //(1 << 0)
@@ -130,7 +130,7 @@ void SynchronizePICCInfo(void);
 #define DESFIRE_USE_TARGET_KEY           0xE
 #define DESFIRE_ALL_KEYS_FROZEN          0xF
 
-/* PICC master key (PMK) settings for application creation / deletion 
+/* PICC master key (PMK) settings for application creation / deletion
  * (see page 34 of the datasheet)
  */
 BYTE PMKConfigurationChangeable(void);
@@ -138,7 +138,7 @@ BYTE PMKRequiredForAppCreateDelete(void);
 BYTE PMKFreeDirectoryListing(void);
 BYTE PMKAllowChangingKey(void);
 
-/* Application master key (AMK) 
+/* Application master key (AMK)
  * (see page 35 of the datasheet)
  */
 BYTE AMKConfigurationChangeable(void);
