@@ -71,7 +71,8 @@ eventTypes = {
     0x45: { 'name': 'CODEC RX SNI READER W/PARITY', 'decoder': binaryParityDecoder },
     0x46: { 'name': 'CODEC RX SNI CARD',            'decoder': binaryDecoder },
     0x47: { 'name': 'CODEC RX SNI CARD W/PARITY',   'decoder': binaryParityDecoder },
-   
+    0x48: { 'name': 'CODEC RX SNI READER FIELD DETECTED',   'decoder': noDecoder },
+
 
     0x80: { 'name': 'APP READ',       'decoder': binaryDecoder },
     0x81: { 'name': 'APP WRITE',      'decoder': binaryDecoder },
@@ -95,7 +96,7 @@ eventTypes = {
 }
 
 TIMESTAMP_MAX = 65536
-eventTypes = { i : ({'name': 'UNKNOWN', 'decoder': binaryDecoder} if i not in eventTypes.keys() else eventTypes[i]) for i in range(256) }
+eventTypes = { i : ({'name': f'UNKNOWN {hex(i)}', 'decoder': binaryDecoder} if i not in eventTypes.keys() else eventTypes[i]) for i in range(256) }
 
 def parseBinary(binaryStream, decoder=None):
     log = []
@@ -130,11 +131,11 @@ def parseBinary(binaryStream, decoder=None):
         logData = eventTypes[event]['decoder'](logData)
         
         # Calculate delta timestamp respecting 16 bit overflow
-        deltaTimestamp = timestamp - lastTimestamp;
+        deltaTimestamp = timestamp - lastTimestamp
         lastTimestamp = timestamp
         
         if (deltaTimestamp < 0):
-            deltaTimestamp += TIMESTAMP_MAX;
+            deltaTimestamp += TIMESTAMP_MAX
 
         note = ""
         # If we need to decode the data and paritybit check success
