@@ -628,7 +628,7 @@ void ISO15693CodecTask(void) {
 
         if (DemodByteCount > 0) {
             LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, DemodByteCount);
-            //LEDHook(LED_CODEC_RX, LED_PULSE);
+            LEDHook(LED_CODEC_RX, LED_PULSE);
 
             if (CodecBuffer[0] & REQ_SUBCARRIER_DUAL) {
                 bDualSubcarrier = true;

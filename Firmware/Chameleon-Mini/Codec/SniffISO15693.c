@@ -52,6 +52,7 @@ static volatile uint8_t ReaderByteCount;
 static volatile uint8_t CardByteCount;
 static volatile uint16_t DemodByteCount;
 static volatile uint16_t SampleDataCount;
+static volatile uint8_t bBrokenFrame;
 
 /////////////////////////////////////////////////
 // VCD->VICC
@@ -74,6 +75,7 @@ void ReaderSniffInit(void) {
     ReaderByteCount = 0; /* Clear direction-specific counters */
     CardByteCount = 0;
     ShiftRegister = 0;
+    bBrokenFrame = 0;
 
     /* Activate Power for demodulator */
     CodecSetDemodPower(true);
@@ -281,13 +283,10 @@ INLINE void CardSniffInit(void) {
 
     if (CodecBuffer[0] & ISO15693_REQ_SUBCARRIER_DUAL) {
         /**
-         * No support for dual subcarrier, 0xBAAAAAAD in log to mark unsupported behavior and stop here
+         * No support for dual subcarrier
          */
-        *(CodecBufferPtr++) = 0xBA;
-        *(CodecBufferPtr++) = 0xAA;
-        *(CodecBufferPtr++) = 0xAA;
-        *(CodecBufferPtr++) = 0xAD;
-        ByteCount += 4;
+        LogEntry(LOG_INFO_GENERIC, "NO DUAL SC", 10);
+
         CardByteCount = ByteCount; /* Copy to direction-specific variable */
 
         Flags.CardDemodFinished = 1;
@@ -618,19 +617,12 @@ ISR_SHARED isr_SNIFF_ISO15693_CODEC_TIMER_LOADMOD_OVF_VECT(void) {
                     (SampleRegisterH & 0b11000000) == 0b00000000
                 ) {
                     /**
-                     * Check for invalid data coding (11 or 00 bit-halfs).
-                     * Write 0x0BADDA7A in log to mark broken frame and stop here: we have
-                     * no knowledge about where the EOF could be
+                     * Check for invalid data coding errors (11 or 00 bit-halfs).
+                     * Mark broken frame and stop here: we have no knowledge about where the EOF could be
                      */
 
-                    *(CodecBufferPtr++) = 0x0B;
-                    *(CodecBufferPtr++) = 0xAD;
-                    *(CodecBufferPtr++) = 0xDA;
-                    *(CodecBufferPtr++) = 0x7A;
-                    ByteCount += 4;
-
                     Flags.CardDemodFinished = 1;
-
+                    bBrokenFrame = 1;
                     CardByteCount = ByteCount; /* Copy to direction-specific variable */
 
                     /* Call cleanup function */
@@ -759,6 +751,11 @@ void SniffISO15693CodecTask(void) {
             LogEntry(LOG_INFO_CODEC_SNI_CARD_DATA, CodecBuffer2, DemodByteCount);
             LEDHook(LED_CODEC_RX, LED_PULSE);
 
+        }
+
+        if (bBrokenFrame) {
+            bBrokenFrame = 0;
+            LogEntry(LOG_INFO_GENERIC, "BROKEN CARD FRAME", 17);
         }
 
         ReaderSniffInit();
