@@ -121,6 +121,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Expecting further data here */
     if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
+        DesfireState = DESFIRE_IDLE;
         return ISO14443A_APP_NO_RESPONSE;
     }
 

@@ -43,7 +43,7 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_MAX_APPS                       (28)
 #endif
 
-#define DESFIRE_MAX_SLOTS                           (DESFIRE_MAX_APPS + 1)
+#define DESFIRE_MAX_SLOTS                      (DESFIRE_MAX_APPS + 1)
 
 #if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_FILES)
 #define DESFIRE_MAX_FILES                      (6)

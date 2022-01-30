@@ -131,7 +131,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
     };
     AUTHENTICATE_ISO_CMD[5] = keyIndex;
     if(PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, ">>> Start AES Authenticate:\n");
+        fprintf(stdout, ">>> Start ISO Authenticate:\n");
         fprintf(stdout, "    -> ");
         print_hex(AUTHENTICATE_ISO_CMD, sizeof(AUTHENTICATE_ISO_CMD));
     }

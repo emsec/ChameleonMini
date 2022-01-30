@@ -1693,8 +1693,8 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     }
 
     /* The next calls just zero out the key buffers (not specific to AES): */
-    InitAESCryptoKeyData(&AESCryptoSessionKey);
-    InitAESCryptoKeyData(&AESCryptoIVBuffer);
+    //InitAESCryptoKeyData(&SessionKey);
+    //InitAESCryptoKeyData(&SessionIV);
 
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
     Key = &SessionKey;
@@ -1749,12 +1749,13 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
     /* Validate command length */
-    if (ByteCount != CRYPTO_DES_BLOCK_SIZE + 1) {
+    if (ByteCount != CRYPTO_3KTDEA_BLOCK_SIZE + 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Reset parameters for authentication from the first exchange */
+    Key = &SessionKey;
     KeyId = DesfireCommandState.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
@@ -1772,7 +1773,8 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Check that the returned RndB matches what we sent in the previous round */
     if (memcmp(DesfireCommandState.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
-        Buffer[0] = STATUS_AUTHENTICATION_ERROR;
+        LogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR, (const void *) challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
+	Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
@@ -1890,6 +1892,7 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     }
 
     /* Reset parameters for authentication from the first exchange */
+    Key = &AESCryptoSessionKey;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_AES128);
     KeyId = DesfireCommandState.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;

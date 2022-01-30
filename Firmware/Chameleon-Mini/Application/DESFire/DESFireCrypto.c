@@ -140,7 +140,10 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
 
 void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData) {
     memset(cryptoKeyData, 0x00, sizeof(DesfireAESCryptoKey));
+    memset(&SessionKey[0], 0x00, CRYPTO_MAX_KEY_SIZE);
+    memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
 }
+
 uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8_t *Key) {
     uint8_t AvailablePlaintext = TransferState.ReadData.Encryption.AvailablePlaintext;
     uint8_t TempBuffer[(DESFIRE_MAX_PAYLOAD_AES_BLOCKS + 1) * CRYPTO_DES_BLOCK_SIZE];

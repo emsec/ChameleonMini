@@ -37,7 +37,7 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_ISO7816_CLA            0x00
 
 /* Storage allocation constants */
-#define DESFIRE_EEPROM_BLOCK_SIZE                16 //32 /* Bytes */
+#define DESFIRE_EEPROM_BLOCK_SIZE                32 // 16 /* Bytes */
 #define DESFIRE_BYTES_TO_BLOCKS(x) \
     ( ((x) + DESFIRE_EEPROM_BLOCK_SIZE - 1) / DESFIRE_EEPROM_BLOCK_SIZE )
 
