@@ -1749,7 +1749,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
     /* Validate command length */
-    if (ByteCount != CRYPTO_3KTDEA_BLOCK_SIZE + 1) {
+    if (ByteCount != 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES + 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }

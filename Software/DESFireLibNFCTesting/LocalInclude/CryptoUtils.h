@@ -128,7 +128,7 @@ static inline size_t DecryptAES128(const uint8_t *encSrcBuf, size_t bufSize,
 static inline size_t Encrypt3DES(const uint8_t *plainSrcBuf, size_t bufSize, 
                                  uint8_t *encDestBuf, CryptoData_t cdata) {
      DES_key_schedule keySched1, keySched2, keySched3;
-     DES_cblock IV;
+     uint8_t IV[CRYPTO_DES_BLOCK_SIZE]; 
      DES_set_key(cdata.keyData, &keySched1);
      DES_set_key(&cdata.keyData[8], &keySched2);
      DES_set_key(&cdata.keyData[16], &keySched3);
@@ -140,7 +140,7 @@ static inline size_t Encrypt3DES(const uint8_t *plainSrcBuf, size_t bufSize,
 static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize, 
                                  uint8_t *plainDestBuf, CryptoData_t cdata) {
      DES_key_schedule keySched1, keySched2, keySched3;
-     DES_cblock IV;
+     uint8_t IV[CRYPTO_DES_BLOCK_SIZE];
      DES_set_key(cdata.keyData, &keySched1);
      DES_set_key(&cdata.keyData[8], &keySched2);
      DES_set_key(&cdata.keyData[16], &keySched3);

@@ -22,6 +22,10 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    // Get list of application IDs:
+    if(GetApplicationIds(nfcPnd)) {
+        return EXIT_FAILURE;
+    }
     // Start ISO authentication (default key, blank setting of all zeros):
     if(Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES, 
                     MASTER_KEY_INDEX, ZERO_KEY)) {

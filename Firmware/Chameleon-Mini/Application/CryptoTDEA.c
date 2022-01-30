@@ -121,7 +121,8 @@ void Decrypt3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, 
 	    CryptoMemoryXOR(IV, Plaintext, CRYPTO_3KTDEA_BLOCK_SIZE);
 	} else {
             memcpy(Plaintext + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, inputBlock, CRYPTO_3KTDEA_BLOCK_SIZE);
-	    CryptoMemoryXOR(&Ciphertext[(blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE], Plaintext + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
+	    CryptoMemoryXOR(&Ciphertext[(blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE], 
+			    Plaintext + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
 	}
         blockIndex++;
     }
