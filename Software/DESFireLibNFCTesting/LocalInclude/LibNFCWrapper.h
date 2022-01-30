@@ -39,7 +39,7 @@ static inline nfc_device * GetNFCDeviceDriver(nfc_context **context) {
         return NULL;
     }   
     // Configure some convenient common settings:
-    nfc_device_set_property_bool(pnd, NP_ACTIVATE_FIELD, false);
+    //nfc_device_set_property_bool(pnd, NP_ACTIVATE_FIELD, false);
     nfc_device_set_property_bool(pnd, NP_HANDLE_CRC, true);
     nfc_device_set_property_bool(pnd, NP_HANDLE_PARITY, true);
     nfc_device_set_property_bool(pnd, NP_AUTO_ISO14443_4, true);

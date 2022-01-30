@@ -1,4 +1,4 @@
-/*
+         /*
  * CryptoDES.h
  *
  *  Created on: 18.10.2016
@@ -35,7 +35,7 @@ PCD's side.
 typedef uint8_t Crypto2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
 typedef uint8_t Crypto3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 
-#define CRYPTO_DES_BLOCK_SIZE       8 /* Bytes */
+#define CRYPTO_DES_BLOCK_SIZE                8 /* Bytes */
 #define CRYPTO_2KTDEA_BLOCK_SIZE             (CRYPTO_DES_BLOCK_SIZE)
 #define CRYPTO_3KTDEA_BLOCK_SIZE             (CRYPTO_DES_BLOCK_SIZE)
 

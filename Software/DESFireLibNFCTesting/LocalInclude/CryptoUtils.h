@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include <openssl/des.h>
 #include <openssl/rand.h>
 
 #include <ArduinoCryptoLib-SingleSource.c>
@@ -124,6 +125,30 @@ static inline size_t DecryptAES128(const uint8_t *encSrcBuf, size_t bufSize,
      return bufSize;
 }
 
+static inline size_t Encrypt3DES(const uint8_t *plainSrcBuf, size_t bufSize, 
+                                 uint8_t *encDestBuf, CryptoData_t cdata) {
+     DES_key_schedule keySched1, keySched2, keySched3;
+     DES_cblock IV;
+     DES_set_key(cdata.keyData, &keySched1);
+     DES_set_key(&cdata.keyData[8], &keySched2);
+     DES_set_key(&cdata.keyData[16], &keySched3);
+     memset(IV, 0x00, CRYPTO_DES_BLOCK_SIZE);
+     DES_ede3_cbc_encrypt(plainSrcBuf, encDestBuf, bufSize, &keySched1, &keySched2, &keySched3, &IV, DES_ENCRYPT);
+     return bufSize;
+}
+
+static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize, 
+                                 uint8_t *plainDestBuf, CryptoData_t cdata) {
+     DES_key_schedule keySched1, keySched2, keySched3;
+     DES_cblock IV;
+     DES_set_key(cdata.keyData, &keySched1);
+     DES_set_key(&cdata.keyData[8], &keySched2);
+     DES_set_key(&cdata.keyData[16], &keySched3);
+     memset(IV, 0x00, CRYPTO_DES_BLOCK_SIZE);
+     DES_ede3_cbc_encrypt(encSrcBuf, plainDestBuf, bufSize, &keySched1, &keySched2, &keySched3, &IV, DES_DECRYPT);
+     return bufSize;
+}
+
 static inline bool TestAESEncyptionRoutines(void) {
     fprintf(stdout, ">>> TestAESEncryptionRoutines [non-DESFire command]:\n");
     const uint8_t keyData[] = { 
@@ -167,6 +192,49 @@ static inline bool TestAESEncyptionRoutines(void) {
     return status;
 }
 
+static inline bool Test3DESEncyptionRoutines(void) {
+    fprintf(stdout, ">>> TestAESEncryptionRoutines [non-DESFire command]:\n");
+    const uint8_t keyData[] = { 
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    };
+    const uint8_t ptData[] = {
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
+    };
+    const uint8_t ctData[] = {
+        0x3e, 0xf0, 0xa8, 0x91, 0xcf, 0x8e, 0xd9, 0x90, 
+	0xc4, 0x77, 0xeb, 0x09, 0x02, 0xf0, 0xc5, 0x4a 
+    };
+    CryptoData_t cdata;
+    cdata.keyData = keyData;
+    cdata.keySize = 3 * 8;
+    uint8_t pt[16], pt2[16], ct[16];
+    Encrypt3DES(ptData, 16, ct, cdata);
+    Decrypt3DES(ct, 16, pt2, cdata);
+    fprintf(stdout, "    -- : PT = "); print_hex(ptData, 16);
+    fprintf(stdout, "    -- : CT = "); print_hex(ctData, 16);
+    fprintf(stdout, "    -- : CT = "); print_hex(ct, 16);
+    fprintf(stdout, "    -- : PT = "); print_hex(pt2, 16);
+    bool status = true;
+    if(memcmp(ct, ctData, 16)) {
+        fprintf(stdout, "    -- CT does NOT match !!\n");
+        status = false;
+    }
+    else {
+        fprintf(stdout, "    -- CT matches.\n");
+    }
+    if(memcmp(pt2, ptData, 16)) {
+        fprintf(stdout, "    -- Decrypted PT from CT does NOT match !!\n");
+        status = false;
+    }
+    else {
+        fprintf(stdout, "    -- Decrypted PT from CT matches.\n");
+    }
+    fprintf(stdout, "\n");
+    return status;
+}
 static inline int GenerateRandomBytes(uint8_t *destBuf, size_t numBytes) {
      return RAND_pseudo_bytes(destBuf, numBytes);
 }

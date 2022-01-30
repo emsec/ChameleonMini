@@ -163,7 +163,8 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
     DesfireCmdCLA = Buffer[0];
     if ((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
-            Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) || Iso7816CLA(DesfireCmdCLA)) { // Wrapped native command structure:
+            Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) || Iso7816CLA(DesfireCmdCLA)) { 
+	    // Wrapped native command structure:
         /* Unwrap the PDU from ISO 7816-4 */
         // Check CRC bytes appended to the buffer:
         // -- Actually, just ignore parity problems if they exist,
@@ -218,7 +219,7 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     } else if (ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
                Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
         // Native wrapped command send without CRCA checksum bytes appended:
-        return MifareDesfireProcess(Buffer, BitCount);
+        return MAX(0, MifareDesfireProcess(Buffer, BitCount) - 2 * BITS_PER_BYTE);
     } else if (IsWrappedISO7816CommandType(Buffer, ByteCount)) {
         uint8_t ISO7816PrologueBytes[2];
         memcpy(&ISO7816PrologueBytes[0], Buffer, 2);

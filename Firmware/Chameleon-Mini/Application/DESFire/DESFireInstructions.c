@@ -1685,13 +1685,14 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    /* Make sure that this key is AES, and figure out its byte size */
+    /* Make sure that this key is 3DES, and figure out its byte size */
     BYTE cryptoKeyType = ReadKeyCryptoType(SelectedApp.Slot, KeyId);
     if (!CryptoType3KTDEA(cryptoKeyType)) {
         Buffer[0] = STATUS_NO_SUCH_KEY;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
+    /* The next calls just zero out the key buffers (not specific to AES): */
     InitAESCryptoKeyData(&AESCryptoSessionKey);
     InitAESCryptoKeyData(&AESCryptoIVBuffer);
 
@@ -1748,7 +1749,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
     /* Validate command length */
-    if (ByteCount != CRYPTO_AES_BLOCK_SIZE + 1) {
+    if (ByteCount != CRYPTO_DES_BLOCK_SIZE + 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
