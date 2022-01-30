@@ -177,6 +177,18 @@ def cmdThreshold(chameleon, arg):
         else:
             return "Setting threshold failed: {}".format(arg, result['statusText'])
 
+def cmdAutoCalibrate(chameleon, arg):
+
+    if (len(arg) == 0):
+        result = chameleon.cmdAutoCalibrate()
+        if (result['statusCode'] in chameleon.STATUS_CODES_SUCCESS):
+            return "Autocalibration successfully executed {}".format(result['statusText'])
+        else:
+            return "Error during autocalibration: {}".format(result['statusText'])
+        
+    else:
+        return "Command failed - No Parameter expected ! {}".format(arg)
+          
 def cmdUpgrade(chameleon, arg):
     if(chameleon.cmdUpgrade() == 0):
         print ("Device changed into Upgrade Mode")
@@ -223,6 +235,7 @@ def main():
     cmdArgGroup.add_argument("-gl",  "--gled",       dest="gled",        action=CmdListAction, metavar="FUNCTION", nargs='?', help="retrieve or set the current green led function")
     cmdArgGroup.add_argument("-rl",  "--rled",       dest="rled",        action=CmdListAction, metavar="FUNCTION", nargs='?', help="retrieve or set the current red led function")
     cmdArgGroup.add_argument("-th",  "--threshold",  dest="threshold",   action=CmdListAction, nargs='?', help="retrieve or set the threshold")
+    cmdArgGroup.add_argument("-ac",  "--autocalibrate",  dest="auto_calib",   action=CmdListAction, nargs=0, help="Send AutoCalibration command")
     cmdArgGroup.add_argument("-ug",  "--upgrade",    dest="upgrade",     action=CmdListAction, nargs=0,   help="set the micro Controller to upgrade mode")
 
     args = argParser.parse_args()
@@ -257,6 +270,7 @@ def main():
                 "gled"      : cmdGreenLED,
                 "rled"      : cmdRedLED,
                 "threshold" : cmdThreshold,
+                "auto_calib": cmdAutoCalibrate,
                 "upgrade"   : cmdUpgrade,
             }
 
