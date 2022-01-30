@@ -16,6 +16,7 @@
 #include "../Battery.h"
 #include "../Codec/Codec.h"
 #include "../Application/Reader14443A.h"
+#include "../Application/Sniff15693.h"
 
 extern Reader14443Command Reader14443CurrentCommand;
 extern Sniff14443Command Sniff14443CurrentCommand;
@@ -653,6 +654,15 @@ CommandStatusIdType CommandExecAutocalibrate(char *OutMessage) {
         Sniff14443CurrentCommand = Sniff14443_Autocalibrate;
         Sniff14443AAppInit();
         CommandLinePendingTaskTimeout = &Sniff14443AAppTimeout;
+        return TIMEOUT_COMMAND;
+    }
+#endif
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+    if (GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO15693_SNIFF) {
+        ApplicationReset();
+
+        Sniff15693CurrentCommand = Sniff15693_Autocalibrate;
+        CommandLinePendingTaskTimeout = &SniffISO15693AppTimeout;
         return TIMEOUT_COMMAND;
     }
 #endif
