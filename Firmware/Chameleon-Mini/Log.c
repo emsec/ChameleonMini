@@ -21,9 +21,9 @@ uint8_t LogBlockListElementCount = 0;
 uint8_t LiveLogModePostTickCount = 0;
 
 static const MapEntryType PROGMEM LogModeMap[] = {
-    { .Id = LOG_MODE_OFF, 		.Text = "OFF" 		},
+    { .Id = LOG_MODE_OFF, 	.Text = "OFF" 		},
     { .Id = LOG_MODE_MEMORY, 	.Text = "MEMORY" 	},
-    { .Id = LOG_MODE_LIVE, 	    .Text = "LIVE" 	    }
+    { .Id = LOG_MODE_LIVE, 	.Text = "LIVE" 	        }
 };
 
 static void LogFuncOff(LogEntryEnum Entry, const void *Data, uint8_t Length) {
@@ -57,11 +57,6 @@ static void LogFuncMemory(LogEntryEnum Entry, const void *Data, uint8_t Length) 
 
 static void LogFuncLive(LogEntryEnum Entry, const void *Data, uint8_t Length) {
     uint16_t SysTick = SystemGetSysTick();
-    //TerminalSendByte((uint8_t) Entry);
-    //TerminalSendByte((uint8_t) Length);
-    //TerminalSendByte((uint8_t)(SysTick >> 8));
-    //TerminalSendByte((uint8_t)(SysTick >> 0));
-    //TerminalSendBlock(Data, Length);
     AtomicAppendLogBlock(Entry, SysTick, Data, Length);
 }
 
@@ -86,11 +81,17 @@ void LogInit(void) {
 }
 
 void LogTick(void) {
-    if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE &&
-            (++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0)
-        AtomicLiveLogTick();
-    if (EnableLogSRAMtoFRAM)
-        LogSRAMToFRAM();
+    // The logging functionality slows down the timings of data exchanges between
+    // Chameleon emulated tags and readers, so schedule the logging writes to
+    // happen only on intervals that will be outside of timing windows for individual xfers
+    // initiated from PICC <--> PCD (e.g., currently approximately every 600ms):
+    if ((++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0) {
+        if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE)
+            AtomicLiveLogTick();
+        if (EnableLogSRAMtoFRAM)
+            LogSRAMToFRAM();
+        LiveLogModePostTickCount = 0;
+    }
 }
 
 void LogTask(void) {
@@ -162,9 +163,9 @@ uint16_t LogMemFree(void) {
 void LogSetModeById(LogModeEnum Mode) {
 #ifdef LOG_SETTING_GLOBAL
     /* Write Log settings globally */
-    for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
-         GlobalSettings.Settings[i].LogMode = Mode;
-    }   
+    for (uint8_t i = 0; i < SETTINGS_COUNT; i++) {
+        GlobalSettings.Settings[i].LogMode = Mode;
+    }
 #endif
     GlobalSettings.ActiveSettingPtr->LogMode = Mode;
     switch (Mode) {
