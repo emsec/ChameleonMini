@@ -949,11 +949,6 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             uint8_t CRC2 = Buffer[3];
             uint8_t OVERCRC = Buffer[4];
 
-            char tmpBuf[10]; //TODO: REMOVE, THIS IS DEBUG
-            snprintf(tmpBuf, 10, "OCRC: %d\n", OVERCRC);
-            TerminalSendString(tmpBuf);
-
-
             if (SigAddrRFUI == 0x00 &&  CRC1 == 0xa2 && CRC2 == 0x01) { //should be a suffient check. Works unless a rouge reader sends exactly this
                 uint16_t signatureAddr;
                 switch(Ntag_type) {
