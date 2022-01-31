@@ -80,7 +80,6 @@
 
 #define CONFIG_AREA_SIZE        8
 
-
 //CONFIG offsets, relative to config start address
 #define CONF_AUTH0_OFFSET       0x03
 #define CONF_ACCESS_OFFSET      0x04
@@ -843,7 +842,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             MemoryReadBlock(&CurrentAuthLimCounterValue, AuthLimCounterAddr, 1);
             MemoryReadBlock(&Password, PwdAddr, 4);
          
-            if (CurrentAuthLimCounterValue > AuthLim){ //If the counter is bigger than the limit, we should not be able to authenticate ever again
+            if ((CurrentAuthLimCounterValue > AuthLim) && (AuthLim != 0)){ //If the counter is bigger than the limit, we should not be able to authenticate ever again
                 Buffer[0] = NAK_NOT_AUTHED;
                 return NAK_FRAME_SIZE;
             }
@@ -963,21 +962,26 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
         }
 
         case CMD_READ_CNT: {
-            
-            //If the NFCCNT is not protected, OR if the NFCCNT is protected BUT we're authenticated, then we can read the NFCCNT
-            if (!NfcCntPwdProt || (NfcCntPwdProt && Authenticated)) {
-                uint16_t CounterAddr = GetNFCCNTAddress();
-                MemoryReadBlock(&Buffer[0], CounterAddr, 3);
+            if (NfcCntEnabled){
+                //If the NFCCNT is not protected, OR if the NFCCNT is protected BUT we're authenticated, then we can read the NFCCNT
+                if (!NfcCntPwdProt || (NfcCntPwdProt && Authenticated)) {
+                    uint16_t CounterAddr = GetNFCCNTAddress();
+                    MemoryReadBlock(&Buffer[0], CounterAddr, 3);
 
-                ISO14443AAppendCRCA(Buffer, 3);
-                return (3 + ISO14443A_CRCA_SIZE) * 8;
+                    ISO14443AAppendCRCA(Buffer, 3);
+                    return (3 + ISO14443A_CRCA_SIZE) * 8;
+                }
+                else {
+                    //If we don't have authentication and the NFCCNT is protected, we can't read the NFCCNT so we return NAK_NOT_AUTHED
+                    Buffer[0] = NAK_NOT_AUTHED;
+                    return NAK_FRAME_SIZE;
+                }
             }
-
-            //If we don't have authentication and the NFCCNT is protected, we can't read the NFCCNT so we return NAK_NOT_AUTHED
-            Buffer[0] = NAK_NOT_AUTHED;
-            return NAK_FRAME_SIZE;
+            else {
+                    Buffer[0] = NAK_INVALID_ARG;
+                    return NAK_FRAME_SIZE;
+            }
         }
-
 
         //PART OF ISO STANDARD, NOT OF NTAG DATASHEET
         case CMD_HALT: {
