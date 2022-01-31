@@ -1,26 +1,26 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFirePICCHeaderLayout.h 
+/*
+ * DESFirePICCHeaderLayout.h
  * Maxie D. Schmidt (github.com/maxieds)
  */
 
@@ -55,11 +55,11 @@ This notice must be retained at the top of all source files where indicated.
 #define SAK_CL2_VALUE           (ISO14443A_SAK_COMPLETE_COMPLIANT)
 #define SAK_UID_NOT_FINISHED    0x04
 
-#define STATUS_FRAME_SIZE           (1 * 8) /* Bits */
+#define STATUS_FRAME_SIZE       (1 * 8) /* Bits */
 
 #define DESFIRE_EV0_ATS_TL_BYTE 0x06 /* TL: ATS length, 6 bytes */
 #define DESFIRE_EV0_ATS_T0_BYTE 0x75 /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
-#define DESFIRE_EV0_ATS_TA_BYTE 0x77 /* TA: Only the lowest bit rate is supported */
+#define DESFIRE_EV0_ATS_TA_BYTE 0x00 /* TA: Only the lowest bit rate is supported (normal is 0x77) */
 #define DESFIRE_EV0_ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
 #define DESFIRE_EV0_ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
 
@@ -99,25 +99,25 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_SW_MAJOR_EV2     0x12
 #define DESFIRE_SW_MINOR_EV2     0x01
 
-/* Other HW product types for DESFire tags: See page 7 of 
- * https://www.nxp.com/docs/en/application-note/AN12343.pdf 
+/* Other HW product types for DESFire tags: See page 7 of
+ * https://www.nxp.com/docs/en/application-note/AN12343.pdf
  */
 // typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-//     NATIVEIC_PHYS_CARD                 = 0x01, 
-//     LIGHT_NATIVEIC_PHYS_CARD           = 0x08, 
-//     MICROCONTROLLER_PHYS_CARDI         = 0x81, 
-//     MICROCONTROLLER_PHYS_CARDII        = 0x83, 
-//     JAVACARD_SECURE_ELEMENT_PHYS_CARD  = 0x91, 
-//     HCE_MIFARE_2GO                     = 0xa1, 
+//     NATIVEIC_PHYS_CARD                 = 0x01,
+//     LIGHT_NATIVEIC_PHYS_CARD           = 0x08,
+//     MICROCONTROLLER_PHYS_CARDI         = 0x81,
+//     MICROCONTROLLER_PHYS_CARDII        = 0x83,
+//     JAVACARD_SECURE_ELEMENT_PHYS_CARD  = 0x91,
+//     HCE_MIFARE_2GO                     = 0xa1,
 // } DESFireHWProductCodes;
 //
-// const BYTE DefaultDESFireATS[] = { 
+// const BYTE DefaultDESFireATS[] = {
 //     0x06, 0x75, 0x77, 0x81, 0x02, 0x80
 // };
 // const BYTE DefaultJCOPDESFireATS[] = {
 //     0x06, 0x75, 0xf7, 0xb1, 0x02, 0x80
 // };
-// 
+//
 // const BYTE DEFAULT_SELECT_DESFIRE_AID[] = {
 //      0xd2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00
 // };
@@ -141,7 +141,7 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_STORAGE_SIZE_4K  0x18
 #define DESFIRE_STORAGE_SIZE_8K  0x1A
 
-/* 
+/*
  * Defines the global PICC configuration.
  * This is located in the very first block on the card.
  */
@@ -150,10 +150,10 @@ This notice must be retained at the top of all source files where indicated.
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
     /* Static data: does not change during the PICC's lifetime.
-     * We will add Chameleon Mini terminal commands to enable 
-     * resetting this data so tags can be emulated authentically. 
-     * This structure is stored verbatim (using memcpy) at the 
-     * start of the FRAM setting space for the configuration. 
+     * We will add Chameleon Mini terminal commands to enable
+     * resetting this data so tags can be emulated authentically.
+     * This structure is stored verbatim (using memcpy) at the
+     * start of the FRAM setting space for the configuration.
      */
     uint8_t Uid[DESFIRE_UID_SIZE] DESFIRE_FIRMWARE_ALIGNAT;
     uint8_t StorageSize;
@@ -178,7 +178,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     BYTE  FileCount;
     BYTE  CryptoCommStandard;
     SIZET KeySettings;            /* Block offset in FRAM */
-    SIZET FileNumbersArrayMap;    /* Block offset in FRAM */ 
+    SIZET FileNumbersArrayMap;    /* Block offset in FRAM */
     SIZET FileCommSettings;       /* Block offset in FRAM */
     SIZET FileAccessRights;       /* Block offset in FRAM */
     SIZET FilesAddress;           /* Block offset in FRAM */
@@ -213,7 +213,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     /* AppData active file count */
     DESFIRE_APP_FILE_COUNT,
     /* AppData keep track of default crypto comm standard */
-    DESFIRE_APP_CRYPTO_COMM_STANDARD, 
+    DESFIRE_APP_CRYPTO_COMM_STANDARD,
     /* AppData keeping track of apps key settings */
     DESFIRE_APP_KEY_SETTINGS_BLOCK_ID,
     /* AppData hash-like unsorted array mapping file indices to their labeled numbers */
@@ -221,7 +221,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     /* AppData communication settings (crypto transfer protocols) per file */
     DESFIRE_APP_FILE_COMM_SETTINGS_BLOCK_ID,
     /* AppData file access rights */
-    DESFIRE_APP_FILE_ACCESS_RIGHTS_BLOCK_ID, 
+    DESFIRE_APP_FILE_ACCESS_RIGHTS_BLOCK_ID,
     /* AppData keep track of newer EVx revisions key versioning schemes */
     DESFIRE_APP_KEY_VERSIONS_ARRAY_BLOCK_ID,
     /* AppData keep track of the key types (and hence, byte sizes) by crypto method */
@@ -234,13 +234,13 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 
 SIZET PrettyPrintPICCHeaderData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
 SIZET PrettyPrintFileContentsData(BYTE *outputBuffer, SIZET maxLength, BYTE fileNumber);
-SIZET PrettyPrintPICCFile(SelectedAppCacheType *appData, uint8_t fileIndex, 
+SIZET PrettyPrintPICCFile(SelectedAppCacheType *appData, uint8_t fileIndex,
                           BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
 SIZET PrettyPrintPICCFilesFull(SelectedAppCacheType *appData, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
-SIZET PrettyPrintPICCKey(SelectedAppCacheType *appData, uint8_t keyIndex, 
+SIZET PrettyPrintPICCKey(SelectedAppCacheType *appData, uint8_t keyIndex,
                          BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
 SIZET PrettyPrintPICCKeysFull(SelectedAppCacheType *appData, BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
-SIZET PrettyPrintPICCAppDir(uint8_t appIndex, 
+SIZET PrettyPrintPICCAppDir(uint8_t appIndex,
                             BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
 SIZET PrettyPrintPICCAppDirsFull(BYTE *outputBuffer, SIZET maxLength, BYTE verbose);
 SIZET PrettyPrintPICCImageData(BYTE *outputBuffer, SIZET maxLength, BYTE verbose);

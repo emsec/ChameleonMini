@@ -334,12 +334,12 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .GetFunc        = NO_FUNCTION
     },
 #endif
-    #ifdef ENABLE_RUNTESTS_TERMINAL_COMMAND
-    #include "../Tests/ChameleonTerminalInclude.c"
-    #endif
-    #if defined(CONFIG_MF_DESFIRE_SUPPORT) && !defined(DISABLE_DESFIRE_TERMINAL_COMMANDS)
-    #include "../Application/DESFire/DESFireChameleonTerminalInclude.c"
-    #endif
+#ifdef ENABLE_RUNTESTS_TERMINAL_COMMAND
+#include "../Tests/ChameleonTerminalInclude.c"
+#endif
+#if defined(CONFIG_MF_DESFIRE_SUPPORT) && !defined(DISABLE_DESFIRE_TERMINAL_COMMANDS)
+#include "../Application/DESFire/DESFireChameleonTerminalInclude.c"
+#endif
     {
         /* This has to be last element */
         .Command    = COMMAND_LIST_END,

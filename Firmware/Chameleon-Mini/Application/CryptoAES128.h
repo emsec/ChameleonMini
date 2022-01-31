@@ -1,8 +1,8 @@
-/* CryptoAES128.h : Adds support for XMega HW accelerated 128-bit AES encryption 
- *                  in ECB and CBC modes. 
- *                  Based in part on the the source code for Microchip's ASF library 
- *                  available at https://github.com/avrxml/asf (see license below). 
- * Author: Maxie D. Schmidt (@maxieds) 
+/* CryptoAES128.h : Adds support for XMega HW accelerated 128-bit AES encryption
+ *                  in ECB and CBC modes.
+ *                  Based in part on the the source code for Microchip's ASF library
+ *                  available at https://github.com/avrxml/asf (see license below).
+ * Author: Maxie D. Schmidt (@maxieds)
  */
 
 /*****************************************************************************
@@ -72,35 +72,35 @@ typedef uint8_t CryptoAESBlock_t[CRYPTO_AES_BLOCK_SIZE];
      ((byteCount + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE)
 
 typedef enum aes_dec {
-	AES_ENCRYPT,                     
-	AES_DECRYPT = AES_DECRYPT_bm,    
+    AES_ENCRYPT,
+    AES_DECRYPT = AES_DECRYPT_bm,
 } CryptoAESDec_t;
 
 /* AES Auto Start Trigger settings */
 typedef enum aes_auto {
-	AES_MANUAL,                      // manual start mode.
-	AES_AUTO = AES_AUTO_bm,          // auto start mode.
+    AES_MANUAL,                      // manual start mode.
+    AES_AUTO = AES_AUTO_bm,          // auto start mode.
 } CryptoAESAuto_t;
 
 /* AES State XOR Load Enable settings */
 typedef enum aes_xor {
-	AES_XOR_OFF,                    // state direct load.
-	AES_XOR_ON = AES_XOR_bm,        // state XOR load.
+    AES_XOR_OFF,                    // state direct load.
+    AES_XOR_ON = AES_XOR_bm,        // state XOR load.
 } CryptoAESXor_t;
 
 /* AES Interrupt Enable / Level settings */
 typedef enum aes_intlvl {
-	AES_INTLVL_OFF = AES_INTLVL_OFF_gc,  // Interrupt Disabled
-	AES_INTLVL_LO  = AES_INTLVL_LO_gc,   // Low Level
-	AES_INTLVL_MED = AES_INTLVL_MED_gc,  // Medium Level
-	AES_INTLVL_HI  = AES_INTLVL_HI_gc,   // High Level
+    AES_INTLVL_OFF = AES_INTLVL_OFF_gc,  // Interrupt Disabled
+    AES_INTLVL_LO  = AES_INTLVL_LO_gc,   // Low Level
+    AES_INTLVL_MED = AES_INTLVL_MED_gc,  // Medium Level
+    AES_INTLVL_HI  = AES_INTLVL_HI_gc,   // High Level
 } CryptoAESIntlvl_t;
 
 /* AES interrupt callback function pointer. */
 typedef void (*aes_callback_t)(void);
 
 typedef struct {
-    CryptoAESDec_t   ProcessingMode; 
+    CryptoAESDec_t   ProcessingMode;
     uint8_t          ProcessingDelay;            // [0,15]
     CryptoAESAuto_t  StartMode;
     unsigned char    OpMode;                     // 0 = ECB, 1 = CBC, 2 = OFB, 3 = CFB, 4 = CTR
@@ -110,7 +110,7 @@ typedef struct {
 typedef struct {
     unsigned char   datrdy;                      // ENABLE/DISABLE; Data ready interrupt
     unsigned char   urad;                        // ENABLE/DISABLE; Unspecified Register Access Detection
-} CryptoAES_ISRConfig_t; 
+} CryptoAES_ISRConfig_t;
 
 /* AES encryption complete. */
 #define AES_ENCRYPTION_COMPLETE  (1UL << 0)
@@ -140,31 +140,31 @@ uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize);
 
 void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key, bool);
 void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key);
-uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, 
+uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
                                const uint8_t *IV, const uint8_t *Key);
-uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext, 
+uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
                                const uint8_t *IV, const uint8_t *Key);
 
-typedef uint8_t (*CryptoAESFuncType)(uint8_t*, uint8_t*, uint8_t*);
+typedef uint8_t (*CryptoAESFuncType)(uint8_t *, uint8_t *, uint8_t *);
 typedef struct {
     CryptoAESFuncType  cryptFunc;
     uint16_t           blockSize;
 } CryptoAES_CBCSpec_t;
 
-void CryptoAES_CBCSend(uint16_t Count, void* Plaintext, void* Ciphertext, 
-                       uint8_t *IV, uint8_t *Key, 
+void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
+                       uint8_t *IV, uint8_t *Key,
                        CryptoAES_CBCSpec_t CryptoSpec);
-void CryptoAES_CBCRecv(uint16_t Count, void* Plaintext, void* Ciphertext, 
-                       uint8_t *IV, uint8_t *Key, 
+void CryptoAES_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
+                       uint8_t *IV, uint8_t *Key,
                        CryptoAES_CBCSpec_t CryptoSpec);
 
-void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText, 
-                              uint8_t *Key, uint8_t *IV); 
-void CryptoAESDecrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText, 
+void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
                               uint8_t *Key, uint8_t *IV);
-void CryptoAESEncrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText, 
+void CryptoAESDecrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
+                              uint8_t *Key, uint8_t *IV);
+void CryptoAESEncrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
                                  uint8_t *Key, uint8_t *IV);
-void CryptoAESDecrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText, 
+void CryptoAESDecrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
                                  uint8_t *Key, uint8_t *IV);
 
 /* Crypto utility functions: */

@@ -11,9 +11,9 @@ CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_1K_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_MF_ULTRALIGHT_SUPPORT
-CONFIG_SETTINGS  += -DCONFIG_ISO14443A_SNIFF_SUPPORT
+#CONFIG_SETTINGS  += -DCONFIG_ISO14443A_SNIFF_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_ISO14443A_READER_SUPPORT
-CONFIG_SETTINGS  += -DCONFIG_NTAG21x_SUPPORT
+#CONFIG_SETTINGS += -DCONFIG_NTAG215_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_VICINITY_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_SL2S2002_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_TITAGITSTANDARD_SUPPORT
@@ -24,10 +24,10 @@ CONFIG_SETTINGS  += -DCONFIG_NTAG21x_SUPPORT
 
 #Default configuration
 #CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_MINI_4B
-#CONFIG_SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K
-#CONFIG_SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
-#CONFIG_SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
-#CONFIG_SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_READER
+#CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K
+#CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
+#CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
+#CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_READER
 CONFIG_SETTINGS     += -DDEFAULT_CONFIGURATION=CONFIG_NONE
 
 #Support magic mode on mifare classic configuration
@@ -62,7 +62,7 @@ SETTINGS	+= -DLED_SETTING_GLOBAL
 #Default logging mode
 SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_OFF
 #SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_MEMORY
-#SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_TERMINAL
+#SETTINGS	+= -DDEFAULT_LOG_MODE=LOG_MODE_LIVE
 
 #Define if log settings should be global
 SETTINGS	+= -DLOG_SETTING_GLOBAL
@@ -82,34 +82,35 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 #Enable tests for DES/2KTDEA/3DES/AES128 crypto schemes:
 #SETTINGS  += -DENABLE_CRYPTO_TESTS
 
-#Enable a command to run any tests added by developers, e.g., the 
+#Enable a command to run any tests added by developers, e.g., the
 #crypto scheme tests that can be enabled above:
 #SETTINGS  += -DENABLE_RUNTESTS_TERMINAL_COMMAND
 
-#Whether or not to allow users Chameleon terminal access to change the DESFire configuration's 
+#Whether or not to allow users Chameleon terminal access to change the DESFire configuration's
 #sensitive settings like manufacturer, serial number, etc.
 #SETTINGS += -DDISABLE_PERMISSIVE_DESFIRE_SETTINGS
 #SETTINGS += -DDISABLE_DESFIRE_TERMINAL_COMMANDS
 
-#Set a default logging mode for debugging with the DESFire 
+#Set a default logging mode for debugging with the DESFire
 #emulation code:
 SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
 #SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
-SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
+SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
+#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
 
-#Feature: Use randomized UIDs that mask the actual secret UID until 
-#the tag has been issued a successful authentication sequence: 
+#Feature: Use randomized UIDs that mask the actual secret UID until
+#the tag has been issued a successful authentication sequence:
 #SETTINGS += -DDESFIRE_RANDOMIZE_UIDS_PREAUTH
 
-#Anticipating that the implementation overhead is high with the 
-#maximum storage allocations for the number of possible keys per 
-#application directory, and/or the total number of AID numbered 
-#directory slots, the following options will tweak this limitation: 
-# -> Set DESFIRE_MEMORY_LIMITED_TESTING to shrink the defaults 
-# -> Or explicitly define DESFIRE_CUSTOM_MAX_KEYS=##UINT## (per AID), 
-# -> And/Or define DESFIRE_CUSTOM_MAX_APPS=##UINT## 
+#Anticipating that the implementation overhead is high with the
+#maximum storage allocations for the number of possible keys per
+#application directory, and/or the total number of AID numbered
+#directory slots, the following options will tweak this limitation:
+# -> Set DESFIRE_MEMORY_LIMITED_TESTING to shrink the defaults
+# -> Or explicitly define DESFIRE_CUSTOM_MAX_KEYS=##UINT## (per AID),
+# -> And/Or define DESFIRE_CUSTOM_MAX_APPS=##UINT##
 #    (total number of AID spaces available, not including the master 0x00)
 SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_APPS=8
@@ -118,23 +119,27 @@ SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
 #SETTINGS += -DDESFIRE_USE_FACTORY_SIZES
 #SETTINGS += -DDESFIRE_MAXIMIZE_SIZES_FOR_STORAGE
 
-#Set a minimum incoming/outgoing log size so we do not spam the 
+#Set a minimum incoming/outgoing log size so we do not spam the
 #Chameleon Mini logs to much by logging everything:
-SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
-SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
+SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
+SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
+#SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
 
-#Option to save space with the "Application/Crypto1.c" code by storing large tables 
+#Option to save space with the "Application/Crypto1.c" code by storing large tables
 #in PROGMEM. Note that this will slow down the read times when accessing these tables:
 #SETTINGS  += -DDESFIRE_CRYPTO1_SAVE_SPACE
 
 DESFIRE_MAINSRC = Application/DESFire
 
+DESFIRE_CONFIG_SETTINGS_BASE = $(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DDESFIRE_CRYPTO1_SAVE_SPACE -UDEFAULT_CONFIGURATION
+
 #Memory definitions and objcopy flags to include sections in binaries
-FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
+FLASH_DATA_ADDR = 0x10000  #Start of data section in flash
 FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
+#FLASH_DATA_SIZE = 0x0FFFF  #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
@@ -145,7 +150,7 @@ BUILD_DATE   = "\"$(shell date /t)\""
 else
 BUILD_DATE   = $(shell date +'\"%y%m%d\"')
 endif
-COMMIT_ID	 = $(shell git rev-parse --short HEAD)
+COMMIT_ID    = $(shell git rev-parse --short HEAD)
 MCU          = atxmega128a4u
 ARCH         = XMEGA
 BOARD        = NONE
@@ -161,9 +166,9 @@ SRC         += Application/MifareUltralight.c Application/MifareClassic.c Applic
 			Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c \
 			Application/CryptoTDEA-HWAccelerated.S Application/CryptoTDEA.c Application/CryptoAES128.c \
 			Tests/CryptoTests.c Tests/ChameleonTerminal.c
-SRC		  += Application/NTAG21x.c
-SRC         += Codec/ISO15693.c
-SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/TITagitplus.c Application/ISO15693-A.c Application/EM4233.c
+SRC		      += Application/NTAG215.c
+SRC         += Codec/ISO15693.c Codec/SniffISO15693.c
+SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/TITagitplus.c Application/ISO15693-A.c Application/EM4233.c Application/Sniff15693.c
 SRC	       += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
                $(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
                $(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
@@ -185,8 +190,8 @@ CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR)
 			   -D__AVR_ATxmega128A4U__ -D__PROG_TYPES_COMPAT__ -DMAX_ENDPOINT_INDEX=4 \
 			   -std=gnu99 -Werror=implicit-function-declaration \
 			   -fno-inline-small-functions -fshort-enums -fpack-struct \
-                  -ffunction-sections -Wl,--gc-sections --data-sections -ffunction-sections \
-                  -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
+                  	   -ffunction-sections -Wl,--gc-sections --data-sections -ffunction-sections \
+                           -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
 			   -fno-aggressive-loop-optimizations
 LD_FLAGS     = $(CC_FLAGS) -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
@@ -205,7 +210,7 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
 
-.PHONY: program program-latest dfu-flip dfu-prog check_size style
+.PHONY: program program-latest dfu-flip dfu-prog dfu-reset check_size style
 
 # Default target
 all:
@@ -257,6 +262,10 @@ dfu-prog: $(TARGET).hex $(TARGET).eep check_size
 	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) reset
 
+# Reset the device after firmware upgrade
+dfu-reset:
+	dfu-programmer $(MCU) reset
+
 check_size:
 	@{ \
 	set -e; \
@@ -291,9 +300,18 @@ local-clean:
 	@rm -rf $(OBJDIR)
 	@mkdir $(OBJDIR)
 
-desfire: CONFIG_SETTINGS:= -DCONFIG_MF_DESFIRE_SUPPORT -DDEFAULT_CONFIGURATION=CONFIG_NONE -DDESFIRE_CRYPTO1_SAVE_SPACE
-desfire: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep
+git-add-dev:
+	@git add Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
+
+## Defining custom targets for the DESFire build (normal/user mode) and
+## developer mode for use with the Android CMLD application that enables
+## the printing of LIVE logs to the phone's console by default:
+desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
 	@avr-size $(TARGET).elf
+desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_NONE
+desfire: desfire-build
+desfire-dev: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_MF_DESFIRE_SUPPORT
+desfire-dev: desfire-build
 

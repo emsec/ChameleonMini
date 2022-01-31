@@ -48,7 +48,10 @@ void Reader14443ACodecInit(void) {
     /* Initialize common peripherals and start listening
      * for incoming data. */
     CodecInitCommon();
+    /* Register shared interrupt handlers */
     isr_func_TCD0_CCC_vect = &isr_Reader14443_2A_TCD0_CCC_vect;
+    isr_func_CODEC_TIMER_LOADMOD_CCA_VECT = &isr_Reader14443_2A_CODEC_TIMER_LOADMOD_CCA_VECT;
+    isr_func_CODEC_TIMER_TIMESTAMPS_CCA_VECT = &isr_Reader14443_2A_CODEC_TIMER_TIMESTAMPS_CCA_VECT;
     CodecSetDemodPower(true);
 
     CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;
@@ -209,7 +212,7 @@ void Reader14443AMillerEOC(void) {
 }
 
 // EOC of Card->Reader found
-ISR(CODEC_TIMER_TIMESTAMPS_CCA_VECT) { // EOC found
+ISR_SHARED isr_Reader14443_2A_CODEC_TIMER_TIMESTAMPS_CCA_VECT(void) { // EOC found
     Reader14443A_EOC();
 }
 
@@ -225,7 +228,8 @@ ISR(ACA_AC1_vect) { // this interrupt either finds the SOC or gets triggered bef
 // according to the pause and modulated period
 // if the half bit duration is modulated, then add 1 to buffer
 // if the half bit duration is not modulated, then add 0 to buffer
-ISR(CODEC_TIMER_LOADMOD_CCA_VECT) { // pause found
+// ISR(CODEC_TIMER_LOADMOD_CCA_VECT) { // pause found
+ISR_SHARED isr_Reader14443_2A_CODEC_TIMER_LOADMOD_CCA_VECT(void) { // pause found
     uint8_t tmp = CODEC_TIMER_TIMESTAMPS.CNTL;
     CODEC_TIMER_TIMESTAMPS.CNT = 0;
 

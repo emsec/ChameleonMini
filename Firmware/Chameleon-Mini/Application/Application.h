@@ -23,6 +23,7 @@
 #include "Sniff14443A.h"
 #include "NTAG21x.h"
 #include "EM4233.h"
+#include "Sniff15693.h"
 
 /* Function wrappers */
 INLINE void ApplicationInit(void) {

@@ -29,6 +29,7 @@ extern uint8_t AntennaLevelLogReaderDetectCount;
 
 static inline
 void AntennaLevelInit(void) {
+    ADCA.CAL = (PRODSIGNATURES_ADCACAL1 << 8) | PRODSIGNATURES_ADCACAL0; /* Load calibration data, source: https://www.avrfreaks.net/comment/2080211#comment-2080211 */
     ADCA.CTRLA = ADC_ENABLE_bm;
     ADCA.CTRLB = ADC_RESOLUTION_12BIT_gc;
     ADCA.REFCTRL = ADC_REFSEL_INT1V_gc | ADC_BANDGAP_bm;

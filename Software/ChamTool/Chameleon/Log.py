@@ -71,7 +71,11 @@ eventTypes = {
     0x45: { 'name': 'CODEC RX SNI READER W/PARITY', 'decoder': binaryParityDecoder },
     0x46: { 'name': 'CODEC RX SNI CARD',            'decoder': binaryDecoder },
     0x47: { 'name': 'CODEC RX SNI CARD W/PARITY',   'decoder': binaryParityDecoder },
+    0x48: { 'name': 'CODEC RX SNI READER FIELD DETECTED',   'decoder': noDecoder },
    
+    0x53: { 'name': 'ISO14443A (DESFIRE) STATE',       'decoder': binaryDecoder },
+    0x54: { 'name': 'ISO144443-4 (DESFIRE) STATE',     'decoder': binaryDecoder },
+    0x55: { 'name': 'ISO14443A (DESFIRE) APP NO RESP', 'decoder': binaryDecoder },
 
     0x80: { 'name': 'APP READ',       'decoder': binaryDecoder },
     0x81: { 'name': 'APP WRITE',      'decoder': binaryDecoder },
@@ -90,12 +94,31 @@ eventTypes = {
     0xC0: { 'name': 'APP AUTH FAILED', 'decoder': binaryDecoder },
     0xC1: { 'name': 'APP CSUM FAILED', 'decoder': binaryDecoder },
     0xC2: { 'name': 'APP NOT AUTHED',  'decoder': binaryDecoder },
-    
+ 
+    0xD0: { 'name': 'APP DESFIRE AUTH KEY', 'decoder': binaryDecoder },
+    0xD1: { 'name': 'APP DESFIRE NONCE B',  'decoder': binaryDecoder },
+    0xD2: { 'name': 'APP DESFIRE NONCE AB', 'decoder': binaryDecoder },
+ 
+    0xE0: { 'name': 'APP DESFIRE GENERIC ERROR',         'decoder': binaryDecoder },
+    0xE1: { 'name': 'APP DESFIRE STATUS INFO',           'decoder': binaryDecoder },
+    0xE2: { 'name': 'APP DESFIRE DEBUG OUTPUT',          'decoder': binaryDecoder },
+    0xE3: { 'name': 'APP DESFIRE INCOMING',              'decoder': binaryDecoder },
+    0xE4: { 'name': 'APP DESFIRE INCOMING ENC',          'decoder': binaryDecoder },
+    0xE5: { 'name': 'APP DESFIRE OUTGOING',              'decoder': binaryDecoder },
+    0xE6: { 'name': 'APP DESFIRE OUTGOING ENC',          'decoder': binaryDecoder },
+    0xE7: { 'name': 'APP DESFIRE NATIVE CMD',            'decoder': binaryDecoder },
+    0xE8: { 'name': 'APP DESFIRE ISO14443 CMD',          'decoder': binaryDecoder },
+    0xE9: { 'name': 'APP DESFIRE ISO7816 CMD',           'decoder': binaryDecoder },
+    0xEA: { 'name': 'APP DESFIRE PICC RESET',            'decoder': binaryDecoder },
+    0xEB: { 'name': 'APP DESFIRE PICC RESET FROM MEM',   'decoder': binaryDecoder },
+    0xEC: { 'name': 'APP DESFIRE PROT DATA SET',         'decoder': binaryDecoder },
+    0xED: { 'name': 'APP DESFIRE PROT DATA SET VERBOSE', 'decoder': binaryDecoder },
+
     0xFF: { 'name': 'BOOT',            'decoder': binaryDecoder },
 }
 
 TIMESTAMP_MAX = 65536
-eventTypes = { i : ({'name': 'UNKNOWN', 'decoder': binaryDecoder} if i not in eventTypes.keys() else eventTypes[i]) for i in range(256) }
+eventTypes = { i : ({'name': f'UNKNOWN {hex(i)}', 'decoder': binaryDecoder} if i not in eventTypes.keys() else eventTypes[i]) for i in range(256) }
 
 def parseBinary(binaryStream, decoder=None):
     log = []
@@ -130,11 +153,11 @@ def parseBinary(binaryStream, decoder=None):
         logData = eventTypes[event]['decoder'](logData)
         
         # Calculate delta timestamp respecting 16 bit overflow
-        deltaTimestamp = timestamp - lastTimestamp;
+        deltaTimestamp = timestamp - lastTimestamp
         lastTimestamp = timestamp
         
         if (deltaTimestamp < 0):
-            deltaTimestamp += TIMESTAMP_MAX;
+            deltaTimestamp += TIMESTAMP_MAX
 
         note = ""
         # If we need to decode the data and paritybit check success

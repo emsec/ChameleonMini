@@ -1,27 +1,27 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
-/* 
- * DESFireLogging.c 
- * Maxie D. Schmidt (github.com/maxieds) 
+/*
+ * DESFireLogging.c
+ * Maxie D. Schmidt (github.com/maxieds)
  */
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
@@ -29,18 +29,18 @@ This notice must be retained at the top of all source files where indicated.
 #include "../../Log.h"
 #include "../../Terminal/Terminal.h"
 
-#include "DESFireLogging.h" 
+#include "DESFireLogging.h"
 
 #ifdef DESFIRE_DEFAULT_DEBUGGING_MODE
-     DESFireLoggingMode LocalLoggingMode = DESFIRE_DEFAULT_LOGGING_MODE;
+DESFireLoggingMode LocalLoggingMode = DESFIRE_DEFAULT_LOGGING_MODE;
 #else
-     DESFireLoggingMode LocalLoggingMode = DEBUGGING;
+DESFireLoggingMode LocalLoggingMode = DEBUGGING;
 #endif
 
 #ifdef DESFIRE_DEFAULT_TESTING_MODE
-     BYTE LocalTestingMode = DESFIRE_DEFAULT_TESTING_MODE;
+BYTE LocalTestingMode = DESFIRE_DEFAULT_TESTING_MODE;
 #else
-     BYTE LocalTestingMode = 0x00;
+BYTE LocalTestingMode = 0x00;
 #endif
 
 void DESFireLogErrorMessage(char *fmtMsg, ...) {
@@ -55,11 +55,11 @@ void DESFireLogErrorMessage(char *fmtMsg, ...) {
 }
 
 void DESFireLogSourceCodeTODO(char *implNoteMsg, char *srcFileLoggingData) {
-     char *bigDataBuffer = (char *) __InternalStringBuffer;
-     snprintf_P(bigDataBuffer, STRING_BUFFER_SIZE, PSTR("%s: %s"), 
-                implNoteMsg, srcFileLoggingData);
-     SIZET logMsgBufferSize = StringLength(bigDataBuffer, STRING_BUFFER_SIZE);
-     LogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, bigDataBuffer, logMsgBufferSize + 1);
+    char *bigDataBuffer = (char *) __InternalStringBuffer;
+    snprintf_P(bigDataBuffer, STRING_BUFFER_SIZE, PSTR("%s: %s"),
+               implNoteMsg, srcFileLoggingData);
+    SIZET logMsgBufferSize = StringLength(bigDataBuffer, STRING_BUFFER_SIZE);
+    LogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, bigDataBuffer, logMsgBufferSize + 1);
 }
 
 void DebugPrintP(const char *fmt, ...) {
