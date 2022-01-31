@@ -452,7 +452,7 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     LogEntry(LOG_APP_AUTH_KEY, (const void *) *Key, keySize);
 
     /* Generate the nonce B (RndB / Challenge response) */
-    if (LocalTestingMode != 0) {
+    if (LocalTestingMode == 0) {
         RandomGetBuffer(DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     } else {
         /* Fixed nonce for testing */
@@ -1709,7 +1709,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     LogEntry(LOG_APP_AUTH_KEY, (const void *) *Key, keySize);
 
     /* Generate the nonce B (RndB / Challenge response) */
-    if (LocalTestingMode != 0) {
+    if (LocalTestingMode == 0) {
         RandomGetBuffer(DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     } else {
         /* Fixed nonce for testing */
@@ -1729,7 +1729,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     memset(rndBPadded, 0x00, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(rndBPadded, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded,
-                      &Buffer[1], *Key);
+                      &Buffer[1], NULL, *Key);
 
     /* Scrub the key */
     memset(*Key, 0, keySize);
@@ -1766,7 +1766,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE challengeRndA[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     Decrypt3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                      &Buffer[1], *Key);
+                      &Buffer[1], NULL, *Key);
     RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB,
                      CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
@@ -1787,7 +1787,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                      &Buffer[1], *Key);
+                      &Buffer[1], NULL, *Key);
 
     /* Scrub the key */
     memset(*Key, 0, keySize);
@@ -1843,7 +1843,7 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     CryptoAESInitContext(&AESCryptoContext);
 
     /* Generate the nonce B (RndB / Challenge response) */
-    if (LocalTestingMode != 0) {
+    if (LocalTestingMode == 0) {
         RandomGetBuffer(&(DesfireCommandState.RndB[0]), CRYPTO_CHALLENGE_RESPONSE_BYTES);
     } else {
         /* Fixed nonce for testing */

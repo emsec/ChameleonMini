@@ -81,6 +81,9 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Enable tests for DES/2KTDEA/3DES/AES128 crypto schemes:
 #SETTINGS  += -DENABLE_CRYPTO_TESTS
+#SETTINGS  += -DENABLE_CRYPTO_TDEA_TESTS
+#SETTINGS  += -DENABLE_CRYPTO_3DES_TESTS
+#SETTINGS  += -DENABLE_CRYPTO_AES_TESTS
 
 #Enable a command to run any tests added by developers, e.g., the
 #crypto scheme tests that can be enabled above:
@@ -97,8 +100,8 @@ SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
 #SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
-SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
-#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
+#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
+SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
 
 #Feature: Use randomized UIDs that mask the actual secret UID until
 #the tag has been issued a successful authentication sequence:

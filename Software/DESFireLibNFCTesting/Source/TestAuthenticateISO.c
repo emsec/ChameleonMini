@@ -1,4 +1,4 @@
-/* TestAuthenticateAES128.c */
+/* TestAuthenticateISO.c */
 
 #include "LibNFCUtils.h"
 #include "LibNFCWrapper.h"
@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     nfc_context *nfcCtxt;
     nfc_device  *nfcPnd = GetNFCDeviceDriver(&nfcCtxt);
     if(nfcPnd == NULL) {
-         return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     // Select AID application 0x000000:
