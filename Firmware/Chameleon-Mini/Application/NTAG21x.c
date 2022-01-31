@@ -307,12 +307,6 @@ static bool HandleWriteOnDynamicLockbytes(uint8_t *const Buffer){
     uint8_t lockByte2ToWrite = Buffer[2];
     uint8_t RFUIToWrite = Buffer[3];
 
-    //The last byte of the dynamic lockbytes is RFUI, so it MUST be 0x00. If it's not, we don't write anything
-    /* //TODO: Are we sure this is actually how it works??? UNDOCUMENTED STUFF SUCKS. Seems like some stuff in the wild tries to write different stuff to the RFUI byte, gotta do more checks IRL
-    if (RFUIToWrite != 0x00){
-        return false;
-    }*/
-
     switch(Ntag_type) {
         case NTAG213:
             MemoryReadBlock(&dynamicLockbyte0, NTAG213_DYNAMIC_LOCKBYTE_0_ADDRESS, 1);
@@ -1006,18 +1000,19 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
         //We're a "virtual" tag that is always powered by battery, so we don't have a tearing event
         {
             uint8_t CntNumber = Buffer[1];
-            if (CntNumber == 0x02) {
+            uint8_t CRC1 = Buffer[2];
+            uint8_t CRC2 = Buffer[3];
+
+            if (CntNumber == 0x02  && CRC1 == 0x00 && CRC2 == 0x11) { //On NTAG21x, the only valid CNT number is 0x02
                 /* Hardcoded response */
                 Buffer[0] = 0xBD;
+                ISO14443AAppendCRCA(Buffer, 1);
                 return (1 + ISO14443A_CRCA_SIZE) * 8;
             }
-            else if (CntNumber != 0x02) //On NTAG21x, the only valid CNT number is 0x02
+            else
             {
                 Buffer[0] = NAK_INVALID_ARG;
                 return NAK_FRAME_SIZE;
-            }
-            else { //If there are more then 1 byte of parameter we don't respond, as real tags do
-                break;
             }
         }
 
