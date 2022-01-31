@@ -100,8 +100,8 @@ SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
 #SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
-SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
-#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
+#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
+SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
 
 #Feature: Use randomized UIDs that mask the actual secret UID until
 #the tag has been issued a successful authentication sequence:
@@ -133,7 +133,7 @@ SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
 
 #Option to save space with the "Application/Crypto1.c" code by storing large tables
 #in PROGMEM. Note that this will slow down the read times when accessing these tables:
-#SETTINGS  += -DDESFIRE_CRYPTO1_SAVE_SPACE
+SETTINGS  += -DDESFIRE_CRYPTO1_SAVE_SPACE
 
 DESFIRE_MAINSRC = Application/DESFire
 

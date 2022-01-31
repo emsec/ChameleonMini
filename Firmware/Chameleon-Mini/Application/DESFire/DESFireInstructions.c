@@ -453,8 +453,8 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     }
 
     /* Indicate that we are in DES key authentication land */
-    Key = &SessionKey;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
+    Key = &SessionKey;
     DesfireCommandState.KeyId = KeyId;
     DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_3K3DES;
     DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
@@ -510,10 +510,10 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     }
 
     /* Reset parameters for authentication from the first exchange */
-    Key = &SessionKey;
     KeyId = DesfireCommandState.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
+    Key = &SessionKey;
     ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
 
     /* Decrypt the challenge sent back to get RndA and a shifted RndB */
@@ -1763,10 +1763,10 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     }
 
     /* Reset parameters for authentication from the first exchange */
-    Key = &SessionKey;
     KeyId = DesfireCommandState.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
+    Key = &SessionKey;
     ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
 
     /* Decrypt the challenge sent back to get RndA and a shifted RndB */
