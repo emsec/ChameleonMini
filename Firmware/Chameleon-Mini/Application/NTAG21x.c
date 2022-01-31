@@ -944,24 +944,44 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
         }
 
         case CMD_READ_SIG: {
-            uint16_t signatureAddr;
-            switch(Ntag_type) {
-                case NTAG213:
-                    signatureAddr = NTAG213_MEM_SIZE + ECC_SIGNATURE_AFTER_DUMP_OFFSET;
-                    break;
-                case NTAG215:
-                    signatureAddr = NTAG215_MEM_SIZE + ECC_SIGNATURE_AFTER_DUMP_OFFSET;
-                    break;
-                case NTAG216:
-                    signatureAddr = NTAG215_MEM_SIZE + ECC_SIGNATURE_AFTER_DUMP_OFFSET;
-                    break;
-                }
-            MemoryReadBlock(&Buffer[0], signatureAddr, SIGNATURE_LENGTH);
-            ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
-            return (SIGNATURE_LENGTH + ISO14443A_CRCA_SIZE) * 8;
+            uint8_t SigAddrRFUI = Buffer[1];
+            uint8_t CRC1 = Buffer[2];
+            uint8_t CRC2 = Buffer[3];
+            uint8_t OVERCRC = Buffer[4];
+
+            char tmpBuf[10]; //TODO: REMOVE, THIS IS DEBUG
+            snprintf(tmpBuf, 10, "OCRC: %d\n", OVERCRC);
+            TerminalSendString(tmpBuf);
+
+
+            if (SigAddrRFUI == 0x00 &&  CRC1 == 0xa2 && CRC2 == 0x01) { //should be a suffient check. Works unless a rouge reader sends exactly this
+                uint16_t signatureAddr;
+                switch(Ntag_type) {
+                    case NTAG213:
+                        signatureAddr = NTAG213_MEM_SIZE + ECC_SIGNATURE_AFTER_DUMP_OFFSET;
+                        break;
+                    case NTAG215:
+                        signatureAddr = NTAG215_MEM_SIZE + ECC_SIGNATURE_AFTER_DUMP_OFFSET;
+                        break;
+                    case NTAG216:
+                        signatureAddr = NTAG215_MEM_SIZE + ECC_SIGNATURE_AFTER_DUMP_OFFSET;
+                        break;
+                    }
+                MemoryReadBlock(&Buffer[0], signatureAddr, SIGNATURE_LENGTH);
+                ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
+                return (SIGNATURE_LENGTH + ISO14443A_CRCA_SIZE) * 8;
+            }
+            else if (SigAddrRFUI != 0x00) { //If the parameter is not 0x00 we respond with a Invalid Argument NAK
+                Buffer[0] = NAK_INVALID_ARG;
+                return NAK_FRAME_SIZE;
+            }
+            else { //Real tags seem not to answer completely if there is more than 1byte of parameter
+                break;
+            }
         }
 
         case CMD_READ_CNT: {
+            uint8_t CntNumber = Buffer[1];
             if (NfcCntEnabled){
                 //If the NFCCNT is not protected, OR if the NFCCNT is protected BUT we're authenticated, then we can read the NFCCNT
                 if (!NfcCntPwdProt || (NfcCntPwdProt && Authenticated)) {
@@ -978,6 +998,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 }
             }
             else {
+                    //The NFCCNT is not enabled, so we can't read the NFCCNT so we return NAK_INVALID_ARG
                     Buffer[0] = NAK_INVALID_ARG;
                     return NAK_FRAME_SIZE;
             }
