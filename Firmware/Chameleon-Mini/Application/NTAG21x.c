@@ -1040,8 +1040,6 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 MemoryReadBlock(Buffer, VCTID_address, 1);
                 ISO14443AAppendCRCA(Buffer, 1);
                 return (1 + ISO14443A_CRCA_SIZE) * 8;
-
-            break; //TODO: REVERSE AND IMPLEMENT
         }
 
         //PART OF ISO STANDARD, NOT OF NTAG DATASHEET
