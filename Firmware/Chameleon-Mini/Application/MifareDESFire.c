@@ -213,7 +213,8 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
 }
 
 uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
-    size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+    uint16_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+    uint16_t ReturnedBytes = 0;
     if (ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
             Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
         return MifareDesfireProcess(Buffer, BitCount);
@@ -233,13 +234,10 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         ISO14443AAppendCRCA(Buffer, ProcessedByteCount);
         ProcessedBitCount += 2 * BITS_PER_BYTE;
         return ProcessedBitCount;
+    } else if((ReturnedBytes = CallInstructionHandler(Buffer, ByteCount)) != ISO14443A_APP_NO_RESPONSE) {
+	return ReturnedBytes;
     } else {
-        uint16_t ProcessedBitCount = ISO144433APiccProcess(Buffer, BitCount);
-        if (ProcessedBitCount == ISO14443A_APP_NO_RESPONSE) {
-            const char *debugNoResponse = PSTR("APP_NO_RESP");
-            LogDebuggingMsg(debugNoResponse);
-        }
-        return ProcessedBitCount;
+        return ISO144433APiccProcess(Buffer, BitCount);
     }
 }
 
