@@ -47,7 +47,7 @@ static inline nfc_device * GetNFCDeviceDriver(nfc_context **context) {
     nfc_device_set_property_bool(pnd, NP_AUTO_ISO14443_4, true);
     nfc_device_set_property_bool(pnd, NP_ACTIVATE_FIELD, true);
     nfc_device_set_property_bool(pnd, NP_EASY_FRAMING, false); 
-    //nfc_device_set_property_int(pnd, NP_TIMEOUT_COMMAND, 0);
+    nfc_device_set_property_int(pnd, NP_TIMEOUT_COMMAND, 0);
     return pnd;
 }
 

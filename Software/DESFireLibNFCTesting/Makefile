@@ -34,6 +34,7 @@ LIBNFC_CUSTOM_CONFIG= -DLIBNFC_LOGLEVEL=NFC_LOG_PRIORITY_DEBUG \
 CFLAGS+= $(LIBNFC_SUPPORTED_DRIVERS) $(LIBNFC_CUSTOM_CONFIG)
 
 FILE_BASENAMES=NFCAntiCollisionMod \
+			   TestAuthenticateLegacy \
 			   TestAuthenticateAES128 \
 			   TestAuthenticateISO \
 			   TestGeneralCommands \

@@ -441,8 +441,9 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    /* Indicate that we are in AES key authentication land */
-    keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_DES);
+    /* Indicate that we are in DES key authentication land */
+    Key = &SessionKey;
+    keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
     DesfireCommandState.KeyId = KeyId;
     DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_3K3DES;
     DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
@@ -471,8 +472,8 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t rndBPadded[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     memset(rndBPadded, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(rndBPadded, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    EncryptDESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded,
-                     &Buffer[1], *Key);
+    Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded,
+                      &Buffer[1], NULL, *Key);
 
     /* Scrub the key */
     memset(*Key, 0, keySize);
@@ -490,13 +491,15 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
+    
     /* Validate command length */
-    if (ByteCount != 2 * CRYPTO_DES_BLOCK_SIZE + 1) {
+    if (ByteCount != 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES + 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Reset parameters for authentication from the first exchange */
+    Key = &SessionKey;
     KeyId = DesfireCommandState.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
@@ -506,8 +509,8 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE challengeRndAB[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndA[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    DecryptDESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                     &Buffer[1], *Key);
+    Decrypt3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
+                      &Buffer[1], NULL, *Key);
     RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB,
                      CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
@@ -515,7 +518,7 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Check that the returned RndB matches what we sent in the previous round */
     if (memcmp(DesfireCommandState.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
+	return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Authenticated successfully */
@@ -526,10 +529,8 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    //memset(challengeRndAB, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    //memcpy(challengeRndAB, challengeRndA, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    EncryptDESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                     &Buffer[1], *Key);
+    Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
+                      &Buffer[1], NULL, *Key);
 
     /* Scrub the key */
     memset(*Key, 0, keySize);
@@ -1691,10 +1692,6 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_NO_SUCH_KEY;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-
-    /* The next calls just zero out the key buffers (not specific to AES): */
-    //InitAESCryptoKeyData(&SessionKey);
-    //InitAESCryptoKeyData(&SessionIV);
 
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
     Key = &SessionKey;

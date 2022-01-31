@@ -45,8 +45,8 @@ typedef void (*CryptoTDEAFuncType)(const void *PlainText, void *Ciphertext, cons
 
 void CryptoEncryptDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecryptDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
-void EncryptDESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
-void DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *Keys);
+void EncryptDESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
+void DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 
 /** Performs the Triple DEA enciphering in ECB mode (single block)
  *

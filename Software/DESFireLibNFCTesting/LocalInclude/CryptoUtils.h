@@ -159,6 +159,37 @@ static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize,
      return bufSize;
 }
 
+static inline size_t EncryptDES(const uint8_t *plainSrcBuf, size_t bufSize, 
+                                uint8_t *encDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
+     DES_key_schedule keySched;
+     uint8_t *kd = cdata.keyData;
+     DES_set_key(kd, &keySched);
+     uint8_t IV[CRYPTO_DES_BLOCK_SIZE]; 
+     if (IVIn == NULL) {
+         memset(IV, 0x00, CRYPTO_DES_BLOCK_SIZE);
+     } else {
+         memcpy(IV, IVIn, CRYPTO_DES_BLOCK_SIZE);
+     }
+     DES_cbc_encrypt(plainSrcBuf, encDestBuf, bufSize, &keySched, &IV, DES_ENCRYPT);
+     return bufSize;
+}
+
+static inline size_t DecryptDES(const uint8_t *encSrcBuf, size_t bufSize, 
+                                uint8_t *plainDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
+     DES_key_schedule keySched;
+     uint8_t *kd = cdata.keyData;
+     DES_set_key(kd, &keySched);
+     uint8_t IV[CRYPTO_DES_BLOCK_SIZE]; 
+     if (IVIn == NULL) {
+         memset(IV, 0x00, CRYPTO_DES_BLOCK_SIZE);
+     } else {
+         memcpy(IV, IVIn, CRYPTO_DES_BLOCK_SIZE);
+     }
+     DES_cbc_encrypt(encSrcBuf, plainDestBuf, bufSize, &keySched, &IV, DES_DECRYPT);
+     return bufSize;
+}
+
+
 static inline bool TestAESEncyptionRoutines(void) {
     fprintf(stdout, ">>> TestAESEncryptionRoutines [non-DESFire command]:\n");
     const uint8_t keyData[] = { 
@@ -203,20 +234,7 @@ static inline bool TestAESEncyptionRoutines(void) {
 }
 
 static inline bool Test3DESEncyptionRoutines(void) {
-    fprintf(stdout, ">>> TestAESEncryptionRoutines [non-DESFire command]:\n");
-    //const uint8_t keyData[] = { 
-    //    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    //    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    //    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    //};
-    //const uint8_t ptData[] = {
-    //    0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-    //    0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
-    //};
-    //const uint8_t ctData[] = {
-    //    0x3e, 0xf0, 0xa8, 0x91, 0xcf, 0x8e, 0xd9, 0x90, 
-    //	0xc4, 0x77, 0xeb, 0x09, 0x02, 0xf0, 0xc5, 0x4a 
-    //};
+    fprintf(stdout, ">>> Test3DESEncryptionRoutines [non-DESFire command]:\n");
     const uint8_t keyData[] = {
         0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 
 	0xf1, 0xe0, 0xd3, 0xc2, 0xb5, 0xa4, 0x97, 0x86, 
@@ -266,6 +284,50 @@ static inline bool Test3DESEncyptionRoutines(void) {
     fprintf(stdout, "\n");
     return status;
 }
+
+static inline bool TestLegacyDESEncyptionRoutines(void) {
+    fprintf(stdout, ">>> TestLegacyDESEncryptionRoutines [non-DESFire command]:\n");
+    const uint8_t keyData[] = { 
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    };
+    const uint8_t ptData[] = {
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
+    };
+    const uint8_t ctData[] = {
+        0x3e, 0xf0, 0xa8, 0x91, 0xcf, 0x8e, 0xd9, 0x90, 
+    	0xc4, 0x77, 0xeb, 0x09, 0x02, 0xf0, 0xc5, 0x4a 
+    };
+    CryptoData_t cdata;
+    cdata.keyData = keyData;
+    cdata.keySize = 8;
+    const uint16_t testDataSize = 2 * 8;
+    uint8_t pt[testDataSize], ct[testDataSize];
+    EncryptDES(ptData, testDataSize, ct, NULL, cdata);
+    DecryptDES(ctData, testDataSize, pt, NULL, cdata);
+    fprintf(stdout, "    -- : PT [FIXED] = "); print_hex(ptData, testDataSize);
+    fprintf(stdout, "    -- : CT [FIXED] = "); print_hex(ctData, testDataSize);
+    fprintf(stdout, "    -- : CT [ENC]   = "); print_hex(ct, testDataSize);
+    fprintf(stdout, "    -- : PT [DEC]   = "); print_hex(pt, testDataSize);
+    bool status = true;
+    if(memcmp(ct, ctData, testDataSize)) {
+        fprintf(stdout, "    -- CT does NOT match !!\n");
+        status = false;
+    }
+    else {
+        fprintf(stdout, "    -- CT matches.\n");
+    }
+    if(memcmp(pt, ptData, testDataSize)) {
+        fprintf(stdout, "    -- Decrypted PT from CT does NOT match !!\n");
+        status = false;
+    }
+    else {
+        fprintf(stdout, "    -- Decrypted PT from CT matches.\n");
+    }
+    fprintf(stdout, "\n");
+    return status;
+}
+
 static inline int GenerateRandomBytes(uint8_t *destBuf, size_t numBytes) {
      return RAND_pseudo_bytes(destBuf, numBytes);
 }
