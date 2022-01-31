@@ -50,7 +50,6 @@ static volatile uint8_t ShiftRegister;
 static volatile uint8_t ByteCount;
 static volatile uint8_t ReaderByteCount;
 static volatile uint8_t CardByteCount;
-static volatile uint16_t DemodByteCount;
 static volatile uint16_t SampleDataCount;
 static volatile uint8_t bBrokenFrame;
 
@@ -733,11 +732,12 @@ void SniffISO15693CodecTask(void) {
     if (Flags.ReaderDemodFinished) {
         Flags.ReaderDemodFinished = 0;
 
-        DemodByteCount = ReaderByteCount;
-
-        if (DemodByteCount > 0) {
-            LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, DemodByteCount);
+        if (ReaderByteCount > 0) {
+            LogEntry(LOG_INFO_CODEC_SNI_READER_DATA, CodecBuffer, ReaderByteCount);
             LEDHook(LED_CODEC_RX, LED_PULSE);
+
+            SniffTrafficSource = TRAFFIC_READER;
+            ApplicationProcess(CodecBuffer, ReaderByteCount);
         }
 
     }
@@ -745,12 +745,13 @@ void SniffISO15693CodecTask(void) {
     if(Flags.CardDemodFinished) {
         Flags.CardDemodFinished = 0;
 
-        DemodByteCount = CardByteCount;
-
-        if (DemodByteCount > 0) {
-            LogEntry(LOG_INFO_CODEC_SNI_CARD_DATA, CodecBuffer2, DemodByteCount);
+        if (CardByteCount > 0) {
+            LogEntry(LOG_INFO_CODEC_SNI_CARD_DATA, CodecBuffer2, CardByteCount);
             LEDHook(LED_CODEC_RX, LED_PULSE);
 
+            SniffTrafficSource = TRAFFIC_CARD;
+            ApplicationProcess(CodecBuffer2, CardByteCount);
+            /* Note: the application might want to know if the frame is broken, need to extern bBrokenFrame */
         }
 
         if (bBrokenFrame) {

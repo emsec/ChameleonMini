@@ -56,8 +56,6 @@ static volatile uint16_t ReaderBitCount;
 static volatile uint16_t CardBitCount;
 static volatile uint16_t rawBitCount;
 
-enum RCTraffic TrafficSource;
-
 INLINE void CardSniffInit(void);
 INLINE void CardSniffDeinit(void);
 
@@ -503,7 +501,7 @@ void Sniff14443ACodecTask(void) {
         // Let the Application layer know where this data comes from
         LEDHook(LED_CODEC_RX, LED_PULSE);
 
-        TrafficSource = TRAFFIC_READER;
+        SniffTrafficSource = TRAFFIC_READER;
         ApplicationProcess(CodecBuffer, ReaderBitCount);
     }
 
@@ -516,7 +514,7 @@ void Sniff14443ACodecTask(void) {
         LEDHook(LED_CODEC_RX, LED_PULSE);
 
         // Let the Application layer know where this data comes from
-        TrafficSource = TRAFFIC_CARD;
+        SniffTrafficSource = TRAFFIC_CARD;
         ApplicationProcess(CodecBuffer2, CardBitCount);
     }
 

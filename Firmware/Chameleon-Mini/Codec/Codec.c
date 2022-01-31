@@ -25,6 +25,8 @@ static volatile struct {
 uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
 uint8_t CodecBuffer2[CODEC_BUFFER_SIZE];
 
+enum RCTraffic SniffTrafficSource;
+
 void (* volatile isr_func_TCD0_CCC_vect)(void) = NULL;
 void (* volatile isr_func_CODEC_DEMOD_IN_INT0_VECT)(void) = NULL;
 void (* volatile isr_func_ACA_AC0_vect)(void);

@@ -119,6 +119,8 @@ typedef enum {
 extern uint8_t CodecBuffer[CODEC_BUFFER_SIZE];
 extern uint8_t CodecBuffer2[CODEC_BUFFER_SIZE];
 
+extern enum RCTraffic {TRAFFIC_READER, TRAFFIC_CARD} SniffTrafficSource;
+
 /* Shared ISR pointers and handlers */
 extern void (* volatile isr_func_TCD0_CCC_vect)(void);
 void isr_Reader14443_2A_TCD0_CCC_vect(void);

@@ -71,7 +71,7 @@ uint16_t Sniff14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                 case STATE_REQA:
                     LED_PORT.OUTCLR = LED_RED;
                     // If received Reader REQA or WUPA
-                    if (TrafficSource == TRAFFIC_READER &&
+                    if (SniffTrafficSource == TRAFFIC_READER &&
                             (Buffer[0] == 0x26 || Buffer[0] == 0x52)) {
                         SniffState = STATE_ATQA;
                     } else {
@@ -80,7 +80,7 @@ uint16_t Sniff14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                     break;
                 case STATE_ATQA:
                     // ATQA: P RRRR XXXX  P XXRX XXXX
-                    if (TrafficSource == TRAFFIC_CARD &&
+                    if (SniffTrafficSource == TRAFFIC_CARD &&
                             BitCount == 2 * 9 &&
                             (Buffer[0] & 0x20) == 0x00 &&        // Bit6 RFU shall be 0
                             (Buffer[1] & 0xE0) == 0x00 &&      // bit13-16 RFU shall be 0
@@ -91,7 +91,7 @@ uint16_t Sniff14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                     } else {
                         // If not ATQA, but REQA, then stay on this state,
                         // Reset to REQA, save the counter and reset the counter
-                        if (TrafficSource == TRAFFIC_READER &&
+                        if (SniffTrafficSource == TRAFFIC_READER &&
                                 (Buffer[0] == 0x26 || Buffer[0] == 0x52)) {
                         } else {
                             // If not ATQA and not REQA then reset to REQA
@@ -101,7 +101,7 @@ uint16_t Sniff14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                     break;
                 case STATE_ANTICOLLI:
                     // SEL: 93/95/97
-                    if (TrafficSource == TRAFFIC_READER &&
+                    if (SniffTrafficSource == TRAFFIC_READER &&
                             BitCount == 2 * 8 &&
                             (Buffer[0] & 0xf0) == 0x90 &&
                             (Buffer[0] & 0x09) == 0x01) {
@@ -112,7 +112,7 @@ uint16_t Sniff14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                     }
                     break;
                 case STATE_UID:
-                    if (TrafficSource == TRAFFIC_CARD &&
+                    if (SniffTrafficSource == TRAFFIC_CARD &&
                             BitCount == 5 * 9 &&
                             checkParityBits(Buffer, BitCount)) {
                         SniffState = STATE_SELECT;
@@ -123,7 +123,7 @@ uint16_t Sniff14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                 case STATE_SELECT:
 
                     // SELECT: 9 bytes, SEL = 93/95/97, NVB=70
-                    if (TrafficSource == TRAFFIC_READER &&
+                    if (SniffTrafficSource == TRAFFIC_READER &&
                             BitCount == 9 * 8 &&
                             (Buffer[0] & 0xf0) == 0x90 &&
                             (Buffer[0] & 0x09) == 0x01 &&
@@ -136,7 +136,7 @@ uint16_t Sniff14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                     break;
                 case STATE_SAK:
                     // SAK: 1Byte SAK + CRC
-                    if (TrafficSource == TRAFFIC_CARD &&
+                    if (SniffTrafficSource == TRAFFIC_CARD &&
                             BitCount == 3 * 9 &&
                             checkParityBits(Buffer, BitCount)) {
                         if ((Buffer[0] & 0x04) == 0x00) {
