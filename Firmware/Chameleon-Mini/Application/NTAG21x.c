@@ -43,6 +43,10 @@
 #define CMD_PWD_AUTH 0x1B
 #define CMD_READ_SIG 0x3C
 
+//These commands are defined in the mifare ultralight ev1 datasheet, not in the ntag 21x datasheet, but real tags seems to answer to them anyway
+#define CMD_CHECK_TEARING_EVENT 0x3E
+#define CMD_VCSL 0x4B
+
 //MEMORY LAYOUT STUFF, addresses and sizes in bytes
 //UID stuff
 #define UID_CL1_ADDRESS         0x00
@@ -944,11 +948,11 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
         }
 
         case CMD_READ_SIG: {
-            uint8_t SigAddrRFUI = Buffer[1];
+            uint8_t SigAddrRFUIParam = Buffer[1];
             uint8_t CRC1 = Buffer[2];
             uint8_t CRC2 = Buffer[3];
 
-            if (SigAddrRFUI == 0x00 &&  CRC1 == 0xa2 && CRC2 == 0x01) { //should be a suffient check. Works unless a rouge reader sends exactly this
+            if (SigAddrRFUIParam == 0x00 &&  CRC1 == 0xa2 && CRC2 == 0x01) { //should be a suffient check. Works unless a rouge reader sends exactly this
                 uint16_t signatureAddr;
                 switch(Ntag_type) {
                     case NTAG213:
@@ -965,7 +969,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
                 return (SIGNATURE_LENGTH + ISO14443A_CRCA_SIZE) * 8;
             }
-            else if (SigAddrRFUI != 0x00) { //If the parameter is not 0x00 we respond with a Invalid Argument NAK
+            else if (SigAddrRFUIParam != 0x00) { //If the parameter is not 0x00 we respond with a Invalid Argument NAK
                 Buffer[0] = NAK_INVALID_ARG;
                 return NAK_FRAME_SIZE;
             }
@@ -976,7 +980,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
         case CMD_READ_CNT: {
             uint8_t CntNumber = Buffer[1];
-            if (NfcCntEnabled){
+            if (NfcCntEnabled && CntNumber == 0x02) {
                 //If the NFCCNT is not protected, OR if the NFCCNT is protected BUT we're authenticated, then we can read the NFCCNT
                 if (!NfcCntPwdProt || (NfcCntPwdProt && Authenticated)) {
                     uint16_t CounterAddr = GetNFCCNTAddress();
@@ -996,6 +1000,48 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                     Buffer[0] = NAK_INVALID_ARG;
                     return NAK_FRAME_SIZE;
             }
+        }
+
+        case CMD_CHECK_TEARING_EVENT:
+        //We're a "virtual" tag that is always powered by battery, so we don't have a tearing event
+        {
+            uint8_t CntNumber = Buffer[1];
+            if (CntNumber == 0x02) {
+                /* Hardcoded response */
+                Buffer[0] = 0xBD;
+                return (1 + ISO14443A_CRCA_SIZE) * 8;
+            }
+            else if (CntNumber != 0x02) //On NTAG21x, the only valid CNT number is 0x02
+            {
+                Buffer[0] = NAK_INVALID_ARG;
+                return NAK_FRAME_SIZE;
+            }
+            else { //If there are more then 1 byte of parameter we don't respond, as real tags do
+                break;
+            }
+        }
+
+        case CMD_VCSL:
+        {
+                uint8_t VCTID_address;
+                switch (Ntag_type){
+                    case(NTAG213):
+                        VCTID_address = CONFIG_AREA_START_ADDRESS_NTAG213 + CONF_ACCESS_OFFSET + 1;
+                        break;
+                    case(NTAG215):
+                        VCTID_address = CONFIG_AREA_START_ADDRESS_NTAG215 + CONF_ACCESS_OFFSET + 1;
+                        break;
+                    case(NTAG216):
+                        VCTID_address = CONFIG_AREA_START_ADDRESS_NTAG216 + CONF_ACCESS_OFFSET + 1;
+                        break;
+                }
+                /* Input is ignored completely */
+                /* Read out the value */
+                MemoryReadBlock(Buffer, VCTID_address, 1);
+                ISO14443AAppendCRCA(Buffer, 1);
+                return (1 + ISO14443A_CRCA_SIZE) * 8;
+
+            break; //TODO: REVERSE AND IMPLEMENT
         }
 
         //PART OF ISO STANDARD, NOT OF NTAG DATASHEET
