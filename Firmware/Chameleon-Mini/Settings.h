@@ -15,7 +15,12 @@
 #include "Memory.h"
 #include <avr/eeprom.h>
 
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+#define SETTINGS_COUNT		(MEMORY_SIZE / MEMORY_SIZE_PER_SETTING / 2)
+#else
 #define SETTINGS_COUNT		(MEMORY_SIZE / MEMORY_SIZE_PER_SETTING)
+#endif
+
 #define SETTINGS_FIRST		1
 #define SETTINGS_LAST		(SETTINGS_FIRST + SETTINGS_COUNT - 1)
 

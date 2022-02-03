@@ -43,6 +43,10 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFire/DESFireLogging.h"
 #include "DESFire/DESFireUtils.h"
 
+#define MIFARE_DESFIRE_EV0     (0x00)
+#define MIFARE_DESFIRE_EV1     (0x01)
+#define MIFARE_DESFIRE_EV2     (0x02)
+
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
@@ -51,43 +55,52 @@ BYTE DesfireCmdCLA = DESFIRE_NATIVE_CLA;
 /* Dispatching routines */
 void MifareDesfireReset(void) {}
 
-void MifareDesfireEV0AppInit(void) {
-    /* Init lower layers: nothing for now */
+static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool FormatPICC) {
     ResetLocalStructureData();
     DesfireState = DESFIRE_IDLE;
     DesfireFromHalt = false;
-    InitialisePiccBackendEV0(DESFIRE_STORAGE_SIZE_4K);
-    /* The rest is handled in reset */
+    switch (Version) {
+        case MIFARE_DESFIRE_EV0:
+            InitialisePiccBackendEV1(StorageSize, FormatPICC);   
+	    break;
+	case MIFARE_DESFIRE_EV1:
+	default: /* Fall through */
+	    InitialisePiccBackendEV0(StorageSize, FormatPICC);   
+	    break;
+    }
+    DesfireCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 }
 
-static void MifareDesfireEV1AppInit(uint8_t StorageSize) {
-    /* Init lower layers: nothing for now */
-    ResetLocalStructureData();
-    DesfireState = DESFIRE_IDLE;
-    DesfireFromHalt = false;
-    InitialisePiccBackendEV1(StorageSize);
-    /* The rest is handled in reset */
+void MifareDesfireEV0AppInit(void) {
+    MifareDesfireAppInitLocal(DESFIRE_STORAGE_SIZE_4K, MIFARE_DESFIRE_EV0, false);
+}
+
+void MifareDesfireEV0AppInitRunOnce(void) {
+    MifareDesfireAppInitLocal(DESFIRE_STORAGE_SIZE_4K, MIFARE_DESFIRE_EV0, true);
 }
 
 void MifareDesfire2kEV1AppInit(void) {
-    ResetLocalStructureData();
-    DesfireState = DESFIRE_IDLE;
-    DesfireFromHalt = false;
-    MifareDesfireEV1AppInit(DESFIRE_STORAGE_SIZE_2K);
+    MifareDesfireAppInitLocal(DESFIRE_STORAGE_SIZE_2K, MIFARE_DESFIRE_EV1, false);
+}
+
+void MifareDesfire2kEV1AppInitRunOnce(void) {
+    MifareDesfireAppInitLocal(DESFIRE_STORAGE_SIZE_2K, MIFARE_DESFIRE_EV1, true);
 }
 
 void MifareDesfire4kEV1AppInit(void) {
-    ResetLocalStructureData();
-    DesfireState = DESFIRE_IDLE;
-    DesfireFromHalt = false;
-    MifareDesfireEV1AppInit(DESFIRE_STORAGE_SIZE_4K);
+    MifareDesfireAppInitLocal(DESFIRE_STORAGE_SIZE_4K, MIFARE_DESFIRE_EV1, false);
+}
+
+void MifareDesfire4kEV1AppInitRunOnce(void) {
+    MifareDesfireAppInitLocal(DESFIRE_STORAGE_SIZE_4K, MIFARE_DESFIRE_EV1, true);
 }
 
 void MifareDesfire8kEV1AppInit(void) {
-    ResetLocalStructureData();
-    DesfireState = DESFIRE_IDLE;
-    DesfireFromHalt = false;
-    MifareDesfireEV1AppInit(DESFIRE_STORAGE_SIZE_8K);
+    MifareDesfireAppInitLocal(DESFIRE_STORAGE_SIZE_8K, MIFARE_DESFIRE_EV1, false);
+}
+
+void MifareDesfire8kEV1AppInitRunOnce(void) {
+    MifareDesfireAppInitLocal(DESFIRE_STORAGE_SIZE_8K, MIFARE_DESFIRE_EV1, true);
 }
 
 void MifareDesfireAppReset(void) {
@@ -164,8 +177,8 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
     DesfireCmdCLA = Buffer[0];
     if ((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
-            Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) || Iso7816CLA(DesfireCmdCLA)) { 
-	    // Wrapped native command structure:
+            Buffer[3] == 0x00 && (Buffer[4] == ByteCount - 6 || Buffer[4] == ByteCount - 8)) || Iso7816CLA(DesfireCmdCLA)) { 
+	// Wrapped native command structure:
         /* Unwrap the PDU from ISO 7816-4 */
         // Check CRC bytes appended to the buffer:
         // -- Actually, just ignore parity problems if they exist,
@@ -197,9 +210,6 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
             ByteCount += 2;
         } else {
             /* Re-wrap into ISO 7816-4 */
-            //Buffer[ByteCount] = Buffer[0];
-            //Buffer[ByteCount + 1] = Buffer[1];
-            //memmove(&Buffer[0], &Buffer[2], ByteCount - 2);
             ISO14443AAppendCRCA(Buffer, ByteCount);
             ByteCount += 2;
         }
@@ -252,8 +262,6 @@ void ResetLocalStructureData(void) {
     memset(&SessionKey, 0x00, sizeof(CryptoKeyBufferType));
     memset(&SessionIV, 0x00, sizeof(CryptoIVBufferType));
     SessionIVByteSize = 0x00;
-    memset(&AESCryptoSessionKey, 0x00, sizeof(DesfireAESCryptoKey));
-    memset(&AESCryptoIVBuffer, 0x00, sizeof(DesfireAESCryptoKey));
 }
 
 void MifareDesfireGetUid(ConfigurationUidType Uid) {

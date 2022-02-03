@@ -24,6 +24,8 @@
 #define CRYPTO_3KTDEA_BLOCK_SIZE            (CRYPTO_DES_BLOCK_SIZE)
 #define AES128_BLOCK_SIZE                   (16)
 
+#define CRYPTO_CHALLENGE_RESPONSE_SIZE      (16)
+
 static const inline uint8_t ZERO_KEY[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

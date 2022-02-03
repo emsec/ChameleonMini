@@ -71,7 +71,7 @@ SETTINGS	+= -DLOG_SETTING_GLOBAL
 SETTINGS	+= -DDEFAULT_SETTING=SETTINGS_FIRST
 
 #Default pending task timeout
-SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=50 #* 100ms
+SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=65 #50 #* 100ms
 
 #Default reader threshold
 SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
@@ -111,11 +111,11 @@ SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
 #maximum storage allocations for the number of possible keys per
 #application directory, and/or the total number of AID numbered
 #directory slots, the following options will tweak this limitation:
-# -> Set DESFIRE_MEMORY_LIMITED_TESTING to shrink the defaults
+# -> Set MEMORY_LIMITED_TESTING to shrink the defaults
 # -> Or explicitly define DESFIRE_CUSTOM_MAX_KEYS=##UINT## (per AID),
 # -> And/Or define DESFIRE_CUSTOM_MAX_APPS=##UINT##
 #    (total number of AID spaces available, not including the master 0x00)
-SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
+SETTINGS  += -DMEMORY_LIMITED_TESTING
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_APPS=8
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_KEYS=6
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_FILES=6
@@ -133,7 +133,7 @@ SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
 
 #Option to save space with the "Application/Crypto1.c" code by storing large tables
 #in PROGMEM. Note that this will slow down the read times when accessing these tables:
-SETTINGS  += -DDESFIRE_CRYPTO1_SAVE_SPACE
+#SETTINGS  += -DDESFIRE_CRYPTO1_SAVE_SPACE
 
 DESFIRE_MAINSRC = Application/DESFire
 
@@ -193,7 +193,7 @@ CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR)
 			   -D__AVR_ATxmega128A4U__ -D__PROG_TYPES_COMPAT__ -DMAX_ENDPOINT_INDEX=4 \
 			   -std=gnu99 -Werror=implicit-function-declaration \
 			   -fno-inline-small-functions -fshort-enums -fpack-struct \
-                  	   -ffunction-sections -Wl,--gc-sections --data-sections -ffunction-sections \
+                  	   -Wl,--gc-sections --data-sections -ffunction-sections -fdata-sections \
                            -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
 			   -fno-aggressive-loop-optimizations
 LD_FLAGS     = $(CC_FLAGS) -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
@@ -311,6 +311,3 @@ desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep
 	@avr-size $(TARGET).elf
 desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_NONE
 desfire: desfire-build
-desfire-dev: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_MF_DESFIRE_SUPPORT
-desfire-dev: desfire-build
-

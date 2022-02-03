@@ -33,8 +33,8 @@ This notice must be retained at the top of all source files where indicated.
 /* Reserve some space on the stack (text / data segment) for intermediate
    storage of strings and data we need to write so we do not have to rely
    on a bothersome heap-based scheme for passing pointers to functions: */
-#define DATA_BUFFER_SIZE_SMALL              (32)
-#define STRING_BUFFER_SIZE                  (92)
+#define DATA_BUFFER_SIZE_SMALL              (16)
+#define STRING_BUFFER_SIZE                  (32)
 extern volatile char __InternalStringBuffer[STRING_BUFFER_SIZE];
 extern char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL];
 

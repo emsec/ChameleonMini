@@ -237,6 +237,13 @@ Syntax:
 DF_TESTMODE?
 DF_TESTMODE=<0|1|TRUE|FALSE|OFF|ON>
 ```
+#### DF_COMM_MODE
+
+Syntax:
+```bash
+DF_COMM_MODE?
+DF_COMM_MODE=<Plaintext|Plaintext:MAC|Enciphered:3K3DES|Enciphered:AES128>
+```
 
 ### Links to public datasheets and online specs 
 

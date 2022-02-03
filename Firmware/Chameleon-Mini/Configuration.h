@@ -72,6 +72,9 @@ typedef enum  {
 #endif
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
     CONFIG_MF_DESFIRE,
+    CONFIG_MF_DESFIRE_2KEV1,
+    CONFIG_MF_DESFIRE_4KEV1,
+    CONFIG_MF_DESFIRE_8KEV1,
 #endif
     /* This HAS to be the last element */
     CONFIG_COUNT
@@ -112,6 +115,12 @@ typedef struct {
      */
     /** Function that initializes the application. */
     void (*ApplicationInitFunc)(void);
+    /** Function to initialize one-time-only data in the application 
+     *  (like the filesystem for `CONFIG=MF_DESFIRE`). This function does not 
+     *  get called when changing slots to run a preexisting configuration or when the 
+     *  device is powered on and reinitializes the last loaded slot. 
+     */
+    void (*ApplicationInitRunOnceFunc)(void);
     /** Function that resets the application. */
     void (*ApplicationResetFunc)(void);
     /** Function that is called on every iteration of the main loop. Application work that is independent from the codec layer can be done here. */
@@ -171,10 +180,10 @@ typedef struct {
 extern ConfigurationType ActiveConfiguration;
 
 void ConfigurationInit(void);
-void ConfigurationSetById(ConfigurationEnum Configuration);
+void ConfigurationSetById(ConfigurationEnum Configuration, bool appInitRunOnce);
 MapIdType ConfigurationCheckByName(const char *Configuration);
 void ConfigurationGetByName(char *Configuration, uint16_t BufferSize);
-bool ConfigurationSetByName(const char *Configuration);
+bool ConfigurationSetByName(const char *Configuration, bool appInitRunOnce);
 void ConfigurationGetList(char *ConfigurationList, uint16_t BufferSize);
 
 #endif /* STANDARDS_H_ */

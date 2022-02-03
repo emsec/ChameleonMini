@@ -37,13 +37,13 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_ISO7816_CLA            0x00
 
 /* Storage allocation constants */
-#define DESFIRE_EEPROM_BLOCK_SIZE                32 // 16 /* Bytes */
+#define DESFIRE_EEPROM_BLOCK_SIZE                (4) // (8) // (16) /* Bytes */
 #define DESFIRE_BYTES_TO_BLOCKS(x) \
     ( ((x) + DESFIRE_EEPROM_BLOCK_SIZE - 1) / DESFIRE_EEPROM_BLOCK_SIZE )
 
 #define DESFIRE_UID_SIZE                         ISO14443A_UID_SIZE_DOUBLE
 
-#define DESFIRE_MAX_PAYLOAD_SIZE                 55 // 64 /* Bytes */
+#define DESFIRE_MAX_PAYLOAD_SIZE                 (64) /* Bytes */
 
 /*
  * Definitions pertaining to on-card data
@@ -145,7 +145,7 @@ This notice must be retained at the top of all source files where indicated.
  * Defines the global PICC configuration.
  * This is located in the very first block on the card.
  */
-#define PICC_FORMAT_BYTE                   (0xff)
+#define PICC_FORMAT_BYTE                   (0xff) // (0xf7)
 #define PICC_EMPTY_BYTE                    (0x00)
 
 typedef struct DESFIRE_FIRMWARE_PACKING {
@@ -201,7 +201,6 @@ extern BYTE APP_CACHE_MAX_KEY_BLOCK_SIZE;
 
 extern SIZET DESFIRE_PICC_INFO_BLOCK_ID;
 extern SIZET DESFIRE_APP_DIR_BLOCK_ID;
-extern SIZET DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID;
 extern SIZET DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID;
 extern SIZET DESFIRE_FIRST_FREE_BLOCK_ID;
 extern SIZET CardCapacityBlocks;

@@ -70,4 +70,14 @@ INLINE uint8_t StringLength(const char *Str, uint8_t MaxLen) {
     return StrLen;
 }
 
+INLINE void ReverseBuffer(uint8_t *Buffer, uint16_t ByteCount) {
+    uint16_t BufferIndex = 0;
+    while(BufferIndex < ByteCount) {
+        uint8_t NextByte = Buffer[BufferIndex];
+	Buffer[BufferIndex] = Buffer[ByteCount - 1 - BufferIndex];
+	Buffer[ByteCount - 1 - BufferIndex] = NextByte;
+        ++BufferIndex;
+    }
+}
+
 #endif /* COMMON_H_ */

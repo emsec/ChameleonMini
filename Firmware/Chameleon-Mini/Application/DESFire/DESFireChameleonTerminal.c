@@ -148,7 +148,7 @@ CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
                PSTR("Chameleon-Mini DESFire enabled firmware built on %s "
                     "based on %s from \r\n"
-                    "https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.\r\n"
+                    "https://github.com/maxieds/ChameleonMini.\r\n"
                     "Revision: %s\r\n"),
                DESFIRE_FIRMWARE_BUILD_TIMESTAMP,
                DESFIRE_FIRMWARE_GIT_COMMIT_ID,
@@ -236,6 +236,49 @@ CommandStatusIdType CommandDESFireSetTestingMode(char *OutParam, const char *InP
         LocalTestingMode = 0x00;
         return COMMAND_INFO_FALSE_ID;
     }
+    return COMMAND_ERR_INVALID_USAGE_ID;
+}
+
+CommandStatusIdType CommandDESFireGetCommMode(char *OutParam) {
+    if (!IsDESFireConfiguration()) {
+        ExitOnInvalidConfigurationError(OutParam);
+    } else if(DesfireCommMode == DESFIRE_COMMS_PLAINTEXT) {
+        snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Plaintext"));
+    } else if(DesfireCommMode == DESFIRE_COMMS_PLAINTEXT_MAC) {
+        snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Plaintext/MAC"));
+    } else if(DesfireCommMode == DESFIRE_COMMS_CIPHERTEXT_DES) {
+        snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Enciphered/DES"));
+    } else if(DesfireCommMode == DESFIRE_COMMS_CIPHERTEXT_AES128) {
+        snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Enciphered/AES128"));
+    } else {
+        snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Unknown"));
+    }
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        ExitOnInvalidConfigurationError(OutParam);
+    }
+    char valueStr[16];
+    if (!sscanf_P(InParams, PSTR("%15s"), valueStr)) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+    valueStr[15] = '\0';
+    if (!strcasecmp_P(valueStr, PSTR("Plaintext"))) {
+        DesfireCommMode = DESFIRE_COMMS_PLAINTEXT;
+        return COMMAND_INFO_OK;
+    } else if (!strcasecmp_P(valueStr, PSTR("Plaintext:MAC"))) {
+        DesfireCommMode = DESFIRE_COMMS_PLAINTEXT_MAC;
+        return COMMAND_INFO_OK;
+    } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:3K3DES"))) {
+        DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_DES;
+        return COMMAND_INFO_OK;
+    } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:AES128"))) {
+        DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_AES128;
+        return COMMAND_INFO_OK;
+    }
+    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Options are: Plaintext|Plaintext:MAC|Enciphered:3K3DES|Enciphered:AES128"));
     return COMMAND_ERR_INVALID_USAGE_ID;
 }
 

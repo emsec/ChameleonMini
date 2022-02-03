@@ -35,8 +35,8 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_MAX_FILES_EV0             16
 #define DESFIRE_MAX_FILES_EV1             32
 
-#if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_APPS)
-#define DESFIRE_MAX_APPS                       (6)
+#if defined(MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_APPS)
+#define DESFIRE_MAX_APPS                       (3)
 #elif defined(DESFIRE_CUSTOM_MAX_APPS)
 #define DESFIRE_MAX_APPS                       (DESFIRE_CUSTOM_MAX_APPS)
 #else
@@ -45,16 +45,16 @@ This notice must be retained at the top of all source files where indicated.
 
 #define DESFIRE_MAX_SLOTS                      (DESFIRE_MAX_APPS + 1)
 
-#if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_FILES)
-#define DESFIRE_MAX_FILES                      (6)
+#if defined(MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_FILES)
+#define DESFIRE_MAX_FILES                      (4)
 #elif defined(DESFIRE_CUSTOM_MAX_FILES)
 #define DESFIRE_MAX_FILES                      (DESFIRE_CUSTOM_MAX_FILES)
 #else
 #define DESFIRE_MAX_FILES                      (DESFIRE_MAX_FILES_EV1)
 #endif
 
-#if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_KEYS)
-#define DESFIRE_MAX_KEYS                       (4)
+#if defined(MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_KEYS)
+#define DESFIRE_MAX_KEYS                       (2)
 #elif defined(DESFIRE_CUSTOM_MAX_KEYS)
 #define DESFIRE_MAX_KEYS                       (DESFIRE_CUSTOM_MAX_KEYS)
 #else

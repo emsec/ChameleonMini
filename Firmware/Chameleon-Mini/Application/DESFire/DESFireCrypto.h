@@ -45,6 +45,8 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_COMMS_CIPHERTEXT_AES128    (0x04)
 #define DESFIRE_DEFAULT_COMMS_STANDARD     (DESFIRE_COMMS_PLAINTEXT)
 
+extern BYTE DesfireCommMode;
+
 #define CRYPTO_TYPE_ANY         (0x00)
 #define CRYPTO_TYPE_DES         (0x01)
 #define CRYPTO_TYPE_2KTDEA      (0x0A)
@@ -62,11 +64,11 @@ This notice must be retained at the top of all source files where indicated.
 
 /* Key sizes, block sizes (in bytes): */
 #define CRYPTO_AES_KEY_SIZE                  (16)
-#define CRYPTO_MAX_KEY_SIZE                  (24)
+#define CRYPTO_MAX_KEY_SIZE                  (24) // (32) // Make it a multiple of the EEPROM_BLOCK_SIZE
 #define CRYPTO_MAX_BLOCK_SIZE                (16)
 #define DESFIRE_AES_IV_SIZE                  (CRYPTO_AES_BLOCK_SIZE)
 #define DESFIRE_SESSION_KEY_SIZE             (CRYPTO_3KTDEA_KEY_SIZE)
-#define CRYPTO_CHALLENGE_RESPONSE_BYTES      (8)
+#define CRYPTO_CHALLENGE_RESPONSE_BYTES      (16)
 
 typedef BYTE CryptoKeyBufferType[CRYPTO_MAX_KEY_SIZE];
 typedef BYTE CryptoIVBufferType[CRYPTO_MAX_BLOCK_SIZE];
@@ -94,6 +96,8 @@ BYTE GetCryptoMethodCommSettings(uint8_t cryptoType);
 const char *GetCryptoMethodDesc(uint8_t cryptoType);
 const char *GetCommSettingsDesc(uint8_t cryptoType);
 
+bool generateSessionKey(uint8_t *sessionKey, uint8_t *rndA, uint8_t *rndB, uint16_t cryptoType);
+
 #define DESFIRE_MAC_LENGTH          4
 #define DESFIRE_CMAC_LENGTH         8    // in bytes
 
@@ -118,13 +122,9 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
 
 #include "../CryptoAES128.h"
 
-typedef uint8_t DesfireAESCryptoKey[CRYPTO_AES_KEY_SIZE];
-
 extern CryptoAESConfig_t AESCryptoContext;
-extern DesfireAESCryptoKey AESCryptoSessionKey;
-extern DesfireAESCryptoKey AESCryptoIVBuffer;
 
-void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData);
+void InitAESCryptoKeyData(void);
 
 typedef void (*CryptoAESCBCFuncType)(uint16_t, void *, void *, uint8_t *, uint8_t *);
 

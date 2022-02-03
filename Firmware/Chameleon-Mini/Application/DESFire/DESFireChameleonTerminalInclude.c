@@ -58,7 +58,14 @@ This notice must be retained at the top of all source files where indicated.
     .ExecParamFunc  = NO_FUNCTION,
     .SetFunc        = CommandDESFireSetTestingMode,
     .GetFunc        = CommandDESFireGetTestingMode
+}, {
+    .Command        = DFCOMMAND_COMM_MODE,
+    .ExecFunc       = NO_FUNCTION,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = CommandDESFireSetCommMode,
+    .GetFunc        = CommandDESFireGetCommMode
 },
+
 #endif
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

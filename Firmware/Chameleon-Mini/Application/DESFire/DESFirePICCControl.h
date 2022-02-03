@@ -114,8 +114,8 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings);
 uint8_t WriteDataFilterSetup(uint8_t CommSettings);
 
 /* PICC management */
-void InitialisePiccBackendEV0(uint8_t StorageSize);
-void InitialisePiccBackendEV1(uint8_t StorageSize);
+void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC);
+void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC);
 void ResetPiccBackend(void);
 bool IsEmulatingEV1(void);
 void GetPiccHardwareVersionInfo(uint8_t *Buffer);

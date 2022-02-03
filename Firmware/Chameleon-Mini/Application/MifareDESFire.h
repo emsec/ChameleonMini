@@ -43,9 +43,13 @@ This notice must be retained at the top of all source files where indicated.
 void ResetLocalStructureData(void);
 void MifareDesfireReset(void);
 void MifareDesfireEV0AppInit(void);
+void MifareDesfireEV0AppInitRunOnce(void);
 void MifareDesfire2kEV1AppInit(void);
+void MifareDesfire2kEV1AppInitRunOnce(void);
 void MifareDesfire4kEV1AppInit(void);
+void MifareDesfire4kEV1AppInitRunOnce(void);
 void MifareDesfire8kEV1AppInit(void);
+void MifareDesfire8kEV1AppInitRunOnce(void);
 void MifareDesfireAppReset(void);
 void MifareDesfireAppTick(void);
 void MifareDesfireAppTask(void);

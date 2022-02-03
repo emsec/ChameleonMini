@@ -55,7 +55,6 @@ BYTE APP_CACHE_MAX_KEY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(CRYPTO_MAX_KEY_SIZE)
 
 SIZET DESFIRE_PICC_INFO_BLOCK_ID = 0;
 SIZET DESFIRE_APP_DIR_BLOCK_ID = 0;
-SIZET DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = 0;
 SIZET DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = 0;
 SIZET DESFIRE_FIRST_FREE_BLOCK_ID = 0;
 SIZET CardCapacityBlocks = 0;
@@ -64,9 +63,8 @@ void InitBlockSizes(void) {
     DESFIRE_PICC_INFO_BLOCK_ID = 0;
     DESFIRE_APP_DIR_BLOCK_ID = DESFIRE_PICC_INFO_BLOCK_ID +
                                DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFirePICCInfoType));
-    DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID +
-                                            DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType));
-    DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID;
+    DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID +
+                                  DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType));
     DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = DESFIRE_FIRST_FREE_BLOCK_ID;
 }
 
@@ -80,7 +78,6 @@ TransferStateType TransferState = { 0 };
 
 void SynchronizePICCInfo(void) {
     WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
-    //MemoryStore();
 }
 
 /* TODO: Currently, everything is transfered in plaintext, without checksums */
@@ -183,41 +180,43 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
  * PICC management routines
  */
 
-void InitialisePiccBackendEV0(uint8_t StorageSize) {
+void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
 #ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
     RunCryptoUnitTests();
 #endif
     /* Init backend */
     InitBlockSizes();
     CardCapacityBlocks = StorageSize;
+    MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
-    if (Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE &&
-            Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
-        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory resetting the device"));
+    if (formatPICC) {
+        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory reset -- EV0"));
         LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer,
                  StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
         FactoryFormatPiccEV0();
     } else {
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
+        SelectPiccApp();
     }
 }
 
-void InitialisePiccBackendEV1(uint8_t StorageSize) {
+void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
 #ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
     RunCryptoUnitTests();
 #endif
     /* Init backend */
     InitBlockSizes();
     CardCapacityBlocks = StorageSize;
+    MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
-    if (Picc.Uid[0] == PICC_FORMAT_BYTE && Picc.Uid[1] == PICC_FORMAT_BYTE &&
-            Picc.Uid[2] == PICC_FORMAT_BYTE && Picc.Uid[3] == PICC_FORMAT_BYTE) {
-        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory resetting the device"));
+    if (formatPICC) {
+        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory reset -- EV1"));
         LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer,
                  StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
         FactoryFormatPiccEV1(StorageSize);
     } else {
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
+        SelectPiccApp();
     }
 }
 
@@ -274,6 +273,7 @@ void FormatPicc(void) {
     SynchronizeAppDir();
     /* Initialize the root app data */
     CreatePiccApp();
+    MemoryStore();
 }
 
 void CreatePiccApp(void) {
@@ -321,6 +321,10 @@ void FactoryFormatPiccEV1(uint8_t StorageSize) {
     BYTE uidData[DESFIRE_UID_SIZE];
     RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
     memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
+    /* Conform to NXP Application Note AN10927 about the first
+     * byte of a randomly generated UID (refer to section 2.1.1).
+     */
+    Picc.Uid[0] = ISO14443A_UID0_RANDOM;
     /* Initialize params to look like EV1 */
     Picc.StorageSize = StorageSize;
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV1;

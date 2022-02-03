@@ -56,6 +56,10 @@ CommandStatusIdType CommandDESFireSetLoggingMode(char *OutMessage, const char *I
 CommandStatusIdType CommandDESFireGetTestingMode(char *OutParam);
 CommandStatusIdType CommandDESFireSetTestingMode(char *OutMessage, const char *InParams);
 
+#define DFCOMMAND_COMM_MODE                "DF_COMM_MODE"
+CommandStatusIdType CommandDESFireGetCommMode(char *OutParam);
+CommandStatusIdType CommandDESFireSetCommMode(char *OutMessage, const char *InParams);
+
 #endif
 
 #endif

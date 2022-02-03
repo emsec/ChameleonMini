@@ -77,7 +77,7 @@ bool SettingsSetActiveById(uint8_t Setting) {
             MemoryRecall();
 
             /* Settings have changed. Progress changes through system */
-            ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
+            ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration, false);
             LogSetModeById(GlobalSettings.ActiveSettingPtr->LogMode);
 
 

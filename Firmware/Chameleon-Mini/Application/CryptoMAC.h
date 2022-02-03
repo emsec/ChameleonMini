@@ -31,8 +31,17 @@ This notice must be retained at the top of all source files where indicated.
 #include "CryptoTDEA.h"
 #include "CryptoAES128.h"
 
+/* MAC and CMAC source code based on github/andrade/nfcjlib */
 
+#define CRYPTO_CMAC_RB64           (0x1B)
+#define CRYPTO_CMAC_RB128          ((uint8_t) 0x87)
 
+void getCMACSubK1(uint8_t *bufferL, uint16_t blockSize, uint8_t polyByte, uint8_t *bufferOut);
+void getCMACSubK2(uint8_t *bufferK1, uint16_t blockSize, uint8_t polyByte, uint8_t *bufferOut);
 
+bool computeBufferCMACFull(uint8_t *keyData, uint8_t *bufferK1, uint8_t *bufferK2, uint8_t *bufferIV, uint16_t blockSize, uint16_t cryptoType);
+bool computeBufferCMAC(uint16_t cryptoType, uint8_t *keyData, uint8_t *bufferData, uint8_t *aesIV);
+
+bool computeMac(uint8_t *bufferData, uint16_t dataLength, uint8_t *keyData, uint16_t cryptoKeyType);
 
 #endif
