@@ -331,6 +331,8 @@ void FactoryFormatPiccEV1(uint8_t StorageSize) {
     Picc.HwVersionMinor = DESFIRE_HW_MINOR_EV1;
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV1;
     Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV1;
+    /* Reset the free block pointer */
+    Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
     /* Continue with user data initialization */
     SynchronizePICCInfo();
     FormatPicc();

@@ -44,8 +44,9 @@ CommandStatusIdType CommandSetConfig(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         ConfigurationGetList(OutMessage, TERMINAL_BUFFER_SIZE);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
-    } else if (ConfigurationSetByName(InParam, true)) {
-        SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->Configuration);
+    } else if (ConfigurationByNameIsValid(InParam)) {
+        ConfigurationSetByName(InParam, true);
+	SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->Configuration);
 	return COMMAND_INFO_OK_ID;
     } else {
         return COMMAND_ERR_INVALID_PARAM_ID;
@@ -526,7 +527,7 @@ CommandStatusIdType CommandExecCloneMFU(char *OutMessage) {
 #ifndef CONFIG_ISO14443A_READER_SUPPORT
     return COMMAND_ERR_INVALID_USAGE_ID;
 #else
-    ConfigurationSetById(CONFIG_ISO14443A_READER);
+    ConfigurationSetById(CONFIG_ISO14443A_READER, false);
     ApplicationReset();
 
     Reader14443CurrentCommand = Reader14443_Clone_MF_Ultralight;
@@ -662,7 +663,7 @@ CommandStatusIdType CommandExecClone(char *OutMessage) {
 #ifndef CONFIG_ISO14443A_READER_SUPPORT
     return COMMAND_ERR_INVALID_USAGE_ID;
 #else
-    ConfigurationSetById(CONFIG_ISO14443A_READER);
+    ConfigurationSetById(CONFIG_ISO14443A_READER, false);
 
     ApplicationReset();
 

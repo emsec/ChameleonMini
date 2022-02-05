@@ -416,7 +416,7 @@ uint16_t DesfireCmdFreeMemory(uint8_t *Buffer, uint16_t ByteCount) {
     // practical working space is less than N:
     uint16_t cardCapacityBlocks = GetCardCapacityBlocks();
     cardCapacityBlocks -= Picc.FirstFreeBlock;
-    uint16_t freeMemoryBytes = cardCapacityBlocks * DESFIRE_EEPROM_BLOCK_SIZE;
+    uint16_t freeMemoryBytes = cardCapacityBlocks * DESFIRE_BLOCK_SIZE;
     Buffer[0] = (uint8_t)(freeMemoryBytes >> 8);
     Buffer[1] = (uint8_t)(freeMemoryBytes >> 0);
     Buffer[2] = STATUS_OPERATION_OK;
@@ -430,7 +430,7 @@ uint16_t DesfireCmdFreeMemory(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE KeyId, Status;
     BYTE keySize;
-    BYTE **Key;
+    BYTE *Key;
 
     /* Reset authentication state right away */
     InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
@@ -454,14 +454,14 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Indicate that we are in DES key authentication land */
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
-    Key = &SessionKey;
+    Key = SessionKey;
     DesfireCommandState.KeyId = KeyId;
     DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_3K3DES;
     DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
 
     /* Fetch the key */
-    ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
-    LogEntry(LOG_APP_AUTH_KEY, (const void *) *Key, keySize);
+    ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
+    LogEntry(LOG_APP_AUTH_KEY, (const void *) Key, keySize);
 
     /* Generate the nonce B (RndB / Challenge response) */
     if (LocalTestingMode == 0) {
@@ -488,11 +488,8 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
     /* Encrypt RndB with the selected key and transfer it back to the PCD */
-    uint8_t rndBPadded[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    memset(rndBPadded, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    memcpy(rndBPadded, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    Encrypt3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded,
-                      &Buffer[1], NULL, *Key);
+    Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, DesfireCommandState.RndB,
+                      &Buffer[1], NULL, Key);
 
     /* Scrub the key */
     memset(*Key, 0, keySize);
@@ -500,13 +497,13 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     /* Done */
     DesfireState = DESFIRE_LEGACY_AUTHENTICATE2;
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
-    return DESFIRE_STATUS_RESPONSE_SIZE + 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES;
+    return DESFIRE_STATUS_RESPONSE_SIZE + CRYPTO_CHALLENGE_RESPONSE_BYTES;
 }
 
 uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE KeyId;
     BYTE cryptoKeyType, keySize;
-    BYTE **Key;
+    BYTE *Key;
 
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
@@ -521,15 +518,15 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     KeyId = DesfireCommandState.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
-    Key = &SessionKey;
-    ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
+    Key = SessionKey;
+    ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
 
     /* Decrypt the challenge sent back to get RndA and a shifted RndB */
     BYTE challengeRndAB[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndA[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     Decrypt3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                      &Buffer[1], NULL, *Key);
+                      &Buffer[1], NULL, Key);
     RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB,
                      CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
@@ -549,7 +546,7 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                      &Buffer[1], NULL, *Key);
+                      &Buffer[1], NULL, Key);
 
     generateSessionKey(SessionKey, challengeRndA, challengeRndB, CRYPTO_TYPE_3K3DES);
 
@@ -1573,7 +1570,7 @@ uint16_t EV0CmdWriteRecord(uint8_t *Buffer, uint16_t ByteCount) {
     if (offsetBlocks > 0) {
         --offsetBlocks;
     }
-    uint16_t effectiveOffset = Offset % DESFIRE_EEPROM_BLOCK_SIZE;
+    uint16_t effectiveOffset = Offset % DESFIRE_BLOCK_SIZE;
     uint8_t dataWriteAddr = GetFileDataAreaBlockId(fileIndex) + offsetBlocks;
     memmove(&Buffer[effectiveOffset], &Buffer[8], dataXferLength);
     if (effectiveOffset > 0) {
@@ -1689,7 +1686,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
 
     BYTE KeyId, Status;
     BYTE keySize;
-    BYTE **Key;
+    BYTE *Key;
 
     /* Reset authentication state right away */
     InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
@@ -1712,7 +1709,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     }
 
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
-    Key = &SessionKey;
+    Key = SessionKey;
 
     /* Indicate that we are in AES key authentication land */
     DesfireCommandState.KeyId = KeyId;
@@ -1720,8 +1717,8 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
 
     /* Fetch the key */
-    ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
-    LogEntry(LOG_APP_AUTH_KEY, (const void *) *Key, keySize);
+    ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
+    LogEntry(LOG_APP_AUTH_KEY, (const void *) Key, keySize);
 
     /* Generate the nonce B (RndB / Challenge response) */
     if (LocalTestingMode == 0) {
@@ -1748,26 +1745,23 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
     /* Encrypt RndB with the selected key and transfer it back to the PCD */
-    uint8_t rndBPadded[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    memset(rndBPadded, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    memcpy(rndBPadded, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    Encrypt3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded,
-                      &Buffer[1], NULL, *Key);
+    Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, DesfireCommandState.RndB,
+                      &Buffer[1], NULL, Key);
 
     /* Scrub the key */
-    memset(*Key, 0, keySize);
+    memset(Key, 0, keySize);
 
     /* Done */
     DesfireState = DESFIRE_ISO_AUTHENTICATE2;
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
-    return DESFIRE_STATUS_RESPONSE_SIZE + 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES;
+    return DESFIRE_STATUS_RESPONSE_SIZE + CRYPTO_CHALLENGE_RESPONSE_BYTES;
 
 }
 
 uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE KeyId;
     BYTE cryptoKeyType, keySize;
-    BYTE **Key;
+    BYTE *Key;
 
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
@@ -1781,15 +1775,15 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     KeyId = DesfireCommandState.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
-    Key = &SessionKey;
-    ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
+    Key = SessionKey;
+    ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
 
     /* Decrypt the challenge sent back to get RndA and a shifted RndB */
     BYTE challengeRndAB[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndA[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     Decrypt3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                      &Buffer[1], NULL, *Key);
+                      &Buffer[1], NULL, Key);
     RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB,
                      CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
@@ -1810,7 +1804,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                      &Buffer[1], NULL, *Key);
+                      &Buffer[1], NULL, Key);
     
     generateSessionKey(SessionKey, challengeRndA, challengeRndB, CRYPTO_TYPE_3K3DES);
 
@@ -1824,7 +1818,7 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
 
     BYTE KeyId, Status;
     BYTE keySize;
-    BYTE **Key, **IVBuffer;
+    BYTE *Key, *IVBuffer;
 
     /* Reset authentication state right away */
     InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
@@ -1849,8 +1843,8 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     InitAESCryptoKeyData();
 
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_AES128);
-    *Key = SessionKey;
-    *IVBuffer = SessionIV;
+    Key = SessionKey;
+    IVBuffer = SessionIV;
 
     /* Indicate that we are in AES key authentication land */
     DesfireCommandState.KeyId = KeyId;
@@ -1858,8 +1852,8 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_AES128);
 
     /* Fetch the key */
-    ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
-    LogEntry(LOG_APP_AUTH_KEY, (const void *) *Key, keySize);
+    ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
+    LogEntry(LOG_APP_AUTH_KEY, (const void *) Key, keySize);
     CryptoAESGetConfigDefaults(&AESCryptoContext);
     CryptoAESInitContext(&AESCryptoContext);
 
@@ -1888,29 +1882,26 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
     /* Encrypt RndB with the selected key and transfer it back to the PCD */
-    uint8_t rndBPadded[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    memset(rndBPadded, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    memcpy(rndBPadded, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    Status = CryptoAESEncryptBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, rndBPadded, &Buffer[1], NULL, *Key);
+    Status = CryptoAESEncryptBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, DesfireCommandState.RndB, &Buffer[1], NULL, Key);
     if (Status != STATUS_OPERATION_OK) {
         Buffer[0] = Status;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Scrub the key */
-    memset(*Key, 0, keySize);
+    memset(Key, 0, keySize);
 
     /* Done */
     DesfireState = DESFIRE_AES_AUTHENTICATE2;
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
-    return DESFIRE_STATUS_RESPONSE_SIZE + 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES;
+    return DESFIRE_STATUS_RESPONSE_SIZE + CRYPTO_CHALLENGE_RESPONSE_BYTES;
 
 }
 
 uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE KeyId;
     BYTE cryptoKeyType, keySize;
-    BYTE **Key;
+    BYTE *Key;
 
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
@@ -1921,17 +1912,17 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     }
 
     /* Reset parameters for authentication from the first exchange */
-    Key = &SessionKey;
+    Key = SessionKey;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_AES128);
     KeyId = DesfireCommandState.KeyId;
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
-    ReadAppKey(SelectedApp.Slot, KeyId, *Key, keySize);
+    ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
 
     /* Decrypt the challenge sent back to get RndA and a shifted RndB */
     BYTE challengeRndAB[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndA[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    CryptoAESDecryptBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, &Buffer[1], NULL, *Key);
+    CryptoAESDecryptBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, &Buffer[1], NULL, Key);
     RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
@@ -1954,7 +1945,7 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     memset(challengeRndAB, 0x00, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndAB, challengeRndA, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    CryptoAESEncryptBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, &Buffer[1], NULL, *Key);
+    CryptoAESEncryptBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, &Buffer[1], NULL, Key);
 
     generateSessionKey(SessionKey, challengeRndA, challengeRndB, CRYPTO_TYPE_AES128);
 
@@ -2129,19 +2120,19 @@ uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount) {
         maxBytesToRead = SelectedFile.File.FileSize - Iso7816FileOffset;
     }
     /* Handle fetching bits in the cases where the file offset is not a multiple of
-     * DESFIRE_EEPROM_BLOCK_SIZE, which is required to address the data read out of the
+     * DESFIRE_BLOCK_SIZE, which is required to address the data read out of the
      * file using ReadBlockBytes
      */
     uint8_t fileDataReadAddr = SelectedFile.File.FileDataAddress + MIN(0, DESFIRE_BYTES_TO_BLOCKS(Iso7816FileOffset) - 1);
     uint8_t *storeDataBufStart = &Buffer[2];
-    if ((Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE) != 0) {
-        uint8_t blockPriorByteCount = Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE;
-        uint8_t blockData[DESFIRE_EEPROM_BLOCK_SIZE];
-        ReadBlockBytes(blockData, fileDataReadAddr, DESFIRE_EEPROM_BLOCK_SIZE);
-        memcpy(storeDataBufStart + blockPriorByteCount, blockData, DESFIRE_EEPROM_BLOCK_SIZE);
+    if ((Iso7816FileOffset % DESFIRE_BLOCK_SIZE) != 0) {
+        uint8_t blockPriorByteCount = Iso7816FileOffset % DESFIRE_BLOCK_SIZE;
+        uint8_t blockData[DESFIRE_BLOCK_SIZE];
+        ReadBlockBytes(blockData, fileDataReadAddr, DESFIRE_BLOCK_SIZE);
+        memcpy(storeDataBufStart + blockPriorByteCount, blockData, DESFIRE_BLOCK_SIZE);
         fileDataReadAddr += 1;
-        storeDataBufStart += DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
-        maxBytesToRead -= DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
+        storeDataBufStart += DESFIRE_BLOCK_SIZE - blockPriorByteCount;
+        maxBytesToRead -= DESFIRE_BLOCK_SIZE - blockPriorByteCount;
     }
     ReadBlockBytes(storeDataBufStart, fileDataReadAddr, maxBytesToRead);
     Buffer[0] = ISO7816_CMD_NO_ERROR;
@@ -2219,20 +2210,20 @@ uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount) {
         maxBytesToRead = SelectedFile.File.FileSize - Iso7816FileOffset;
     }
     /* Handle fetching bits in the cases where the file offset is not a multiple of
-     * DESFIRE_EEPROM_BLOCK_SIZE, which is required to address the data read out of the
+     * DESFIRE_BLOCK_SIZE, which is required to address the data read out of the
      * file using ReadBlockBytes
      */
     uint8_t fileDataWriteAddr = SelectedFile.File.FileDataAddress + MIN(0, DESFIRE_BYTES_TO_BLOCKS(Iso7816FileOffset) - 1);
     uint8_t *updateDataBufStart = &Buffer[1];
-    if ((Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE) != 0) {
-        uint8_t blockPriorByteCount = Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE;
-        uint8_t blockData[DESFIRE_EEPROM_BLOCK_SIZE];
+    if ((Iso7816FileOffset % DESFIRE_BLOCK_SIZE) != 0) {
+        uint8_t blockPriorByteCount = Iso7816FileOffset % DESFIRE_BLOCK_SIZE;
+        uint8_t blockData[DESFIRE_BLOCK_SIZE];
         ReadBlockBytes(blockData, fileDataWriteAddr, blockPriorByteCount);
-        memcpy(blockData + blockPriorByteCount, updateDataBufStart, DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount);
-        WriteBlockBytes(blockData, fileDataWriteAddr, DESFIRE_EEPROM_BLOCK_SIZE);
+        memcpy(blockData + blockPriorByteCount, updateDataBufStart, DESFIRE_BLOCK_SIZE - blockPriorByteCount);
+        WriteBlockBytes(blockData, fileDataWriteAddr, DESFIRE_BLOCK_SIZE);
         fileDataWriteAddr += 1;
-        updateDataBufStart += DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
-        maxBytesToRead -= DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
+        updateDataBufStart += DESFIRE_BLOCK_SIZE - blockPriorByteCount;
+        maxBytesToRead -= DESFIRE_BLOCK_SIZE - blockPriorByteCount;
     }
     WriteBlockBytes(updateDataBufStart, fileDataWriteAddr, maxBytesToRead);
     Buffer[0] = ISO7816_CMD_NO_ERROR;
@@ -2312,19 +2303,19 @@ uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount) {
         cyclicRecordOffsetDiff = maxBytesToRead + Iso7816FileOffset - SelectedFile.File.FileSize;
     }
     /* Handle fetching bits in the cases where the file offset is not a multiple of
-     * DESFIRE_EEPROM_BLOCK_SIZE, which is required to address the data read out of the
+     * DESFIRE_BLOCK_SIZE, which is required to address the data read out of the
      * file using ReadBlockBytes
      */
     uint8_t initFileReadDataAddr = SelectedFile.File.FileDataAddress + MIN(0, DESFIRE_BYTES_TO_BLOCKS(Iso7816FileOffset) - 1);
     uint8_t *storeDataBufStart = &Buffer[2];
-    if ((Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE) != 0) {
-        uint8_t blockPriorByteCount = Iso7816FileOffset % DESFIRE_EEPROM_BLOCK_SIZE;
-        uint8_t blockData[DESFIRE_EEPROM_BLOCK_SIZE];
-        ReadBlockBytes(blockData, initFileReadDataAddr, DESFIRE_EEPROM_BLOCK_SIZE);
-        memcpy(storeDataBufStart + blockPriorByteCount, blockData, DESFIRE_EEPROM_BLOCK_SIZE);
+    if ((Iso7816FileOffset % DESFIRE_BLOCK_SIZE) != 0) {
+        uint8_t blockPriorByteCount = Iso7816FileOffset % DESFIRE_BLOCK_SIZE;
+        uint8_t blockData[DESFIRE_BLOCK_SIZE];
+        ReadBlockBytes(blockData, initFileReadDataAddr, DESFIRE_BLOCK_SIZE);
+        memcpy(storeDataBufStart + blockPriorByteCount, blockData, DESFIRE_BLOCK_SIZE);
         initFileReadDataAddr += 1;
-        storeDataBufStart += DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
-        maxBytesToRead -= DESFIRE_EEPROM_BLOCK_SIZE - blockPriorByteCount;
+        storeDataBufStart += DESFIRE_BLOCK_SIZE - blockPriorByteCount;
+        maxBytesToRead -= DESFIRE_BLOCK_SIZE - blockPriorByteCount;
     }
     /* Now, read the specified file contents into the Buffer:
      * Cases to handle separately:
@@ -2398,20 +2389,20 @@ uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount) {
         nextRecordPointer = (SelectedFile.File.RecordFile.RecordPointer + appendRecordLength) % fileMaxRecords;
     }
     uint16_t nextRecordIndexToAppend = SelectedFile.File.RecordFile.RecordPointer % fileMaxRecords;
-    uint16_t priorBlockBytesToCopy = DESFIRE_EEPROM_BLOCK_SIZE - (nextRecordIndexToAppend % DESFIRE_EEPROM_BLOCK_SIZE);
-    if ((priorBlockBytesToCopy == DESFIRE_EEPROM_BLOCK_SIZE) || (nextRecordIndexToAppend < DESFIRE_EEPROM_BLOCK_SIZE)) {
+    uint16_t priorBlockBytesToCopy = DESFIRE_BLOCK_SIZE - (nextRecordIndexToAppend % DESFIRE_BLOCK_SIZE);
+    if ((priorBlockBytesToCopy == DESFIRE_BLOCK_SIZE) || (nextRecordIndexToAppend < DESFIRE_BLOCK_SIZE)) {
         priorBlockBytesToCopy = 0;
     }
     uint16_t fileDataWriteAddr = SelectedFile.File.FileDataAddress + MIN(0, DESFIRE_BYTES_TO_BLOCKS(nextRecordIndexToAppend) - 1);
     uint8_t *writeDataBufStart = &Buffer[1];
     if (priorBlockBytesToCopy > 0) {
-        uint8_t firstBlockData[DESFIRE_EEPROM_BLOCK_SIZE];
+        uint8_t firstBlockData[DESFIRE_BLOCK_SIZE];
         ReadBlockBytes(firstBlockData, fileDataWriteAddr, priorBlockBytesToCopy);
-        memcpy(firstBlockData + priorBlockBytesToCopy, writeDataBufStart, DESFIRE_EEPROM_BLOCK_SIZE - 1 - priorBlockBytesToCopy);
-        WriteBlockBytes(firstBlockData, fileDataWriteAddr, DESFIRE_EEPROM_BLOCK_SIZE);
+        memcpy(firstBlockData + priorBlockBytesToCopy, writeDataBufStart, DESFIRE_BLOCK_SIZE - 1 - priorBlockBytesToCopy);
+        WriteBlockBytes(firstBlockData, fileDataWriteAddr, DESFIRE_BLOCK_SIZE);
         fileDataWriteAddr += 1;
-        appendRecordLength -= DESFIRE_EEPROM_BLOCK_SIZE - priorBlockBytesToCopy;
-        writeDataBufStart += DESFIRE_EEPROM_BLOCK_SIZE - priorBlockBytesToCopy;
+        appendRecordLength -= DESFIRE_BLOCK_SIZE - priorBlockBytesToCopy;
+        writeDataBufStart += DESFIRE_BLOCK_SIZE - priorBlockBytesToCopy;
     }
     WriteBlockBytes(writeDataBufStart, fileDataWriteAddr, appendRecordLength);
     SelectedFile.File.RecordFile.RecordPointer = nextRecordPointer;

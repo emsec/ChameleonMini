@@ -48,7 +48,7 @@ uint16_t GetFileSizeFromFileType(DESFireFileTypeSettings *File) {
         case DESFIRE_FILE_VALUE_DATA:
             return sizeof(int32_t); // 4
         case DESFIRE_FILE_LINEAR_RECORDS:
-            return (File->RecordFile.BlockCount) * DESFIRE_EEPROM_BLOCK_SIZE;
+            return (File->RecordFile.BlockCount) * DESFIRE_BLOCK_SIZE;
         case DESFIRE_FILE_CIRCULAR_RECORDS:
         default:
             break;

@@ -60,10 +60,10 @@ static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool
     DesfireState = DESFIRE_IDLE;
     DesfireFromHalt = false;
     switch (Version) {
-        case MIFARE_DESFIRE_EV0:
+        case MIFARE_DESFIRE_EV1:
             InitialisePiccBackendEV1(StorageSize, FormatPICC);   
 	    break;
-	case MIFARE_DESFIRE_EV1:
+	case MIFARE_DESFIRE_EV0:
 	default: /* Fall through */
 	    InitialisePiccBackendEV0(StorageSize, FormatPICC);   
 	    break;
@@ -128,14 +128,9 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
                (DesfireCmdCLA != DESFIRE_ISO7816_CLA)) {
         return ISO14443A_APP_NO_RESPONSE;
     } else if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
-        uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
-        return ReturnBytes;
-    }
-
-    /* Expecting further data here */
-    if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         DesfireState = DESFIRE_IDLE;
-        return ISO14443A_APP_NO_RESPONSE;
+	uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
+        return ReturnBytes;
     }
 
     uint16_t ReturnBytes = 0;
@@ -230,8 +225,7 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         return MifareDesfireProcess(Buffer, BitCount);
     } else if (ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
                Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
-        // Native wrapped command send without CRCA checksum bytes appended:
-        return MAX(0, MifareDesfireProcess(Buffer, BitCount) - 2 * BITS_PER_BYTE);
+        return MifareDesfireProcess(Buffer, BitCount);
     } else if (IsWrappedISO7816CommandType(Buffer, ByteCount)) {
         uint8_t ISO7816PrologueBytes[2];
         memcpy(&ISO7816PrologueBytes[0], Buffer, 2);
@@ -256,12 +250,15 @@ void ResetLocalStructureData(void) {
     DesfireState = DESFIRE_HALT;
     InvalidateAuthState(0x00);
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
+    memset(&AppDir, 0x00, sizeof(AppDir));
     memset(&SelectedApp, 0x00, sizeof(SelectedApp));
     memset(&SelectedFile, 0x00, sizeof(SelectedFile));
     memset(&TransferState, 0x00, sizeof(TransferState));
     memset(&SessionKey, 0x00, sizeof(CryptoKeyBufferType));
     memset(&SessionIV, 0x00, sizeof(CryptoIVBufferType));
     SessionIVByteSize = 0x00;
+    SelectedApp.Slot = 0;
+    SelectedFile.Num = -1;
 }
 
 void MifareDesfireGetUid(ConfigurationUidType Uid) {

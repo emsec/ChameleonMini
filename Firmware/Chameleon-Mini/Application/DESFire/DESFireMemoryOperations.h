@@ -47,15 +47,11 @@ void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count);
 #define WriteBlockBytes(Buffer, StartBlock, Count)                 \
     WriteBlockBytesMain(Buffer, StartBlock, Count);
 
-void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count);
-
 uint16_t AllocateBlocksMain(uint16_t BlockCount);
 #define AllocateBlocks(BlockCount)                                 \
     AllocateBlocksMain(BlockCount);
 
 BYTE GetCardCapacityBlocks(void);
-
-void MemsetBlockBytes(uint8_t initValue, SIZET startBlock, SIZET byteCount);
 
 /* File data transfer related routines: */
 void ReadDataEEPROMSource(uint8_t *Buffer, uint8_t Count);

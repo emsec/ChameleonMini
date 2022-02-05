@@ -34,69 +34,27 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireFile.h"
 #include "DESFireLogging.h"
 
-#define BLOCKWISE_IO_MULTIPLIER           (DESFIRE_EEPROM_BLOCK_SIZE)
-#define BLOCK_TRANSFER_SIZE               (DESFIRE_EEPROM_BLOCK_SIZE)
+#define BLOCKWISE_IO_MULTIPLIER           (DESFIRE_BLOCK_SIZE)
 
 volatile char __InternalStringBuffer[STRING_BUFFER_SIZE] = { 0 };
 char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL] = { 0 };
 
 void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count) {
-    if (StartBlock >= MEMORY_SIZE_PER_SETTING) {
+    if (StartBlock * BLOCKWISE_IO_MULTIPLIER >= MEMORY_SIZE_PER_SETTING) {
         const char *rbbLogMsg = PSTR("RBB Too Lg - %d / %d");
         DEBUG_PRINT_P(rbbLogMsg, StartBlock, MEMORY_SIZE_PER_SETTING);
         return;
     }
-    uint16_t numBlocks = DESFIRE_BYTES_TO_BLOCKS(Count);
-    uint16_t blockModDiff = Count % BLOCK_TRANSFER_SIZE;
-    if (blockModDiff == 0) {
-        MemoryReadBlockInSetting(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
-    } else {
-	if (Count > blockModDiff) {
-	    MemoryReadBlockInSetting(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count - blockModDiff);
-	}
-	StartBlock += numBlocks - 1;
-	uint8_t fullBlock[BLOCK_TRANSFER_SIZE];
-        MemoryReadBlockInSetting(fullBlock, StartBlock * BLOCKWISE_IO_MULTIPLIER, BLOCK_TRANSFER_SIZE);
-        // TODO: Reverse Mod buf when read ???
-	//ReverseBuffer(fullBlock, BLOCK_TRANSFER_SIZE);
-        memcpy(Buffer + Count - blockModDiff, fullBlock, blockModDiff);
-    }
+    MemoryDownloadBlock(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
 }
 
 void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count) {
-    if (StartBlock >= MEMORY_SIZE_PER_SETTING) {
+    if (StartBlock * BLOCKWISE_IO_MULTIPLIER >= MEMORY_SIZE_PER_SETTING) {
         const char *wbbLogMsg = PSTR("WBB Too Lg - %d / %d");
         DEBUG_PRINT_P(wbbLogMsg, StartBlock, MEMORY_SIZE_PER_SETTING);
         return;
     }
-    uint16_t numBlocks = DESFIRE_BYTES_TO_BLOCKS(Count);
-    uint16_t blockModDiff = Count % BLOCK_TRANSFER_SIZE;
-    if (blockModDiff == 0) {
-        MemoryWriteBlockInSetting(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
-    } else {
-	if (Count > blockModDiff) {
-            MemoryWriteBlockInSetting(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count - blockModDiff);
-	}
-	StartBlock += numBlocks - 1;
-	uint8_t fullBlock[BLOCK_TRANSFER_SIZE];
-	memcpy(fullBlock, Buffer + Count - blockModDiff, blockModDiff);
-	memset(fullBlock + blockModDiff, 0x00, BLOCK_TRANSFER_SIZE - blockModDiff);
-        MemoryWriteBlockInSetting(fullBlock, StartBlock * BLOCKWISE_IO_MULTIPLIER, BLOCK_TRANSFER_SIZE);
-    }
-}
-
-void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {
-    uint8_t Buffer[DESFIRE_EEPROM_BLOCK_SIZE];
-    uint16_t SrcOffset = SrcBlock;
-    uint16_t DestOffset = DestBlock;
-    while (Count > 0) {
-        SIZET bytesToWrite = MIN(Count, DESFIRE_EEPROM_BLOCK_SIZE);
-        ReadBlockBytes(Buffer, SrcOffset, bytesToWrite);
-        WriteBlockBytes(Buffer, DestOffset, bytesToWrite);
-        SrcOffset += 1;
-        DestOffset += 1;
-        Count -= DESFIRE_EEPROM_BLOCK_SIZE;
-    }
+    MemoryUploadBlock(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
 }
 
 uint16_t AllocateBlocksMain(uint16_t BlockCount) {
@@ -107,7 +65,7 @@ uint16_t AllocateBlocksMain(uint16_t BlockCount) {
         return 0;
     }
     Picc.FirstFreeBlock = Block + BlockCount;
-    DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = Picc.FirstFreeBlock;
+    DESFIRE_FIRST_FREE_BLOCK_ID = Picc.FirstFreeBlock;
     SynchronizePICCInfo();
     return Block;
 }

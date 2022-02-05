@@ -72,7 +72,6 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
     { .Id = CONFIG_MF_DESFIRE,                       .Text = "MF_DESFIRE" },
     { .Id = CONFIG_MF_DESFIRE_2KEV1,                 .Text = "MF_DESFIRE_2KEV1" },
     { .Id = CONFIG_MF_DESFIRE_4KEV1,                 .Text = "MF_DESFIRE_4KEV1" },
-    { .Id = CONFIG_MF_DESFIRE_8KEV1,                 .Text = "MF_DESFIRE_8KEV1" },
 #endif
 };
 
@@ -493,22 +492,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
         .ReadOnly = false
     },
-    [CONFIG_MF_DESFIRE_8KEV1] = {
-        .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
-        .CodecTaskFunc = ISO14443ACodecTask,
-        .ApplicationInitFunc = MifareDesfire8kEV1AppInit,
-        .ApplicationInitRunOnceFunc = MifareDesfire8kEV1AppInitRunOnce, 
-	.ApplicationResetFunc = MifareDesfireAppReset,
-        .ApplicationTaskFunc = MifareDesfireAppTask,
-        .ApplicationTickFunc = MifareDesfireAppTick,
-        .ApplicationProcessFunc = MifareDesfireAppProcess,
-        .ApplicationGetUidFunc = MifareDesfireGetUid,
-        .ApplicationSetUidFunc = MifareDesfireSetUid,
-        .UidSize = ISO14443A_UID_SIZE_DOUBLE,
-        .MemorySize = 2 * MIFARE_CLASSIC_4K_MEM_SIZE,
-        .ReadOnly = false
-    },
 #endif
 };
 
@@ -541,7 +524,6 @@ void ConfigurationSetById(ConfigurationEnum Configuration, bool appInitRunOnce) 
         ApplicationInitRunOnce();
         /* Notify LED. blink according to current setting */
         LEDHook(LED_SETTING_CHANGE, LED_BLINK_3X + Configuration);
-
     } else {
         ApplicationInit();
         /* Notify LED. blink according to current setting */
@@ -562,9 +544,16 @@ MapIdType ConfigurationCheckByName(const char *Configuration) {
     return 0xff;
 }
 
+bool ConfigurationByNameIsValid(const char *Configuration) {
+    MapIdType Id;
+    if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
+        return true;
+    }
+    return false;
+}
+
 bool ConfigurationSetByName(const char *Configuration, bool appInitRunOnce) {
     MapIdType Id;
-
     if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
         ConfigurationSetById(Id, appInitRunOnce);
 	LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX - 1));

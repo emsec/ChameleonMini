@@ -37,13 +37,11 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_ISO7816_CLA            0x00
 
 /* Storage allocation constants */
-#define DESFIRE_EEPROM_BLOCK_SIZE                (4) // (8) // (16) /* Bytes */
-#define DESFIRE_BYTES_TO_BLOCKS(x) \
-    ( ((x) + DESFIRE_EEPROM_BLOCK_SIZE - 1) / DESFIRE_EEPROM_BLOCK_SIZE )
+#define DESFIRE_BLOCK_SIZE                (4)  /* Bytes */
+#define DESFIRE_BYTES_TO_BLOCKS(x)        ( ((x) + DESFIRE_BLOCK_SIZE - 1) / DESFIRE_BLOCK_SIZE )
 
-#define DESFIRE_UID_SIZE                         ISO14443A_UID_SIZE_DOUBLE
-
-#define DESFIRE_MAX_PAYLOAD_SIZE                 (64) /* Bytes */
+#define DESFIRE_UID_SIZE                  ISO14443A_UID_SIZE_DOUBLE
+#define DESFIRE_MAX_PAYLOAD_SIZE          (64) /* Bytes */
 
 /*
  * Definitions pertaining to on-card data
@@ -84,8 +82,7 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_SW_MAJOR_EV0     0x00
 #define DESFIRE_SW_MINOR_EV0     0x01
 
-#define IsPiccEV0(picc)          \
-    (picc.HwVersionMajor == DESFIRE_HW_MAJOR_EV0 && picc.SwVersionMajor == DESFIRE_SW_MAJOR_EV0)
+#define IsPiccEV0(picc)          (picc.HwVersionMajor == DESFIRE_HW_MAJOR_EV0 && picc.SwVersionMajor == DESFIRE_SW_MAJOR_EV0)
 
 /* DESFire EV1 versions */
 #define DESFIRE_HW_MAJOR_EV1     0x01
@@ -145,10 +142,10 @@ This notice must be retained at the top of all source files where indicated.
  * Defines the global PICC configuration.
  * This is located in the very first block on the card.
  */
-#define PICC_FORMAT_BYTE                   (0xff) // (0xf7)
+#define PICC_FORMAT_BYTE                   (0x00)
 #define PICC_EMPTY_BYTE                    (0x00)
 
-typedef struct DESFIRE_FIRMWARE_PACKING {
+typedef struct DESFIRE_FIRMWARE_PACKING  DESFIRE_FIRMWARE_ALIGNAT{
     /* Static data: does not change during the PICC's lifetime.
      * We will add Chameleon Mini terminal commands to enable
      * resetting this data so tags can be emulated authentically.

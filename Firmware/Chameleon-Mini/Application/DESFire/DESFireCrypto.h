@@ -53,21 +53,20 @@ extern BYTE DesfireCommMode;
 #define CRYPTO_TYPE_3K3DES      (0x1A)
 #define CRYPTO_TYPE_AES128      (0x4A)
 
-#define CryptoTypeDES(ct) \
+#define CryptoTypeDES(ct)    \
     ((ct == CRYPTO_TYPE_DES) || (ct == CRYPTO_TYPE_ANY))
 #define CryptoType2KTDEA(ct) \
     ((ct == CRYPTO_TYPE_2KTDEA) || (ct == CRYPTO_TYPE_ANY))
 #define CryptoType3KTDEA(ct) \
     ((ct == CRYPTO_TYPE_3K3DES) || (ct == CRYPTO_TYPE_ANY))
-#define CryptoTypeAES(ct) \
+#define CryptoTypeAES(ct)    \
     ((ct == CRYPTO_TYPE_AES128) || (ct == CRYPTO_TYPE_ANY))
 
 /* Key sizes, block sizes (in bytes): */
 #define CRYPTO_AES_KEY_SIZE                  (16)
-#define CRYPTO_MAX_KEY_SIZE                  (24) // (32) // Make it a multiple of the EEPROM_BLOCK_SIZE
+#define CRYPTO_MAX_KEY_SIZE                  (24) 
 #define CRYPTO_MAX_BLOCK_SIZE                (16)
 #define DESFIRE_AES_IV_SIZE                  (CRYPTO_AES_BLOCK_SIZE)
-#define DESFIRE_SESSION_KEY_SIZE             (CRYPTO_3KTDEA_KEY_SIZE)
 #define CRYPTO_CHALLENGE_RESPONSE_BYTES      (16)
 
 typedef BYTE CryptoKeyBufferType[CRYPTO_MAX_KEY_SIZE];
