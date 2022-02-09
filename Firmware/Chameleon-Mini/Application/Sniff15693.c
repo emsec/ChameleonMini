@@ -155,9 +155,15 @@ INLINE void SniffISO15693IncrementThreshold(void){
 
 uint16_t SniffISO15693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
 {
+
+    bool crc_chk = ISO15693CheckCRC(FrameBuf, FrameBytes-ISO15693_CRC16_SIZE);
+
 #ifdef ISO15693_DEBUG_LOG
     char str[64];
-#endif
+    sprintf(str, "Sniff15693: CrcCheck result=%d", crc_chk);
+    LogEntry(LOG_INFO_GENERIC, str, strlen(str));
+#endif /*#ifdef ISO15693_DEBUG_LOG*/
+
     switch (Sniff15693CurrentCommand) {
         case Sniff15693_Do_Nothing: {
             return 0;
@@ -187,15 +193,17 @@ uint16_t SniffISO15693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                         }
                         last_cycle_successful = false;
                     }else{
-                        /* We have received card data now */
-                        /* Threshold is in a good range */
-                        /* if min_succ_th was never set ( == 0) */
-                        /* Set it now to the current threshold */
-                        if (min_succ_th == 0)
-                            min_succ_th = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
-                        last_cycle_successful = true;
+                        if (crc_chk){
+                            /* We have received card data now */
+                            /* Threshold is in a good range */
+                            /* if min_succ_th was never set ( == 0) */
+                            /* Set it now to the current threshold */
+                            if (min_succ_th == 0)
+                                min_succ_th = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
+                            last_cycle_successful = true;
+                        }
 #ifdef ISO15693_DEBUG_LOG
-                        sprintf(str, "Sniff15693: Found card data (%d) ", min_succ_th);
+                        sprintf(str, "Sniff15693: Found card data (%d) - crc=%d", min_succ_th, crc_chk);
                         LogEntry(LOG_INFO_GENERIC, str, strlen(str));
 #endif /*#ifdef ISO15693_DEBUG_LOG*/
                         autocalib_state = AUTOCALIB_CARD_DATA;
@@ -204,15 +212,17 @@ uint16_t SniffISO15693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                     break;
                 case(AUTOCALIB_CARD_DATA): /* Means last time we have received card data */
                     if(SniffTrafficSource == TRAFFIC_CARD){
-                        /* We have received card data now */
-                        /* Threshold is in a good range */
-                        /* if min_succ_th was never set ( == 0) */
-                        /* Set it now to the current threshold */
-                        if (min_succ_th == 0)
-                            min_succ_th = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
-                        last_cycle_successful = true;
+                        if (crc_chk){
+                            /* We have received card data now */
+                            /* Threshold is in a good range */
+                            /* if min_succ_th was never set ( == 0) */
+                            /* Set it now to the current threshold */
+                            if (min_succ_th == 0)
+                                min_succ_th = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
+                            last_cycle_successful = true;
+                        }
 #ifdef ISO15693_DEBUG_LOG
-                        sprintf(str, "Sniff15693: Found card data (%d) ", min_succ_th);
+                        sprintf(str, "Sniff15693: Found card data (%d) - crc=%d", min_succ_th, crc_chk);
                         LogEntry(LOG_INFO_GENERIC, str, strlen(str));
 #endif /*#ifdef ISO15693_DEBUG_LOG*/
                         SniffISO15693IncrementThreshold();
