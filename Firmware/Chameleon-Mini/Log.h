@@ -3,7 +3,7 @@
 /** @file */
 #include "Common.h"
 
-#define LOG_SIZE	2048
+#define LOG_SIZE	        2048
 #define FRAM_LOG_ADDR_ADDR	0x4000 // start of the second half of FRAM
 #define FRAM_LOG_START_ADDR	0x4002 // directly after the address
 #define FRAM_LOG_SIZE		0x3FFE // the whole second half (minus the 2 Bytes of Address)

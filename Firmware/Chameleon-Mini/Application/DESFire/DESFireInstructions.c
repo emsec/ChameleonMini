@@ -447,7 +447,7 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     }
     /* Make sure that this key is AES, and figure out its byte size */
     BYTE cryptoKeyType = ReadKeyCryptoType(SelectedApp.Slot, KeyId);
-    if (!CryptoTypeDES(cryptoKeyType)) {
+    if (!CryptoType3KTDEA(cryptoKeyType)) {
         Buffer[0] = STATUS_NO_SUCH_KEY;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -492,7 +492,7 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
                       &Buffer[1], NULL, Key);
 
     /* Scrub the key */
-    memset(*Key, 0, keySize);
+    memset(Key, 0, keySize);
 
     /* Done */
     DesfireState = DESFIRE_LEGACY_AUTHENTICATE2;

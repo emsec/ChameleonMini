@@ -45,7 +45,7 @@ void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count) {
         DEBUG_PRINT_P(rbbLogMsg, StartBlock, MEMORY_SIZE_PER_SETTING);
         return;
     }
-    MemoryDownloadBlock(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
+    MemoryReadBlockInSetting(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
 }
 
 void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count) {
@@ -54,7 +54,7 @@ void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count) {
         DEBUG_PRINT_P(wbbLogMsg, StartBlock, MEMORY_SIZE_PER_SETTING);
         return;
     }
-    MemoryUploadBlock(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
+    MemoryWriteBlockInSetting(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
 }
 
 uint16_t AllocateBlocksMain(uint16_t BlockCount) {

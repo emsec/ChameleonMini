@@ -366,7 +366,25 @@ void MemoryWriteBlock(const void *Buffer, uint16_t Address, uint16_t ByteCount) 
     if (ByteCount == 0)
         return;
     FRAMWrite(Buffer, Address, ByteCount);
+    LEDHook(LED_MEMORY_CHANGED, LED_ON);
+}
 
+void MemoryReadBlockInSetting(void *Buffer, uint16_t Address, uint16_t ByteCount) {
+    if (ByteCount == 0 || ByteCount >= MEMORY_SIZE_PER_SETTING)
+        return;
+    uint16_t ShiftedAddress = Address + GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING;
+    if (ShiftedAddress < Address)
+	return;
+    FRAMRead(Buffer, ShiftedAddress, ByteCount);
+}
+
+void MemoryWriteBlockInSetting(const void *Buffer, uint16_t Address, uint16_t ByteCount) {
+    if (ByteCount == 0 || ByteCount >= MEMORY_SIZE_PER_SETTING)
+        return;
+    uint16_t ShiftedAddress = Address + GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING;
+    if (ShiftedAddress < Address)
+        return;
+    FRAMWrite(Buffer, ShiftedAddress, ByteCount);
     LEDHook(LED_MEMORY_CHANGED, LED_ON);
 }
 
