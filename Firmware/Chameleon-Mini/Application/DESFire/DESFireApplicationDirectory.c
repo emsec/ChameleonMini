@@ -209,7 +209,7 @@ void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value) {
 bool KeyIdValid(uint8_t AppSlot, uint8_t KeyId) {
     if (KeyId >= DESFIRE_MAX_KEYS || KeyId >= ReadMaxKeyCount(AppSlot)) {
         const char *debugMsg = PSTR("INVKEY-KeyId(%02x)-RdMax(%02x)");
-	DEBUG_PRINT_P(debugMsg, KeyId, ReadMaxKeyCount(AppSlot));
+        DEBUG_PRINT_P(debugMsg, KeyId, ReadMaxKeyCount(AppSlot));
         return false;
     }
     return true;
@@ -585,8 +585,8 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     /* Allocate storage for the application structure itself */
     AppDir.AppCacheStructBlockOffset[Slot] = AllocateBlocks(SELECTED_APP_CACHE_TYPE_BLOCK_SIZE);
     if (AppDir.AppCacheStructBlockOffset[Slot] == 0) {
-	const char *debugMsg = PSTR("X - alloc blks, slot = %d");
-	DEBUG_PRINT_P(debugMsg, Slot);
+        const char *debugMsg = PSTR("X - alloc blks, slot = %d");
+        DEBUG_PRINT_P(debugMsg, Slot);
         return STATUS_OUT_OF_EEPROM_ERROR;
     }
     /* Allocate storage for the application components */
@@ -628,8 +628,8 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     } else {
         SIZET fileAccessRightsData[DESFIRE_MAX_FILES];
         for (int fidx = 0; fidx < DESFIRE_MAX_FILES; fidx++) {
-	    fileAccessRightsData[fidx] = 0x000f;
-	}
+            fileAccessRightsData[fidx] = 0x000f;
+        }
         WriteBlockBytes(fileAccessRightsData, appCacheData.FileAccessRights, sizeof(SIZET) * DESFIRE_MAX_FILES);
     }
     appCacheData.KeyVersionsArray = AllocateBlocks(APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE);
@@ -669,8 +669,8 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
         }
         BYTE cryptoBlankKeyData[CRYPTO_MAX_KEY_SIZE];
         memset(cryptoBlankKeyData, 0x00, CRYPTO_MAX_KEY_SIZE);
-	WriteBlockBytes(cryptoBlankKeyData, keyAddresses[0], CRYPTO_MAX_KEY_SIZE);
-	WriteBlockBytes(keyAddresses, appCacheData.KeyAddress, sizeof(SIZET) * DESFIRE_MAX_KEYS);
+        WriteBlockBytes(cryptoBlankKeyData, keyAddresses[0], CRYPTO_MAX_KEY_SIZE);
+        WriteBlockBytes(keyAddresses, appCacheData.KeyAddress, sizeof(SIZET) * DESFIRE_MAX_KEYS);
     }
     SIZET appCacheDataBlockId = AppDir.AppCacheStructBlockOffset[Slot];
     WriteBlockBytes(&appCacheData, appCacheDataBlockId, sizeof(SelectedAppCacheType));

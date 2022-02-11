@@ -1,9 +1,9 @@
-         /*
- * CryptoDES.h
- *
- *  Created on: 18.10.2016
- *      Author: dev_zzo
- */
+/*
+* CryptoDES.h
+*
+*  Created on: 18.10.2016
+*      Author: dev_zzo
+*/
 
 #ifndef CRYPTODES_H_
 #define CRYPTODES_H_

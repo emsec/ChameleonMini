@@ -46,8 +46,8 @@ CommandStatusIdType CommandSetConfig(char *OutMessage, const char *InParam) {
         return COMMAND_INFO_OK_WITH_TEXT_ID;
     } else if (ConfigurationByNameIsValid(InParam)) {
         ConfigurationSetByName(InParam, true);
-	SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->Configuration);
-	return COMMAND_INFO_OK_ID;
+        SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->Configuration);
+        return COMMAND_INFO_OK_ID;
     } else {
         return COMMAND_ERR_INVALID_PARAM_ID;
     }

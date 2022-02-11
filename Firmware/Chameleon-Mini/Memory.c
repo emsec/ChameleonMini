@@ -374,7 +374,7 @@ void MemoryReadBlockInSetting(void *Buffer, uint16_t Address, uint16_t ByteCount
         return;
     uint16_t ShiftedAddress = Address + GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING;
     if (ShiftedAddress < Address)
-	return;
+        return;
     FRAMRead(Buffer, ShiftedAddress, ByteCount);
 }
 

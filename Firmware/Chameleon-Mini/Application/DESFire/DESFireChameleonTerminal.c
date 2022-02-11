@@ -242,13 +242,13 @@ CommandStatusIdType CommandDESFireSetTestingMode(char *OutParam, const char *InP
 CommandStatusIdType CommandDESFireGetCommMode(char *OutParam) {
     if (!IsDESFireConfiguration()) {
         ExitOnInvalidConfigurationError(OutParam);
-    } else if(DesfireCommMode == DESFIRE_COMMS_PLAINTEXT) {
+    } else if (DesfireCommMode == DESFIRE_COMMS_PLAINTEXT) {
         snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Plaintext"));
-    } else if(DesfireCommMode == DESFIRE_COMMS_PLAINTEXT_MAC) {
+    } else if (DesfireCommMode == DESFIRE_COMMS_PLAINTEXT_MAC) {
         snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Plaintext/MAC"));
-    } else if(DesfireCommMode == DESFIRE_COMMS_CIPHERTEXT_DES) {
+    } else if (DesfireCommMode == DESFIRE_COMMS_CIPHERTEXT_DES) {
         snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Enciphered/DES"));
-    } else if(DesfireCommMode == DESFIRE_COMMS_CIPHERTEXT_AES128) {
+    } else if (DesfireCommMode == DESFIRE_COMMS_CIPHERTEXT_AES128) {
         snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Enciphered/AES128"));
     } else {
         snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Unknown"));

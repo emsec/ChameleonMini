@@ -122,32 +122,32 @@ const char *GetCommSettingsDesc(uint8_t cryptoType) {
 
 /* Code is adapted from @github/andrade/nfcjlib */
 bool generateSessionKey(uint8_t *sessionKey, uint8_t *rndA, uint8_t *rndB, uint16_t cryptoType) {
-    switch(cryptoType) {
-	case CRYPTO_TYPE_DES:
+    switch (cryptoType) {
+        case CRYPTO_TYPE_DES:
             memcpy(sessionKey, rndA, 4);
-	    memcpy(sessionKey + 4, rndB, 4);
-	    break;
-	case CRYPTO_TYPE_2KTDEA:
-	    memcpy(sessionKey, rndA, 4);
-	    memcpy(sessionKey + 4, rndB, 4);
-	    memcpy(sessionKey + 8, rndA + 4, 4);
-	    memcpy(sessionKey + 12, rndB + 4, 4);
-	    break;
-	case CRYPTO_TYPE_3K3DES:
-	    memcpy(sessionKey, rndA, 4);
-	    memcpy(sessionKey + 4, rndB, 4);
-	    memcpy(sessionKey + 8, rndA + 6, 4);
-	    memcpy(sessionKey + 12, rndB + 6, 4);
-	    memcpy(sessionKey + 16, rndA + 12, 4);
-	    memcpy(sessionKey + 20, rndB + 12, 4);
-	    break;
-	case CRYPTO_TYPE_AES128:
-	    memcpy(sessionKey, rndA, 4);
-	    memcpy(sessionKey + 4, rndB, 4);
-	    memcpy(sessionKey + 8, rndA + 12, 4);
-	    memcpy(sessionKey + 12, rndB + 12, 4);
-	    break;
-	default:
+            memcpy(sessionKey + 4, rndB, 4);
+            break;
+        case CRYPTO_TYPE_2KTDEA:
+            memcpy(sessionKey, rndA, 4);
+            memcpy(sessionKey + 4, rndB, 4);
+            memcpy(sessionKey + 8, rndA + 4, 4);
+            memcpy(sessionKey + 12, rndB + 4, 4);
+            break;
+        case CRYPTO_TYPE_3K3DES:
+            memcpy(sessionKey, rndA, 4);
+            memcpy(sessionKey + 4, rndB, 4);
+            memcpy(sessionKey + 8, rndA + 6, 4);
+            memcpy(sessionKey + 12, rndB + 6, 4);
+            memcpy(sessionKey + 16, rndA + 12, 4);
+            memcpy(sessionKey + 20, rndB + 12, 4);
+            break;
+        case CRYPTO_TYPE_AES128:
+            memcpy(sessionKey, rndA, 4);
+            memcpy(sessionKey + 4, rndB, 4);
+            memcpy(sessionKey + 8, rndA + 12, 4);
+            memcpy(sessionKey + 12, rndB + 12, 4);
+            break;
+        default:
             return false;
     }
     return true;

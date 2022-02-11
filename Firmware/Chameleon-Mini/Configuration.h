@@ -114,10 +114,10 @@ typedef struct {
      */
     /** Function that initializes the application. */
     void (*ApplicationInitFunc)(void);
-    /** Function to initialize one-time-only data in the application 
-     *  (like the filesystem for `CONFIG=MF_DESFIRE`). This function does not 
-     *  get called when changing slots to run a preexisting configuration or when the 
-     *  device is powered on and reinitializes the last loaded slot. 
+    /** Function to initialize one-time-only data in the application
+     *  (like the filesystem for `CONFIG=MF_DESFIRE`). This function does not
+     *  get called when changing slots to run a preexisting configuration or when the
+     *  device is powered on and reinitializes the last loaded slot.
      */
     void (*ApplicationInitRunOnceFunc)(void);
     /** Function that resets the application. */

@@ -45,15 +45,15 @@ This notice must be retained at the top of all source files where indicated.
 
 DesfireSavedCommandStateType DesfireCommandState = { 0 };
 
-/* NOTE: The order of the structures in this buffer MUST be kept in 
- *       ascending sorted order by the INS code. This property of the 
- *       array has to be maintained as new commands and functions are 
- *       added to keep CallInstructionHandler(uint8_t*, uint16_t) 
- *       operating correctly. The instruction handler performs a 
- *       binary search on the array to save time locating the correct 
- *       C function to call to execute the command -- and this speedup 
- *       helps keep timing issues at bay. DO NOT just append new command 
- *       handlers to the end of the array, or insert them haphazardly in 
+/* NOTE: The order of the structures in this buffer MUST be kept in
+ *       ascending sorted order by the INS code. This property of the
+ *       array has to be maintained as new commands and functions are
+ *       added to keep CallInstructionHandler(uint8_t*, uint16_t)
+ *       operating correctly. The instruction handler performs a
+ *       binary search on the array to save time locating the correct
+ *       C function to call to execute the command -- and this speedup
+ *       helps keep timing issues at bay. DO NOT just append new command
+ *       handlers to the end of the array, or insert them haphazardly in
  *       the middle !!!
  */
 const __flash DESFireCommand DESFireCommandSet[] = {
@@ -309,19 +309,19 @@ uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount) {
     uint16_t curInsLower = 0, curInsUpper = sizeof(DESFireCommandSet) / sizeof(DESFireCommand) - 1;
     uint16_t curInsIndex;
     DESFireCommand dfCmd;
-    while(curInsUpper >= curInsLower) {
+    while (curInsUpper >= curInsLower) {
         curInsIndex = curInsLower + (curInsUpper + 1 - curInsLower) / 2;
         memcpy_P(&dfCmd, insLookupTableBuf + curInsIndex * sizeof(DESFireCommand), sizeof(DESFireCommand));
         if (dfCmd.insCode == insCode) {
-	    if (dfCmd.insFunc == NULL) {
-	        return CmdNotImplemented(Buffer, ByteCount);
-	    }
-	    return dfCmd.insFunc(Buffer, ByteCount);
-	} else if (dfCmd.insCode < insCode) {
-             curInsLower = curInsIndex + 1;
-	} else {
-             curInsUpper = curInsIndex - 1;
-	}
+            if (dfCmd.insFunc == NULL) {
+                return CmdNotImplemented(Buffer, ByteCount);
+            }
+            return dfCmd.insFunc(Buffer, ByteCount);
+        } else if (dfCmd.insCode < insCode) {
+            curInsLower = curInsIndex + 1;
+        } else {
+            curInsUpper = curInsIndex - 1;
+        }
     }
     return ISO14443A_APP_NO_RESPONSE;
 }
@@ -507,7 +507,7 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
-    
+
     /* Validate command length */
     if (ByteCount != 2 * CRYPTO_CHALLENGE_RESPONSE_BYTES + 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
@@ -534,7 +534,7 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Check that the returned RndB matches what we sent in the previous round */
     if (memcmp(DesfireCommandState.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
-	return DESFIRE_STATUS_RESPONSE_SIZE;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Authenticated successfully */
@@ -1791,7 +1791,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Check that the returned RndB matches what we sent in the previous round */
     if (memcmp(DesfireCommandState.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
         LogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR, (const void *) challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-	Buffer[0] = STATUS_AUTHENTICATION_ERROR;
+        Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
@@ -1805,7 +1805,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
                       &Buffer[1], NULL, Key);
-    
+
     generateSessionKey(SessionKey, challengeRndA, challengeRndB, CRYPTO_TYPE_3K3DES);
 
     /* Return the status on success */

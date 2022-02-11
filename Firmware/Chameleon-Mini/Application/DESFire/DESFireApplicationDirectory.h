@@ -37,7 +37,7 @@ This notice must be retained at the top of all source files where indicated.
 
 #ifdef MEMORY_LIMITED_TESTING
 #define DESFIRE_MAX_APPS                       (3)
-#else 
+#else
 #ifdef DESFIRE_CUSTOM_MAX_APPS
 #define DESFIRE_MAX_APPS                       (DESFIRE_CUSTOM_MAX_APPS)
 #else
@@ -49,7 +49,7 @@ This notice must be retained at the top of all source files where indicated.
 
 #ifdef MEMORY_LIMITED_TESTING
 #define DESFIRE_MAX_FILES                      (4)
-#else 
+#else
 #ifdef DESFIRE_CUSTOM_MAX_FILES
 #define DESFIRE_MAX_FILES                      (DESFIRE_CUSTOM_MAX_FILES)
 #else
@@ -59,7 +59,7 @@ This notice must be retained at the top of all source files where indicated.
 
 #ifdef MEMORY_LIMITED_TESTING
 #define DESFIRE_MAX_KEYS                       (2)
-#else 
+#else
 #ifdef DESFIRE_CUSTOM_MAX_KEYS
 #define DESFIRE_MAX_KEYS                       (DESFIRE_CUSTOM_MAX_KEYS)
 #else

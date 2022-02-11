@@ -21,19 +21,19 @@ void EncryptDESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, c
     if (IVIn == NULL) {
         memset(IV, 0x00, CRYPTO_DES_BLOCK_SIZE);
     } else {
-	memcpy(IV, IVIn, CRYPTO_DES_BLOCK_SIZE);
+        memcpy(IV, IVIn, CRYPTO_DES_BLOCK_SIZE);
     }
     while (blockIndex < numBlocks) {
         if (blockIndex == 0) {
             memcpy(inputBlock, &Plaintext[0], CRYPTO_DES_BLOCK_SIZE);
-	    CryptoMemoryXOR(IV, inputBlock, CRYPTO_DES_BLOCK_SIZE);
-	} else {
+            CryptoMemoryXOR(IV, inputBlock, CRYPTO_DES_BLOCK_SIZE);
+        } else {
             memcpy(inputBlock, &Ciphertext[(blockIndex - 1) * CRYPTO_DES_BLOCK_SIZE], CRYPTO_DES_BLOCK_SIZE);
-	    CryptoMemoryXOR(&Plaintext[blockIndex * CRYPTO_DES_BLOCK_SIZE], inputBlock, CRYPTO_DES_BLOCK_SIZE);
-	}
-	CryptoSpec.cryptFunc(inputBlock, ctBuf, Keys);
-	ctBuf += CryptoSpec.blockSize;
-	blockIndex++;
+            CryptoMemoryXOR(&Plaintext[blockIndex * CRYPTO_DES_BLOCK_SIZE], inputBlock, CRYPTO_DES_BLOCK_SIZE);
+        }
+        CryptoSpec.cryptFunc(inputBlock, ctBuf, Keys);
+        ctBuf += CryptoSpec.blockSize;
+        blockIndex++;
     }
 }
 
@@ -49,18 +49,18 @@ void DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, c
     if (IVIn == NULL) {
         memset(IV, 0x00, CRYPTO_DES_BLOCK_SIZE);
     } else {
-	memcpy(IV, IVIn, CRYPTO_DES_BLOCK_SIZE);
+        memcpy(IV, IVIn, CRYPTO_DES_BLOCK_SIZE);
     }
     while (blockIndex < numBlocks) {
-	CryptoSpec.cryptFunc(inputBlock, Ciphertext + blockIndex * CRYPTO_DES_BLOCK_SIZE, Keys);
+        CryptoSpec.cryptFunc(inputBlock, Ciphertext + blockIndex * CRYPTO_DES_BLOCK_SIZE, Keys);
         if (blockIndex == 0) {
             memcpy(Plaintext, inputBlock, CRYPTO_DES_BLOCK_SIZE);
-	    CryptoMemoryXOR(IV, Plaintext, CRYPTO_DES_BLOCK_SIZE);
-	} else {
+            CryptoMemoryXOR(IV, Plaintext, CRYPTO_DES_BLOCK_SIZE);
+        } else {
             memcpy(Plaintext + blockIndex * CRYPTO_DES_BLOCK_SIZE, inputBlock, CRYPTO_DES_BLOCK_SIZE);
-	    CryptoMemoryXOR(&Ciphertext[(blockIndex - 1) * CRYPTO_DES_BLOCK_SIZE], 
-			    Plaintext + blockIndex * CRYPTO_DES_BLOCK_SIZE, CRYPTO_DES_BLOCK_SIZE);
-	}
+            CryptoMemoryXOR(&Ciphertext[(blockIndex - 1) * CRYPTO_DES_BLOCK_SIZE],
+                            Plaintext + blockIndex * CRYPTO_DES_BLOCK_SIZE, CRYPTO_DES_BLOCK_SIZE);
+        }
         blockIndex++;
     }
 }
@@ -78,19 +78,19 @@ void Encrypt3DESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, 
     if (IVIn == NULL) {
         memset(IV, 0x00, CRYPTO_3KTDEA_BLOCK_SIZE);
     } else {
-	memcpy(IV, IVIn, CRYPTO_3KTDEA_BLOCK_SIZE);
+        memcpy(IV, IVIn, CRYPTO_3KTDEA_BLOCK_SIZE);
     }
     while (blockIndex < numBlocks) {
         if (blockIndex == 0) {
             memcpy(inputBlock, &Plaintext[0], CRYPTO_3KTDEA_BLOCK_SIZE);
-	    CryptoMemoryXOR(IV, inputBlock, CRYPTO_3KTDEA_BLOCK_SIZE);
-	} else {
+            CryptoMemoryXOR(IV, inputBlock, CRYPTO_3KTDEA_BLOCK_SIZE);
+        } else {
             memcpy(inputBlock, &Ciphertext[(blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE], CRYPTO_3KTDEA_BLOCK_SIZE);
-	    CryptoMemoryXOR(&Plaintext[blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE], inputBlock, CRYPTO_3KTDEA_BLOCK_SIZE);
-	}
-	CryptoSpec.cryptFunc(inputBlock, ctBuf, Keys);
+            CryptoMemoryXOR(&Plaintext[blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE], inputBlock, CRYPTO_3KTDEA_BLOCK_SIZE);
+        }
+        CryptoSpec.cryptFunc(inputBlock, ctBuf, Keys);
         ctBuf += CryptoSpec.blockSize;
-	blockIndex++;
+        blockIndex++;
     }
 }
 
@@ -106,18 +106,18 @@ void Decrypt3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, 
     if (IVIn == NULL) {
         memset(IV, 0x00, CRYPTO_3KTDEA_BLOCK_SIZE);
     } else {
-	memcpy(IV, IVIn, CRYPTO_3KTDEA_BLOCK_SIZE);
+        memcpy(IV, IVIn, CRYPTO_3KTDEA_BLOCK_SIZE);
     }
     while (blockIndex < numBlocks) {
-	CryptoSpec.cryptFunc(inputBlock, Ciphertext + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, Keys);
+        CryptoSpec.cryptFunc(inputBlock, Ciphertext + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, Keys);
         if (blockIndex == 0) {
             memcpy(Plaintext, inputBlock, CRYPTO_3KTDEA_BLOCK_SIZE);
-	    CryptoMemoryXOR(IV, Plaintext, CRYPTO_3KTDEA_BLOCK_SIZE);
-	} else {
+            CryptoMemoryXOR(IV, Plaintext, CRYPTO_3KTDEA_BLOCK_SIZE);
+        } else {
             memcpy(Plaintext + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, inputBlock, CRYPTO_3KTDEA_BLOCK_SIZE);
-	    CryptoMemoryXOR(&Ciphertext[(blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE], 
-			    Plaintext + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
-	}
+            CryptoMemoryXOR(&Ciphertext[(blockIndex - 1) * CRYPTO_3KTDEA_BLOCK_SIZE],
+                            Plaintext + blockIndex * CRYPTO_3KTDEA_BLOCK_SIZE, CRYPTO_3KTDEA_BLOCK_SIZE);
+        }
         blockIndex++;
     }
 }

@@ -64,7 +64,7 @@ extern BYTE DesfireCommMode;
 
 /* Key sizes, block sizes (in bytes): */
 #define CRYPTO_AES_KEY_SIZE                  (16)
-#define CRYPTO_MAX_KEY_SIZE                  (24) 
+#define CRYPTO_MAX_KEY_SIZE                  (24)
 #define CRYPTO_MAX_BLOCK_SIZE                (16)
 #define DESFIRE_AES_IV_SIZE                  (CRYPTO_AES_BLOCK_SIZE)
 #define CRYPTO_CHALLENGE_RESPONSE_BYTES      (16)

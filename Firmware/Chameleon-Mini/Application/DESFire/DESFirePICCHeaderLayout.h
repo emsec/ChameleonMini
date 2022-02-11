@@ -145,7 +145,7 @@ This notice must be retained at the top of all source files where indicated.
 #define PICC_FORMAT_BYTE                   (0x00)
 #define PICC_EMPTY_BYTE                    (0x00)
 
-typedef struct DESFIRE_FIRMWARE_PACKING  DESFIRE_FIRMWARE_ALIGNAT{
+typedef struct DESFIRE_FIRMWARE_PACKING  DESFIRE_FIRMWARE_ALIGNAT {
     /* Static data: does not change during the PICC's lifetime.
      * We will add Chameleon Mini terminal commands to enable
      * resetting this data so tags can be emulated authentically.

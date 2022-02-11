@@ -61,12 +61,12 @@ static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool
     DesfireFromHalt = false;
     switch (Version) {
         case MIFARE_DESFIRE_EV1:
-            InitialisePiccBackendEV1(StorageSize, FormatPICC);   
-	    break;
-	case MIFARE_DESFIRE_EV0:
-	default: /* Fall through */
-	    InitialisePiccBackendEV0(StorageSize, FormatPICC);   
-	    break;
+            InitialisePiccBackendEV1(StorageSize, FormatPICC);
+            break;
+        case MIFARE_DESFIRE_EV0:
+        default: /* Fall through */
+            InitialisePiccBackendEV0(StorageSize, FormatPICC);
+            break;
     }
     DesfireCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 }
@@ -129,7 +129,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
         return ISO14443A_APP_NO_RESPONSE;
     } else if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         DesfireState = DESFIRE_IDLE;
-	uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
+        uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
         return ReturnBytes;
     }
 
@@ -172,8 +172,8 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
     DesfireCmdCLA = Buffer[0];
     if ((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
-            Buffer[3] == 0x00 && (Buffer[4] == ByteCount - 6 || Buffer[4] == ByteCount - 8)) || Iso7816CLA(DesfireCmdCLA)) { 
-	// Wrapped native command structure:
+            Buffer[3] == 0x00 && (Buffer[4] == ByteCount - 6 || Buffer[4] == ByteCount - 8)) || Iso7816CLA(DesfireCmdCLA)) {
+        // Wrapped native command structure:
         /* Unwrap the PDU from ISO 7816-4 */
         // Check CRC bytes appended to the buffer:
         // -- Actually, just ignore parity problems if they exist,
@@ -238,8 +238,8 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         ISO14443AAppendCRCA(Buffer, ProcessedByteCount);
         ProcessedBitCount += 2 * BITS_PER_BYTE;
         return ProcessedBitCount;
-    } else if((ReturnedBytes = CallInstructionHandler(Buffer, ByteCount)) != ISO14443A_APP_NO_RESPONSE) {
-	return ReturnedBytes;
+    } else if ((ReturnedBytes = CallInstructionHandler(Buffer, ByteCount)) != ISO14443A_APP_NO_RESPONSE) {
+        return ReturnedBytes;
     } else {
         return ISO144433APiccProcess(Buffer, BitCount);
     }
