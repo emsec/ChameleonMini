@@ -236,7 +236,7 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
     };
     AUTHENTICATE_LEGACY_CMD[5] = keyIndex;
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, ">>> Start Legacy 3K3DES Authenticate:\n");
+        fprintf(stdout, ">>> Start Legacy 2K3DES (EEE/DDD) Authenticate:\n");
         fprintf(stdout, "    -> ");
         print_hex(AUTHENTICATE_LEGACY_CMD, sizeof(AUTHENTICATE_LEGACY_CMD));
     }
@@ -265,13 +265,13 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
     desCryptoData.keySize = 3 * 8;
     desCryptoData.keyData = keyData;
     desCryptoData.ivSize = CRYPTO_CHALLENGE_RESPONSE_SIZE;
-    Decrypt3DES(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, plainTextRndB, NULL, desCryptoData);
+    Decrypt2K3DES(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, plainTextRndB, NULL, desCryptoData);
     RotateArrayLeft(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     desCryptoData.ivData = IVBuf;
     GenerateRandomBytes(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     ConcatByteArrays(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponse);
-    Encrypt3DES(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponseCipherText, NULL, desCryptoData);
+    Encrypt2K3DES(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponseCipherText, NULL, desCryptoData);
 
     uint8_t sendBytesBuf[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6];
     memset(sendBytesBuf, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6);
@@ -306,7 +306,7 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
     // decrypt rndA sent by PICC, compare it to our original randomized rndA computed above,
     // and report back whether they match:
     uint8_t decryptedRndAFromPICCRotated[CRYPTO_CHALLENGE_RESPONSE_SIZE], decryptedRndA[CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    Decrypt3DES(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE, decryptedRndAFromPICCRotated, NULL, desCryptoData);
+    Decrypt2K3DES(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE, decryptedRndAFromPICCRotated, NULL, desCryptoData);
     RotateArrayRight(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     if (!memcmp(rndA, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE)) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {

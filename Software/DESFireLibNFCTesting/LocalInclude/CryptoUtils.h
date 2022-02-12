@@ -128,11 +128,43 @@ static inline size_t DecryptAES128(const uint8_t *encSrcBuf, size_t bufSize,
     return bufSize;
 }
 
+static inline size_t Encrypt2K3DES(const uint8_t *plainSrcBuf, size_t bufSize,
+                                   uint8_t *encDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
+    DES_key_schedule keySched1, keySched2;
+    uint8_t IV[2 * CRYPTO_DES_BLOCK_SIZE];
+    uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[CRYPTO_DES_BLOCK_SIZE]);
+    DES_set_key(kd1, &keySched1);
+    DES_set_key(kd2, &keySched2);
+    if (IVIn == NULL) {
+        memset(IV, 0x00, 2 * CRYPTO_DES_BLOCK_SIZE);
+    } else {
+        memcpy(IV, IVIn, 2 * CRYPTO_DES_BLOCK_SIZE);
+    }
+    DES_ede2_cbc_encrypt(plainSrcBuf, encDestBuf, bufSize, &keySched1, &keySched2, &IV, DES_ENCRYPT);
+    return bufSize;
+}
+
+static inline size_t Decrypt2K3DES(const uint8_t *encSrcBuf, size_t bufSize,
+                                   uint8_t *plainDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
+    DES_key_schedule keySched1, keySched2;
+    uint8_t IV[2 * CRYPTO_DES_BLOCK_SIZE];
+    uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[CRYPTO_DES_BLOCK_SIZE]);
+    DES_set_key(kd1, &keySched1);
+    DES_set_key(kd2, &keySched2);
+    if (IVIn == NULL) {
+        memset(IV, 0x00, 2 * CRYPTO_DES_BLOCK_SIZE);
+    } else {
+        memcpy(IV, IVIn, 2 * CRYPTO_DES_BLOCK_SIZE);
+    }
+    DES_ede2_cbc_encrypt(encSrcBuf, plainDestBuf, bufSize, &keySched1, &keySched2, &IV, DES_DECRYPT);
+    return bufSize;
+}
+
 static inline size_t Encrypt3DES(const uint8_t *plainSrcBuf, size_t bufSize,
                                  uint8_t *encDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
     DES_key_schedule keySched1, keySched2, keySched3;
     uint8_t IV[CRYPTO_DES_BLOCK_SIZE];
-    uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[8]), *kd3 = &(cdata.keyData[16]);
+    uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[CRYPTO_DES_BLOCK_SIZE]), *kd3 = &(cdata.keyData[2 * CRYPTO_DES_BLOCK_SIZE]);
     DES_set_key(kd1, &keySched1);
     DES_set_key(kd2, &keySched2);
     DES_set_key(kd3, &keySched3);
@@ -149,7 +181,7 @@ static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize,
                                  uint8_t *plainDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
     DES_key_schedule keySched1, keySched2, keySched3;
     uint8_t IV[CRYPTO_DES_BLOCK_SIZE];
-    uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[8]), *kd3 = &(cdata.keyData[16]);
+    uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[CRYPTO_DES_BLOCK_SIZE]), *kd3 = &(cdata.keyData[2 * CRYPTO_DES_BLOCK_SIZE]);
     DES_set_key(kd1, &keySched1);
     DES_set_key(kd2, &keySched2);
     DES_set_key(kd3, &keySched3);
@@ -161,6 +193,7 @@ static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize,
     DES_ede3_cbc_encrypt(encSrcBuf, plainDestBuf, bufSize, &keySched1, &keySched2, &keySched3, &IV, DES_DECRYPT);
     return bufSize;
 }
+
 
 static inline size_t EncryptDES(const uint8_t *plainSrcBuf, size_t bufSize,
                                 uint8_t *encDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {

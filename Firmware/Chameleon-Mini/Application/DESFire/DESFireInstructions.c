@@ -447,20 +447,25 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     }
     /* Make sure that this key is AES, and figure out its byte size */
     BYTE cryptoKeyType = ReadKeyCryptoType(SelectedApp.Slot, KeyId);
-    if (!CryptoType3KTDEA(cryptoKeyType)) {
+    if (!CryptoTypeDES(cryptoKeyType) && !CryptoType2KTDEA(cryptoKeyType)) {
         Buffer[0] = STATUS_NO_SUCH_KEY;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Indicate that we are in DES key authentication land */
-    keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
+    keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_2KTDEA);
     Key = SessionKey;
     DesfireCommandState.KeyId = KeyId;
     DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_3K3DES;
     DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
 
     /* Fetch the key */
-    ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
+    if (cryptoKeyType == CRYPTO_TYPE_DES) {
+        ReadAppKey(SelectedApp.Slot, KeyId, Key, CRYPTO_DES_KEY_SIZE);
+        memcpy(Key + CRYPTO_DES_KEY_SIZE, Key, CRYPTO_DES_KEY_SIZE);
+    } else {
+        ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
+    }
     LogEntry(LOG_APP_AUTH_KEY, (const void *) Key, keySize);
 
     /* Generate the nonce B (RndB / Challenge response) */
@@ -488,8 +493,8 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
     /* Encrypt RndB with the selected key and transfer it back to the PCD */
-    Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, DesfireCommandState.RndB,
-                      &Buffer[1], NULL, Key);
+    Encrypt2K3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, DesfireCommandState.RndB,
+                        &Buffer[1], NULL, Key);
 
     /* Scrub the key */
     memset(Key, 0, keySize);
@@ -519,14 +524,19 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
     Key = SessionKey;
-    ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
+    if (cryptoKeyType == CRYPTO_TYPE_DES) {
+        ReadAppKey(SelectedApp.Slot, KeyId, Key, CRYPTO_DES_KEY_SIZE);
+        memcpy(Key + CRYPTO_DES_KEY_SIZE, Key, CRYPTO_DES_KEY_SIZE);
+    } else {
+        ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
+    }
 
     /* Decrypt the challenge sent back to get RndA and a shifted RndB */
     BYTE challengeRndAB[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndA[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     BYTE challengeRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
-    Decrypt3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                      &Buffer[1], NULL, Key);
+    Decrypt2K3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
+                        &Buffer[1], NULL, Key);
     RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB,
                      CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
@@ -539,11 +549,11 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
-                      &Buffer[1], NULL, Key);
+    Encrypt2K3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
+                        &Buffer[1], NULL, Key);
 
     /* Create the session key based on the previous exchange */
-    generateSessionKey(SessionKey, challengeRndA, challengeRndB, CRYPTO_TYPE_3K3DES);
+    generateSessionKey(SessionKey, challengeRndA, challengeRndB, CRYPTO_TYPE_2KTDEA);
 
     /* Now that we have auth'ed with the legacy command, a ChangeKey command will
      * allow for subsequent authentication with the ISO or AES routines

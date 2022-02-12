@@ -37,7 +37,7 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_ISO7816_CLA            0x00
 
 /* Storage allocation constants */
-#define DESFIRE_BLOCK_SIZE                (4)  /* Bytes */
+#define DESFIRE_BLOCK_SIZE                (1)  /* Bytes */
 #define DESFIRE_BYTES_TO_BLOCKS(x)        ( ((x) + DESFIRE_BLOCK_SIZE - 1) / DESFIRE_BLOCK_SIZE )
 
 #define DESFIRE_UID_SIZE                  ISO14443A_UID_SIZE_DOUBLE

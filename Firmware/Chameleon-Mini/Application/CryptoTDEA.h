@@ -57,6 +57,9 @@ void DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, c
 void CryptoEncrypt2KTDEA(const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecrypt2KTDEA(const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 
+void Encrypt2K3DESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
+void Decrypt2K3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
+
 void CryptoEncrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 
