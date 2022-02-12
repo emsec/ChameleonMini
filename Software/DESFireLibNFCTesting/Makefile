@@ -66,5 +66,19 @@ prelims:
 	@mkdir -p ./Obj ./Bin
 
 clean:
-	@rm -f $(OBJDIR)/* $(BINDIR)/*
+	@rm -f $(OBJDIR)/* $(BINDIR)/* *.code
 
+style:
+	# Make sure astyle is installed
+	@which astyle >/dev/null || ( echo "Please install 'astyle' package first" ; exit 1 )
+	# Remove spaces & tabs at EOL, add LF at EOF if needed on *.c, *.h, Makefile
+	find . \( -name "*.[ch]" -or -name "Makefile" \) \
+	    -exec perl -pi -e 's/[ \t]+$$//' {} \; \
+	    -exec sh -c "tail -c1 {} | xxd -p | tail -1 | grep -q -v 0a$$" \; \
+	    -exec sh -c "echo >> {}" \;
+	# Apply astyle on *.c, *.h
+	find . -name "*.[ch]" -exec astyle --formatted --mode=c --suffix=none \
+	    --indent=spaces=4 --indent-switches \
+	    --keep-one-line-blocks --max-instatement-indent=60 \
+	    --style=google --pad-oper --unpad-paren --pad-header \
+	    --align-pointer=name {} \;

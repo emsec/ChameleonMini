@@ -76,9 +76,9 @@ extern CryptoKeyBufferType SessionKey;
 extern CryptoIVBufferType SessionIV;
 extern BYTE SessionIVByteSize;
 
-extern uint8_t Authenticated;
+extern bool    Authenticated;
 extern uint8_t AuthenticatedWithKey;
-extern uint8_t AuthenticatedWithPICCMasterKey;
+extern bool    AuthenticatedWithPICCMasterKey;
 extern uint8_t CryptoAuthMethod;
 extern uint8_t ActiveCommMode;
 

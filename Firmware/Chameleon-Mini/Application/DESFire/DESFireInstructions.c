@@ -537,18 +537,21 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    /* Authenticated successfully */
-    Authenticated = 0x01;
-    AuthenticatedWithKey = KeyId;
-    AuthenticatedWithPICCMasterKey = (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT) &&
-                                     (KeyId == DESFIRE_MASTER_KEY_ID);
-
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
                       &Buffer[1], NULL, Key);
 
+    /* Create the session key based on the previous exchange */
     generateSessionKey(SessionKey, challengeRndA, challengeRndB, CRYPTO_TYPE_3K3DES);
+
+    /* Now that we have auth'ed with the legacy command, a ChangeKey command will
+     * allow for subsequent authentication with the ISO or AES routines
+     */
+    Authenticated = true;
+    AuthenticatedWithKey = KeyId;
+    AuthenticatedWithPICCMasterKey = (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT) &&
+                                     (KeyId == DESFIRE_MASTER_KEY_ID);
 
     /* Return the status on success */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -1688,15 +1691,30 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE keySize;
     BYTE *Key;
 
-    /* Reset authentication state right away */
-    InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
     /* Validate command length */
     if (ByteCount != 2) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    /* Validate number of keys: less than max */
+
+    /* Reset authentication state right away:
+     * Check that we have first authenticated with the legacy auth command, and that the
+     * key we are using matches (may require a call to ChangeKey after the legacy auth).
+     * Note that we keep the status flag that we have already auth'ed with the legacy command
+     * in the event of an error.
+     */
     KeyId = Buffer[1];
+    if (!Authenticated || !AuthenticatedWithPICCMasterKey) {
+        Buffer[0] = STATUS_PERMISSION_DENIED;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    } else if (AuthenticatedWithKey != KeyId) {
+        Buffer[0] = STATUS_NO_SUCH_KEY;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    } else {
+        InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
+    }
+
+    /* Validate number of keys: less than max */
     if (!KeyIdValid(SelectedApp.Slot, KeyId)) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -1820,14 +1838,29 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE keySize;
     BYTE *Key, *IVBuffer;
 
-    /* Reset authentication state right away */
-    InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
     /* Validate command length */
     if (ByteCount != 2) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
+
+    /* Reset authentication state right away:
+     * Check that we have first authenticated with the legacy auth command, and that the
+     * key we are using matches (may require a call to ChangeKey after the legacy auth).
+     * Note that we keep the status flag that we have already auth'ed with the legacy command
+     * in the event of an error.
+     */
     KeyId = Buffer[1];
+    if (!Authenticated || !AuthenticatedWithPICCMasterKey) {
+        Buffer[0] = STATUS_PERMISSION_DENIED;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    } else if (AuthenticatedWithKey != KeyId) {
+        Buffer[0] = STATUS_NO_SUCH_KEY;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    } else {
+        InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
+    }
+
     /* Validate number of keys: less than max */
     if (!KeyIdValid(SelectedApp.Slot, KeyId)) {
         Buffer[0] = STATUS_PARAMETER_ERROR;

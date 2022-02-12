@@ -46,9 +46,9 @@ BYTE DesfireCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 uint16_t AESCryptoKeySizeBytes = 0;
 CryptoAESConfig_t AESCryptoContext = { 0 };
 
-uint8_t Authenticated = 0x00;
+bool Authenticated = false;
 uint8_t AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
-uint8_t AuthenticatedWithPICCMasterKey = 0x00;
+bool AuthenticatedWithPICCMasterKey = false;
 uint8_t CryptoAuthMethod = CRYPTO_TYPE_ANY;
 uint8_t ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 
@@ -56,9 +56,9 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
     if (!keepPICCAuthData) {
         AuthenticatedWithPICCMasterKey = DESFIRE_NOT_AUTHENTICATED;
     }
-    Authenticated = 0x00;
+    Authenticated = false;
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
-    AuthenticatedWithPICCMasterKey = 0x00;
+    AuthenticatedWithPICCMasterKey = false;
     Iso7816FileSelected = false;
     CryptoAuthMethod = CRYPTO_TYPE_ANY;
     ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
