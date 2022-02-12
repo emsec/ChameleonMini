@@ -37,6 +37,7 @@ static uint8_t _cmac_K2[CRYPTO_MAX_BLOCK_SIZE] = { 0x00 };
 static uint8_t _cmac_RB[CRYPTO_MAX_BLOCK_SIZE] = { 0x00 };
 static uint8_t _cmac_final[CRYPTO_MAX_BLOCK_SIZE] = { 0x00 };
 static uint8_t _cmac_zeros[CRYPTO_MAX_BLOCK_SIZE] = { 0x00 };
+static uint8_t _mac_key24[CRYPTO_MAX_KEY_SIZE] = { 0x00 };
 
 static void getCMACSubK1(const uint8_t *bufferL, uint8_t blockSize, uint8_t polyByte, uint8_t *bufferOut);
 static void getCMACSubK1(const uint8_t *bufferL, uint8_t blockSize, uint8_t polyByte, uint8_t *bufferOut) {
@@ -126,4 +127,16 @@ bool appendBufferCMAC(uint8_t cryptoType, const uint8_t *keyData, uint8_t *buffe
     } else {
         return appendBufferCMACSubroutine(cryptoType, keyData, _cmac_K1, _cmac_K2, IV, blockSize, bufferData, bufferSize);
     }
+}
+
+uint16_t appendBufferMAC(const uint8_t *keyData, uint8_t *bufferData, uint16_t bufferSize) {
+    memcpy(&_mac_key24[2 * CRYPTO_DES_BLOCK_SIZE], keyData, CRYPTO_DES_BLOCK_SIZE);
+    memcpy(&_mac_key24[CRYPTO_DES_BLOCK_SIZE], keyData, CRYPTO_DES_BLOCK_SIZE);
+    memcpy(&_mac_key24[0], keyData, CRYPTO_DES_BLOCK_SIZE);
+    memset(&_cmac_zeros[0], 0x00, CRYPTO_DES_BLOCK_SIZE);
+    Encrypt3DESBuffer(bufferSize, bufferData, &bufferData[3 * CRYPTO_DES_BLOCK_SIZE], _cmac_zeros, keyData);
+    // Copy the 4-byte MAC from the ciphertext (end of the bufferData array):
+    memcpy(&_cmac_zeros[0], &bufferData[3 * CRYPTO_DES_BLOCK_SIZE + bufferSize - CRYPTO_DES_BLOCK_SIZE], 4);
+    memcpy(&bufferData[bufferSize], &_cmac_zeros[0], 4);
+    return bufferSize + 4;
 }

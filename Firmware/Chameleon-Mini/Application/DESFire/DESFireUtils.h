@@ -53,4 +53,23 @@ uint16_t DesfireAddParityBits(uint8_t *Buffer, uint16_t bits);
 uint16_t DesfireRemoveParityBits(uint8_t *Buffer, uint16_t BitCount);
 bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount);
 
+/* Add utility wrapper functions to perform pre and postprocessing on 
+ * the raw input APDU commands sent by the PCD depending on which 
+ * CommMode (PLAINTEXT|PLAINTEXT-MAC|ENCIPHERED-CMAC-3DES|ECIPHERED-CMAC-AES128) 
+ * setting is active. 
+ *
+ * The implementation is adapted from the Java sources at 
+ * @github/andrade/nfcjlib (in the DESFireEV1 source files). 
+ * We will use the conventions in that library to update the SessionIV buffer 
+ * when the next rounds of data are exchanged. Note that the SessionIV and 
+ * SessionKey arrays are initialized in the Authenticate(Legacy|ISO|AES) commands 
+ * used to initiate the working session from PCD <--> PICC.
+ *
+ * Helper methods to format and encode quirky or pathological cases of the 
+ * CommSettings and wrapped APDU format combinations are defined statically in the 
+ * C source file to save space in the symbol table for the firmware (ELF) binary. 
+ */
+uint16_t DesfirePreprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize);
+uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize);
+
 #endif

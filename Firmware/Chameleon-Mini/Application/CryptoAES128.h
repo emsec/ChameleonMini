@@ -163,7 +163,7 @@ void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *Ciphe
                               uint8_t *Key, uint8_t *IV);
 
 /* Crypto utility functions: */
-#define CRYPTO_BYTES_TO_BLOCKS(numBytes, blockSize) \
+#define CRYPTO_BYTES_TO_BLOCKS(numBytes, blockSize)    \
      ( ((numBytes) + (blockSize) - 1) / (blockSize) )
 
 #define CryptoMemoryXOR(inputBuf, destBuf, bufSize) ({ \
@@ -174,5 +174,13 @@ void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *Ciphe
           *(out++) ^= *(in++);                         \
      }                                                 \
      })
+
+/* The initial value is (-1) in one's complement: */
+#define INIT_CRC32C_VALUE            ((uint32_t) 0xFFFFFFFF)
+
+/* The CCITT CRC-32 polynomial (modulo 2) in little endian (lsb-first) byte order: */
+#define LE_CRC32C_POLYNOMIAL         ((uint32_t) 0xEDB88320)
+
+uint16_t appendBufferCRC32C(uint8_t *bufferData, uint16_t bufferSize);
 
 #endif

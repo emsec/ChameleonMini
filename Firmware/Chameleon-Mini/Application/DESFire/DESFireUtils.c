@@ -146,4 +146,85 @@ bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount) {
     return true;
 }
 
+uint16_t DesfirePreprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize) {
+    switch (CommMode) {
+        case DESFIRE_COMMS_PLAINTEXT:
+	    // Remove the CRCA bytes at the end of the buffer:
+	    return MAX(0, BufferSize - 2);
+	case DESFIRE_COMMS_PLAINTEXT_MAC: {
+	    // TODO: We are not checking the MAC/CMAC bytes for consistency yet ...
+	    uint16_t ChecksumBytes = 0;
+            if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
+                ChecksumBytes = 4;
+	    }
+	    else if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_3K3DES) {
+		ChecksumBytes = CRYPTO_3KTDEA_BLOCK_SIZE;
+	    } else {
+		ChecksumBytes = CRYPTO_AES128_BLOCK_SIZE;
+	    }
+	    return MAX(0, BufferSize - ChecksumBytes);
+	}
+        case DESFIRE_COMMS_CIPHERTEXT_DES: {
+            // TODO ... 
+	    break;
+	}
+	case DESFIRE_COMMS_CIPHERTEXT_AES128: {
+            // TODO ...
+	    break;
+	}
+	default:
+	    break;
+    }
+    return BufferSize;
+}
+
+uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize) {
+    switch (CommMode) {
+        case DESFIRE_COMMS_PLAINTEXT:
+	    ISO14443AAppendCRCA(Buffer, BufferSize);
+	    return BufferSize + 2;
+	case DESFIRE_COMMS_PLAINTEXT_MAC: {
+	    if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
+	        return appendBufferMAC(SessionKey, Buffer, BufferSize);
+	    } else { 
+		// AES-128 or 3DES:
+	        uint16_t MacedBytes = appendBufferCMAC(DesfireCommandState.CryptoMethodType, SessionKey, Buffer, BufferSize, SessionIV);
+		memcpy(SessionIV, &Buffer[BufferSize], MacedBytes - BufferSize);
+                return MacedBytes;
+	    }
+	    break;
+	}
+	case DESFIRE_COMMS_CIPHERTEXT_DES: {
+	    // TripleDES: 
+	    uint16_t CryptoBlockSize = CRYPTO_3KTDEA_BLOCK_SIZE;
+	    uint16_t BlockPadding = 0;
+	    if ((BufferSize % CryptoBlockSize) != 0) {
+	        BlockPadding = CryptoBlockSize - (BufferSize % CryptoBlockSize);
+	    }
+	    uint16_t MacedBytes = appendBufferCMAC(CRYPTO_TYPE_3K3DES, SessionKey, Buffer, BufferSize, SessionIV);
+            memset(&Buffer[MacedBytes], 0x00, BlockPadding);
+	    uint16_t XferBytes = MacedBytes + BlockPadding;
+	    Encrypt3DESBuffer(XferBytes, Buffer, &Buffer[XferBytes], SessionIV, SessionKey);
+	    memmove(&Buffer[0], &Buffer[XferBytes], XferBytes);
+	    return XferBytes;
+	}
+	case DESFIRE_COMMS_CIPHERTEXT_AES128: {
+	    uint16_t CryptoBlockSize = CRYPTO_AES_BLOCK_SIZE;
+	    uint16_t BlockPadding = 0;
+	    if ((BufferSize % CryptoBlockSize) != 0) {
+	        BlockPadding = CryptoBlockSize - (BufferSize % CryptoBlockSize);
+	    }
+	    uint16_t MacedBytes = appendBufferCMAC(CRYPTO_TYPE_AES128, SessionKey, Buffer, BufferSize, SessionIV);
+            memset(&Buffer[MacedBytes], 0x00, BlockPadding);
+	    uint16_t XferBytes = MacedBytes + BlockPadding;
+	    CryptoAESEncryptBuffer(XferBytes, Buffer, &Buffer[XferBytes], SessionIV, SessionKey);
+	    memmove(&Buffer[0], &Buffer[XferBytes], XferBytes);
+	    return XferBytes;
+	}
+	default:
+	    break;
+    }
+    return BufferSize;
+}
+
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

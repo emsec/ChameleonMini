@@ -384,3 +384,23 @@ void CryptoAESEncrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *Ci
     };
     CryptoAES_CBCRecv(Count, PlainText, CipherText, IV, Key, CryptoSpec);
 }
+
+uint16_t appendBufferCRC32C(uint8_t *bufferData, uint16_t bufferSize) {
+    uint32_t workingCRC = INIT_CRC32C_VALUE;
+    for (int i = 0; i < bufferSize; i++) {
+        workingCRC = workingCRC ^ *(bufferData++);
+	for (int j = 0; j < 8; j++) {
+            if (workingCRC & 1) {
+	        workingCRC = (workingCRC >> 1) ^ LE_CRC32C_POLYNOMIAL;
+	    } else {
+		workingCRC = workingCRC >> 1;
+	    }
+	}
+    }
+    // Append the CRC32C bytes in little endian byte order to the end of the buffer: 
+    bufferData[bufferSize] = (uint8_t) (workingCRC & 0x000000FF);
+    bufferData[bufferSize + 1] = (uint8_t) ((workingCRC & 0x0000FF00) >> 8);
+    bufferData[bufferSize + 2] = (uint8_t) ((workingCRC & 0x00FF0000) >> 16);
+    bufferData[bufferSize + 4] = (uint8_t) ((workingCRC & 0xFF000000) >> 24);
+    return bufferSize + 4;
+}

@@ -204,6 +204,29 @@ DF_SETHDR=ATS 0675f7b102
 ```
 Note that the UID for the tag can be set using separate Chameleon terminal commands.
 
+#### DF_COMM_MODE -- Manually sets the communication mode of the current session
+
+The supported (work in progress) DESFire communication modes include: 
+PLAINTEXT, PLAINTEXT-MAC, ENCIPHERED-CMAC-3DES, and ENCIPHERED-CMAC-AES128. 
+It should be clear from the prior commands issued in the session which ``CommMode`` 
+congiguration we are supposed to be working within. This command let's the user 
+reset it intentionally at will for testing and debugging purposes. 
+
+The syntax is as follows:
+```bash
+DF_COMM_MODE?
+DF_COMM_MODE=Plaintext
+DF_COMM_MODE=Plaintext:MAC
+DF_COMM_MODE=Enciphered:3K3DES
+DF_COMM_MODE=Enciphered:AES128
+```
+Use of this experimental command may cause unexpected results, vulnerabilities exposing 
+your keys and sensitive (a priori) protected data to hackers and sniffers, and is 
+discouraged unless you know what you are doing :) Try not to report bugs with the 
+DESFire emulation if things suddenly fail after a call to this terminal command. 
+Putting the Chameleon through a full power recycle (battery off) should reset the setting 
+to the defaults. 
+
 #### DF_LOGMODE -- Sets the depth of (LIVE) logging messages printed at runtime
 
 Syntax -- not guaranteeing that all of these are meaningful or distinct just yet:
