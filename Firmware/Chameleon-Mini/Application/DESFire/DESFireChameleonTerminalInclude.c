@@ -35,18 +35,6 @@ This notice must be retained at the top of all source files where indicated.
     .SetFunc        = CommandDESFireSetHeaderProperty,
     .GetFunc        = CommandDESFireGetHeaderProperty
 }, {
-//    .Command        = DFCOMMAND_LAYOUT_PPRINT,
-//    .ExecFunc       = NO_FUNCTION,
-//    .ExecParamFunc  = CommandDESFireLayoutPPrint,
-//    .SetFunc        = NO_FUNCTION,
-//    .GetFunc        = NO_FUNCTION
-//}, {
-//    .Command        = DFCOMMAND_FIRMWARE_INFO,
-//    .ExecFunc       = CommandDESFireFirmwareInfo,
-//    .ExecParamFunc  = NO_FUNCTION,
-//    .SetFunc        = NO_FUNCTION,
-//    .GetFunc        = NO_FUNCTION
-//}, {
     .Command        = DFCOMMAND_LOGGING_MODE,
     .ExecFunc       = NO_FUNCTION,
     .ExecParamFunc  = NO_FUNCTION,

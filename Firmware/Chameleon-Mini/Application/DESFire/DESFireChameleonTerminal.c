@@ -114,50 +114,6 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
 }
 #endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */
 
-#if 0
-CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InParams) {
-    if (!IsDESFireConfiguration()) {
-        ExitOnInvalidConfigurationError(OutParam);
-    }
-    char pprintListSpecStr[32];
-    BYTE StatusError = 0x00;
-    if (!sscanf_P(InParams, PSTR("%31s"), pprintListSpecStr)) {
-        StatusError = 0x01;
-    } else {
-        pprintListSpecStr[31] = '\0';
-        if (!strcasecmp_P(pprintListSpecStr, PSTR("FullImage"))) {
-            PrettyPrintPICCImageData((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
-        } else if (!strcasecmp_P(pprintListSpecStr, PSTR("HeaderData"))) {
-            PrettyPrintPICCHeaderData((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
-        } else {
-            StatusError = 0x01;
-        }
-    }
-    if (StatusError) {
-        snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-                   PSTR("%s <FullImage|HeaderData>"),
-                   DFCOMMAND_LAYOUT_PPRINT);
-        return COMMAND_ERR_INVALID_USAGE_ID;
-    }
-    return COMMAND_INFO_OK_WITH_TEXT_ID;
-}
-
-CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
-    if (!IsDESFireConfiguration()) {
-        ExitOnInvalidConfigurationError(OutParam);
-    }
-    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-               PSTR("Chameleon-Mini DESFire enabled firmware built on %s "
-                    "based on %s from \r\n"
-                    "https://github.com/maxieds/ChameleonMini.\r\n"
-                    "Revision: %s\r\n"),
-               DESFIRE_FIRMWARE_BUILD_TIMESTAMP,
-               DESFIRE_FIRMWARE_GIT_COMMIT_ID,
-               DESFIRE_FIRMWARE_REVISION);
-    return COMMAND_INFO_OK_WITH_TEXT_ID;
-}
-#endif
-
 CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam) {
     if (!IsDESFireConfiguration()) {
         ExitOnInvalidConfigurationError(OutParam);

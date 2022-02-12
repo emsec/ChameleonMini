@@ -51,9 +51,12 @@ DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
 BYTE DesfireCmdCLA = DESFIRE_NATIVE_CLA;
+static bool AnticolNoResp = false;
 
 /* Dispatching routines */
-void MifareDesfireReset(void) {}
+void MifareDesfireReset(void) {
+    AnticolNoResp = false;
+}
 
 static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool FormatPICC) {
     ResetLocalStructureData();
@@ -247,12 +250,18 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         return ProcessedBitCount;
     } else if ((ReturnedBytes = CallInstructionHandler(Buffer, ByteCount)) != ISO14443A_APP_NO_RESPONSE) {
         return ReturnedBytes;
-    } else {
-        return ISO144433APiccProcess(Buffer, BitCount);
+    } else if (!AnticolNoResp) {
+        uint16_t PiccProcessRespBytes = ISO144433APiccProcess(Buffer, BitCount);
+	if (PiccProcessRespBytes == ISO14443A_APP_NO_RESPONSE) {
+	    AnticolNoResp = true;
+	}
+	return PiccProcessRespBytes;
     }
+    return ISO14443A_APP_NO_RESPONSE;
 }
 
 void ResetLocalStructureData(void) {
+    AnticolNoResp = false;
     DesfirePreviousState = DESFIRE_IDLE;
     DesfireState = DESFIRE_HALT;
     InvalidateAuthState(0x00);

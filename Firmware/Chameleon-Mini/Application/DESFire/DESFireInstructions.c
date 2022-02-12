@@ -45,6 +45,68 @@ This notice must be retained at the top of all source files where indicated.
 
 DesfireSavedCommandStateType DesfireCommandState = { 0 };
 
+/* Helper and batch process functions */
+static uint16_t ExitWithStatus(uint8_t *Buffer, uint8_t StatusCode, uint16_t DefaultReturnValue);
+uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount);
+
+/* General commands */
+static uint16_t EV0CmdFormatPicc(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t DesfireCmdGetCardUID(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t DesfireCmdSetConfiguration(uint8_t *Buffer, uint16_t ByteCount); // ?? Docs ??
+static uint16_t DesfireCmdFreeMemory(uint8_t *Buffer, uint16_t ByteCount); // returns free memory on the tag
+
+/* Key management commands */
+static uint16_t EV0CmdChangeKey(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdGetKeySettings(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdChangeKeySettings(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t DesfireCmdGetKeyVersion(uint8_t *Buffer, uint16_t ByteCount);
+
+/* Application management commands */
+static uint16_t EV0CmdGetApplicationIds1(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdCreateApplication(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdDeleteApplication(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdSelectApplication(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t DesfireCmdGetDFNames(uint8_t *Buffer, uint16_t ByteCount);
+
+/* File management commands */
+static uint16_t EV0CmdCreateStandardDataFile(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdCreateBackupDataFile(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdCreateValueFile(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdCreateLinearRecordFile(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdCreateCyclicRecordFile(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdDeleteFile(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdGetFileIds(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdGetFileSettings(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdChangeFileSettings(uint8_t *Buffer, uint16_t ByteCount);
+
+/* Data manipulation commands */
+// NOTE: Page 57: Read file functions:
+static uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdGetValue(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdCredit(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdDebit(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdLimitedCredit(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdWriteRecord(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdClearRecords(uint8_t *Buffer, uint16_t ByteCount);
+
+/* Transaction handling commands */
+static uint16_t EV0CmdCommitTransaction(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t EV0CmdAbortTransaction(uint8_t *Buffer, uint16_t ByteCount);
+
+/* ISO7816 command handling */
+static uint16_t ISO7816CmdSelect(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t ISO7816CmdSelectEF(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t ISO7816CmdSelectDF(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t ISO7816CmdGetChallenge(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t ISO7816CmdExternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t ISO7816CmdInternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount);
+static uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount);
+
 /* NOTE: The order of the structures in this buffer MUST be kept in
  *       ascending sorted order by the INS code. This property of the
  *       array has to be maintained as new commands and functions are

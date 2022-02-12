@@ -182,7 +182,6 @@ SRC	    += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
                $(DESFIRE_MAINSRC)/DESFireLogging.c \
                $(DESFIRE_MAINSRC)/DESFireMemoryOperations.c \
                $(DESFIRE_MAINSRC)/DESFirePICCControl.c \
-               $(DESFIRE_MAINSRC)/DESFirePICCHeaderLayout.c \
                $(DESFIRE_MAINSRC)/DESFireUtils.c
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA

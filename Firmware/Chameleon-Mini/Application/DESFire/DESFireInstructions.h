@@ -122,81 +122,21 @@ extern const __flash DESFireCommand DESFireCommandSet[];
 
 /* Helper and batch process functions */
 uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ExitWithStatus(uint8_t *Buffer, uint8_t StatusCode, uint16_t DefaultReturnValue);
-uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount);
 
 /*
  * The following section implements:
  * DESFire EV0 / D40 specific commands
  */
 
-/* General commands */
 uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdGetVersion2(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdGetVersion3(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdFormatPicc(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t DesfireCmdGetCardUID(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t DesfireCmdSetConfiguration(uint8_t *Buffer, uint16_t ByteCount); // ?? Docs ??
-uint16_t DesfireCmdFreeMemory(uint8_t *Buffer, uint16_t ByteCount); // returns free memory on the tag
-
-/* Key management commands */
-uint16_t EV0CmdChangeKey(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdGetKeySettings(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdChangeKeySettings(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t DesfireCmdGetKeyVersion(uint8_t *Buffer, uint16_t ByteCount);
-
-/* Application management commands */
-uint16_t EV0CmdGetApplicationIds1(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdCreateApplication(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdDeleteApplication(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdSelectApplication(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t DesfireCmdGetDFNames(uint8_t *Buffer, uint16_t ByteCount);
-
-/* File management commands */
-uint16_t EV0CmdCreateStandardDataFile(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdCreateBackupDataFile(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdCreateValueFile(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdCreateLinearRecordFile(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdCreateCyclicRecordFile(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdDeleteFile(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdGetFileIds(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdGetFileSettings(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdChangeFileSettings(uint8_t *Buffer, uint16_t ByteCount);
-
-/* Data manipulation commands */
-// NOTE: Page 57: Read file functions:
-uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdGetValue(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdCredit(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdDebit(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdLimitedCredit(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdWriteRecord(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdClearRecords(uint8_t *Buffer, uint16_t ByteCount);
-
-/* Transaction handling commands */
-uint16_t EV0CmdCommitTransaction(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t EV0CmdAbortTransaction(uint8_t *Buffer, uint16_t ByteCount);
-
-/* EV1/EV2 supported commands */
 uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount);
+
 uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount);
-
-/* ISO7816 command handling */
-uint16_t ISO7816CmdSelect(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdSelectEF(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdSelectDF(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdGetChallenge(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdExternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdInternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdReadBinary(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdUpdateBinary(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdReadRecords(uint8_t *Buffer, uint16_t ByteCount);
-uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount);
 
 #endif

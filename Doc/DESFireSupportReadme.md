@@ -204,23 +204,6 @@ DF_SETHDR=ATS 0675f7b102
 ```
 Note that the UID for the tag can be set using separate Chameleon terminal commands.
 
-#### DF_PPRINT_PICC -- Visualize tag contents
-
-This lets users pretty print the tag layout in several different ways, and with 
-a couple of options for verbosity. This helps with visualizing the landscape that 
-we are programming. The syntax include: 
-```bash
-DF_PPRINT_PICC FullImage
-DF_PPRINT_PICC HeaderData
-```
-
-#### DF_FWINFO -- Print firmware revision information 
-
-Self explanatory and similar to the familiar ``VERSION`` command. Syntax:
-```bash 
-DF_FWINFO
-```
-
 #### DF_LOGMODE -- Sets the depth of (LIVE) logging messages printed at runtime
 
 Syntax -- not guaranteeing that all of these are meaningful or distinct just yet:
