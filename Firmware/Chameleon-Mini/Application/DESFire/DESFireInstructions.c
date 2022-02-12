@@ -2020,7 +2020,7 @@ uint16_t ISO7816CmdSelect(uint8_t *Buffer, uint16_t ByteCount) {
         return ISO7816CmdSelectDF(Buffer, ByteCount);
     }
     Buffer[0] = ISO7816_ERROR_SW1_INS_UNSUPPORTED;
-    Buffer[1] = ISO7816_ERROR_SW2_INS_UNSUPPORTED;
+    Buffer[1] = ISO7816_ERROR_SW2_FUNC_UNSUPPORTED;
     return ISO7816_STATUS_RESPONSE_SIZE;
 }
 
