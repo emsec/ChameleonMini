@@ -4,7 +4,7 @@
 #include "Common.h"
 
 #ifdef MEMORY_LIMITED_TESTING
-#define LOG_SIZE                1284 // 1536
+#define LOG_SIZE                764 // 1536
 #else
 #define LOG_SIZE	        2048
 #endif
