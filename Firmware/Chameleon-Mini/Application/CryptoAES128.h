@@ -99,18 +99,20 @@ typedef enum aes_intlvl {
 /* AES interrupt callback function pointer. */
 typedef void (*aes_callback_t)(void);
 
+#define CRYPTO_AES128_STRUCT_ATTR               __attribute((aligned(1)))
+
 typedef struct {
     CryptoAESDec_t   ProcessingMode;
     uint8_t          ProcessingDelay;            // [0,15]
     CryptoAESAuto_t  StartMode;
     unsigned char    OpMode;                     // 0 = ECB, 1 = CBC, 2 = OFB, 3 = CFB, 4 = CTR
     CryptoAESXor_t   XorMode;
-} CryptoAESConfig_t;
+} CryptoAESConfig_t CRYPTO_AES128_STRUCT_ATTR;
 
 typedef struct {
     unsigned char   datrdy;                      // ENABLE/DISABLE; Data ready interrupt
     unsigned char   urad;                        // ENABLE/DISABLE; Unspecified Register Access Detection
-} CryptoAES_ISRConfig_t;
+} CryptoAES_ISRConfig_t CRYPTO_AES128_STRUCT_ATTR;
 
 /* AES encryption complete. */
 #define AES_ENCRYPTION_COMPLETE  (1UL << 0)
@@ -149,15 +151,15 @@ typedef uint8_t (*CryptoAESFuncType)(uint8_t *, uint8_t *, uint8_t *);
 typedef struct {
     CryptoAESFuncType  cryptFunc;
     uint16_t           blockSize;
-} CryptoAES_CBCSpec_t;
+} CryptoAES_CBCSpec_t CRYPTO_AES128_STRUCT_ATTR;
 
+#ifdef ENABLE_CRYPTO_TESTS
 void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
                        uint8_t *IV, uint8_t *Key,
                        CryptoAES_CBCSpec_t CryptoSpec);
 void CryptoAES_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
                        uint8_t *IV, uint8_t *Key,
                        CryptoAES_CBCSpec_t CryptoSpec);
-
 void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
                               uint8_t *Key, uint8_t *IV);
 void CryptoAESDecrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
@@ -166,6 +168,7 @@ void CryptoAESEncrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *Ci
                                  uint8_t *Key, uint8_t *IV);
 void CryptoAESDecrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
                                  uint8_t *Key, uint8_t *IV);
+#endif
 
 /* Crypto utility functions: */
 #define CRYPTO_BYTES_TO_BLOCKS(numBytes, blockSize) \

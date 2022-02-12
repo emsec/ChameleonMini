@@ -174,6 +174,7 @@ void InitAESCryptoKeyData(void) {
     memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
 }
 
+#ifdef ENABLE_CRYPTO_TESTS
 uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8_t *Key) {
     uint8_t AvailablePlaintext = TransferState.ReadData.Encryption.AvailablePlaintext;
     uint8_t TempBuffer[(DESFIRE_MAX_PAYLOAD_AES_BLOCKS + 1) * CRYPTO_DES_BLOCK_SIZE];
@@ -213,6 +214,7 @@ uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const ui
     LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
     return STATUS_OPERATION_OK;
 }
+#endif
 
 /* Checksum routines */
 
@@ -281,6 +283,7 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer) {
 
 /* Encryption routines */
 
+#ifdef ENABLE_CRYPTO_TESTS
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count) {
     uint8_t AvailablePlaintext = TransferState.ReadData.Encryption.AvailablePlaintext;
     uint8_t TempBuffer[(DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS + 1) * CRYPTO_DES_BLOCK_SIZE];
@@ -312,5 +315,6 @@ uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count) {
     LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
     return 0;
 }
+#endif
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

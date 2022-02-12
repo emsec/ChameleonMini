@@ -236,7 +236,7 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
     };
     AUTHENTICATE_LEGACY_CMD[5] = keyIndex;
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, ">>> Start Legacy 2K3DES (EEE/DDD) Authenticate:\n");
+        fprintf(stdout, ">>> Start Legacy 2K3DES Authenticate:\n");
         fprintf(stdout, "    -> ");
         print_hex(AUTHENTICATE_LEGACY_CMD, sizeof(AUTHENTICATE_LEGACY_CMD));
     }

@@ -47,7 +47,7 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_PICC_ARRAY_ALIGNAT                  __attribute__((aligned(1)))
 #define DESFIRE_FIRMWARE_ARRAY_ALIGNAT              __attribute__((aligned(1)))
 #define DESFIRE_FIRMWARE_ENUM_PACKING               __attribute__((aligned(1)))
-#define DESFIRE_FIRMWARE_NOINIT                     __attribute__ ((section (".noinit")))
+#define DESFIRE_FIRMWARE_NOINIT                     __attribute__((section(".noinit")))
 
 /* Some standard boolean interpreted and other values for types and return values: */
 typedef int      BOOL;

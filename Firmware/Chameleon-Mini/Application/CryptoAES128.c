@@ -289,6 +289,7 @@ uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciph
     return 0;
 }
 
+#ifdef ENABLE_CRYPTO_TESTS
 // This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
 void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
                        uint8_t *IV, uint8_t *Key,
@@ -376,3 +377,4 @@ void CryptoAESDecrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *Ci
     };
     CryptoAES_CBCRecv(Count, PlainText, CipherText, IV, Key, CryptoSpec);
 }
+#endif

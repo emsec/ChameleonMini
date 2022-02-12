@@ -129,8 +129,11 @@ typedef void (*CryptoAESCBCFuncType)(uint16_t, void *, void *, uint8_t *, uint8_
 
 typedef uint8_t (*CryptoTransferSendFunc)(uint8_t *, uint8_t);
 typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t *, uint8_t);
+
+#ifdef ENABLE_CRYPTO_TESTS
 uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8_t *Key);
 uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const uint8_t *Key);
+#endif
 
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
 

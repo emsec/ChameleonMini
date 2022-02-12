@@ -131,7 +131,7 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT_MAC:
             TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
             TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
-            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCSend;
+            //TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCSend;
             memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
@@ -139,7 +139,7 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
             TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCRCA;
             TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
             TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT;
-            TransferState.ReadData.Encryption.Func = &TransferEncryptTDEASend;
+            //TransferState.ReadData.Encryption.Func = &TransferEncryptTDEASend;
             memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
             break;
@@ -157,7 +157,7 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT_MAC:
             TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
             TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
-            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCReceive;
+            //TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCReceive;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
@@ -165,7 +165,7 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
             TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCRCA;
             TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
             TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT;
-            TransferState.WriteData.Encryption.Func = &TransferEncryptTDEAReceive;
+            //TransferState.WriteData.Encryption.Func = &TransferEncryptTDEAReceive;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
             break;
