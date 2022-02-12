@@ -114,6 +114,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
 }
 #endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */
 
+#if 0
 CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InParams) {
     if (!IsDESFireConfiguration()) {
         ExitOnInvalidConfigurationError(OutParam);
@@ -155,6 +156,7 @@ CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
                DESFIRE_FIRMWARE_REVISION);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
+#endif
 
 CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam) {
     if (!IsDESFireConfiguration()) {

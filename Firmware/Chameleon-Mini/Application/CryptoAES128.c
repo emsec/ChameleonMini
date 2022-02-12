@@ -99,6 +99,9 @@ void aes_get_key(uint8_t *key_out) {
     }
 }
 
+static void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key, bool XorModeOn);
+static void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key);
+
 static bool aes_lastsubkey_generate(uint8_t *key, uint8_t *last_sub_key) {
     bool keygen_ok;
     aes_software_reset();
@@ -178,7 +181,8 @@ void CryptoAESInitContext(CryptoAESConfig_t *ctx) {
     aes_set_callback(&int_callback_aes);
 }
 
-uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize) {
+static uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize);
+static uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize) {
     uint16_t spareBytes = (bufSize % CRYPTO_AES_BLOCK_SIZE);
     if (spareBytes == 0) {
         return bufSize;
@@ -186,7 +190,7 @@ uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize) {
     return bufSize + CRYPTO_AES_BLOCK_SIZE - spareBytes;
 }
 
-void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key, bool XorModeOn) {
+static void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key, bool XorModeOn) {
     aes_software_reset();
     AES.CTRL = AES_RESET_bm;
     NOP();
@@ -207,7 +211,7 @@ void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_
     aes_clear_error_flag();
 }
 
-void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key) {
+static void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key) {
     AES.CTRL = AES_RESET_bm;
     NOP();
     AES.CTRL = 0;
@@ -289,9 +293,9 @@ uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciph
     return 0;
 }
 
-#ifdef ENABLE_CRYPTO_TESTS
 // This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
-void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
+static void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext, uint8_t *IV, uint8_t *Key, CryptoAES_CBCSpec_t CryptoSpec);
+static void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
                        uint8_t *IV, uint8_t *Key,
                        CryptoAES_CBCSpec_t CryptoSpec) {
     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
@@ -317,7 +321,8 @@ void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
 }
 
 // This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
-void CryptoAES_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
+static void CryptoAES_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext, uint8_t *IV, uint8_t *Key, CryptoAES_CBCSpec_t CryptoSpec);
+static void CryptoAES_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
                        uint8_t *IV, uint8_t *Key,
                        CryptoAES_CBCSpec_t CryptoSpec) {
     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
@@ -342,19 +347,30 @@ void CryptoAES_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
     }
 }
 
-void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
+#ifdef ENABLE_CRYPTO_TESTS
+void CryptoAESDecrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
                               uint8_t *Key, uint8_t *IV) {
     CryptoAES_CBCSpec_t CryptoSpec = {
-        .cryptFunc   = &CryptoAESEncryptBlock,
+        .cryptFunc   = &CryptoAESDecryptBlock,
         .blockSize   = CRYPTO_AES_BLOCK_SIZE
     };
     CryptoAES_CBCSend(Count, PlainText, CipherText, IV, Key, CryptoSpec);
 }
 
-void CryptoAESDecrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
-                              uint8_t *Key, uint8_t *IV) {
+void CryptoAESDecrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
+                                 uint8_t *Key, uint8_t *IV) {
     CryptoAES_CBCSpec_t CryptoSpec = {
         .cryptFunc   = &CryptoAESDecryptBlock,
+        .blockSize   = CRYPTO_AES_BLOCK_SIZE
+    };
+    CryptoAES_CBCRecv(Count, PlainText, CipherText, IV, Key, CryptoSpec);
+}
+#endif
+
+void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
+                              uint8_t *Key, uint8_t *IV) {
+    CryptoAES_CBCSpec_t CryptoSpec = {
+        .cryptFunc   = &CryptoAESEncryptBlock,
         .blockSize   = CRYPTO_AES_BLOCK_SIZE
     };
     CryptoAES_CBCSend(Count, PlainText, CipherText, IV, Key, CryptoSpec);
@@ -368,13 +384,3 @@ void CryptoAESEncrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *Ci
     };
     CryptoAES_CBCRecv(Count, PlainText, CipherText, IV, Key, CryptoSpec);
 }
-
-void CryptoAESDecrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
-                                 uint8_t *Key, uint8_t *IV) {
-    CryptoAES_CBCSpec_t CryptoSpec = {
-        .cryptFunc   = &CryptoAESDecryptBlock,
-        .blockSize   = CRYPTO_AES_BLOCK_SIZE
-    };
-    CryptoAES_CBCRecv(Count, PlainText, CipherText, IV, Key, CryptoSpec);
-}
-#endif

@@ -281,6 +281,12 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer) {
     return 4;
 }
 
+void TransferChecksumUpdateCMAC(const uint8_t *Buffer, uint8_t Count) {} // TODO
+
+uint8_t TransferChecksumFinalCMAC(uint8_t *Buffer) {
+    return 0x00; // TODO
+}
+
 /* Encryption routines */
 
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count) {

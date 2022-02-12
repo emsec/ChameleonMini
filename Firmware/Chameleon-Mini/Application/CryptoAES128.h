@@ -138,10 +138,7 @@ void aes_set_callback(const aes_callback_t callback);
 
 void CryptoAESGetConfigDefaults(CryptoAESConfig_t *ctx);
 void CryptoAESInitContext(CryptoAESConfig_t *ctx);
-uint16_t CryptoAESGetPaddedBufferSize(uint16_t bufSize);
 
-void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key, bool);
-void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key);
 uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
                                const uint8_t *IV, const uint8_t *Key);
 uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
@@ -154,21 +151,16 @@ typedef struct {
 } CryptoAES_CBCSpec_t CRYPTO_AES128_STRUCT_ATTR;
 
 #ifdef ENABLE_CRYPTO_TESTS
-void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
-                       uint8_t *IV, uint8_t *Key,
-                       CryptoAES_CBCSpec_t CryptoSpec);
-void CryptoAES_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
-                       uint8_t *IV, uint8_t *Key,
-                       CryptoAES_CBCSpec_t CryptoSpec);
-void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
-                              uint8_t *Key, uint8_t *IV);
 void CryptoAESDecrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
                               uint8_t *Key, uint8_t *IV);
-void CryptoAESEncrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
-                                 uint8_t *Key, uint8_t *IV);
 void CryptoAESDecrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
                                  uint8_t *Key, uint8_t *IV);
 #endif
+
+void CryptoAESEncrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
+                                 uint8_t *Key, uint8_t *IV);
+void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *CipherText,
+                              uint8_t *Key, uint8_t *IV);
 
 /* Crypto utility functions: */
 #define CRYPTO_BYTES_TO_BLOCKS(numBytes, blockSize) \

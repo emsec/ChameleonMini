@@ -145,7 +145,7 @@ This notice must be retained at the top of all source files where indicated.
 #define PICC_FORMAT_BYTE                   (0x00)
 #define PICC_EMPTY_BYTE                    (0x00)
 
-typedef struct DESFIRE_FIRMWARE_PACKING  DESFIRE_FIRMWARE_ALIGNAT {
+typedef struct {
     /* Static data: does not change during the PICC's lifetime.
      * We will add Chameleon Mini terminal commands to enable
      * resetting this data so tags can be emulated authentically.
@@ -164,11 +164,11 @@ typedef struct DESFIRE_FIRMWARE_PACKING  DESFIRE_FIRMWARE_ALIGNAT {
     uint8_t ATSBytes[5];
     /* Dynamic data: changes during the PICC's lifetime */
     uint16_t FirstFreeBlock;
-    uint8_t TransactionStarted; // USED ???
-    uint8_t Spare[9] DESFIRE_FIRMWARE_ALIGNAT; // USED ???
-} DESFirePICCInfoType;
+    uint8_t TransactionStarted;
+    //uint8_t Spare[9] DESFIRE_FIRMWARE_ALIGNAT; // USED ANYWHERE ???
+} DESFirePICCInfoType DESFIRE_FIRMWARE_PACKING;
 
-typedef struct DESFIRE_FIRMWARE_PACKING {
+typedef struct {
     BYTE  Slot;
     BYTE  KeyCount;
     BYTE  MaxKeyCount;
@@ -182,8 +182,8 @@ typedef struct DESFIRE_FIRMWARE_PACKING {
     SIZET KeyVersionsArray;       /* Block offset in FRAM */
     SIZET KeyTypesArray;          /* Block offset in FRAM */
     SIZET KeyAddress;             /* Block offset in FRAM */
-    UINT  DirtyFlags;             // USED ???
-} SelectedAppCacheType;
+    //UINT  DirtyFlags;           // USED ANYWHERE ???
+} SelectedAppCacheType DESFIRE_FIRMWARE_PACKING;
 
 extern BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;
 extern BYTE APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE;

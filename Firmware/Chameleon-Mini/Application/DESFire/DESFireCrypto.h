@@ -28,6 +28,7 @@ This notice must be retained at the top of all source files where indicated.
 #define __DESFIRE_CRYPTO_H__
 
 #include "../../Common.h"
+#include "../CryptoAES128.h"
 
 #include "DESFireFirmwareSettings.h"
 
@@ -63,7 +64,6 @@ extern BYTE DesfireCommMode;
     ((ct == CRYPTO_TYPE_AES128) || (ct == CRYPTO_TYPE_ANY))
 
 /* Key sizes, block sizes (in bytes): */
-#define CRYPTO_AES_KEY_SIZE                  (16)
 #define CRYPTO_MAX_KEY_SIZE                  (24)
 #define CRYPTO_MAX_BLOCK_SIZE                (16)
 #define DESFIRE_AES_IV_SIZE                  (CRYPTO_AES_BLOCK_SIZE)
@@ -152,5 +152,10 @@ void TransferChecksumUpdateCRCA(const uint8_t *Buffer, uint8_t Count);
 uint8_t TransferChecksumFinalCRCA(uint8_t *Buffer);
 void TransferChecksumUpdateMACTDEA(const uint8_t *Buffer, uint8_t Count);
 uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer);
+
+#include "../CryptoCMAC.h"
+
+void TransferChecksumUpdateCMAC(const uint8_t *Buffer, uint8_t Count);
+uint8_t TransferChecksumFinalCMAC(uint8_t *Buffer);
 
 #endif

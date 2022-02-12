@@ -96,8 +96,8 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Set a default logging mode for debugging with the DESFire
 #emulation code:
-SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
-#SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
+#SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
+SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
 SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
@@ -141,8 +141,7 @@ DESFIRE_CONFIG_SETTINGS_BASE = $(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_
 
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000  #Start of data section in flash
-FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
-#FLASH_DATA_SIZE = 0x0FFFF  #Size of data section in flash
+FLASH_DATA_SIZE = 0x10000  #Size of data section in flash
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
@@ -172,7 +171,7 @@ SRC         += Application/MifareUltralight.c Application/MifareClassic.c Applic
 SRC         += Application/NTAG215.c
 SRC         += Codec/ISO15693.c
 SRC         += Application/Vicinity.c Application/Sl2s2002.c Application/TITagitstandard.c Application/TITagitplus.c Application/ISO15693-A.c Application/EM4233.c
-SRC	       += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
+SRC	    += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
                $(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
                $(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
                $(DESFIRE_MAINSRC)/DESFireCrypto.c \
@@ -193,9 +192,10 @@ CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR)
 			   -D__AVR_ATxmega128A4U__ -D__PROG_TYPES_COMPAT__ -DMAX_ENDPOINT_INDEX=4 \
 			   -std=gnu99 -Werror=implicit-function-declaration \
 			   -fno-inline-small-functions -fshort-enums -fpack-struct \
-                  	   -Wl,--gc-sections --data-sections -ffunction-sections -fdata-sections \
+			   -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden \
+			   -Wl,-strip-all -Wl,--gc-sections --data-sections \
                            -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
-			   -fno-aggressive-loop-optimizations
+			   -fno-aggressive-loop-optimizations #-fno-jump-tables -fno-common
 LD_FLAGS     = $(CC_FLAGS) -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES =
@@ -252,7 +252,7 @@ program-latest: check_size
 	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP_LATEST) $(AVRDUDE_WRITE_EEPROM_LATEST)
 
 # Program the device using batchisp and the DFU bootloader
-# Note that the device has to be in bootloader mode already
+# Note that the device has to be in bootloader mode already-ffunction-sections -fdata-sections 
 dfu-flip: $(TARGET).hex $(TARGET).eep check_size
 	cp $(TARGET).eep EEPROM.hex
 	batchisp -hardware usb -device $(MCU) -operation erase f memory FLASH loadbuffer $(TARGET).hex program verify memory EEPROM loadbuffer EEPROM.hex program verify start reset 0
@@ -305,9 +305,13 @@ git-add-dev:
 ## Defining custom targets for the DESFire build (normal/user mode) and
 ## developer mode for use with the Android CMLD application that enables
 ## the printing of LIVE logs to the phone's console by default:
-desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep
+desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep check_size
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
-	@avr-size $(TARGET).elf
+	@echo -e "\n"
+	@avr-size -A -x $(TARGET).elf
+	@avr-size -B -x $(TARGET).elf
+	@echo -e "\n"
+	@avr-size -C -x $(TARGET).elf
 desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_NONE
 desfire: desfire-build
