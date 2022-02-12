@@ -1813,18 +1813,21 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    /* Authenticated successfully */
-    Authenticated = 0x01;
-    AuthenticatedWithKey = KeyId;
-    AuthenticatedWithPICCMasterKey = (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT) &&
-                                     (KeyId == DESFIRE_MASTER_KEY_ID);
-
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Encrypt3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
                       &Buffer[1], NULL, Key);
 
+    /* Create the session key based on the previous exchange */
     generateSessionKey(SessionKey, challengeRndA, challengeRndB, CRYPTO_TYPE_3K3DES);
+
+    /* Now that we have auth'ed with the legacy command, a ChangeKey command will
+     * allow for subsequent authentication with the ISO or AES routines
+     */
+    Authenticated = true;
+    AuthenticatedWithKey = KeyId;
+    AuthenticatedWithPICCMasterKey = (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT) &&
+                                     (KeyId == DESFIRE_MASTER_KEY_ID);
 
     /* Return the status on success */
     Buffer[0] = STATUS_OPERATION_OK;
@@ -1968,19 +1971,22 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    /* Authenticated successfully */
-    Authenticated = 0x01;
-    AuthenticatedWithKey = KeyId;
-    AuthenticatedWithPICCMasterKey = (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT) &&
-                                     (KeyId == DESFIRE_MASTER_KEY_ID);
-
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     memset(challengeRndAB, 0x00, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndAB, challengeRndA, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     CryptoAESEncryptBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, &Buffer[1], NULL, Key);
 
+    /* Create the session key based on the previous exchange */
     generateSessionKey(SessionKey, challengeRndA, challengeRndB, CRYPTO_TYPE_AES128);
+
+    /* Now that we have auth'ed with the legacy command, a ChangeKey command will
+     * allow for subsequent authentication with the ISO or AES routines
+     */
+    Authenticated = true;
+    AuthenticatedWithKey = KeyId;
+    AuthenticatedWithPICCMasterKey = (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT) &&
+                                     (KeyId == DESFIRE_MASTER_KEY_ID);
 
     /* Return the status on success */
     Buffer[0] = STATUS_OPERATION_OK;
