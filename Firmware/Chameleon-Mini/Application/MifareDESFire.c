@@ -226,13 +226,13 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     } else if (ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
                Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
         return MifareDesfireProcess(Buffer, BitCount);
-    } else if (ByteCount == 4 && Buffer[2] == 0x37 && Buffer[3] == 0xC8) { 
-        // NXP-based PCD sent a "keep alive" response of ACK, 
-	// so we respond with a corresponding NAK (with CRCA bytes appended):
-	Buffer[2] = 0x7E;
-	Buffer[3] = 0x44;
+    } else if (ByteCount == 4 && Buffer[2] == 0x37 && Buffer[3] == 0xC8) {
+        // NXP-based PCD sent a "keep alive" response of ACK,
+        // so we respond with a corresponding NAK (with CRCA bytes appended):
+        Buffer[2] = 0x7E;
+        Buffer[3] = 0x44;
         ISO14443AAppendCRCA(Buffer, 4);
-	return 6 * BITS_PER_BYTE;
+        return 6 * BITS_PER_BYTE;
     } else if (IsWrappedISO7816CommandType(Buffer, ByteCount)) {
         uint8_t ISO7816PrologueBytes[2];
         memcpy(&ISO7816PrologueBytes[0], Buffer, 2);

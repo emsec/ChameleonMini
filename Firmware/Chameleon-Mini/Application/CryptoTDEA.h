@@ -66,7 +66,6 @@ void CryptoDecrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys)
 void Encrypt3DESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 void Decrypt3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 
-#ifdef ENABLE_CRYPTO_TESTS
 /** Performs the 2-key Triple DES en/deciphering in the CBC "send" mode (xor-then-crypt)
  *
  * \param Count         Block count, expected to be >= 1
@@ -90,6 +89,7 @@ void CryptoEncrypt2KTDEA_CBCReceive(uint16_t Count, const void *Input, void *Out
 void CryptoDecrypt2KTDEA_CBCReceive(uint16_t Count, const void *Input, void *Output, void *IV, const uint8_t *Keys);
 
 
+#ifdef ENABLE_CRYPTO_TESTS
 /** Performs the 3-key Triple DES en/deciphering in the CBC "send" or "receive" mode
  *
  * \param Count         Block count, expected to be >= 1
@@ -108,7 +108,6 @@ typedef struct {
     uint16_t           blockSize;
 } CryptoTDEA_CBCSpec;
 
-#ifdef ENABLE_CRYPTO_TESTS
 void CryptoTDEA_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
                         void *IV, const uint8_t *Keys, CryptoTDEA_CBCSpec CryptoSpec);
 void CryptoTDEA_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
@@ -116,7 +115,6 @@ void CryptoTDEA_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
 
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count);
 uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count);
-#endif
 
 /** Applies padding to the data within the buffer
  *

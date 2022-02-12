@@ -283,7 +283,6 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer) {
 
 /* Encryption routines */
 
-#ifdef ENABLE_CRYPTO_TESTS
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count) {
     uint8_t AvailablePlaintext = TransferState.ReadData.Encryption.AvailablePlaintext;
     uint8_t TempBuffer[(DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS + 1) * CRYPTO_DES_BLOCK_SIZE];
@@ -315,6 +314,5 @@ uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count) {
     LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
     return 0;
 }
-#endif
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

@@ -229,7 +229,7 @@ void LogSRAMToFRAM(void) {
             LogFRAMAddr += FRAM_Free;
             MemoryWriteBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
         } else {
-            // TODO handle the case in which the FRAM is full
+            // TODO: handle the case in which the FRAM is full
         }
     }
 }
