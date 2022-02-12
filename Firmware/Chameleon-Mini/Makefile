@@ -166,7 +166,7 @@ SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Termina
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S
 SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c \
 			Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c \
-			Application/CryptoTDEA-HWAccelerated.S Application/CryptoTDEA.c Application/CryptoAES128.c \
+			Application/CryptoTDEA-HWAccelerated.S Application/CryptoTDEA.c Application/CryptoAES128.c Application/CryptoCMAC.c \
 			Tests/CryptoTests.c Tests/ChameleonTerminal.c
 SRC         += Application/NTAG215.c
 SRC         += Codec/ISO15693.c
