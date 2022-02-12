@@ -482,6 +482,13 @@ static void DecodeCommand(void) {
         /* Send optional answer */
         TerminalSendString(pTerminalBuffer);
         TerminalSendStringP(PSTR(OPTIONAL_ANSWER_TRAILER));
+        if (StringLength(pTerminalBuffer, TERMINAL_BUFFER_SIZE) + 1 >= TERMINAL_BUFFER_SIZE) {
+            // Notify the user that the command line output is truncated. This can come up in the
+            // 'CONFIG=MF_DESFIRE' variants where the Makefile setting 'MEMORY_LIMITED_TESTING' is
+            // enabled by default to save space for other necessary components.
+            TerminalSendStringP(PSTR("-- OUTPUT TRUNCATED --"));
+            TerminalSendStringP(PSTR(OPTIONAL_ANSWER_TRAILER));
+        }
     }
 }
 

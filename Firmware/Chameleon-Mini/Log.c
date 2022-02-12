@@ -213,7 +213,6 @@ void LogGetModeList(char *List, uint16_t BufferSize) {
 void LogSRAMToFRAM(void) {
     if (LogMemLeft < LOG_SIZE) {
         uint16_t FRAM_Free = FRAM_LOG_SIZE - (LogFRAMAddr - FRAM_LOG_START_ADDR);
-
         if (FRAM_Free >= LOG_SIZE - LogMemLeft) {
             MemoryWriteBlock(LogMem, LogFRAMAddr, LOG_SIZE - LogMemLeft);
             LogFRAMAddr += LOG_SIZE - LogMemLeft;
@@ -223,13 +222,15 @@ void LogSRAMToFRAM(void) {
             // not everything fits in FRAM, simply write as much as possible to FRAM
             MemoryWriteBlock(LogMem, LogFRAMAddr, FRAM_Free);
             memmove(LogMem, LogMem + FRAM_Free, LOG_SIZE - FRAM_Free); // FRAM_Free is < LOG_SIZE - LogMemLeft and thus also < LOG_SIZE
-
             LogMemPtr -= FRAM_Free;
             LogMemLeft += FRAM_Free;
             LogFRAMAddr += FRAM_Free;
             MemoryWriteBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
         } else {
-            // TODO: handle the case in which the FRAM is full
+            // TODO: handle the case in which the FRAM is full ???
+            // Notify the user by repeatedly blinking the LED:
+            LEDHook(LED_LOG_MEM_FULL, LED_BLINK_8X);
+            LEDHook(LED_LOG_MEM_FULL, LED_BLINK_8X);
         }
     }
 }
