@@ -32,6 +32,7 @@ This notice must be retained at the top of all source files where indicated.
 #include "CryptoTDEA.h"
 #include "CryptoAES128.h"
 
+#if 0
 static uint8_t _cmac_K1[CRYPTO_MAX_BLOCK_SIZE] = { 0x00 };
 static uint8_t _cmac_K2[CRYPTO_MAX_BLOCK_SIZE] = { 0x00 };
 static uint8_t _cmac_RB[CRYPTO_MAX_BLOCK_SIZE] = { 0x00 };
@@ -190,3 +191,4 @@ bool checkBufferMAC(uint8_t *bufferData, uint16_t bufferSize, uint16_t checksumS
     }
     return true;
 }
+#endif

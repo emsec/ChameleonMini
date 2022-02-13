@@ -518,6 +518,8 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_2KTDEA);
     Key = SessionKey;
     DesfireCommandState.KeyId = KeyId;
+    DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_3K3DES;
+    DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
 
     /* Fetch the key */
     if (cryptoKeyType == CRYPTO_TYPE_DES) {
@@ -581,10 +583,15 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Reset parameters for authentication from the first exchange */
     KeyId = DesfireCommandState.KeyId;
-    cryptoKeyType = CRYPTO_TYPE_2KTDEA;
-    keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_2KTDEA);
+    cryptoKeyType = DesfireCommandState.CryptoMethodType;
+    keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
     Key = SessionKey;
-    ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
+    if (cryptoKeyType == CRYPTO_TYPE_DES) {
+        ReadAppKey(SelectedApp.Slot, KeyId, Key, CRYPTO_DES_KEY_SIZE);
+        memcpy(Key + CRYPTO_DES_KEY_SIZE, Key, CRYPTO_DES_KEY_SIZE);
+    } else {
+        ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
+    }
 
     /* Decrypt the challenge sent back to get RndA and a shifted RndB */
     BYTE challengeRndAB[2 * CRYPTO_CHALLENGE_RESPONSE_BYTES];
@@ -617,8 +624,6 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     AuthenticatedWithKey = KeyId;
     AuthenticatedWithPICCMasterKey = (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT) &&
                                      (KeyId == DESFIRE_MASTER_KEY_ID);
-    DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_2KTDEA;
-    DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_2KTDEA);
 
     /* Return the status on success */
     Buffer[0] = STATUS_OPERATION_OK;

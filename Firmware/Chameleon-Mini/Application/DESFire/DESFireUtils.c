@@ -148,9 +148,9 @@ bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount) {
 }
 
 uint16_t DesfirePreprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize) {
-    DEBUG_PRINT_P(PSTR("PRE -- CommMode -- 0x%02x"), CommMode);
+    //DEBUG_PRINT_P(PSTR("PRE -- CommMode -- 0x%02x"), CommMode);
     switch (CommMode) {
-        case DESFIRE_COMMS_PLAINTEXT_MAC: {
+        /*case DESFIRE_COMMS_PLAINTEXT_MAC: {
             uint16_t ChecksumBytes = 0;
             if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
                 ChecksumBytes = 4;
@@ -187,18 +187,18 @@ uint16_t DesfirePreprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t Buffe
                 return 0;
             }
             return MAX(0, BufferSize - ChecksumBytes);
-        }
+        }*/
         case DESFIRE_COMMS_PLAINTEXT:
         default:
-            // Leave the CRCA bytes intact: 
-	    return BufferSize; 
+            // Leave the CRCA bytes intact:
+            return BufferSize;
     }
 }
 
 uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize) {
-    DEBUG_PRINT_P(PSTR("POST -- CommMode -- 0x%02x"), CommMode);
+    //DEBUG_PRINT_P(PSTR("POST -- CommMode -- 0x%02x"), CommMode);
     switch (CommMode) {
-        case DESFIRE_COMMS_PLAINTEXT_MAC: {
+        /*case DESFIRE_COMMS_PLAINTEXT_MAC: {
             if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
                 return appendBufferMAC(SessionKey, Buffer, BufferSize);
             } else {
@@ -235,12 +235,11 @@ uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t Buff
             CryptoAESEncryptBuffer(XferBytes, Buffer, &Buffer[XferBytes], SessionIV, SessionKey);
             memmove(&Buffer[0], &Buffer[XferBytes], XferBytes);
             return XferBytes;
-        }
+        }*/
         case DESFIRE_COMMS_PLAINTEXT:
         default:
-            //ISO14443AAppendCRCA(Buffer, BufferSize);
-            //return BufferSize + 2;
-	    return BufferSize;
+            ISO14443AAppendCRCA(Buffer, BufferSize);
+            return BufferSize + 2;
     }
 }
 

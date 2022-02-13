@@ -44,6 +44,9 @@ uint8_t Iso144434LastBlockLength = 0x00;
 uint8_t StateRetryCount = 0x00;
 uint8_t LastReaderSentCmd = 0x00;
 
+uint8_t  ISO14443ALastDataFrame[MAX_DATA_FRAME_XFER_SIZE] = { 0x00 };
+uint16_t ISO14443ALastDataFrameBits = 0;
+
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging) {
     if (resetByDefault || ++StateRetryCount >= MAX_STATE_RETRY_COUNT) {
         ISO144434SwitchState2(Iso144433AIdleState, performLogging);
@@ -74,6 +77,7 @@ void ISO144434Reset(void) {
     /* No logging -- spams the log */
     Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
     Iso144434BlockNumber = 1;
+    ISO14443ALastDataFrameBits = 0;
 }
 
 static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t BitCount) {
@@ -205,13 +209,21 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
                 /* 7.5.4.3, rule 12 */
                 /* This is a NAK. Send an ACK back */
                 Buffer[0] = ISO14443_PCB_R_BLOCK_STATIC | ISO14443_PCB_R_BLOCK_ACK | MyBlockNumber;
-                ByteCount = 1;
+                //ByteCount = 1;
+                // Per the NXP data sheet MF1S50YYX_V1 (Table 10: ACK / NAK), we should return 4 bits:
+                return 4;
             } else {
                 /* This is an ACK */
                 /* NOTE: Chaining is not supported yet. */
                 const char *debugPrintStr = PSTR("ISO144434ProcessBlock: ISO14443_PCB_R_BLOCK -- %d");
                 DEBUG_PRINT_P(debugPrintStr, __LINE__);
-                return ISO14443A_APP_NO_RESPONSE;
+                // Resend the data from the last frame:
+                if (ISO14443ALastDataFrameBits > 0) {
+                    memcpy(&Buffer[0], &ISO14443ALastDataFrame[0], (ISO14443ALastDataFrameBits + BITS_PER_BYTE - 1) / BITS_PER_BYTE);
+                    return ISO14443ALastDataFrameBits;
+                } else {
+                    return ISO14443A_APP_NO_RESPONSE;
+                }
             }
             const char *debugPrintStr6 = PSTR("ISO14443-4: R-BLK");
             LogDebuggingMsg(debugPrintStr6);
@@ -272,6 +284,7 @@ void ISO144433AReset(void) {
     /* No logging -- spams the log */
     Iso144433AState = ISO14443_3A_STATE_IDLE;
     Iso144433AIdleState = ISO14443_3A_STATE_IDLE;
+    ISO14443ALastDataFrameBits = 0;
 }
 
 void ISO144433AHalt(void) {

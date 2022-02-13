@@ -41,9 +41,9 @@ This notice must be retained at the top of all source files where indicated.
  */
 
 #define ISO14443A_CMD_RATS                  0xE0
-#define ISO14443A_RATS_FRAME_SIZE           (6 * BITS_PER_BYTE) //(4 * 8) /* Bit */
+#define ISO14443A_RATS_FRAME_SIZE           (6 * BITS_PER_BYTE) /* Bit */
 #define ISO14443A_CMD_RNAK                  0xB2
-#define ISO14443A_CRC_FRAME_SIZE           (ISO14443A_CRCA_SIZE * BITS_PER_BYTE)
+#define ISO14443A_CRC_FRAME_SIZE            (ISO14443A_CRCA_SIZE * BITS_PER_BYTE)
 
 #define ISO14443_PCB_BLOCK_TYPE_MASK        0xC0
 #define ISO14443_PCB_I_BLOCK                0x00
@@ -92,13 +92,29 @@ extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
 extern uint8_t LastReaderSentCmd;
 
+/* Configure saving last data frame state so can resend on ACK from the PCD */
+
+#define MAX_DATA_FRAME_XFER_SIZE            (64)
+extern uint8_t  ISO14443ALastDataFrame[MAX_DATA_FRAME_XFER_SIZE];
+extern uint16_t ISO14443ALastDataFrameBits;
+
+INLINE ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t BufferBitCount) {
+    uint16_t ISO14443ALastDataFrameBytes = MIN((BufferBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE, MAX_DATA_FRAME_XFER_SIZE);
+    if (ISO14443ALastDataFrameBytes > 0) {
+        memcpy(ISO14443ALastDataFrame, &Buffer[0], ISO14443ALastDataFrameBytes);
+    }
+    ISO14443ALastDataFrameBits = BufferBitCount;
+    return BufferBitCount;
+}
+
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
+
 #define MAX_STATE_RETRY_COUNT               (4)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault);
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging);
 
-#define IGNORE_ACK_BYTE               (0x92)
+//#define IGNORE_ACK_BYTE               (0x92)
 
 /* Support functions */
 void ISO144434SwitchState(Iso144434StateType NewState);

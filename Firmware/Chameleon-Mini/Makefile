@@ -191,7 +191,7 @@ CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR)
 			   -D__AVR_ATxmega128A4U__ -D__PROG_TYPES_COMPAT__ -DMAX_ENDPOINT_INDEX=4 \
 			   -std=gnu99 -Werror=implicit-function-declaration \
 			   -fno-inline-small-functions -fshort-enums -fpack-struct \
-			   -ffunction-sections -fdata-sections -fvisibility=hidden -fvisibility-inlines-hidden \
+			   -ffunction-sections -fdata-sections -fvisibility=hidden \
 			   -Wl,-strip-all -Wl,--gc-sections --data-sections \
                            -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
 			   -fno-aggressive-loop-optimizations #-fno-jump-tables -fno-common

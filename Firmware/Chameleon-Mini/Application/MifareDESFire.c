@@ -174,10 +174,11 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
     DesfireCmdCLA = Buffer[0];
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+    //LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if (BitCount == 0) {
+        LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
         return ISO14443A_APP_NO_RESPONSE;
-    } else if ((ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
+    } else if ((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
                 Buffer[3] == 0x00 && (Buffer[4] == ByteCount - 6 || Buffer[4] == ByteCount - 8)) || Iso7816CLA(DesfireCmdCLA)) {
         /* Wrapped native command structure or ISO7816: */
         if (Iso7816CLA(DesfireCmdCLA)) {
@@ -186,7 +187,7 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
                 Buffer[0] = (uint8_t)((iso7816ParamsStatus >> 8) & 0x00ff);
                 Buffer[1] = (uint8_t)(iso7816ParamsStatus & 0x00ff);
                 ByteCount = 2;
-		return ByteCount * BITS_PER_BYTE;
+                return ByteCount * BITS_PER_BYTE;
             }
         }
         ByteCount = Buffer[4];
@@ -203,7 +204,7 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
         } else {
             /* Re-wrap into ISO 7816-4 */
         }
-        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
+        //LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
         return ByteCount * BITS_PER_BYTE;
     } else {
         /* ISO/IEC 14443-4 PDUs: No extra work */
@@ -215,41 +216,37 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
 uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     uint16_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
     uint16_t ReturnedBytes = 0;
-    if (ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
-            Buffer[3] == 0x00 && (Buffer[4] == ByteCount - 6 || Buffer[4] == ByteCount - 8)) {
+    if (ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
+            Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
+        DesfireCmdCLA = Buffer[0];
         uint16_t IncomingByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
         uint16_t UnwrappedBitCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, IncomingByteCount) * BITS_PER_BYTE;
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-        ProcessedBitCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount) * BITS_PER_BYTE;
-        return ProcessedBitCount;
-    } else if (BitCount == 4 && (Buffer[0] & 0xF0) == 0xA0) {
-        // NXP-based PCD sent a "keep alive" response of ACK,
-        // so we respond with a corresponding NAK (with CRCA bytes appended):
-        Buffer[0] = 0x00;
-	return 4;
+        return ISO14443AStoreLastDataFrameAndReturn(Buffer, DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount) * BITS_PER_BYTE);
     } else if (IsWrappedISO7816CommandType(Buffer, ByteCount)) {
+        DesfireCmdCLA = Buffer[2];
         uint8_t ISO7816PrologueBytes[2];
         memcpy(&ISO7816PrologueBytes[0], Buffer, 2);
         uint16_t IncomingByteCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, IncomingByteCount);
-	memmove(&Buffer[0], &Buffer[2], IncomingByteCount - 2);
+        memmove(&Buffer[0], &Buffer[2], IncomingByteCount - 2);
         uint16_t UnwrappedBitCount = (IncomingByteCount - 2) * BITS_PER_BYTE;
-	uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
+        uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
         /* Append the same ISO7816 prologue bytes to the response: */
         memmove(&Buffer[2], &Buffer[0], ProcessedByteCount);
         memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
         ProcessedBitCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount + 2) * BITS_PER_BYTE;
-        return ProcessedBitCount;
+        return ISO14443AStoreLastDataFrameAndReturn(Buffer, ProcessedBitCount);
     } else if ((ReturnedBytes = CallInstructionHandler(Buffer, ByteCount)) != ISO14443A_APP_NO_RESPONSE) {
         /* This case should handle non-wrappped native commands. No pre/postprocessing afterwards: */
-        return ReturnedBytes;
-    } else { // if (!AnticolNoResp) {
+        return ISO14443AStoreLastDataFrameAndReturn(Buffer, ReturnedBytes * BITS_PER_BYTE);
+    } else if (!AnticolNoResp || BitCount < BITS_PER_BYTE) {
         /* This case is to exchange anticollision loop and RATS data. No need to pre/postprocess it depending
-        * on the CommMode, which has not been set yet if we reach this point:
+         * on the CommMode, which has not been set yet if we reach this point:
          */
-        uint16_t PiccProcessRespBytes = ISO144433APiccProcess(Buffer, BitCount);
-        if (PiccProcessRespBytes == ISO14443A_APP_NO_RESPONSE) {
+        uint16_t PiccProcessRespBits = ISO144433APiccProcess(Buffer, BitCount);
+        if (PiccProcessRespBits == ISO14443A_APP_NO_RESPONSE) {
             // Stop pesky USB readers trying to autodetect all tag types by brute-force enumeration
             // from interfering with making it into the command exchange (DESFIRE_IDLE) states.
             // Once the anticollision and/or RATS has completed, set this flag to keep it from
@@ -259,8 +256,9 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
             // and it really screws things up timing-wise!
             AnticolNoResp = true;
         }
-        return PiccProcessRespBytes;
+        return ISO14443AStoreLastDataFrameAndReturn(Buffer, PiccProcessRespBits);
     }
+    LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
     return ISO14443A_APP_NO_RESPONSE;
 }
 
