@@ -30,6 +30,7 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "DESFireUtils.h"
 #include "DESFirePICCControl.h"
+#include "DESFireLogging.h"
 
 void RotateArrayRight(BYTE *srcBuf, BYTE *destBuf, SIZET bufSize) {
     destBuf[bufSize - 1] = srcBuf[0];
@@ -147,10 +148,8 @@ bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount) {
 }
 
 uint16_t DesfirePreprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize) {
+    DEBUG_PRINT_P(PSTR("PRE -- CommMode -- 0x%02x"), CommMode);
     switch (CommMode) {
-        case DESFIRE_COMMS_PLAINTEXT:
-            // Remove the CRCA bytes at the end of the buffer:
-            return MAX(0, BufferSize - 2);
         case DESFIRE_COMMS_PLAINTEXT_MAC: {
             uint16_t ChecksumBytes = 0;
             if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
@@ -189,17 +188,16 @@ uint16_t DesfirePreprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t Buffe
             }
             return MAX(0, BufferSize - ChecksumBytes);
         }
+        case DESFIRE_COMMS_PLAINTEXT:
         default:
-            break;
+            // Leave the CRCA bytes intact: 
+	    return BufferSize; 
     }
-    return 0;
 }
 
 uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize) {
+    DEBUG_PRINT_P(PSTR("POST -- CommMode -- 0x%02x"), CommMode);
     switch (CommMode) {
-        case DESFIRE_COMMS_PLAINTEXT:
-            ISO14443AAppendCRCA(Buffer, BufferSize);
-            return BufferSize + 2;
         case DESFIRE_COMMS_PLAINTEXT_MAC: {
             if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
                 return appendBufferMAC(SessionKey, Buffer, BufferSize);
@@ -238,10 +236,12 @@ uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t Buff
             memmove(&Buffer[0], &Buffer[XferBytes], XferBytes);
             return XferBytes;
         }
+        case DESFIRE_COMMS_PLAINTEXT:
         default:
-            break;
+            //ISO14443AAppendCRCA(Buffer, BufferSize);
+            //return BufferSize + 2;
+	    return BufferSize;
     }
-    return 0;
 }
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

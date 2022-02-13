@@ -62,6 +62,7 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
     Iso7816FileSelected = false;
     CryptoAuthMethod = CRYPTO_TYPE_ANY;
     ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
+    DesfireCommMode = ActiveCommMode;
 }
 
 bool IsAuthenticated(void) {
