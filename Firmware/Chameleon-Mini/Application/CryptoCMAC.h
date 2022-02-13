@@ -37,7 +37,9 @@ This notice must be retained at the top of all source files where indicated.
 #define CRYPTO_CMAC_RB128          ((uint8_t) 0x87)
 
 bool appendBufferCMAC(uint8_t cryptoType, const uint8_t *keyData, uint8_t *bufferData, uint16_t bufferSize, uint8_t *IV);
+bool checkBufferMAC(uint8_t *bufferData, uint16_t bufferSize, uint16_t checksumSize);
 
 uint16_t appendBufferMAC(const uint8_t *keyData, uint8_t *bufferData, uint16_t bufferSize);
+bool checkBufferCMAC(uint8_t *bufferData, uint16_t bufferSize, uint16_t checksumSize);
 
 #endif

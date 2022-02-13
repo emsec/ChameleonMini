@@ -152,30 +152,48 @@ uint16_t DesfirePreprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t Buffe
 	    // Remove the CRCA bytes at the end of the buffer:
 	    return MAX(0, BufferSize - 2);
 	case DESFIRE_COMMS_PLAINTEXT_MAC: {
-	    // TODO: We are not checking the MAC/CMAC bytes for consistency yet ...
 	    uint16_t ChecksumBytes = 0;
             if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
                 ChecksumBytes = 4;
+	        if (!checkBufferMAC(Buffer, BufferSize, ChecksumBytes)) {
+		    return 0;
+		}
 	    }
 	    else if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_3K3DES) {
 		ChecksumBytes = CRYPTO_3KTDEA_BLOCK_SIZE;
+	        if (!checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
+		    return 0;
+		}
 	    } else {
-		ChecksumBytes = CRYPTO_AES128_BLOCK_SIZE;
+		ChecksumBytes = CRYPTO_AES_BLOCK_SIZE;
+	        if (!checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
+		    return 0;
+		}
 	    }
 	    return MAX(0, BufferSize - ChecksumBytes);
 	}
         case DESFIRE_COMMS_CIPHERTEXT_DES: {
-            // TODO ... 
-	    break;
+	    Decrypt3DESBuffer(BufferSize, Buffer, &Buffer[BufferSize], SessionIV, SessionKey);
+            memmove(&Buffer[0], &Buffer[BufferSize], BufferSize);
+	    uint16_t ChecksumBytes = CRYPTO_3KTDEA_BLOCK_SIZE;
+	    if (!checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
+		    return 0;
+	    }
+	    return MAX(0, BufferSize - ChecksumBytes);
 	}
 	case DESFIRE_COMMS_CIPHERTEXT_AES128: {
-            // TODO ...
-	    break;
+	    CryptoAESDecryptBuffer(BufferSize, Buffer, &Buffer[BufferSize], SessionIV, SessionKey);
+            memmove(&Buffer[0], &Buffer[BufferSize], BufferSize);
+	    uint16_t ChecksumBytes = CRYPTO_AES_BLOCK_SIZE;
+	    if (!checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
+		    return 0;
+	    }
+	    return MAX(0, BufferSize - ChecksumBytes);
 	}
 	default:
 	    break;
     }
-    return BufferSize;
+    return 0;
 }
 
 uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize) {
@@ -224,7 +242,7 @@ uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t Buff
 	default:
 	    break;
     }
-    return BufferSize;
+    return 0;
 }
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

@@ -126,7 +126,7 @@ void MifareDesfireAppTask(void) {
 
 uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
     if (ByteCount == 0) {
-        return ISO14443A_APP_NO_RESPONSE;//
+        return ISO14443A_APP_NO_RESPONSE;
     } else if ((DesfireCmdCLA != DESFIRE_NATIVE_CLA) &&
                (DesfireCmdCLA != DESFIRE_ISO7816_CLA)) {
         return ISO14443A_APP_NO_RESPONSE;
@@ -174,7 +174,9 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
     DesfireCmdCLA = Buffer[0];
-    if ((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
+    if (BitCount == 0) {
+        return ISO14443A_APP_NO_RESPONSE;  
+    } else if ((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
             Buffer[3] == 0x00 && (Buffer[4] == ByteCount - 6 || Buffer[4] == ByteCount - 8)) || Iso7816CLA(DesfireCmdCLA)) {
         // Wrapped native command structure:
         /* Unwrap the PDU from ISO 7816-4 */
