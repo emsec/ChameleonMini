@@ -151,7 +151,7 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
             TransferState.WriteData.Encryption.Func = &CryptoAESEncrypt_CBCSend;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
-	default:
+        default:
             return STATUS_PARAMETER_ERROR;
     }
     return STATUS_OPERATION_OK;
@@ -160,12 +160,12 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
 uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
     switch (CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT:
-            TransferState.Checksums.UpdateFunc = NULL; 
-            TransferState.Checksums.FinalFunc = NULL; 
-            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = NULL; 
+            TransferState.Checksums.UpdateFunc = NULL;
+            TransferState.Checksums.FinalFunc = NULL;
+            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = NULL;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
-            SessionIVByteSize = 0; 
-	    break;
+            SessionIVByteSize = 0;
+            break;
         case DESFIRE_COMMS_PLAINTEXT_MAC:
             TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
             TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
@@ -181,8 +181,8 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
             break;
-	case DESFIRE_COMMS_CIPHERTEXT_AES128:
-	    // A.k.a., CommMode=FULL from NXP application note AN12343:
+        case DESFIRE_COMMS_CIPHERTEXT_AES128:
+            // A.k.a., CommMode=FULL from NXP application note AN12343:
             TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCMAC;
             TransferState.Checksums.FinalFunc = &TransferChecksumFinalCMAC;
             TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT; // TODO ???

@@ -175,9 +175,9 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     size_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
     DesfireCmdCLA = Buffer[0];
     if (BitCount == 0) {
-        return ISO14443A_APP_NO_RESPONSE;  
+        return ISO14443A_APP_NO_RESPONSE;
     } else if ((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
-            Buffer[3] == 0x00 && (Buffer[4] == ByteCount - 6 || Buffer[4] == ByteCount - 8)) || Iso7816CLA(DesfireCmdCLA)) {
+                Buffer[3] == 0x00 && (Buffer[4] == ByteCount - 6 || Buffer[4] == ByteCount - 8)) || Iso7816CLA(DesfireCmdCLA)) {
         // Wrapped native command structure:
         /* Unwrap the PDU from ISO 7816-4 */
         // Check CRC bytes appended to the buffer:
@@ -224,13 +224,13 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     //    return MifareDesfireProcess(Buffer, BitCount);
     //}
     if (ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
-               Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
+            Buffer[3] == 0x00 && Buffer[4] == ByteCount - 6) {
         uint16_t IncomingByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
         uint16_t UnwrappedBitCount = DesfirePreprocessAPDU(DesfireCommMode, Buffer, IncomingByteCount) * BITS_PER_BYTE;
-	uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
+        uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-	ProcessedBitCount = DesfirePostprocessAPDU(DesfireCommMode, Buffer, ProcessedByteCount) * BITS_PER_BYTE;
-	return ProcessedBitCount;
+        ProcessedBitCount = DesfirePostprocessAPDU(DesfireCommMode, Buffer, ProcessedByteCount) * BITS_PER_BYTE;
+        return ProcessedBitCount;
     } else if (ByteCount == 4 && Buffer[2] == 0x37 && Buffer[3] == 0xC8) {
         // NXP-based PCD sent a "keep alive" response of ACK,
         // so we respond with a corresponding NAK (with CRCA bytes appended):
@@ -243,33 +243,33 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         memcpy(&ISO7816PrologueBytes[0], Buffer, 2);
         memmove(&Buffer[0], &Buffer[2], ByteCount - 2);
         uint16_t IncomingByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-        uint16_t UnwrappedBitCount = DesfirePreprocessAPDU(DesfireCommMode, Buffer, IncomingByteCount) * BITS_PER_BYTE;	
-	uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
+        uint16_t UnwrappedBitCount = DesfirePreprocessAPDU(DesfireCommMode, Buffer, IncomingByteCount) * BITS_PER_BYTE;
+        uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
         /* Append the same ISO7816 prologue bytes to the response: */
         memmove(&Buffer[2], &Buffer[0], ProcessedByteCount);
         memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
-	ProcessedBitCount = DesfirePostprocessAPDU(DesfireCommMode, Buffer, ProcessedByteCount) * BITS_PER_BYTE;
+        ProcessedBitCount = DesfirePostprocessAPDU(DesfireCommMode, Buffer, ProcessedByteCount) * BITS_PER_BYTE;
         return ProcessedBitCount;
     } else if ((ReturnedBytes = CallInstructionHandler(Buffer, ByteCount)) != ISO14443A_APP_NO_RESPONSE) {
         /* This case should handle non-wrappped native commands. No pre/postprocessing afterwards: */
-	return ReturnedBytes;
+        return ReturnedBytes;
     } else if (!AnticolNoResp) {
-        /* This case is to exchange anticollision loop and RATS data. No need to pre/postprocess it depending 
-	 * on the CommMode, which has not been set yet if we reach this point: 
-	 */ 
-	uint16_t PiccProcessRespBytes = ISO144433APiccProcess(Buffer, BitCount);
-	if (PiccProcessRespBytes == ISO14443A_APP_NO_RESPONSE) {
-	    // Stop pesky USB readers trying to autodetect all tag types by brute-force enumeration 
-	    // from interfering with making it into the command exchange (DESFIRE_IDLE) states. 
-	    // Once the anticollision and/or RATS has completed, set this flag to keep it from 
-	    // resending that initial handshaking until the AppReset() function is called on a timeout.
-	    // N.b., the ACR-122 reader does this repeatedly when trying to run the LibNFC testing code 
-	    // even when the reader has not been put in scan mode -- 
-	    // and it really screws things up timing-wise!
-	    AnticolNoResp = true;
-	}
-	return PiccProcessRespBytes;
+        /* This case is to exchange anticollision loop and RATS data. No need to pre/postprocess it depending
+        * on the CommMode, which has not been set yet if we reach this point:
+         */
+        uint16_t PiccProcessRespBytes = ISO144433APiccProcess(Buffer, BitCount);
+        if (PiccProcessRespBytes == ISO14443A_APP_NO_RESPONSE) {
+            // Stop pesky USB readers trying to autodetect all tag types by brute-force enumeration
+            // from interfering with making it into the command exchange (DESFIRE_IDLE) states.
+            // Once the anticollision and/or RATS has completed, set this flag to keep it from
+            // resending that initial handshaking until the AppReset() function is called on a timeout.
+            // N.b., the ACR-122 reader does this repeatedly when trying to run the LibNFC testing code
+            // even when the reader has not been put in scan mode --
+            // and it really screws things up timing-wise!
+            AnticolNoResp = true;
+        }
+        return PiccProcessRespBytes;
     }
     return ISO14443A_APP_NO_RESPONSE;
 }

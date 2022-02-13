@@ -296,8 +296,8 @@ uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciph
 // This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C
 static void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext, uint8_t *IV, uint8_t *Key, CryptoAES_CBCSpec_t CryptoSpec);
 static void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
-                       uint8_t *IV, uint8_t *Key,
-                       CryptoAES_CBCSpec_t CryptoSpec) {
+                              uint8_t *IV, uint8_t *Key,
+                              CryptoAES_CBCSpec_t CryptoSpec) {
     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
     uint16_t blockIndex = 0;
     uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
@@ -323,8 +323,8 @@ static void CryptoAES_CBCSend(uint16_t Count, void *Plaintext, void *Ciphertext,
 // This routine performs the CBC "receive" mode chaining: C = E(P) ^ IV; IV = P
 static void CryptoAES_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext, uint8_t *IV, uint8_t *Key, CryptoAES_CBCSpec_t CryptoSpec);
 static void CryptoAES_CBCRecv(uint16_t Count, void *Plaintext, void *Ciphertext,
-                       uint8_t *IV, uint8_t *Key,
-                       CryptoAES_CBCSpec_t CryptoSpec) {
+                              uint8_t *IV, uint8_t *Key,
+                              CryptoAES_CBCSpec_t CryptoSpec) {
     uint16_t numBlocks = CRYPTO_BYTES_TO_BLOCKS(Count, CryptoSpec.blockSize);
     uint16_t blockIndex = 0;
     uint8_t *ptBuf = (uint8_t *) Plaintext, *ctBuf = (uint8_t *) Ciphertext;
@@ -389,18 +389,18 @@ uint16_t appendBufferCRC32C(uint8_t *bufferData, uint16_t bufferSize) {
     uint32_t workingCRC = INIT_CRC32C_VALUE;
     for (int i = 0; i < bufferSize; i++) {
         workingCRC = workingCRC ^ *(bufferData++);
-	for (int j = 0; j < 8; j++) {
+        for (int j = 0; j < 8; j++) {
             if (workingCRC & 1) {
-	        workingCRC = (workingCRC >> 1) ^ LE_CRC32C_POLYNOMIAL;
-	    } else {
-		workingCRC = workingCRC >> 1;
-	    }
-	}
+                workingCRC = (workingCRC >> 1) ^ LE_CRC32C_POLYNOMIAL;
+            } else {
+                workingCRC = workingCRC >> 1;
+            }
+        }
     }
-    // Append the CRC32C bytes in little endian byte order to the end of the buffer: 
-    bufferData[bufferSize] = (uint8_t) (workingCRC & 0x000000FF);
-    bufferData[bufferSize + 1] = (uint8_t) ((workingCRC & 0x0000FF00) >> 8);
-    bufferData[bufferSize + 2] = (uint8_t) ((workingCRC & 0x00FF0000) >> 16);
-    bufferData[bufferSize + 4] = (uint8_t) ((workingCRC & 0xFF000000) >> 24);
+    // Append the CRC32C bytes in little endian byte order to the end of the buffer:
+    bufferData[bufferSize] = (uint8_t)(workingCRC & 0x000000FF);
+    bufferData[bufferSize + 1] = (uint8_t)((workingCRC & 0x0000FF00) >> 8);
+    bufferData[bufferSize + 2] = (uint8_t)((workingCRC & 0x00FF0000) >> 16);
+    bufferData[bufferSize + 4] = (uint8_t)((workingCRC & 0xFF000000) >> 24);
     return bufferSize + 4;
 }

@@ -226,7 +226,7 @@ CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InPara
     if (!strcasecmp_P(valueStr, PSTR("Plaintext"))) {
         DesfireCommMode = DESFIRE_COMMS_PLAINTEXT;
         DesfireCommandState.ActiveCommMode = DesfireCommMode;
-	return COMMAND_INFO_OK;
+        return COMMAND_INFO_OK;
     } else if (!strcasecmp_P(valueStr, PSTR("Plaintext:MAC"))) {
         DesfireCommMode = DESFIRE_COMMS_PLAINTEXT_MAC;
         DesfireCommandState.ActiveCommMode = DesfireCommMode;
@@ -234,11 +234,11 @@ CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InPara
     } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:3K3DES"))) {
         DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_DES;
         DesfireCommandState.ActiveCommMode = DesfireCommMode;
-	return COMMAND_INFO_OK;
+        return COMMAND_INFO_OK;
     } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:AES128"))) {
         DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_AES128;
         DesfireCommandState.ActiveCommMode = DesfireCommMode;
-	return COMMAND_INFO_OK;
+        return COMMAND_INFO_OK;
     }
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Options are: Plaintext|Plaintext:MAC|Enciphered:3K3DES|Enciphered:AES128"));
     return COMMAND_ERR_INVALID_USAGE_ID;

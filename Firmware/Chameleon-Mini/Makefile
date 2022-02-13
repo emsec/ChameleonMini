@@ -251,7 +251,7 @@ program-latest: check_size
 	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP_LATEST) $(AVRDUDE_WRITE_EEPROM_LATEST)
 
 # Program the device using batchisp and the DFU bootloader
-# Note that the device has to be in bootloader mode already-ffunction-sections -fdata-sections 
+# Note that the device has to be in bootloader mode already-ffunction-sections -fdata-sections
 dfu-flip: $(TARGET).hex $(TARGET).eep check_size
 	cp $(TARGET).eep EEPROM.hex
 	batchisp -hardware usb -device $(MCU) -operation erase f memory FLASH loadbuffer $(TARGET).hex program verify memory EEPROM loadbuffer EEPROM.hex program verify start reset 0
