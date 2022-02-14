@@ -18,6 +18,9 @@
 #include "../Application/Reader14443A.h"
 #include "../Application/Sniff15693.h"
 
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+#include "../Codec/SniffISO15693.h"
+#endif /*#ifdef CONFIG_ISO15693_SNIFF_SUPPORT*/
 extern Reader14443Command Reader14443CurrentCommand;
 extern Sniff14443Command Sniff14443CurrentCommand;
 
@@ -687,3 +690,46 @@ CommandStatusIdType CommandExecClone(char *OutMessage) {
 #endif
 }
 #endif
+
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+CommandStatusIdType CommandGetAutoThreshold(char *OutParam){
+
+    /* Only Execute the command if the current configuration is CONFIG_ISO15693_SNIFF */
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF)
+        return COMMAND_ERR_INVALID_USAGE_ID;
+
+    /* Get Autothreshold mode */
+    if(SniffISO15693GetAutoThreshold())
+        snprintf(OutParam, TERMINAL_BUFFER_SIZE, "%c (enabled)", COMMAND_CHAR_TRUE);
+    else
+        snprintf(OutParam, TERMINAL_BUFFER_SIZE, "%c - (disabled)", COMMAND_CHAR_FALSE);
+    /* In case of overflow, snprintf does not write the terminating '\0' */
+    /* so we should make sure it gets terminated */
+    OutParam[TERMINAL_BUFFER_SIZE-1] = '\0';
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetAutoThreshold(char *OutMessage, const char *InParam){
+
+    /* Only Execute the command if the current configuration is CONFIG_ISO15693_SNIFF */
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF)
+        return COMMAND_ERR_INVALID_USAGE_ID;
+
+    if (COMMAND_IS_SUGGEST_STRING(InParam)) {
+        snprintf(OutMessage, TERMINAL_BUFFER_SIZE, "%c (enable), %c (disable)", COMMAND_CHAR_TRUE, COMMAND_CHAR_FALSE);
+        /* In case of overflow, snprintf does not write the terminating '\0' */
+        /* so we should make sure it gets terminated */
+        OutMessage[TERMINAL_BUFFER_SIZE-1] = '\0';
+        return COMMAND_INFO_OK_WITH_TEXT_ID;
+    } else if (InParam[0] == COMMAND_CHAR_TRUE) {
+        SniffISO15693CtrlAutoThreshold(true);
+        return COMMAND_INFO_OK_ID;
+    } else if (InParam[0] == COMMAND_CHAR_FALSE) {
+        SniffISO15693CtrlAutoThreshold(false);
+        return COMMAND_INFO_OK_ID;
+    } else {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+}
+#endif /*#ifdef CONFIG_ISO15693_SNIFF_SUPPORT*/
