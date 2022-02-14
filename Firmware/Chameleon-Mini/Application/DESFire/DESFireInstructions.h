@@ -115,10 +115,9 @@ typedef uint16_t (*InsCodeHandlerFunc)(uint8_t *Buffer, uint16_t ByteCount);
 typedef struct {
     DESFireCommandType  insCode;
     InsCodeHandlerFunc  insFunc;
-    const __flash char *insDesc;
-} DESFireCommand;
+} DESFireCommand DESFIRE_FIRMWARE_ALIGNAT;
 
-extern const __flash DESFireCommand DESFireCommandSet[];
+extern const DESFIRE_DFFRAM_SECTION DESFIRE_FIRMWARE_ALIGNAT DESFireCommand DESFireCommandSet[];
 
 /* Helper and batch process functions */
 uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount);

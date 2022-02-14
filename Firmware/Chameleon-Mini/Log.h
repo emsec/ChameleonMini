@@ -4,13 +4,24 @@
 #include "Common.h"
 
 #ifdef MEMORY_LIMITED_TESTING
-#define LOG_SIZE                764 // 1536
+#define LOG_SIZE                1024
 #else
 #define LOG_SIZE	        2048
 #endif
+#ifdef DESFIRE_FRAM_LOG_START
+/* This is separated so we can store the large DESFire (native) and ISO7816 command subset 
+ * oragnized in a sorted lookup table by command (byte) ID in the FRAM memory space. 
+ * It is too large to fit in .data, and storing it in the FLASH space causes collision problems 
+ * with the memory settings data storage (and probably slower access times).
+ */
+#define FRAM_LOG_ADDR_ADDR	DESFIRE_FRAM_LOG_START           // start of the second half of FRAM
+#define FRAM_LOG_START_ADDR	(DESFIRE_FRAM_LOG_START + 0x002) // directly after the address
+#define FRAM_LOG_SIZE		(DESFIRE_FRAM_LOG_SIZE)          // the whole second half (minus the 2 Bytes of Address)
+#else
 #define FRAM_LOG_ADDR_ADDR	0x4000 // start of the second half of FRAM
 #define FRAM_LOG_START_ADDR	0x4002 // directly after the address
 #define FRAM_LOG_SIZE		0x3FFE // the whole second half (minus the 2 Bytes of Address)
+#endif
 
 extern uint8_t LogMem[LOG_SIZE];
 extern uint8_t *LogMemPtr;

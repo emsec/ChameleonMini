@@ -34,6 +34,7 @@ This notice must be retained at the top of all source files where indicated.
 #include "../../Common.h"
 #include "../../Random.h"
 
+#include "DESFireFirmwareSettings.h"
 #include "DESFireInstructions.h"
 #include "DESFirePICCControl.h"
 #include "DESFireCrypto.h"
@@ -118,245 +119,197 @@ static uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount);
  *       handlers to the end of the array, or insert them haphazardly in
  *       the middle !!!
  */
-const __flash DESFireCommand DESFireCommandSet[] = {
+const DESFIRE_DFFRAM_SECTION DESFIRE_FIRMWARE_ALIGNAT DESFireCommand DESFireCommandSet[] = {
     {
         .insCode = CMD_AUTHENTICATE,
-        .insDesc = (const __flash char[]) { "Authenicate_Legacy" },
         .insFunc = &EV0CmdAuthenticateLegacy1
     },
     {
         .insCode = CMD_CREDIT,
-        .insDesc = (const __flash char[]) { "Credit" },
         .insFunc = &EV0CmdCredit
     },
     {
         .insCode = CMD_AUTHENTICATE_ISO,
-        .insDesc = (const __flash char[]) { "Authenticate_ISO" },
         .insFunc = &DesfireCmdAuthenticate3KTDEA1
     },
     {
         .insCode = CMD_LIMITED_CREDIT,
-        .insDesc = (const __flash char[]) { "Limited_Credit" },
         .insFunc = &EV0CmdLimitedCredit
     },
     {
         .insCode = CMD_WRITE_RECORD,
-        .insDesc = (const __flash char[]) { "Write_Record" },
         .insFunc = &EV0CmdWriteRecord
     },
     {
         .insCode = CMD_WRITE_DATA,
-        .insDesc = (const __flash char[]) { "Write_Data" },
         .insFunc = &EV0CmdWriteData
     },
     {
         .insCode = CMD_GET_KEY_SETTINGS,
-        .insDesc = (const __flash char[]) { "Get_Key_Settings" },
         .insFunc = &EV0CmdGetKeySettings
     },
     {
         .insCode = CMD_GET_CARD_UID,
-        .insDesc = (const __flash char[]) { "Get_Card_UID" },
         .insFunc = &DesfireCmdGetCardUID
     },
     {
         .insCode = CMD_CHANGE_KEY_SETTINGS,
-        .insDesc = (const __flash char[]) { "Change_Key_Settings" },
         .insFunc = &EV0CmdChangeKeySettings
     },
     {
         .insCode = CMD_SELECT_APPLICATION,
-        .insDesc = (const __flash char[]) { "Select_Application" },
         .insFunc = &EV0CmdSelectApplication
     },
     {
         .insCode = CMD_SET_CONFIGURATION,
-        .insDesc = (const __flash char[]) { "Set_Configuration" },
-        .insFunc = NULL //&DesfireCmdSetConfiguration
+        .insFunc = NULL
     },
     {
         .insCode = CMD_CHANGE_FILE_SETTINGS,
-        .insDesc = (const __flash char[]) { "Change_File_Settings" },
         .insFunc = &EV0CmdChangeFileSettings
     },
     {
         .insCode = CMD_GET_VERSION,
-        .insDesc = (const __flash char[]) { "Get_Version" },
         .insFunc = &EV0CmdGetVersion1
     },
     {
         .insCode = CMD_GET_ISO_FILE_IDS,
-        .insDesc = (const __flash char[]) { "Get_ISO_File_IDs" },
         .insFunc = &EV0CmdGetFileIds
     },
     {
         .insCode = CMD_GET_KEY_VERSION,
-        .insDesc = (const __flash char[]) { "Get_Key_Version" },
         .insFunc = &DesfireCmdGetKeyVersion
     },
     {
         .insCode = CMD_GET_APPLICATION_IDS,
-        .insDesc = (const __flash char[]) { "Get_Application_IDs" },
         .insFunc = &EV0CmdGetApplicationIds1
     },
     {
         .insCode = CMD_GET_VALUE,
-        .insDesc = (const __flash char[]) { "Get_Value" },
         .insFunc = &EV0CmdGetValue
     },
     {
         .insCode = CMD_GET_DF_NAMES,
-        .insDesc = (const __flash char[]) { "Get_DF_Names" },
         .insFunc = &DesfireCmdGetDFNames
     },
     {
         .insCode = CMD_FREE_MEMORY,
-        .insDesc = (const __flash char[]) { "Free_Memory" },
         .insFunc = &DesfireCmdFreeMemory
     },
     {
         .insCode = CMD_GET_FILE_IDS,
-        .insDesc = (const __flash char[]) { "Get_File_IDs" },
         .insFunc = &EV0CmdGetFileIds
     },
     {
         .insCode = CMD_AUTHENTICATE_EV2_FIRST,
-        .insDesc = (const __flash char[]) { "Authenticate_AES_EV2_First" },
         .insFunc = NULL
     },
     {
         .insCode = CMD_AUTHENTICATE_EV2_NONFIRST,
-        .insDesc = (const __flash char[]) { "Authenticate_AES_EV2_NonFirst" },
         .insFunc = NULL
     },
     {
         .insCode = CMD_ISO7816_EXTERNAL_AUTHENTICATE,
-        .insDesc = (const __flash char[]) { "ISO7816_External_Authenticate" },
         .insFunc = &ISO7816CmdExternalAuthenticate
     },
     {
         .insCode = CMD_ISO7816_GET_CHALLENGE,
-        .insDesc = (const __flash char[]) { "ISO7816_Get_Challenge" },
         .insFunc = &ISO7816CmdGetChallenge
     },
     {
         .insCode = CMD_ISO7816_SELECT,
-        .insDesc = (const __flash char[]) { "ISO7816_Select" },
         .insFunc = &ISO7816CmdSelect
     },
     {
         .insCode = CMD_ISO7816_INTERNAL_AUTHENTICATE,
-        .insDesc = (const __flash char[]) { "ISO7816_Internal_Authenticate" },
         .insFunc = &ISO7816CmdInternalAuthenticate
     },
     {
         .insCode = CMD_ABORT_TRANSACTION,
-        .insDesc = (const __flash char[]) { "Abort_Transaction" },
         .insFunc = &EV0CmdAbortTransaction
     },
     {
         .insCode = CMD_AUTHENTICATE_AES,
-        .insDesc = (const __flash char[]) { "Authenticate_AES" },
         .insFunc = &DesfireCmdAuthenticateAES1
     },
     {
         .insCode = CMD_ISO7816_READ_BINARY,
-        .insDesc = (const __flash char[]) { "ISO7816_Read_Binary" },
         .insFunc = &ISO7816CmdReadBinary
     },
     {
         .insCode = CMD_ISO7816_READ_RECORDS,
-        .insDesc = (const __flash char[]) { "ISO7816_Read_Records" },
         .insFunc = &ISO7816CmdReadRecords
     },
     {
         .insCode = CMD_READ_RECORDS,
-        .insDesc = (const __flash char[]) { "Read_Records" },
         .insFunc = &EV0CmdReadRecords
     },
     {
         .insCode = CMD_READ_DATA,
-        .insDesc = (const __flash char[]) { "Read_Data" },
         .insFunc = &EV0CmdReadData
     },
     {
         .insCode = CMD_CREATE_CYCLIC_RECORD_FILE,
-        .insDesc = (const __flash char[]) { "Create_Cyclic_Record_File" },
         .insFunc = &EV0CmdCreateCyclicRecordFile
     },
     {
         .insCode = CMD_CREATE_LINEAR_RECORD_FILE,
-        .insDesc = (const __flash char[]) { "Create_Linear_Record_File" },
         .insFunc = &EV0CmdCreateLinearRecordFile
     },
     {
         .insCode = CMD_CHANGE_KEY,
-        .insDesc = (const __flash char[]) { "Change_Key" },
         .insFunc = &EV0CmdChangeKey
     },
     {
         .insCode = CMD_CREATE_APPLICATION,
-        .insDesc = (const __flash char[]) { "Create_Application" },
         .insFunc = &EV0CmdCreateApplication
     },
     {
         .insCode = CMD_CREATE_BACKUPDATA_FILE,
-        .insDesc = (const __flash char[]) { "Create_Backup_File" },
         .insFunc = &EV0CmdCreateBackupDataFile
     },
     {
         .insCode = CMD_CREATE_VALUE_FILE,
-        .insDesc = (const __flash char[]) { "Create_Value_File" },
         .insFunc = &EV0CmdCreateValueFile
     },
     {
         .insCode = CMD_CREATE_STDDATA_FILE,
-        .insDesc = (const __flash char[]) { "Create_Data_File" },
         .insFunc = &EV0CmdCreateStandardDataFile
     },
     {
         .insCode = CMD_COMMIT_TRANSACTION,
-        .insDesc = (const __flash char[]) { "Commit_Transaction" },
         .insFunc = &EV0CmdCommitTransaction
     },
     {
         .insCode = CMD_ISO7816_UPDATE_BINARY,
-        .insDesc = (const __flash char[]) { "ISO7816_Update_Binary" },
         .insFunc = &ISO7816CmdUpdateBinary
     },
     {
         .insCode = CMD_DELETE_APPLICATION,
-        .insDesc = (const __flash char[]) { "Delete_Application" },
         .insFunc = &EV0CmdDeleteApplication
     },
     {
         .insCode = CMD_DEBIT,
-        .insDesc = (const __flash char[]) { "Debit" },
         .insFunc = &EV0CmdDebit
     },
     {
         .insCode = CMD_DELETE_FILE,
-        .insDesc = (const __flash char[]) { "Delete_File" },
         .insFunc = &EV0CmdDeleteFile
     },
     {
         .insCode = CMD_ISO7816_APPEND_RECORD,
-        .insDesc = (const __flash char[]) { "ISO7816_Append_Record" },
         .insFunc = &ISO7816CmdAppendRecord
     },
     {
         .insCode = CMD_CLEAR_RECORD_FILE,
-        .insDesc = (const __flash char[]) { "Clear_Record_File" },
         .insFunc = &EV0CmdClearRecords
     },
     {
         .insCode = CMD_FORMAT_PICC,
-        .insDesc = (const __flash char[]) { "Format_PICC" },
         .insFunc = &EV0CmdFormatPicc
     },
     {
         .insCode = CMD_GET_FILE_SETTINGS,
-        .insDesc = (const __flash char[]) { "Get_File_Settings" },
         .insFunc = &EV0CmdGetFileSettings
     },
 };
@@ -367,14 +320,15 @@ uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     uint8_t insCode = Buffer[0];
-    uint32_t insLookupTableBuf = &DESFireCommandSet[0];
     uint16_t curInsLower = 0, curInsUpper = sizeof(DESFireCommandSet) / sizeof(DESFireCommand) - 1;
     uint16_t curInsIndex;
+    uint16_t nextDESFireFRAMBaseAddr = DESFIRE_DFFRAM_SECTION_START;
     DESFireCommand dfCmd;
     while (curInsUpper >= curInsLower) {
         curInsIndex = curInsLower + (curInsUpper + 1 - curInsLower) / 2;
-        memcpy_P(&dfCmd, insLookupTableBuf + curInsIndex * sizeof(DESFireCommand), sizeof(DESFireCommand));
-        if (dfCmd.insCode == insCode) {
+        MemoryReadBlock(&dfCmd, nextDESFireFRAMBaseAddr, sizeof(DESFireCommand));
+        nextDESFireFRAMBaseAddr += sizeof(DESFireCommand);
+	if (dfCmd.insCode == insCode) {
             if (dfCmd.insFunc == NULL) {
                 return CmdNotImplemented(Buffer, ByteCount);
             }

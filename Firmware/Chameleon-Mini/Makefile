@@ -137,7 +137,15 @@ SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
 
 DESFIRE_MAINSRC = Application/DESFire
 
-DESFIRE_CONFIG_SETTINGS_BASE = $(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_LIMITED_TESTING -DDESFIRE_CRYPTO1_SAVE_SPACE -UDEFAULT_CONFIGURATION
+DESFIRE_FRAM_LOG_START=0x4000
+DESFIRE_FRAM_LOG_SIZE=0x2046
+DESFIRE_DFFRAM_SECTION_START=0x6048
+DESFIRE_DFFRAM_SECTION_NAME=\".dffram\"
+DESFIRE_CONFIG_SETTINGS_BASE=$(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_LIMITED_TESTING -DDESFIRE_CRYPTO1_SAVE_SPACE -UDEFAULT_CONFIGURATION \
+			       -DDESFIRE_FRAM_LOG_START=$(DESFIRE_FRAM_LOG_START) -DDESFIRE_FRAM_LOG_SIZE=$(DESFIRE_FRAM_LOG_SIZE) \
+			       -DDESFIRE_DFFRAM_SECTION_START=$(DESFIRE_DFFRAM_SECTION_START) \
+			       -Wl,--section-start=$(DESFIRE_DFFRAM_SECTION_NAME)=$(DESFIRE_DFFRAM_SECTION_START) \
+			       -DDESFIRE_DFFRAM_SECTION_NAME=$(DESFIRE_DFFRAM_SECTION_NAME)
 
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000  #Start of data section in flash
@@ -192,9 +200,9 @@ CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR)
 			   -std=gnu99 -Werror=implicit-function-declaration \
 			   -fno-inline-small-functions -fshort-enums -fpack-struct \
 			   -ffunction-sections -fdata-sections -fvisibility=hidden \
-			   -Wl,-strip-all -Wl,--gc-sections --data-sections \
+			   -Wl,--gc-sections --data-sections \
                            -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
-			   -fno-aggressive-loop-optimizations #-fno-jump-tables -fno-common
+			   -fno-aggressive-loop-optimizations -fno-jump-tables -fno-common
 LD_FLAGS     = $(CC_FLAGS) -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES =
@@ -312,5 +320,5 @@ desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep check_size
 	@avr-size -B -x $(TARGET).elf
 	@echo -e "\n"
 	@avr-size -C -x $(TARGET).elf
-desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_NONE
+desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_NONE -fno-inline-small-functions
 desfire: desfire-build
