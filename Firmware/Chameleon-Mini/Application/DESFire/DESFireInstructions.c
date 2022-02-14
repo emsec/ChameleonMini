@@ -119,7 +119,7 @@ static uint16_t ISO7816CmdAppendRecord(uint8_t *Buffer, uint16_t ByteCount);
  *       handlers to the end of the array, or insert them haphazardly in
  *       the middle !!!
  */
-const DESFIRE_DFFRAM_SECTION DESFIRE_FIRMWARE_ALIGNAT DESFireCommand DESFireCommandSet[] = {
+const DESFIRE_FIRMWARE_ALIGNAT DESFireCommand DESFireCommandSet[] DESFIRE_DFFRAM_SECTION = {
     {
         .insCode = CMD_AUTHENTICATE,
         .insFunc = &EV0CmdAuthenticateLegacy1
@@ -322,12 +322,11 @@ uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t insCode = Buffer[0];
     uint16_t curInsLower = 0, curInsUpper = sizeof(DESFireCommandSet) / sizeof(DESFireCommand) - 1;
     uint16_t curInsIndex;
-    uint16_t nextDESFireFRAMBaseAddr = DESFIRE_DFFRAM_SECTION_START;
     DESFireCommand dfCmd;
     while (curInsUpper >= curInsLower) {
         curInsIndex = curInsLower + (curInsUpper + 1 - curInsLower) / 2;
-        MemoryReadBlock(&dfCmd, nextDESFireFRAMBaseAddr, sizeof(DESFireCommand));
-        nextDESFireFRAMBaseAddr += sizeof(DESFireCommand);
+        MemoryReadBlock(&dfCmd, DESFireCommandSet[curInsIndex], sizeof(DESFireCommand));
+	nextDESFireFRAMBaseAddr += sizeof(DESFireCommand);
 	if (dfCmd.insCode == insCode) {
             if (dfCmd.insFunc == NULL) {
                 return CmdNotImplemented(Buffer, ByteCount);

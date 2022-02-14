@@ -140,16 +140,22 @@ DESFIRE_MAINSRC = Application/DESFire
 DESFIRE_FRAM_LOG_START=0x4000
 DESFIRE_FRAM_LOG_SIZE=0x2046
 DESFIRE_DFFRAM_SECTION_START=0x6048
+DESFIRE_DFFRAM_DATA_ADDR=0x16048
+DESFIRE_DFFRAM_MAX_SIZE=0x0FFF
 DESFIRE_DFFRAM_SECTION_NAME=\".dffram\"
 DESFIRE_CONFIG_SETTINGS_BASE=$(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_LIMITED_TESTING -DDESFIRE_CRYPTO1_SAVE_SPACE -UDEFAULT_CONFIGURATION \
 			       -DDESFIRE_FRAM_LOG_START=$(DESFIRE_FRAM_LOG_START) -DDESFIRE_FRAM_LOG_SIZE=$(DESFIRE_FRAM_LOG_SIZE) \
+			       -DDESFIRE_DFFRAM_MAX_SIZE=$(DESFIRE_DFFRAM_MAX_SIZE) \
 			       -DDESFIRE_DFFRAM_SECTION_START=$(DESFIRE_DFFRAM_SECTION_START) \
-			       -Wl,--section-start=$(DESFIRE_DFFRAM_SECTION_NAME)=$(DESFIRE_DFFRAM_SECTION_START) \
+			       -DDESFIRE_DFFRAM_DATA_ADDR=$(DESFIRE_DFFRAM_DATA_ADDR) \
 			       -DDESFIRE_DFFRAM_SECTION_NAME=$(DESFIRE_DFFRAM_SECTION_NAME)
+DESFIRE_DFFRAM_OBJCOPY= --set-section-flags=.dffram="alloc,load,readonly"
 
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000  #Start of data section in flash
 FLASH_DATA_SIZE = 0x10000  #Size of data section in flash
+#FLASH_DATA_ADDR = 0x12046 
+#FLASH_DATA_SIZE = 0xF001
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
@@ -194,7 +200,7 @@ SRC	    += $(DESFIRE_MAINSRC)/../MifareDESFire.c \
 SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ../LUFA
 CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) \
-			   -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS) \
+			   -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" \
 			   $(CONFIG_SETTINGS) $(SETTINGS) \
 			   -D__AVR_ATxmega128A4U__ -D__PROG_TYPES_COMPAT__ -DMAX_ENDPOINT_INDEX=4 \
 			   -std=gnu99 -Werror=implicit-function-declaration \
@@ -203,7 +209,8 @@ CC_FLAGS     = -g0 -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR)
 			   -Wl,--gc-sections --data-sections \
                            -Wl,-relax -fno-split-wide-types -fno-tree-scev-cprop \
 			   -fno-aggressive-loop-optimizations -fno-jump-tables -fno-common
-LD_FLAGS     = $(CC_FLAGS) -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
+LD_FLAGS     = $(CC_FLAGS) -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR) \
+	       			-Wl,--section-start=.dffram=$(DESFIRE_DFFRAM_DATA_ADDR)
 OBJDIR       = Bin
 OBJECT_FILES =
 
@@ -230,11 +237,6 @@ include $(LUFA_PATH)/Build/lufa_core.mk
 include $(LUFA_PATH)/Build/lufa_sources.mk
 include $(LUFA_PATH)/Build/lufa_build.mk
 include $(LUFA_PATH)/Build/lufa_cppcheck.mk
-# include $(LUFA_PATH)/Build/lufa_doxygen.mk
-# include $(LUFA_PATH)/Build/lufa_dfu.mk
-# include $(LUFA_PATH)/Build/lufa_hid.mk
-# include $(LUFA_PATH)/Build/lufa_avrdude.mk
-# include $(LUFA_PATH)/Build/lufa_atprogram.mk
 
 #Overwrite the LUFA versions of hex/bin file generation to include spmhelper and flashdata sections
 %.hex: %.elf
@@ -312,9 +314,15 @@ git-add-dev:
 ## Defining custom targets for the DESFire build (normal/user mode) and
 ## developer mode for use with the Android CMLD application that enables
 ## the printing of LIVE logs to the phone's console by default:
-desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep check_size
+desfire-objcopy: $(TARGET).elf
+	@echo $(MSG_OBJCPY_CMD) RE-Extracting HEX file data from \"$<\"
+	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $(DESFIRE_DFFRAM_OBJCOPY) $< $(TARGET).hex
+	@echo $(MSG_OBJCPY_CMD) RE-Extracting BIN file data from \"$<\"
+	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $(TARGET).bin
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
+	@cp $(TARGET).bin $(TARGET)-DESFire.bin
+desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).bin desfire-objcopy check_size
 	@echo -e "\n"
 	@avr-size -A -x $(TARGET).elf
 	@avr-size -B -x $(TARGET).elf

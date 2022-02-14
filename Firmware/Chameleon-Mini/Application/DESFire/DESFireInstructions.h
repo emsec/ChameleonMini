@@ -117,7 +117,7 @@ typedef struct {
     InsCodeHandlerFunc  insFunc;
 } DESFireCommand DESFIRE_FIRMWARE_ALIGNAT;
 
-extern const DESFIRE_DFFRAM_SECTION DESFIRE_FIRMWARE_ALIGNAT DESFireCommand DESFireCommandSet[];
+extern const DESFIRE_FIRMWARE_ALIGNAT DESFireCommand DESFireCommandSet[];
 
 /* Helper and batch process functions */
 uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount);

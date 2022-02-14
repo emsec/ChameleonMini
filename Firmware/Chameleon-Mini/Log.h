@@ -10,9 +10,7 @@
 #endif
 #ifdef DESFIRE_FRAM_LOG_START
 /* This is separated so we can store the large DESFire (native) and ISO7816 command subset 
- * oragnized in a sorted lookup table by command (byte) ID in the FRAM memory space. 
- * It is too large to fit in .data, and storing it in the FLASH space causes collision problems 
- * with the memory settings data storage (and probably slower access times).
+ * oragnized in a sorted lookup table by command (byte) ID in the FLASH -> FRAM memory space. 
  */
 #define FRAM_LOG_ADDR_ADDR	DESFIRE_FRAM_LOG_START           // start of the second half of FRAM
 #define FRAM_LOG_START_ADDR	(DESFIRE_FRAM_LOG_START + 0x002) // directly after the address
