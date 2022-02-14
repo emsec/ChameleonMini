@@ -143,19 +143,12 @@ DESFIRE_DFFRAM_SECTION_START=0x6048
 DESFIRE_DFFRAM_DATA_ADDR=0x16048
 DESFIRE_DFFRAM_MAX_SIZE=0x0FFF
 DESFIRE_DFFRAM_SECTION_NAME=\".dffram\"
-DESFIRE_CONFIG_SETTINGS_BASE=$(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_LIMITED_TESTING -DDESFIRE_CRYPTO1_SAVE_SPACE -UDEFAULT_CONFIGURATION \
-			       -DDESFIRE_FRAM_LOG_START=$(DESFIRE_FRAM_LOG_START) -DDESFIRE_FRAM_LOG_SIZE=$(DESFIRE_FRAM_LOG_SIZE) \
-			       -DDESFIRE_DFFRAM_MAX_SIZE=$(DESFIRE_DFFRAM_MAX_SIZE) \
-			       -DDESFIRE_DFFRAM_SECTION_START=$(DESFIRE_DFFRAM_SECTION_START) \
-			       -DDESFIRE_DFFRAM_DATA_ADDR=$(DESFIRE_DFFRAM_DATA_ADDR) \
-			       -DDESFIRE_DFFRAM_SECTION_NAME=$(DESFIRE_DFFRAM_SECTION_NAME)
+DESFIRE_CONFIG_SETTINGS_BASE=$(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_LIMITED_TESTING -DDESFIRE_CRYPTO1_SAVE_SPACE -UDEFAULT_CONFIGURATION
 DESFIRE_DFFRAM_OBJCOPY= --set-section-flags=.dffram="alloc,load,readonly"
 
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000  #Start of data section in flash
 FLASH_DATA_SIZE = 0x10000  #Size of data section in flash
-#FLASH_DATA_ADDR = 0x12046 
-#FLASH_DATA_SIZE = 0xF001
 FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
 SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
 SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
@@ -314,15 +307,10 @@ git-add-dev:
 ## Defining custom targets for the DESFire build (normal/user mode) and
 ## developer mode for use with the Android CMLD application that enables
 ## the printing of LIVE logs to the phone's console by default:
-desfire-objcopy: $(TARGET).elf
-	@echo $(MSG_OBJCPY_CMD) RE-Extracting HEX file data from \"$<\"
-	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $(DESFIRE_DFFRAM_OBJCOPY) $< $(TARGET).hex
-	@echo $(MSG_OBJCPY_CMD) RE-Extracting BIN file data from \"$<\"
-	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $(TARGET).bin
+desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).bin check_size
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
 	@cp $(TARGET).bin $(TARGET)-DESFire.bin
-desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).bin desfire-objcopy check_size
 	@echo -e "\n"
 	@avr-size -A -x $(TARGET).elf
 	@avr-size -B -x $(TARGET).elf

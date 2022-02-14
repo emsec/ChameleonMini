@@ -223,9 +223,3 @@ FlashCommonSPM:
 .section .flashdata
 .align 1
 .skip MEMORY_SIZE, MEMORY_INIT_VALUE
-
-#ifdef DESFIRE_FRAM_LOG_SIZE
-.section .dffram
-.align 1
-.skip DESFIRE_FRAM_LOG_SIZE, MEMORY_INIT_VALUE
-#endif
