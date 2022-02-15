@@ -661,7 +661,10 @@ CommandStatusIdType CommandExecAutocalibrate(char *OutMessage) {
     }
 #endif
 #ifdef CONFIG_ISO15693_SNIFF_SUPPORT
-    if (GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO15693_SNIFF) {
+    /* Only execute autocalibration if the codec does not use autothreshold */
+    /* It needs to be disabled by the AUTOTHRESHOLD=DISABLE command */
+    if ((GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO15693_SNIFF) &&
+        (SniffISO15693GetAutoThreshold() == false)){
         ApplicationReset();
 
         Sniff15693CurrentCommand = Sniff15693_Autocalibrate;
