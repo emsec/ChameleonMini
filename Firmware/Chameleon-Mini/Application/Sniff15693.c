@@ -61,10 +61,14 @@ static uint16_t max_th = 0xFFF;
 static uint16_t min_succ_th = 0;
 static uint16_t max_succ_th = 0xFFF;
 
+/* to store the threshold which was used before we started AUTOCALIBRATION */
+static uint16_t recent_th = 0;
+
 static bool last_cycle_successful = false;
 
 void SniffISO15693AppTimeout(void)
 {
+    CodecThresholdSet(recent_th);
     SniffISO15693AppReset();
 }
 
@@ -104,6 +108,10 @@ INLINE void SniffISO15693InitAutocalib(void){
     min_succ_th = 0;
     max_succ_th = 0xFFF;
 
+
+    /* store current threshold before we started AUTOCALIBRATION */
+    recent_th = GlobalSettings.ActiveSettingPtr->ReaderThreshold;
+
     last_cycle_successful = false;
 #ifdef ISO15693_DEBUG_LOG
     {
@@ -119,18 +127,26 @@ INLINE void SniffISO15693InitAutocalib(void){
 
 INLINE void SniffISO15693FinishAutocalib(void){
     uint16_t new_th;
-    new_th = (min_succ_th + max_succ_th) >> 1;
-    CodecThresholdSet(new_th);
+    CommandStatusIdType ReturnStatusID = COMMAND_ERR_INVALID_USAGE_ID;
+    if(min_succ_th > 0) {
+        /* In this case AUTOCALIBRATION was successfull */
+        new_th = (min_succ_th + max_succ_th) >> 1;
+        CodecThresholdSet(new_th);
 #ifdef ISO15693_DEBUG_LOG
-    {
-        char str[64];
-        sprintf(str, "Sniff15693: Finished Autocalibration %d - %d --> % d", min_succ_th, max_succ_th, new_th);
-        LogEntry(LOG_INFO_GENERIC, str, strlen(str));
-    }
+        {
+            char str[64];
+            sprintf(str, "Sniff15693: Finished Autocalibration %d - %d --> % d", min_succ_th, max_succ_th, new_th);
+            LogEntry(LOG_INFO_GENERIC, str, strlen(str));
+        }
 #endif /*#ifdef ISO15693_DEBUG_LOG*/
+        ReturnStatusID = COMMAND_INFO_OK_WITH_TEXT_ID;
+    }else{
+        /* This means we never received a valid frame - Error*/
+        CodecThresholdSet(recent_th);
+        /* ReturnStatusID already set to error code */
+    }
     SniffISO15693AppInit();
-    CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, NULL);
-    //CommandLinePendingTaskFinished(COMMAND_INFO_FALSE_ID, NULL);
+    CommandLinePendingTaskFinished(ReturnStatusID, NULL);
 }
 
 INLINE void SniffISO15693IncrementThreshold(void){
