@@ -32,6 +32,18 @@ void SniffISO15693CodecTask(void);
 /* Application Interface */
 void SniffISO15693CodecStart(void);
 void SniffISO15693CodecReset(void);
+/* Can be used by an application to disable */
+/* The auto-threshold algorithm */
+/* This is needed in corner cases - where the algo doesnt */
+/* find a proper threshold */
+/* In this case, the application can run an autocalibration session */
+void SniffISO15693CtrlAutoThreshold(bool enable);
+bool SniffISO15693GetAutoThreshold(void);
+
+/* Function is used to receive the measured FloorNoise */
+/* This is used to narrow down the range, which is considered for */
+/* Threshold */
+uint16_t SniffISO15693GetFloorNoise(void);
 
 /* Internal functions */
 INLINE void SNIFF_ISO15693_READER_EOC_VCD(void);

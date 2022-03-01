@@ -194,6 +194,12 @@ CommandStatusIdType CommandGetField(char *OutMessage);
 #define COMMAND_CLONE  "CLONE"
 CommandStatusIdType CommandExecClone(char *OutMessage);
 
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+#define COMMAND_AUTOTHRESHOLD     "AUTOTHRESHOLD"
+CommandStatusIdType CommandGetAutoThreshold(char *OutParam);
+CommandStatusIdType CommandSetAutoThreshold(char *OutMessage, const char *InParam);
+#endif /*#ifdef CONFIG_ISO15693_SNIFF_SUPPORT*/
+
 #ifdef ENABLE_RUNTESTS_TERMINAL_COMMAND
 #include "../Tests/ChameleonTerminal.h"
 #endif
