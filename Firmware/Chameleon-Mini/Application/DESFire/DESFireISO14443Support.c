@@ -317,9 +317,8 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
         back a response, so that we should not reset. */
         decrementRetryCount = false;
     } else if (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA) {
-        ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
-        CheckStateRetryCount(true);
         ISO144434Reset();
+        ISO144433ASwitchState(ISO14443_3A_STATE_READY1);
         decrementRetryCount = false;
     } else if (ISO144433AIsHalt(Buffer, BitCount)) {
         LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
@@ -365,7 +364,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             return ISO14443A_ATQA_FRAME_SIZE_BYTES * BITS_PER_BYTE;
 
         case ISO14443_3A_STATE_READY1:
-            if (Cmd == ISO14443A_CMD_SELECT_CL1) {
+            if (Cmd == ISO14443A_CMD_SELECT_CL1 || Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA) {
                 /* Load UID CL1 and perform anticollision. */
                 ConfigurationUidType Uid;
                 ApplicationGetUid(Uid);

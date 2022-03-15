@@ -114,8 +114,6 @@ extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault);
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging);
 
-//#define IGNORE_ACK_BYTE               (0x92)
-
 /* Support functions */
 void ISO144434SwitchState(Iso144434StateType NewState);
 void ISO144434SwitchState2(Iso144434StateType NewState, bool performLogging);
@@ -134,7 +132,6 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
      fullReturnBits = ByteCount * BITS_PER_BYTE + ISO14443A_CRC_FRAME_SIZE;          \
      fullReturnBits;                                                                 \
      })
-/* TODO: Should we return CRC bytes when giving a NO_RESPONSE ??? ... Apparently "No". */
 #define GetAndSetNoResponseCRCA(Buffer)            ({                                \
      uint16_t fullReturnBits = 0;                                                    \
      ISO14443AAppendCRCA(Buffer, 0);                                                 \
