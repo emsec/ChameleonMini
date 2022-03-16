@@ -127,7 +127,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
             ISO144434SwitchState(ISO14443_4_STATE_ACTIVE);
             const char *debugPrintStr = PSTR("ISO14443-4: SEND RATS");
             LogDebuggingMsg(debugPrintStr);
-            return GetAndSetBufferCRCA(Buffer, ByteCount);
+            return ByteCount * BITS_PER_BYTE; // PM3 expects no CRCA bytes
         }
         case ISO14443_4_STATE_ACTIVE: {
             /* See: ISO/IEC 14443-4; 7.1 Block format */
@@ -277,6 +277,7 @@ Iso144433AStateType Iso144433AIdleState = ISO14443_3A_STATE_IDLE;
 
 void ISO144433ASwitchState(Iso144433AStateType NewState) {
     Iso144433AState = NewState;
+    StateRetryCount = 0x00;
     DesfireLogISOStateChange(Iso144433AState, LOG_ISO14443_3A_STATE);
 }
 
@@ -316,9 +317,9 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
         REQA bytes, in between which we would have already sent
         back a response, so that we should not reset. */
         decrementRetryCount = false;
-    } else if (Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA) {
+    } else if (Cmd == ISO14443A_CMD_REQA || ISO14443ACmdIsWUPA(Cmd)) {
         ISO144434Reset();
-        ISO144433ASwitchState(ISO14443_3A_STATE_READY1);
+        ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
         decrementRetryCount = false;
     } else if (ISO144433AIsHalt(Buffer, BitCount)) {
         LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
@@ -339,7 +340,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
     /* See: ISO/IEC 14443-3, clause 6.2 */
     switch (Iso144433AState) {
         case ISO14443_3A_STATE_HALT:
-            if (Cmd != ISO14443A_CMD_WUPA) {
+            if (!ISO14443ACmdIsWUPA(Cmd)) {
                 const char *debugPrintStr = PSTR("ISO14443-4: HALT / NOT WUPA");
                 LogDebuggingMsg(debugPrintStr);
                 break;
@@ -349,12 +350,6 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
         /* Fall-through */
 
         case ISO14443_3A_STATE_IDLE:
-            if (Cmd != ISO14443A_CMD_REQA &&
-                    Cmd != ISO14443A_CMD_WUPA) {
-                const char *debugPrintStr = PSTR("ISO14443-4: IDLE / NOT WUPA 0x%02x");
-                DEBUG_PRINT_P(debugPrintStr);
-                break;
-            }
             Iso144433AIdleState = Iso144433AState;
             ISO144433ASwitchState(ISO14443_3A_STATE_READY1);
             Buffer[0] = (ATQA_VALUE) & 0x00FF;
@@ -364,7 +359,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             return ISO14443A_ATQA_FRAME_SIZE_BYTES * BITS_PER_BYTE;
 
         case ISO14443_3A_STATE_READY1:
-            if (Cmd == ISO14443A_CMD_SELECT_CL1 || Cmd == ISO14443A_CMD_REQA || Cmd == ISO14443A_CMD_WUPA) {
+            if (Cmd == ISO14443A_CMD_SELECT_CL1 || Cmd == ISO14443A_CMD_REQA || ISO14443ACmdIsWUPA(Cmd)) {
                 /* Load UID CL1 and perform anticollision. */
                 ConfigurationUidType Uid;
                 ApplicationGetUid(Uid);
@@ -414,10 +409,14 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             /* Recognise the HLTA command */
             if (ISO144433AIsHalt(Buffer, BitCount)) {
                 LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
-                ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
+                ISO144434SwitchState(ISO14443_3A_STATE_HALT);
                 const char *logMsg = PSTR("ISO14443-3: Got HALT");
                 LogDebuggingMsg(logMsg);
                 return ISO14443A_APP_NO_RESPONSE;
+            } else if(Cmd == ISO14443A_CMD_RATS) {
+                ISO144433ASwitchState(ISO14443_4_STATE_EXPECT_RATS);
+                const char *logMsg = PSTR("ISO14443-3/4: EXPECTING RATS");
+                LogDebuggingMsg(logMsg);
             }
             /* Forward to ISO/IEC 14443-4 processing code */
             uint16_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;

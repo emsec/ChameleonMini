@@ -36,13 +36,15 @@ uint8_t Iso7816EfIdNumber = ISO7816_EF_NOT_SPECIFIED;
 
 bool IsWrappedISO7816CommandType(uint8_t *Buffer, uint16_t ByteCount) {
     if (ByteCount <= ISO7816_PROLOGUE_SIZE + ISO14443A_CRCA_SIZE + 2) {
-        return false;
+        return ISO7816_WRAPPED_CMD_TYPE_NONE;
     } else if (!ISO14443ACheckCRCA(Buffer, ByteCount - 2)) {
-        return false;
+        return ISO7816_WRAPPED_CMD_TYPE_NONE;
+    } else if (ByteCount >= 4 && Buffer[3] == ByteCount - 4) {
+        return ISO7816_WRAPPED_CMD_TYPE_PM3RAW;
     } else if (!Iso7816CLA(Buffer[2])) {
-        return false;
+        return ISO7816_WRAPPED_CMD_TYPE_NONE;
     }
-    return true;
+    return ISO7816_WRAPPED_CMD_TYPE_STANDARD;
 }
 
 uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {

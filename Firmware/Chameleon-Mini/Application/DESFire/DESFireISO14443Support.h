@@ -45,6 +45,9 @@ This notice must be retained at the top of all source files where indicated.
 #define ISO14443A_CMD_RNAK                  0xB2
 #define ISO14443A_CRC_FRAME_SIZE            (ISO14443A_CRCA_SIZE * BITS_PER_BYTE)
 
+#define ISO14443ACmdIsPM3WUPA(cmd)          ((cmd & 0x54) == 0x54)
+#define ISO14443ACmdIsWUPA(cmd)             ((cmd == ISO14443A_CMD_WUPA) || ISO14443ACmdIsPM3WUPA(cmd))
+
 #define ISO14443_PCB_BLOCK_TYPE_MASK        0xC0
 #define ISO14443_PCB_I_BLOCK                0x00
 #define ISO14443_PCB_R_BLOCK                0x80
@@ -109,7 +112,7 @@ INLINE ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t Buff
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
 
-#define MAX_STATE_RETRY_COUNT               (4)
+#define MAX_STATE_RETRY_COUNT               (0x8f)   /* For all intensive purposes, as many as necessary */
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault);
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging);

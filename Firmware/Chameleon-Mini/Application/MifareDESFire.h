@@ -89,5 +89,6 @@ extern DesfireStateType DesfireState;
 extern DesfireStateType DesfirePreviousState;
 extern bool DesfireFromHalt;
 extern BYTE DesfireCmdCLA;
+extern Iso7816WrappedCommandType_t Iso7816CmdType;
 
 #endif /* MIFAREDESFIRE_H_ */

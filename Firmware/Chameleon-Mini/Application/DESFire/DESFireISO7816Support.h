@@ -83,6 +83,13 @@ extern bool Iso7816FileSelected;
 extern uint8_t Iso7816FileOffset;
 extern uint8_t Iso7816EfIdNumber;
 
+typedef enum {
+    ISO7816_WRAPPED_CMD_TYPE_NONE = 0,
+    ISO7816_WRAPPED_CMD_TYPE_STANDARD,
+    ISO7816_WRAPPED_CMD_TYPE_PM3RAW,
+    /* Others ??? */
+} Iso7816WrappedCommandType_t;
+
 bool IsWrappedISO7816CommandType(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount);
 

@@ -51,6 +51,7 @@ DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
 BYTE DesfireCmdCLA = DESFIRE_NATIVE_CLA;
+Iso7816WrappedCommandType_t Iso7816CmdType;
 static bool AnticolNoResp = false;
 
 /* Dispatching routines */
@@ -223,13 +224,22 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         uint16_t UnwrappedBitCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, IncomingByteCount) * BITS_PER_BYTE;
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-        return ISO14443AStoreLastDataFrameAndReturn(Buffer, DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount) * BITS_PER_BYTE);
-    } else if (IsWrappedISO7816CommandType(Buffer, ByteCount)) {
-        DesfireCmdCLA = Buffer[2];
+        return ISO14443AStoreLastDataFrameAndReturn(Buffer, 
+               DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount) * BITS_PER_BYTE);
+    } else if ((Iso7816CmdType = IsWrappedISO7816CommandType(Buffer, ByteCount)) && Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_NONE) {
+        DesfireCmdCLA = (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_STANDARD) ? Buffer[2] : DESFIRE_ISO7816_CLA;
         uint8_t ISO7816PrologueBytes[2];
         memcpy(&ISO7816PrologueBytes[0], Buffer, 2);
         uint16_t IncomingByteCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, IncomingByteCount);
-        memmove(&Buffer[0], &Buffer[2], IncomingByteCount - 2);
+        if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_STANDARD) {
+            memmove(&Buffer[0], &Buffer[2], IncomingByteCount - 2);
+        } else if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_PM3RAW) {
+            Buffer[0] = DesfireCmdCLA;
+            Buffer[1] = Buffer[2];
+            Buffer[2] = 0x04;
+            memmove(&Buffer[4], &Buffer[3], IncomingByteCount - 2);
+            Buffer[3] = 0x00;
+        }
         uint16_t UnwrappedBitCount = (IncomingByteCount - 2) * BITS_PER_BYTE;
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
@@ -255,6 +265,8 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
             // even when the reader has not been put in scan mode --
             // and it really screws things up timing-wise!
             AnticolNoResp = true;
+            const char *debugPrintStr = PSTR("DESFire: Anticol NO-RESP set");
+            LogDebuggingMsg(debugPrintStr);
         }
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, PiccProcessRespBits);
     }
