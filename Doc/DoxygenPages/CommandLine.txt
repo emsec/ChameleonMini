@@ -133,6 +133,18 @@
  * \warning When setting the timeout to zero, there is no timeout and thus a process may continue forever. 
  * Such a process can only be terminated by changing the setting, if a button is configured accordingly, 
  * or by restarting the ChameleonMini (power off, power on).
+ *
+ *
+ * Reader Example
+ * --------------
+ * To read cards, you must first choose a suitable threshold. An example workflow is listed below.
+ * ```
+ * CONFIG=ISO14443A_READER
+ * AUTOCALIBRATE
+ * IDENTIFY
+ * ```
+ * The `THRESHOLD` command can be used to show the threshold chosen by the Chameleon or one can set a threshold manually.
+ * \note A good alignment of the cards antenna and the antenna of the Chameleon improves the communication.
  * 
  *
  *

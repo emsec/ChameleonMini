@@ -38,7 +38,7 @@ var searchData=
   ['lufaconfig_2eh',['LUFAConfig.h',['../_l_u_f_a_config_8h.html',1,'']]],
   ['lufadescriptors_2ec',['LUFADescriptors.c',['../_l_u_f_a_descriptors_8c.html',1,'']]],
   ['lufadescriptors_2eh',['LUFADescriptors.h',['../_l_u_f_a_descriptors_8h.html',1,'']]],
-  ['led_20functionality',['LED functionality',['../Page_LED.html',1,'']]],
-  ['led_20functionality',['LED functionality',['../Page_LEDs.html',1,'index']]],
-  ['log_20functionality',['Log functionality',['../Page_Log.html',1,'index']]]
+  ['led_20functionality',['LED functionality',['../_page__l_e_d.html',1,'']]],
+  ['led_20functionality',['LED functionality',['../_page__l_e_ds.html',1,'index']]],
+  ['log_20functionality',['Log functionality',['../_page__log.html',1,'index']]]
 ];

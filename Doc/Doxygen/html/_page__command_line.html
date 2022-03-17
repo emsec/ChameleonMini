@@ -233,6 +233,8 @@ $(function() {
 <tr>
 <td><code>DUMP_MFU</code> </td><td>Reads the whole content of a Mifare Ultralight card that is in the range of the antenna and returns it. This command is a <a class="el" href="_page__command_line.html#Anchor_TimeoutCommands">Timeout command</a>. </td></tr>
 <tr>
+<td><code>CLONE_MFU</code> </td><td>Clones a Mifare Ultralight card that is in the range of the antenna to the current slot, which is then accordingly configured to emulate it. This command is a <a class="el" href="_page__command_line.html#Anchor_TimeoutCommands">Timeout command</a>. </td></tr>
+<tr>
 <td><code>IDENTIFY</code> </td><td>Identifies the type of a card in the range of the antenna and returns it. This command is a <a class="el" href="_page__command_line.html#Anchor_TimeoutCommands">Timeout command</a>. </td></tr>
 <tr>
 <td><code>THRESHOLD=?</code> </td><td>Returns the possible number range for the reader threshold. </td></tr>
@@ -252,6 +254,8 @@ $(function() {
 <dl class="section warning"><dt>Warning</dt><dd>Any terminal input is completely ignored during the waiting period.</dd>
 <dd>
 When setting the timeout to zero, there is no timeout and thus a process may continue forever. Such a process can only be terminated by changing the setting, if a button is configured accordingly, or by restarting the ChameleonMini (power off, power on).</dd></dl>
+<h2>Reader Example </h2>
+<p>To read cards, you must first choose a suitable threshold. An example workflow is listed below. </p><div class="fragment"><div class="line">CONFIG=ISO14443A_READER</div><div class="line">AUTOCALIBRATE</div><div class="line">IDENTIFY</div></div><!-- fragment --><p> The <code>THRESHOLD</code> command can be used to show the threshold chosen by the Chameleon or one can set a threshold manually. </p><dl class="section note"><dt>Note</dt><dd>A good alignment of the cards antenna and the antenna of the Chameleon improves the communication.</dd></dl>
 <h1>Accessing the command-line using a terminal software </h1>
 <p>In order to have quick access to the Chameleon's command-line without using any complicated software, we suggest using the <a href="https://ttssh2.osdn.jp/index.html.en">TeraTerm</a> terminal emulation software available for windows based operating systems.</p>
 <h2>Connecting and setting up </h2>
@@ -270,7 +274,7 @@ When setting the timeout to zero, there is no timeout and thus a process may con
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 17 2018 21:05:32 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Mar 17 2022 12:03:24 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13
 </small></address>

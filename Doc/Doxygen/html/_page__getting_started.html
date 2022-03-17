@@ -74,7 +74,7 @@ $(function() {
 </ol>
 <p>In either way, the ChameleonMini now jumps to the bootloader and waits patiently for a firmware upgrade.</p>
 <h1>Step 2: Upgrade the Firmware </h1>
-<p>Once the ChameleonMini is in the bootloader, you can flash a new firmware, i.e., the files <a href="https://cdn.statically.io/gh/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/Latest/Chameleon-Mini.hex">Chameleon-Mini.hex</a> and the <a href="https://cdn.statically.io/gh/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/Latest/Chameleon-Mini.eep">Chameleon-Mini.eep</a>, into the microcontroller. The source code directory contains these files precompiled but you can of course also compile the code yourself. Create a new folder and copy the two files into it. The following depends on your operating system:</p>
+<p>Once the ChameleonMini is in the bootloader, you can flash a new firmware, i.e., the files Chameleon-Mini.hex and the Chameleon-Mini.eep, into the microcontroller. The <a href="https://github.com/emsec/ChameleonMini/releases">release page</a> contains these files precompiled but you can of course also compile the code yourself. Create a new folder and copy the two files into it. The following depends on your operating system:</p>
 <h2>Upgrade Procedure for Linux Users</h2>
 <p>In order to upgrade the firmware under Linux you first have to install <code>avrdude</code>, e.g. under Ubuntu with the command <code>sudo apt-get install avra avrdude</code>. Then change to the directory where you have saved the hex and eep files and run <code>sudo avrdude -c flip2 -p ATXMega128A4U -B 60 -P usb -U application:w:Chameleon-Mini.hex:i -U eeprom:w:Chameleon-Mini.eep:i</code>.</p>
 <p>You also can use <code>sudo make program</code> in the source code directory, which basically does the same.</p>
@@ -96,7 +96,7 @@ $(function() {
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Jan 17 2018 21:05:32 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Mar 17 2022 12:03:24 for Chameleon-Mini by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.13
 </small></address>
