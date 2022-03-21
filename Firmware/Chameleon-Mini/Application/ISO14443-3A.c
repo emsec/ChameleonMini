@@ -160,10 +160,10 @@ bool ISO14443ACheckCRCA(const void *Buffer, uint16_t ByteCount) {
 bool ISO14443ASelect(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t SAKValue) {
     uint8_t *DataPtr = (uint8_t *) Buffer;
     uint8_t NVB = DataPtr[1];
-    //uint8_t CollisionByteCount = (NVB >> 4) & 0x0F;
-    //uint8_t CollisionBitCount =  (NVB >> 0) & 0x0F;
 
     switch (NVB) {
+        case 0x00:
+        case ISO14443A_CMD_HLTA:
         case ISO14443A_NVB_AC_START:
             /* Start of anticollision procedure.
             * Send whole UID CLn + BCC */

@@ -48,7 +48,7 @@ uint8_t  ISO14443ALastDataFrame[MAX_DATA_FRAME_XFER_SIZE] = { 0x00 };
 uint16_t ISO14443ALastDataFrameBits = 0;
 
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging) {
-    if (resetByDefault || ++StateRetryCount >= MAX_STATE_RETRY_COUNT) {
+    if (resetByDefault || ++StateRetryCount > MAX_STATE_RETRY_COUNT) {
         ISO144434SwitchState2(Iso144433AIdleState, performLogging);
         StateRetryCount = 0x00;
         const char *debugStatusMsg = PSTR("RETRY-RESET");
@@ -311,16 +311,16 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
 
     /* Wakeup and Request may occure in all states */
     bool checkStateRetryStatus = CheckStateRetryCount(false);
-    bool decrementRetryCount = true;
+    bool incrementRetryCount = true;
     if ((Cmd == ISO14443A_CMD_REQA) && (LastReaderSentCmd == ISO14443A_CMD_REQA) && !checkStateRetryStatus) {
         /* Catch timing issues where the reader sends multiple
-        REQA bytes, in between which we would have already sent
-        back a response, so that we should not reset. */
-        decrementRetryCount = false;
+           REQA bytes, in between which we would have already sent
+           back a response, so that we should not reset. */
+        incrementRetryCount = false;
     } else if (Cmd == ISO14443A_CMD_REQA || ISO14443ACmdIsWUPA(Cmd)) {
         ISO144434Reset();
         ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
-        decrementRetryCount = false;
+        incrementRetryCount = false;
     } else if (ISO144433AIsHalt(Buffer, BitCount)) {
         LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
         ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
@@ -332,8 +332,8 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
         return ISO14443A_APP_NO_RESPONSE;
     }
     LastReaderSentCmd = Cmd;
-    if (decrementRetryCount && StateRetryCount > 0) {
-        StateRetryCount -= 1;
+    if (incrementRetryCount) {
+        StateRetryCount += 1;
     }
 
     /* This implements ISO 14443-3A state machine */
@@ -406,6 +406,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             break;
 
         case ISO14443_3A_STATE_ACTIVE:
+            StateRetryCount = MAX_STATE_RETRY_COUNT;
             /* Recognise the HLTA command */
             if (ISO144433AIsHalt(Buffer, BitCount)) {
                 LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
@@ -413,10 +414,12 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 const char *logMsg = PSTR("ISO14443-3: Got HALT");
                 LogDebuggingMsg(logMsg);
                 return ISO14443A_APP_NO_RESPONSE;
-            } else if(Cmd == ISO14443A_CMD_RATS) {
+            } else if (Cmd == ISO14443A_CMD_RATS) {
                 ISO144433ASwitchState(ISO14443_4_STATE_EXPECT_RATS);
                 const char *logMsg = PSTR("ISO14443-3/4: EXPECTING RATS");
                 LogDebuggingMsg(logMsg);
+            } else if (Cmd == ISO14443A_CMD_SELECT_CL3) {
+                return ISO14443A_APP_NO_RESPONSE;
             }
             /* Forward to ISO/IEC 14443-4 processing code */
             uint16_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;

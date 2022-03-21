@@ -111,6 +111,7 @@ void MifareDesfireAppReset(void) {
     /* This is called repeatedly, so limit the amount of work done */
     ISO144433AReset();
     ISO144434Reset();
+    StateRetryCount = MAX_STATE_RETRY_COUNT;
     MifareDesfireReset();
 }
 
@@ -230,16 +231,18 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         DesfireCmdCLA = (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_STANDARD) ? Buffer[2] : DESFIRE_ISO7816_CLA;
         uint8_t ISO7816PrologueBytes[2];
         memcpy(&ISO7816PrologueBytes[0], Buffer, 2);
-        uint16_t IncomingByteCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, IncomingByteCount);
         if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_STANDARD) {
-            memmove(&Buffer[0], &Buffer[2], IncomingByteCount - 2);
+            memmove(&Buffer[0], &Buffer[2], ByteCount - 2);
         } else if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_PM3RAW) {
+            /* Looks something like: 0a 00 1a 00 CRC1 CRC2 (for PM3 raw ISO auth) */
             Buffer[0] = DesfireCmdCLA;
             Buffer[1] = Buffer[2];
-            Buffer[2] = 0x04;
-            memmove(&Buffer[4], &Buffer[3], IncomingByteCount - 2);
+            memmove(&Buffer[5], &Buffer[3], ByteCount - 3);
+            Buffer[2] = 0x00;
             Buffer[3] = 0x00;
+            Buffer[4] = ByteCount - 5;
         }
+        uint16_t IncomingByteCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, IncomingByteCount);
         uint16_t UnwrappedBitCount = (IncomingByteCount - 2) * BITS_PER_BYTE;
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;

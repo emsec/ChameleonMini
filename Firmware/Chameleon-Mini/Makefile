@@ -124,9 +124,9 @@ SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
 
 #Set a minimum incoming/outgoing log size so we do not spam the
 #Chameleon Mini logs to much by logging everything:
-SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
-SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
-#SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
+SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
+#SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
+SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
@@ -303,6 +303,8 @@ local-clean:
 
 git-add-dev:
 	@git add Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
+	@cd ../../Software/DESFireLibNFCTesting && \
+	git add Makefile LocalInclude/*.h Source/*.c SampleOutputDumps/*.dump
 
 ## Defining custom targets for the DESFire build (normal/user mode) and
 ## developer mode for use with the Android CMLD application that enables
@@ -311,10 +313,10 @@ desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).b
 	@cp $(TARGET).hex $(TARGET)-DESFire.hex
 	@cp $(TARGET).eep $(TARGET)-DESFire.eep
 	@cp $(TARGET).bin $(TARGET)-DESFire.bin
-	@echo -e "\n"
+	@echo ""
 	@avr-size -A -x $(TARGET).elf
 	@avr-size -B -x $(TARGET).elf
-	@echo -e "\n"
+	@echo ""
 	@avr-size -C -x $(TARGET).elf
 desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_NONE -fno-inline-small-functions
 desfire: desfire-build
