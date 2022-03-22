@@ -235,7 +235,8 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
             ByteCount = ByteCount - 2;
         } else if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_PM3RAW) {
             /* Something like the following (for PM3 raw ISO auth): 
-             * 0a 00 1a 00 CRC1 CRC2 -- first two are prologue -- last two are checksum */
+             * 0a 00 1a 00 CRC1 CRC2 -- first two are prologue -- last two are checksum 
+             */
             Buffer[0] = DesfireCmdCLA;
             Buffer[1] = Buffer[2];
             memmove(&Buffer[5], &Buffer[3], ByteCount - 3);
@@ -255,6 +256,7 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ProcessedBitCount);
     } else if ((ReturnedBytes = CallInstructionHandler(Buffer, ByteCount)) != ISO14443A_APP_NO_RESPONSE) {
         /* This case should handle non-wrappped native commands. No pre/postprocessing afterwards: */
+        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnedBytes);
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ReturnedBytes * BITS_PER_BYTE);
     } else if (!AnticolNoResp || BitCount < BITS_PER_BYTE) {
         /* This case is to exchange anticollision loop and RATS data. No need to pre/postprocess it depending
@@ -262,20 +264,22 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
          */
         uint16_t PiccProcessRespBits = ISO144433APiccProcess(Buffer, BitCount);
         if (PiccProcessRespBits == ISO14443A_APP_NO_RESPONSE) {
-            // Stop pesky USB readers trying to autodetect all tag types by brute-force enumeration
-            // from interfering with making it into the command exchange (DESFIRE_IDLE) states.
-            // Once the anticollision and/or RATS has completed, set this flag to keep it from
-            // resending that initial handshaking until the AppReset() function is called on a timeout.
-            // N.b., the ACR-122 reader does this repeatedly when trying to run the LibNFC testing code
-            // even when the reader has not been put in scan mode --
-            // and it really screws things up timing-wise!
+            /* Stop pesky USB readers trying to autodetect all tag types by brute-force enumeration
+             * from interfering with making it into the command exchange (DESFIRE_IDLE) states.
+             * Once the anticollision and/or RATS has completed, set this flag to keep it from
+             * resending that initial handshaking until the AppReset() function is called on a timeout.
+             * N.b., the ACR-122 reader does this repeatedly when trying to run the LibNFC testing code
+             * even when the reader has not been put in scan mode --
+             * and it really screws things up timing-wise!
+             */
             AnticolNoResp = true;
             const char *debugPrintStr = PSTR("DESFire: Anticol NO-RESP set");
             LogDebuggingMsg(debugPrintStr);
         }
+        uint16_t PiccProcessRespBytes = (PiccProcessRespBits + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, PiccProcessRespBytes);
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, PiccProcessRespBits);
     }
-    LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
     return ISO14443A_APP_NO_RESPONSE;
 }
 
