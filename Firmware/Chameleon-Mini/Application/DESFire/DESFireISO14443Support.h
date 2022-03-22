@@ -112,7 +112,7 @@ INLINE ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t Buff
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
 
-#define MAX_STATE_RETRY_COUNT               (0x04)   /* For all intensive purposes, as many as necessary */
+#define MAX_STATE_RETRY_COUNT               (0x0a)   /* For all intensive purposes, as many as necessary */
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault);
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging);

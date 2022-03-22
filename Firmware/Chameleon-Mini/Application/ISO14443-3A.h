@@ -25,12 +25,6 @@
 #define ISO14443A_NVB_AC_START      0x20
 #define ISO14443A_NVB_AC_END        0x70
 
-#define IsSelectCmd(Buffer)         ((Buffer[0] == ISO14443A_CMD_SELECT_CL1) || \
-				     (Buffer[0] == ISO14443A_CMD_SELECT_CL2) || \
-				     (Buffer[0] == ISO14443A_CMD_SELECT_CL3))
-#define IsCmdSelectRound1(Buffer)   (IsSelectCmd(Buffer) && (Buffer[1] == ISO14443A_NVB_AC_START))
-#define IsCmdSelectRound2(Buffer)   (IsSelectCmd(Buffer) && (Buffer[1] == ISO14443A_NVB_AC_END))
-
 #define ISO14443A_CL_UID_OFFSET     0
 #define ISO14443A_CL_UID_SIZE       4
 #define ISO14443A_CL_BCC_OFFSET     4

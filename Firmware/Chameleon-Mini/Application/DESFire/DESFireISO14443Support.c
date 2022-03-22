@@ -359,7 +359,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             return ISO14443A_ATQA_FRAME_SIZE_BYTES * BITS_PER_BYTE;
 
         case ISO14443_3A_STATE_READY1:
-            if (Cmd == ISO14443A_CMD_SELECT_CL1 || Cmd == ISO14443A_CMD_REQA || ISO14443ACmdIsWUPA(Cmd)) {
+            if (Cmd == ISO14443A_CMD_SELECT_CL1) {
                 /* Load UID CL1 and perform anticollision. */
                 ConfigurationUidType Uid;
                 ApplicationGetUid(Uid);
