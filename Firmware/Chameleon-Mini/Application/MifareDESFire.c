@@ -57,6 +57,7 @@ static bool AnticolNoResp = false;
 /* Dispatching routines */
 void MifareDesfireReset(void) {
     AnticolNoResp = false;
+    //DesfireState = DESFIRE_IDLE;
 }
 
 static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool FormatPICC) {
@@ -178,9 +179,9 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     if (BitCount == 0) {
         LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
         return ISO14443A_APP_NO_RESPONSE;
-    } else if ((ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
-                Buffer[3] == 0x00 && (Buffer[4] == ByteCount - 6 || Buffer[4] == ByteCount - 8)) || 
-                Iso7816CLA(DesfireCmdCLA)) {
+    } else if (((ByteCount >= 8 && Buffer[4] == ByteCount - 8) || (ByteCount >= 5 && Buffer[4] == ByteCount - 5)) &&
+               DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
+               Buffer[3] == 0x00 || Iso7816CLA(DesfireCmdCLA)) {
         /* Wrapped native command structure or ISO7816: */
         if (Iso7816CLA(DesfireCmdCLA)) {
             uint16_t iso7816ParamsStatus = SetIso7816WrappedParametersType(Buffer, ByteCount);
@@ -193,10 +194,12 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
         }
         ByteCount = Buffer[4];
         Buffer[0] = Buffer[1];
-        memmove(&Buffer[1], &Buffer[5], ByteCount);
+        if (ByteCount > 0) {
+            memmove(&Buffer[1], &Buffer[5], ByteCount);
+        }
         /* Process the command */
         ByteCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
-        if ((ByteCount != 0 && !Iso7816CLA(DesfireCmdCLA)) || (ByteCount == 1)) {
+        if ((ByteCount != 0 && !Iso7816CLA(DesfireCmdCLA))) {
             /* Re-wrap into padded APDU form */
             Buffer[ByteCount] = Buffer[0];
             memmove(&Buffer[0], &Buffer[1], ByteCount - 1);
@@ -205,7 +208,6 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
         } else {
             /* Re-wrap into ISO 7816-4 -- Done below by prepending the prologue back to the buffer */
         }
-        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
         return ByteCount * BITS_PER_BYTE;
     } else {
         /* ISO/IEC 14443-4 PDUs: No extra work */
@@ -217,6 +219,7 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
 uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     uint16_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
     uint16_t ReturnedBytes = 0;
+    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
     if (ByteCount >= 8 && DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
             Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8) {
         DesfireCmdCLA = Buffer[0];
@@ -224,18 +227,21 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         uint16_t UnwrappedBitCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, IncomingByteCount) * BITS_PER_BYTE;
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-        return ISO14443AStoreLastDataFrameAndReturn(Buffer, 
-               DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount) * BITS_PER_BYTE);
-    } else if ((Iso7816CmdType = IsWrappedISO7816CommandType(Buffer, ByteCount)) && Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_NONE) {
-        DesfireCmdCLA = (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_STANDARD) ? Buffer[2] : DESFIRE_ISO7816_CLA;
+        ProcessedByteCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount);
+        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ProcessedByteCount);
+        return ISO14443AStoreLastDataFrameAndReturn(Buffer, ProcessedByteCount * BITS_PER_BYTE);
+    }
+    Iso7816CmdType = IsWrappedISO7816CommandType(Buffer, ByteCount);
+    if (Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_NONE) {
+        DesfireCmdCLA = (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_STANDARD) ? Buffer[2] : DESFIRE_NATIVE_CLA;
         uint8_t ISO7816PrologueBytes[2];
         memcpy(&ISO7816PrologueBytes[0], Buffer, 2);
         if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_STANDARD) {
             memmove(&Buffer[0], &Buffer[2], ByteCount - 2);
             ByteCount = ByteCount - 2;
         } else if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_PM3RAW) {
-            /* Something like the following (for PM3 raw ISO auth): 
-             * 0a 00 1a 00 CRC1 CRC2 -- first two are prologue -- last two are checksum 
+            /* Something like the following (for PM3 raw ISO auth):
+             * 0a 00 1a 00 CRC1 CRC2 -- first two are prologue -- last two are checksum
              */
             Buffer[0] = DesfireCmdCLA;
             Buffer[1] = Buffer[2];
@@ -243,17 +249,23 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
             Buffer[2] = 0x00;
             Buffer[3] = 0x00;
             Buffer[4] = ByteCount - 5;
-            ByteCount = ByteCount + 3;
         }
         uint16_t IncomingByteCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, ByteCount);
-        uint16_t UnwrappedBitCount = (IncomingByteCount - 2) * BITS_PER_BYTE;
+        uint16_t UnwrappedBitCount = IncomingByteCount * BITS_PER_BYTE;
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+        /* Undo the leading 0x91 and shift for the PM3 raw wrapped commands: */
+        if (Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_NONE) {
+            memmove(&Buffer[1], &Buffer[0], ProcessedByteCount);
+            Buffer[0] = Buffer[ProcessedByteCount];
+            --ProcessedByteCount;
+        }
         /* Append the same ISO7816 prologue bytes to the response: */
         memmove(&Buffer[2], &Buffer[0], ProcessedByteCount);
         memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
-        ProcessedBitCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount + 2) * BITS_PER_BYTE;
-        return ISO14443AStoreLastDataFrameAndReturn(Buffer, ProcessedBitCount);
+        ProcessedByteCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount + 2);
+        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ProcessedByteCount);
+        return ISO14443AStoreLastDataFrameAndReturn(Buffer, ProcessedByteCount * BITS_PER_BYTE);
     } else if ((ReturnedBytes = CallInstructionHandler(Buffer, ByteCount)) != ISO14443A_APP_NO_RESPONSE) {
         /* This case should handle non-wrappped native commands. No pre/postprocessing afterwards: */
         LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ReturnedBytes);

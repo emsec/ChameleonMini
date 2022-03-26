@@ -96,12 +96,12 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Set a default logging mode for debugging with the DESFire
 #emulation code:
-#SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
-SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
+SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
+#SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
-SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
-#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
+#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
+SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
 
 #Feature: Use randomized UIDs that mask the actual secret UID until
 #the tag has been issued a successful authentication sequence:
@@ -173,7 +173,8 @@ SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Termina
 SRC         += Codec/Codec.c Codec/ISO14443-2A.c Codec/Reader14443-2A.c Codec/SniffISO14443-2A.c Codec/Reader14443-ISR.S
 SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c \
 			Application/Crypto1.c Application/Reader14443A.c Application/Sniff14443A.c \
-			Application/CryptoTDEA-HWAccelerated.S Application/CryptoTDEA.c Application/CryptoAES128.c Application/CryptoCMAC.c \
+			Application/CryptoTDEA-HWAccelerated.S Application/CryptoTDEA.c \
+			Application/CryptoAES128.c Application/CryptoCMAC.c \
 			Tests/CryptoTests.c Tests/ChameleonTerminal.c
 SRC         += Application/NTAG215.c
 SRC         += Codec/ISO15693.c
@@ -302,8 +303,8 @@ local-clean:
 	@mkdir $(OBJDIR)
 
 git-add-dev:
-	@git add Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
-	@cd ../../Software/DESFireLibNFCTesting && \
+	@make style && git add Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
+	@cd ../../Software/DESFireLibNFCTesting && make style && \
 	git add Makefile LocalInclude/*.h Source/*.c SampleOutputDumps/*.dump
 
 ## Defining custom targets for the DESFire build (normal/user mode) and

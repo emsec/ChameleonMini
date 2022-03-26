@@ -34,17 +34,16 @@ bool Iso7816FileSelected = false;
 uint8_t Iso7816FileOffset = 0;
 uint8_t Iso7816EfIdNumber = ISO7816_EF_NOT_SPECIFIED;
 
-bool IsWrappedISO7816CommandType(uint8_t *Buffer, uint16_t ByteCount) {
-    if (ByteCount <= ISO7816_PROLOGUE_SIZE + ISO14443A_CRCA_SIZE + 2) {
-        return ISO7816_WRAPPED_CMD_TYPE_NONE;
-    } else if (!ISO14443ACheckCRCA(&Buffer[0], ByteCount - 2)) {
-        return ISO7816_WRAPPED_CMD_TYPE_NONE;
-    } else if (ByteCount >= 6 && Buffer[3] == ByteCount - 6) {
+Iso7816WrappedCommandType_t IsWrappedISO7816CommandType(uint8_t *Buffer, uint16_t ByteCount) {
+    if (ByteCount >= 6 && Buffer[3] == ByteCount - 6) {
         return ISO7816_WRAPPED_CMD_TYPE_PM3RAW;
+    } else if (ByteCount <= ISO7816_PROLOGUE_SIZE + ISO14443A_CRCA_SIZE + 2) {
+        return ISO7816_WRAPPED_CMD_TYPE_NONE;
     } else if (!Iso7816CLA(Buffer[2])) {
         return ISO7816_WRAPPED_CMD_TYPE_NONE;
+    } else {
+        return ISO7816_WRAPPED_CMD_TYPE_STANDARD;
     }
-    return ISO7816_WRAPPED_CMD_TYPE_STANDARD;
 }
 
 uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount) {

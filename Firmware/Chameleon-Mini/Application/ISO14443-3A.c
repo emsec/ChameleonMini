@@ -20,7 +20,7 @@ bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, ui
 
     switch (NVB) {
         case 0x00:
-        case ISO14443A_CMD_HLTA:        
+        case ISO14443A_CMD_HLTA:
         case ISO14443A_NVB_AC_START:
             /* Start of anticollision procedure.
              * Send whole UID CLn + BCC          */
