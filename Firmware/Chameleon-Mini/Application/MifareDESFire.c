@@ -57,7 +57,7 @@ static bool AnticolNoResp = false;
 /* Dispatching routines */
 void MifareDesfireReset(void) {
     AnticolNoResp = false;
-    //DesfireState = DESFIRE_IDLE;
+    DesfireState = DESFIRE_IDLE;
 }
 
 static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool FormatPICC) {
@@ -199,7 +199,7 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
         }
         /* Process the command */
         ByteCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
-        if ((ByteCount != 0 && !Iso7816CLA(DesfireCmdCLA))) {
+        if (ByteCount != 0 && !Iso7816CLA(DesfireCmdCLA)) {
             /* Re-wrap into padded APDU form */
             Buffer[ByteCount] = Buffer[0];
             memmove(&Buffer[0], &Buffer[1], ByteCount - 1);
@@ -254,14 +254,16 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         uint16_t UnwrappedBitCount = IncomingByteCount * BITS_PER_BYTE;
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-        /* Undo the leading 0x91 and shift for the PM3 raw wrapped commands: */
-        if (Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_NONE) {
+        /* Undo the leading 0x91 and shift for the PM3 raw wrapped commands: (TODO) */
+        if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_PM3RAW && ProcessedByteCount > 0) {
             memmove(&Buffer[1], &Buffer[0], ProcessedByteCount);
             Buffer[0] = Buffer[ProcessedByteCount];
             --ProcessedByteCount;
         }
         /* Append the same ISO7816 prologue bytes to the response: */
-        memmove(&Buffer[2], &Buffer[0], ProcessedByteCount);
+        if (ProcessedByteCount > 0) {
+            memmove(&Buffer[2], &Buffer[0], ProcessedByteCount);
+        }
         memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
         ProcessedByteCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount + 2);
         LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ProcessedByteCount);

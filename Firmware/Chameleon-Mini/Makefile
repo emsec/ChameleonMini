@@ -96,12 +96,12 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Set a default logging mode for debugging with the DESFire
 #emulation code:
-SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
-#SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
+#SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
+SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
-#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
-SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
+SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
+#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
 
 #Feature: Use randomized UIDs that mask the actual secret UID until
 #the tag has been issued a successful authentication sequence:
@@ -124,9 +124,10 @@ SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
 
 #Set a minimum incoming/outgoing log size so we do not spam the
 #Chameleon Mini logs to much by logging everything:
-SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
+SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
+#SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
 #SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
-SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
+#SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
@@ -143,9 +144,9 @@ DESFIRE_DFFRAM_SECTION_START=0x6048
 DESFIRE_DFFRAM_DATA_ADDR=0x16048
 DESFIRE_DFFRAM_MAX_SIZE=0x0FFF
 DESFIRE_DFFRAM_SECTION_NAME=\".dffram\"
-DESFIRE_CONFIG_SETTINGS_BASE=$(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_LIMITED_TESTING -DDESFIRE_CRYPTO1_SAVE_SPACE -UDEFAULT_CONFIGURATION
 DESFIRE_DFFRAM_OBJCOPY= --set-section-flags=.dffram="alloc,load,readonly"
-
+DESFIRE_CONFIG_SETTINGS_BASE=$(SETTINGS) -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_LIMITED_TESTING \
+					 -DDESFIRE_CRYPTO1_SAVE_SPACE -DDEFAULT_CONFIGURATION=CONFIG_NONE
 #Memory definitions and objcopy flags to include sections in binaries
 FLASH_DATA_ADDR = 0x10000  #Start of data section in flash
 FLASH_DATA_SIZE = 0x10000  #Size of data section in flash
@@ -268,7 +269,7 @@ dfu-prog: $(TARGET).hex $(TARGET).eep check_size
 	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) reset
 
-check_size:
+check_size: SHELL:=$(shell which bash)
 	@{ \
 	set -e; \
 	if [ ! -f $(TARGET).elf ]; then \
@@ -321,3 +322,10 @@ desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).b
 	@avr-size -C -x $(TARGET).elf
 desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_NONE -fno-inline-small-functions
 desfire: desfire-build
+
+desfire-dev: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -fno-inline-small-functions \
+	-DDESFIRE_MIN_OUTGOING_LOGSIZE=0 \
+	-DDESFIRE_MIN_INCOMING_LOGSIZE=0 \
+	-DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING \
+	-DDESFIRE_DEFAULT_TESTING_MODE=1
+desfire-dev: desfire-build
