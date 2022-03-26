@@ -1754,16 +1754,9 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     /* Update state */
     Key = SessionKey;
     DesfireCommandState.KeyId = KeyId;
-    if (!AuthenticatedWithPICCMasterKey) {
-        keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_DES);
-        DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_DES;
-        DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_DES);
-
-    } else {
-        keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
-        DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_3K3DES;
-        DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
-    }
+    keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
+    DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_3K3DES;
+    DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
     CryptoChallengeResponseBytesSize = keySize;
 
     /* Fetch the key */
@@ -1865,8 +1858,9 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
                                      (KeyId == DESFIRE_MASTER_KEY_ID);
 
     /* Return the status on success */
-    Buffer[0] = STATUS_OPERATION_OK;
-    return DESFIRE_STATUS_RESPONSE_SIZE + CryptoChallengeResponseBytesSize;
+    Buffer[0] = (SW_NO_ERROR >> 8) & 0x00ff;
+    Buffer[1] = SW_NO_ERROR & 0x00ff;
+    return 2 * DESFIRE_STATUS_RESPONSE_SIZE;
 
 }
 
