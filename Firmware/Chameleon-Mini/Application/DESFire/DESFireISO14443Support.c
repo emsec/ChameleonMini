@@ -419,7 +419,8 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 const char *logMsg = PSTR("ISO14443-3/4: EXPECTING RATS");
                 LogDebuggingMsg(logMsg);
             } else if (Cmd == ISO14443A_CMD_SELECT_CL3) {
-                return ISO14443A_APP_NO_RESPONSE;
+                Buffer[0] = 0x00;
+                return 1 * BITS_PER_BYTE;
             }
             /* Forward to ISO/IEC 14443-4 processing code */
             uint16_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;

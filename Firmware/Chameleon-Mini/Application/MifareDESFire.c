@@ -179,7 +179,9 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     if (BitCount == 0) {
         LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
         return ISO14443A_APP_NO_RESPONSE;
-    } else if (((ByteCount >= 8 && Buffer[4] == ByteCount - 8) || (ByteCount >= 5 && Buffer[4] == ByteCount - 5)) &&
+    } else if (((ByteCount >= 8 && Buffer[4] == ByteCount - 8) ||
+                (ByteCount >= 5 && Buffer[4] == ByteCount - 5) ||
+                (ByteCount >= 5 && Buffer[1] == STATUS_ADDITIONAL_FRAME)) &&
                DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
                Buffer[3] == 0x00 || Iso7816CLA(DesfireCmdCLA)) {
         /* Wrapped native command structure or ISO7816: */
@@ -243,12 +245,12 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
             Buffer[0] = DesfireCmdCLA;
             Buffer[1] = STATUS_ADDITIONAL_FRAME;
             if (ByteCount > 3) {
-                memmove(&Buffer[3], &Buffer[5], ByteCount - 3);
+                memmove(&Buffer[5], &Buffer[3], ByteCount - 3);
             }
             Buffer[2] = 0x00;
             Buffer[3] = 0x00;
-            Buffer[4] = ByteCount - 3;
-            ByteCount += 1;
+            Buffer[4] = ByteCount - 5;
+            ByteCount += 2;
         } else if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_PM3RAW) {
             /* Something like the following (for PM3 raw ISO auth):
              * 0a 00 1a 00 CRC1 CRC2 -- first two are prologue -- last two are checksum

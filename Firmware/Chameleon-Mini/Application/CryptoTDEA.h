@@ -27,6 +27,10 @@ PCD's side.
 
 */
 
+/* DES Operation cipher mode */
+#define CRYPTO_DES_ECB_MODE                0     // Electronic Code Book mode
+#define CRYPTO_DES_CBC_MODE                1     // Cipher Block Chaining mode
+
 /* Key sizes, in bytes */
 #define CRYPTO_DES_KEY_SIZE         8 /* Bytes */
 #define CRYPTO_2KTDEA_KEY_SIZE      (CRYPTO_DES_KEY_SIZE * 2)

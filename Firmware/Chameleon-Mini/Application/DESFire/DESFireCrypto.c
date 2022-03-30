@@ -63,6 +63,8 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
     CryptoAuthMethod = CRYPTO_TYPE_ANY;
     ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
     DesfireCommMode = ActiveCommMode;
+    memset(&SessionKey[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
+    memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
 }
 
 bool IsAuthenticated(void) {
