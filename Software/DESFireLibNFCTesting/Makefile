@@ -1,17 +1,27 @@
 #### Makefile for the libnfc-based tests in C
 #### These tests are compiled for the local host system, not for AVR platforms
 
-#CC=gcc-10 # for MacOS
+#CC=gcc-10   # for MacOS
 CC=gcc
-CFLAGS= -ILocalInclude -ISource \
+CFLAGS_BASE= -ILocalInclude -ISource \
 		-g -O0 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t \
 		`pkg-config libnfc --cflags` -I/usr/local/opt/openssl/include \
 		-DHOST_BUILD -DCRYPTO_AES_DEFAULT=1 \
 		-ILibs/ArduinoCryptoLib
-#LD=gcc-10
+#LD=gcc-10   # for MacOS
 LD=gcc
-LDFLAGS= $(CFLAGS) -lc `pkg-config libnfc --libs` \
+LDFLAGS_BASE= $(CFLAGS) -lc `pkg-config libnfc --libs` \
 		 -L/usr/local/opt/openssl/lib -lssl -lcrypto
+
+ifeq ("$(shell uname -s)", "Darwin")
+    CC=/usr/local/opt/llvm/bin/clang-13
+    CFLAGS=$(CFLAGS_BASE) -I/usr/local/opt/llvm/include
+    LD=/usr/local/opt/llvm/bin/clang-13
+    LDFLAGS=$(LDFLAGS_BASE) -L/usr/local/opt/llvm/lib
+else
+    CFLAGS=$(CFLAGS_BASE)
+    LDFLAGS=$(LDFLAGS_BASE)
+endif
 
 BINDIR=./Bin
 BINEXT=exe

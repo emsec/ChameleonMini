@@ -551,8 +551,8 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE challengeRndB[CRYPTO_CHALLENGE_RESPONSE_BYTES];
     Decrypt2K3DESBuffer(2 * CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
                         &Buffer[1], NULL, Key);
-    RotateArrayRight(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB,
-                     CRYPTO_CHALLENGE_RESPONSE_BYTES);
+    RotateArrayLeft(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB,
+                    CRYPTO_CHALLENGE_RESPONSE_BYTES);
     memcpy(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
     /* Check that the returned RndB matches what we sent in the previous round */
@@ -562,7 +562,7 @@ uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount) {
     }
 
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
-    RotateArrayLeft(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
+    RotateArrayRight(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     Encrypt2K3DESBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB,
                         &Buffer[1], NULL, Key);
 
@@ -845,7 +845,6 @@ uint16_t EV0CmdDeleteApplication(uint8_t *Buffer, uint16_t ByteCount) {
         }
         PiccKeySettings = GetPiccKeySettings();
         const char *logMsg = PSTR("PICC key settings -- %02x");
-        DEBUG_PRINT_P(logMsg, PiccKeySettings);
         /* Check the PICC key settings whether it is OK to delete using app master key */
         if ((PiccKeySettings & DESFIRE_FREE_CREATE_DELETE) == 0x00) {
             Status = STATUS_AUTHENTICATION_ERROR;

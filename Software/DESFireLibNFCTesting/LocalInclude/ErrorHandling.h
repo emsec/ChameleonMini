@@ -8,7 +8,7 @@
 #include <errno.h>
 
 #define STRING_BUFFER_SIZE          (256)
-static inline char __InternalLoggingStringBuffer[STRING_BUFFER_SIZE] = { '\0' };
+static char __InternalLoggingStringBuffer[STRING_BUFFER_SIZE] = { '\0' };
 
 #define GetSourceFileLoggingData(outputDataBuf, maxBufSize)      ({    \
         char *strBuffer;                                               \
@@ -48,7 +48,7 @@ typedef enum {
     LAST_ERROR,
 } ErrorType_t;
 
-static inline const char *LOCAL_ERROR_MSGS[] = {
+static const char *LOCAL_ERROR_MSGS[] = {
     [NO_ERROR]                    = "No error",
     [LIBC_ERROR]                  = "Libc function error",
     [GENERIC_OTHER_ERROR]         = "Unspecified (generic) error",
@@ -58,8 +58,8 @@ static inline const char *LOCAL_ERROR_MSGS[] = {
     [LAST_ERROR]                  = NULL,
 };
 
-static inline bool RUNTIME_QUIET_MODE = false;
-static inline bool RUNTIME_VERBOSE_MODE = true;
+static bool RUNTIME_QUIET_MODE = false;
+static bool RUNTIME_VERBOSE_MODE = true;
 static bool PRINT_STATUS_EXCHANGE_MESSAGES = true;
 
 #define STATUS_OK                       (0x00)

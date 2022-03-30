@@ -58,7 +58,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, c
     aesCryptoData.keyData = keyData;
     aesCryptoData.ivSize = CRYPTO_CHALLENGE_RESPONSE_SIZE;
     DecryptAES128(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, plainTextRndB, aesCryptoData);
-    RotateArrayLeft(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    RotateArrayRight(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     aesCryptoData.ivData = IVBuf;
     GenerateRandomBytes(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
@@ -99,7 +99,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, c
     // and report back whether they match:
     uint8_t decryptedRndAFromPICCRotated[CRYPTO_CHALLENGE_RESPONSE_SIZE], decryptedRndA[CRYPTO_CHALLENGE_RESPONSE_SIZE];
     DecryptAES128(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE, decryptedRndAFromPICCRotated, aesCryptoData);
-    RotateArrayRight(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    RotateArrayLeft(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     if (!memcmp(rndA, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE)) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH OK! :)\n\n");
@@ -162,7 +162,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
     desCryptoData.keyData = keyData;
     desCryptoData.ivSize = CRYPTO_CHALLENGE_RESPONSE_SIZE;
     Decrypt3DES(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, plainTextRndB, NULL, desCryptoData);
-    RotateArrayLeft(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    RotateArrayRight(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     desCryptoData.ivData = IVBuf;
     GenerateRandomBytes(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
@@ -203,7 +203,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
     // and report back whether they match:
     uint8_t decryptedRndAFromPICCRotated[CRYPTO_CHALLENGE_RESPONSE_SIZE], decryptedRndA[CRYPTO_CHALLENGE_RESPONSE_SIZE];
     Decrypt3DES(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE, decryptedRndAFromPICCRotated, NULL, desCryptoData);
-    RotateArrayRight(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    RotateArrayLeft(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     if (!memcmp(rndA, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE)) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH OK! :)\n\n");
@@ -266,7 +266,7 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
     desCryptoData.keyData = keyData;
     desCryptoData.ivSize = CRYPTO_CHALLENGE_RESPONSE_SIZE;
     Decrypt2K3DES(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, plainTextRndB, NULL, desCryptoData);
-    RotateArrayLeft(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    RotateArrayRight(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     desCryptoData.ivData = IVBuf;
     GenerateRandomBytes(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
@@ -307,7 +307,7 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
     // and report back whether they match:
     uint8_t decryptedRndAFromPICCRotated[CRYPTO_CHALLENGE_RESPONSE_SIZE], decryptedRndA[CRYPTO_CHALLENGE_RESPONSE_SIZE];
     Decrypt2K3DES(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE, decryptedRndAFromPICCRotated, NULL, desCryptoData);
-    RotateArrayRight(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    RotateArrayLeft(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     if (!memcmp(rndA, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE)) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH OK! :)\n\n");

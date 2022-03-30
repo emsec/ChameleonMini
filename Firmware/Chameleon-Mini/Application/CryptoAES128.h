@@ -65,7 +65,7 @@
 #define CRYPTO_AES_KEY_SIZE                16
 typedef uint8_t CryptoAESKey_t[CRYPTO_AES_KEY_SIZE];
 
-#define CRYPTO_AES_BLOCK_SIZE	             16
+#define CRYPTO_AES_BLOCK_SIZE	           16
 typedef uint8_t CryptoAESBlock_t[CRYPTO_AES_BLOCK_SIZE];
 
 #define CryptoAESBytesToBlocks(byteCount) \
