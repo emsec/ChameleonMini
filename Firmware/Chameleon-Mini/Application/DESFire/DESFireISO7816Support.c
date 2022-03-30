@@ -26,6 +26,7 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFirePICCHeaderLayout.h"
 #include "DESFireISO7816Support.h"
 #include "DESFireInstructions.h"
+#include "DESFireStatusCodes.h"
 #include "../ISO14443-3A.h"
 
 Iso7816WrappedParams_t Iso7816P1Data = ISO7816_NO_DATA;
@@ -37,6 +38,8 @@ uint8_t Iso7816EfIdNumber = ISO7816_EF_NOT_SPECIFIED;
 Iso7816WrappedCommandType_t IsWrappedISO7816CommandType(uint8_t *Buffer, uint16_t ByteCount) {
     if (ByteCount >= 6 && Buffer[3] == ByteCount - 6) {
         return ISO7816_WRAPPED_CMD_TYPE_PM3RAW;
+    } else if (ByteCount >= 3 && Buffer[2] == STATUS_ADDITIONAL_FRAME) {
+        return ISO7816_WRAPPED_CMD_TYPE_PM3_ADDITIONAL_FRAME;
     } else if (ByteCount <= ISO7816_PROLOGUE_SIZE + ISO14443A_CRCA_SIZE + 2) {
         return ISO7816_WRAPPED_CMD_TYPE_NONE;
     } else if (!Iso7816CLA(Buffer[2])) {

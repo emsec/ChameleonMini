@@ -71,14 +71,16 @@ bool IsAuthenticated(void) {
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
     switch (cryptoType) {
+        case CRYPTO_TYPE_ANY:
+            return CRYPTO_3KTDEA_KEY_SIZE;
         case CRYPTO_TYPE_2KTDEA:
             return CRYPTO_2KTDEA_KEY_SIZE;
         case CRYPTO_TYPE_3K3DES:
             return CRYPTO_3KTDEA_KEY_SIZE;
         case CRYPTO_TYPE_AES128:
-            return 16;
+            return CRYPTO_AES_BLOCK_SIZE;
         default:
-            return 8;
+            return CRYPTO_DES_BLOCK_SIZE;
     }
 }
 

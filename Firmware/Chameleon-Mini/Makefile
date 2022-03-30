@@ -96,12 +96,12 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Set a default logging mode for debugging with the DESFire
 #emulation code:
-#SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
-SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
+#CONFIG_SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
+CONFIG_SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
 
 #Set a default testing mode setting (0 = OFF, non-NULL = ON):
-SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
-#SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
+CONFIG_SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
+#CONFIG_SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
 
 #Feature: Use randomized UIDs that mask the actual secret UID until
 #the tag has been issued a successful authentication sequence:
@@ -124,10 +124,10 @@ SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
 
 #Set a minimum incoming/outgoing log size so we do not spam the
 #Chameleon Mini logs to much by logging everything:
-SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
-#SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
-#SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
-#SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
+CONFIG_SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
+#CONFIG_SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
+#CONFIG_SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
+#CONFIG_SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 
 #Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
@@ -320,7 +320,7 @@ desfire-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).b
 	@avr-size -B -x $(TARGET).elf
 	@echo ""
 	@avr-size -C -x $(TARGET).elf
-desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -DDEFAULT_CONFIGURATION=CONFIG_NONE -fno-inline-small-functions
+desfire: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -fno-inline-small-functions
 desfire: desfire-build
 
 desfire-dev: CONFIG_SETTINGS:=$(DESFIRE_CONFIG_SETTINGS_BASE) -fno-inline-small-functions \

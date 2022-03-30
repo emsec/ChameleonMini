@@ -1732,9 +1732,6 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     if (!AuthenticatedWithPICCMasterKey && KeyId != DESFIRE_MASTER_KEY_ID) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
-    } else if ((Authenticated || AuthenticatedWithPICCMasterKey) && AuthenticatedWithKey != KeyId) {
-        Buffer[0] = STATUS_NO_SUCH_KEY;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
     } else {
         InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
     }
@@ -1744,25 +1741,19 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    /* Make sure that this key is 3DES, and figure out its byte size */
-    BYTE cryptoKeyType = ReadKeyCryptoType(SelectedApp.Slot, KeyId);
-    if (!CryptoType3KTDEA(cryptoKeyType)) {
-        Buffer[0] = STATUS_NO_SUCH_KEY;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
-    }
 
     /* Update state */
     Key = SessionKey;
     DesfireCommandState.KeyId = KeyId;
-    BYTE selectedKeyCryptoType = ReadKeyCryptoType(SelectedApp.Slot, KeyId);
-    if (selectedKeyCryptoType == CRYPTO_TYPE_ANY || selectedKeyCryptoType == CRYPTO_TYPE_3K3DES) {
+    BYTE cryptoKeyType = ReadKeyCryptoType(SelectedApp.Slot, KeyId);
+    if (cryptoKeyType == CRYPTO_TYPE_ANY || cryptoKeyType == CRYPTO_TYPE_3K3DES) {
         keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
         DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_3K3DES;
         DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
         CryptoChallengeResponseBytesSize = CRYPTO_CHALLENGE_RESPONSE_BYTES;
-    } else if (selectedKeyCryptoType == CRYPTO_TYPE_AES128) {
+    } else if (cryptoKeyType == CRYPTO_TYPE_AES128) {
         return DesfireCmdAuthenticateAES1(Buffer, ByteCount);
-    } else if (selectedKeyCryptoType == CRYPTO_TYPE_DES) {
+    } else if (cryptoKeyType == CRYPTO_TYPE_DES) {
         keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_DES);
         DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_DES;
         DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_DES);
@@ -1776,7 +1767,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Fetch the key */
     ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
-    if (selectedKeyCryptoType == CRYPTO_TYPE_DES) {
+    if (cryptoKeyType == CRYPTO_TYPE_DES) {
         memcpy(&Key[CRYPTO_DES_BLOCK_SIZE], &Key[0], CRYPTO_DES_BLOCK_SIZE);
         memcpy(&Key[2 * CRYPTO_DES_BLOCK_SIZE], &Key[0], CRYPTO_DES_BLOCK_SIZE);
     }
@@ -1807,7 +1798,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.RndB, CryptoChallengeResponseBytesSize);
 
     /* Encrypt RndB with the selected key and transfer it back to the PCD */
-    if (cryptoKeyType == CRYPTO_TYPE_DES || cryptoKeyType == CRYPTO_TYPE_3K3DES) {
+    if (cryptoKeyType == CRYPTO_TYPE_DES || cryptoKeyType == CRYPTO_TYPE_3K3DES || cryptoKeyType == CRYPTO_TYPE_ANY) {
         Encrypt3DESBuffer(CryptoChallengeResponseBytesSize, DesfireCommandState.RndB,
                           &Buffer[1], NULL, Key);
     } else {
@@ -1833,14 +1824,22 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
 
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
     keySize = GetDefaultCryptoMethodKeySize(cryptoKeyType);
-    CryptoChallengeResponseBytesSize = CRYPTO_CHALLENGE_RESPONSE_BYTES;
+    if (cryptoKeyType == CRYPTO_TYPE_ANY || cryptoKeyType == CRYPTO_TYPE_3K3DES) {
+        CryptoChallengeResponseBytesSize = CRYPTO_CHALLENGE_RESPONSE_BYTES;
+    } else if (cryptoKeyType == CRYPTO_TYPE_DES) {
+        CryptoChallengeResponseBytesSize = CRYPTO_DES_BLOCK_SIZE;
+    } else {
+        CryptoChallengeResponseBytesSize = CRYPTO_DES_BLOCK_SIZE;
+    }
 
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
     /* Validate command length */
     if (ByteCount != 2 * CryptoChallengeResponseBytesSize + 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
+        Buffer[1] = ByteCount;
+        Buffer[2] = CryptoChallengeResponseBytesSize;
+        return 3 * DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
     /* Reset parameters for authentication from the first exchange */
@@ -1856,7 +1855,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE challengeRndAB[2 * CryptoChallengeResponseBytesSize];
     BYTE challengeRndA[CryptoChallengeResponseBytesSize];
     BYTE challengeRndB[CryptoChallengeResponseBytesSize];
-    if (cryptoKeyType == CRYPTO_TYPE_DES || cryptoKeyType == CRYPTO_TYPE_3K3DES) {
+    if (cryptoKeyType == CRYPTO_TYPE_DES || cryptoKeyType == CRYPTO_TYPE_3K3DES || cryptoKeyType == CRYPTO_TYPE_ANY) {
         Decrypt3DESBuffer(2 * CryptoChallengeResponseBytesSize, challengeRndAB,
                           &Buffer[1], NULL, Key);
     } else {
@@ -1876,7 +1875,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     RotateArrayLeft(challengeRndA, challengeRndAB, CryptoChallengeResponseBytesSize);
-    if (cryptoKeyType == CRYPTO_TYPE_DES || cryptoKeyType == CRYPTO_TYPE_3K3DES) {
+    if (cryptoKeyType == CRYPTO_TYPE_DES || cryptoKeyType == CRYPTO_TYPE_3K3DES || cryptoKeyType == CRYPTO_TYPE_ANY) {
         Encrypt3DESBuffer(CryptoChallengeResponseBytesSize, challengeRndAB,
                           &Buffer[1], NULL, Key);
     } else {
@@ -1897,7 +1896,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Return the status on success */
     Buffer[0] = STATUS_OPERATION_OK;
-    return DESFIRE_STATUS_RESPONSE_SIZE;
+    return DESFIRE_STATUS_RESPONSE_SIZE + CryptoChallengeResponseBytesSize;
 
 }
 

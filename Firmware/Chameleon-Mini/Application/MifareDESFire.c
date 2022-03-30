@@ -239,6 +239,16 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_STANDARD) {
             memmove(&Buffer[0], &Buffer[2], ByteCount - 2);
             ByteCount = ByteCount - 2;
+        } else if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_PM3_ADDITIONAL_FRAME) {
+            Buffer[0] = DesfireCmdCLA;
+            Buffer[1] = STATUS_ADDITIONAL_FRAME;
+            if (ByteCount > 3) {
+                memmove(&Buffer[3], &Buffer[5], ByteCount - 3);
+            }
+            Buffer[2] = 0x00;
+            Buffer[3] = 0x00;
+            Buffer[4] = ByteCount - 3;
+            ByteCount += 1;
         } else if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_PM3RAW) {
             /* Something like the following (for PM3 raw ISO auth):
              * 0a 00 1a 00 CRC1 CRC2 -- first two are prologue -- last two are checksum
@@ -250,12 +260,15 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
             Buffer[3] = 0x00;
             Buffer[4] = ByteCount - 5;
         }
-        uint16_t IncomingByteCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, ByteCount);
-        uint16_t UnwrappedBitCount = IncomingByteCount * BITS_PER_BYTE;
+        uint16_t UnwrappedBitCount = ByteCount * BITS_PER_BYTE;
+        if (Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_PM3_ADDITIONAL_FRAME) {
+            uint16_t IncomingByteCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, ByteCount);
+            UnwrappedBitCount = IncomingByteCount * BITS_PER_BYTE;
+        }
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-        /* Undo the leading 0x91 and shift for the PM3 raw wrapped commands: (TODO) */
-        if (Iso7816CmdType == ISO7816_WRAPPED_CMD_TYPE_PM3RAW && ProcessedByteCount > 0) {
+        /* Undo the leading 0x91 and shift for the PM3 raw wrapped commands: */
+        if (Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_STANDARD && ProcessedByteCount > 0) {
             memmove(&Buffer[1], &Buffer[0], ProcessedByteCount);
             Buffer[0] = Buffer[ProcessedByteCount];
             --ProcessedByteCount;
@@ -312,6 +325,9 @@ void ResetLocalStructureData(void) {
     SessionIVByteSize = 0x00;
     SelectedApp.Slot = 0;
     SelectedFile.Num = -1;
+    ISO144433AReset();
+    ISO144434Reset();
+    MifareDesfireReset();
 }
 
 void MifareDesfireGetUid(ConfigurationUidType Uid) {
