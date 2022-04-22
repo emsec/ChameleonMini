@@ -151,6 +151,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
                     return ISO14443A_APP_NO_RESPONSE;
                 }
             }
+            break;
         }
         case ISO14443_4_STATE_LAST: {
             return ISO14443A_APP_NO_RESPONSE;
@@ -184,7 +185,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
             }
             Buffer[0] = PCB;
             /* Let the DESFire application code process the input data */
-            ByteCount = MifareDesfireProcess(Buffer + PrologueLength, ByteCount - PrologueLength);
+            ByteCount = MifareDesfireProcessCommand(Buffer + PrologueLength, ByteCount - PrologueLength);
             /* Short-circuit in case the app decides not to respond at all */
             if (ByteCount == ISO14443A_APP_NO_RESPONSE) {
                 const char *debugPrintStr = PSTR("ISO14443-4: APP_NO_RESP");
@@ -194,7 +195,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
             ByteCount += PrologueLength;
             const char *debugPrintStr = PSTR("ISO14443-4: I-BLK");
             LogDebuggingMsg(debugPrintStr);
-            break;
+            return GetAndSetBufferCRCA(Buffer, ByteCount);
         }
 
         case ISO14443_PCB_R_BLOCK: {
@@ -227,7 +228,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
             }
             const char *debugPrintStr6 = PSTR("ISO14443-4: R-BLK");
             LogDebuggingMsg(debugPrintStr6);
-            break;
+            return GetAndSetBufferCRCA(Buffer, ByteCount);
         }
 
         case ISO14443_PCB_S_BLOCK: {

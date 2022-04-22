@@ -196,7 +196,7 @@ static void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const
     NOP();
     AES.CTRL = 0;
     aes_configure_encrypt(AES_MANUAL, XorModeOn ? AES_XOR_ON : AES_XOR_OFF);
-    aes_isr_configure(AES_INTLVL_LO);
+    aes_isr_configure(AES_INTLVL_OFF);
     aes_set_key(Key);
     for (uint8_t i = 0; i < CRYPTO_AES_BLOCK_SIZE; i++) {
         AES.STATE = 0x00;
@@ -221,7 +221,7 @@ static void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const
     NOP();
     AES.CTRL = 0;
     aes_configure_decrypt(AES_MANUAL, AES_XOR_OFF);
-    aes_isr_configure(AES_INTLVL_LO);
+    aes_isr_configure(AES_INTLVL_OFF);
     aes_set_key(lastSubKey);
     for (uint8_t i = 0; i < CRYPTO_AES_BLOCK_SIZE; i++) {
         AES.STATE = 0x00;
