@@ -270,6 +270,7 @@ dfu-prog: $(TARGET).hex $(TARGET).eep check_size
 	dfu-programmer $(MCU) reset
 
 check_size: SHELL:=$(shell which bash)
+check_size:
 	@{ \
 	set -e; \
 	if [ ! -f $(TARGET).elf ]; then \
