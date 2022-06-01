@@ -2,7 +2,9 @@
 ## : Note when using AVR-Toolchain, you have to install cygwin and
 ## : append cygwin's bin directory to the PATH environment variable
 ## : because Atmel does not ship sh.exe anymore with the toolchain.
-SHELL = /bin/sh
+SHELL            = /bin/sh
+CONFIG_SETTINGS ?= 
+SETTINGS        ?=
 
 ## : Supported configurations:
 ## : CAUTION: Enabling too many configurations in the firmware 
@@ -144,41 +146,42 @@ DESFIRE_MAINSRC = Application/DESFire
 DESFIRE_CONFIG_SETTINGS_BASE=   -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_LIMITED_TESTING \
 				-DDESFIRE_CRYPTO1_SAVE_SPACE -DDEFAULT_CONFIGURATION=CONFIG_NONE
 
-#include BuildScripts/generate_build_settings_from_config.mk
-
 ## : Fix some issues with standard Makefile targets on MacOS 
 ## : where non-GNU versions of coreutils (and Unix commands like 
 ## : grep, sed, awk) lead to unexpected behavior: 
-CHECK_SIZE_GREP_CMD=grep -oP "\d+"
-ifeq "$(shell uname -s)" "Darwin"
-	CHECK_SIZE_GREP_CMD=grep -Eo "[[:digit:]]+"
-endif
+CHECK_SIZE_GREP_ARGS=$(if $(filter "$(shell uname -s)", "Darwin"), -Eo "[[:digit:]]+", -oP "\d+")
 
 ## : Memory definitions and objcopy flags to include sections in binaries
-## : ++ Start of data section in flash
-FLASH_DATA_ADDR = 0x10000
-## : ++ Size of data section in flash
-FLASH_DATA_SIZE = 0x10000
-FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
-## : ++ Start of SPM helper section. Should be last 32Byte in bootloader section
-SPM_HELPER_ADDR = 0x21FE0
-SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
+## ++ Start of data section in flash
+FLASH_DATA_ADDR         = 0x10000
+## ++ Size of data section in flash
+FLASH_DATA_SIZE         = 0x10000
+FLASH_DATA_SECTION_NAME = .flashdata
+FLASH_DATA_OBJCOPY      = --set-section-flags=$(FLASH_DATA_SECTION_NAME)="alloc,load"
+## ++ Start of SPM helper section. 
+## ++ Should be last 32 bytes in bootloader section
+SPM_HELPER_ADDR         = 0x21FE0
+SPM_HELPER_OBJCOPY      = --set-section-flags=.spmhelper="alloc,load,readonly"
 
 ## : Build configuration
-ifeq ($(OS),Windows_NT)
-	BUILD_DATE   = "\"$(shell date /t)\""
-else
-	BUILD_DATE   = $(shell date +'\"%Y-%m-%d\"')
-endif
-
 COMMIT_ID    = $(shell git rev-parse --short HEAD)
-MCU          = atxmega128a4u
-ARCH         = XMEGA
-BOARD        = NONE
-F_CPU        = 27120000
-F_USB        = 48000000
+BUILD_DATE   = $(strip $(if $(filter $(OS), Windows_NT), "\"$(shell date /t)\"", $(shell date +'\"%Y-%m-%d\"')))
+
+## : Adding the '?=' before the `MCU` variable definition lets it be reset by an environment variable, 
+## : so that the following works (may be useful for those users working with a RevE generation 
+## : Chameleon device): 
+## : $ TARGET=atxmega32a4u make 
+## : ... OR ... 
+## : $ TARGET=atxmega32a4u make <custom-target-name>
+MCU          ?= atxmega128a4u
+
+ARCH         =  XMEGA
+BOARD        =  NONE
+F_CPU        =  27120000
+F_USB        =  48000000
 TARGET       ?= Chameleon-Mini
-OPTIMIZATION = s
+OPTIMIZATION =  s
+SRC          =
 SRC         +=  $(TARGET).c \
 		LUFADescriptors.c \
 		System.c \
@@ -236,7 +239,7 @@ SRC	    +=  $(DESFIRE_MAINSRC)/../MifareDESFire.c \
                 $(DESFIRE_MAINSRC)/DESFireUtils.c
 SRC         +=  Tests/CryptoTests.c \
 		Tests/ChameleonTerminal.c
-SRC         +=  $(LUFA_SRC_USB) \
+LUFA_SRC     =  $(LUFA_SRC_USB) \
 		$(LUFA_SRC_USBCLASS)
 LUFA_PATH    =  ../LUFA
 CC_FLAGS     =  -g0 \
@@ -271,7 +274,11 @@ LD_FLAGS     =  $(CC_FLAGS) \
 		-Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 		-Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
+LUFA_OBJDIR  = LUFABin
+TEMPDIR      = $(OBJDIR)/Temp
 OBJECT_FILES =
+FWROOT       = ../..
+BUILD_SCR    = ./BuildScripts
 
 ## : AVRDUDE settings
 AVRDUDE_PROGRAMMER = flip2
@@ -288,27 +295,38 @@ AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/$(TARGET).eep
 .PHONY: clean program program-latest dfu-flip dfu-prog check_size style
 
 ## : Default target
-all:
+.DEFAULT all:
 
 ## : Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk
 include $(LUFA_PATH)/Build/lufa_sources.mk
-include $(LUFA_PATH)/Build/lufa_build.mk
+include $(BUILD_SCR)/lufa_build_extra.mk
 include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 
 ## : Overwrite the LUFA versions of hex/bin file generation to include spmhelper and flashdata sections
 %.hex: %.elf
-	@echo $(MSG_OBJCPY_CMD) Extracting HEX file data from \"$<\"
+	@echo $(MSG_TIDY_PRE_FORMATTING)
+	@echo $(MSG_OBJCPY_CMD) Extracting $(FMT_ANSIC_LIGHTRED)HEX$(FMT_ANSIC_END) file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
+	@echo $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
+	@echo $(MSG_TIDY_POST_FORMATTING)
 
 %.bin: %.elf
-	@echo $(MSG_OBJCPY_CMD) Extracting BIN file data from \"$<\"
+	@echo $(MSG_TIDY_PRE_FORMATTING)
+	@echo $(MSG_OBJCPY_CMD) Extracting $(FMT_ANSIC_LIGHTRED)BIN$(FMT_ANSIC_END) file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
+	@echo $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
+	@echo $(MSG_TIDY_POST_FORMATTING)
 
 ## : Extract SPMHelper in the last 32 Byte of the bootloader section to externally combine it with any bootloader
 spmhelper: $(TARGET).elf
-	@echo $(MSG_OBJCPY_CMD) Extracting SPM helper HEX file from $(TARGET).elf
+	@echo $(MSG_TIDY_PRE_FORMATTING)
+	@echo $(MSG_OBJCPY_CMD) Extracting $(FMT_ANSIC_LIGHTRED)SPM$(FMT_ANSIC_END) helper \
+		$(FMT_ANSIC_LIGHTRED)HEX$(FMT_ANSIC_END) file \
+		from $(FMT_FILENAME_BEGIN)$(TARGET).elf$(MSG_NEWLINE)
+	@echo $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
+	@echo $(MSG_TIDY_POST_FORMATTING)
 
 ## : Program the device using avrdude
 program: $(TARGET).hex $(TARGET).eep check_size
@@ -334,49 +352,105 @@ dfu-prog: $(TARGET).hex $(TARGET).eep check_size
 	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) reset
 
-check_size: SHELL:=$(shell which bash)
-check_size: SHELL_SCRIPT_EXEC_LINES:='\
-	set -e; \
-	if [ ! -f $(TARGET).elf ]; then \
-		exit 0; \
-	fi; \
-	PROGMEM_SIZE=$$(avr-size $(TARGET).elf | $(CHECK_SIZE_GREP_CMD) | sed -n 4p); \
-	MAX_PRGMEM_SIZE=$$(printf "%d\n" $(FLASH_DATA_ADDR)); \
-	if [ $$PROGMEM_SIZE -gt $$MAX_PRGMEM_SIZE ]; then \
-		echo "make: *** $(TARGET).elf Application Section size $$PROGMEM_SIZE " \
-		echo "excedes maximum allowed $$MAX_PRGMEM_SIZE. Please disable some features in Makefile"; \
-		exit 1; \
-	fi; \
+check_size: BASH:=$(if $(shell which bash), $(shell which bash), /bin/bash)
+check_size: BASH_SCRIPT_EXEC_LINES:='                                                                         \
+	set -e;                                                                                               \
+	if [[ ! -f $(TARGET).elf ]]; then                                                                     \
+		exit 0;                                                                                       \
+	fi;                                                                                                   \
+	PROGMEM_SIZE=$$(avr-size $(TARGET).elf | grep $(CHECK_SIZE_GREP_ARGS) | sed -n 4p);                   \
+	MAX_PRGMEM_SIZE=$$(printf "%d\n" $(FLASH_DATA_ADDR));                                                 \
+	if [[ $$PROGMEM_SIZE -gt $$MAX_PRGMEM_SIZE ]]; then                                                   \
+		echo \"make: *** $(TARGET).elf Application Section size $$PROGMEM_SIZE \"                     \
+		echo \"excedes maximum allowed $$MAX_PRGMEM_SIZE. Please disable some features in Makefile\"; \
+		exit 1;                                                                                       \
+	fi;                                                                                                   \
 	'
 check_size:
-	@$(SHELL) -c $(SHELL_SCRIPT_EXEC_LINES)
+	@$(BASH) -c $(BASH_SCRIPT_EXEC_LINES) || $(SHELL) -c $(BASH_SCRIPT_EXEC_LINES)
 
 style:
 	## : Make sure astyle is installed
 	@which astyle >/dev/null || ( echo "Please install 'astyle' package first" ; exit 1 )
 	## : Remove spaces & tabs at EOL, add LF at EOF if needed on *.c, *.h, Makefile
-	find . \( -name "*.[ch]" -or -name "Makefile" \) \
-	    -exec perl -pi -e 's/[ \t]+$$//' {} \; \
+	find . \( -name "*.[ch]" -or -name "Makefile" \)                      \
+	    -exec perl -pi -e 's/[ \t]+$$//' {} \;                            \
 	    -exec sh -c "tail -c1 {} | xxd -p | tail -1 | grep -q -v 0a$$" \; \
 	    -exec sh -c "echo >> {}" \;
 	## : Apply astyle on *.c, *.h
 	find . -name "*.[ch]" -exec astyle --formatted --mode=c --suffix=none \
-	    --indent=spaces=4 --indent-switches \
-	    --keep-one-line-blocks --max-instatement-indent=60 \
-	    --style=google --pad-oper --unpad-paren --pad-header \
+	    --indent=spaces=4 --indent-switches                               \
+	    --keep-one-line-blocks --max-instatement-indent=60                \
+	    --style=google --pad-oper --unpad-paren --pad-header              \
 	    --align-pointer=name {} \;
 
+local-clean: BASH:=$(if $(shell which bash), $(shell which bash), /bin/bash)
+local-clean: BASH_SCRIPT_EXEC_LINES:='                                               \
+		for lufaobj in $$(ls $(LUFA_OBJDIR)); do                             \
+		     lobj_basename=$$(basename $$lufaobj);                           \
+		     ln -s $(LUFA_OBJDIR)/$$lobj_basename $(OBJDIR)/$$lobj_basename; \
+		done                                                                 \
+		'
 local-clean:
-	@rm -f $(TARGET)*.{elf,hex,eep,bin,lss,map}
-	@rm -rf $(OBJDIR)
-	@mkdir $(OBJDIR)
+	@rm -f  $(TARGET)*.{elf,hex,eep,bin,lss,map}
+	@rm -rf $(OBJDIR) $(LUFA_OBJ)
+	@mkdir -p $(OBJDIR) $(LUFA_OBJDIR)
+	@$(BASH) -c $(BASH_SCRIPT_EXEC_LINES) || $(SHELL) -c $(BASH_SCRIPT_EXEC_LINES)
 
-clean: local-clean
+local-clean-skip:
 
+ifdef $(NOCLEAN)
+	clean: local-clean-skip
+else
+	clean: local-clean
+endif
+
+git-add-dev: LOCALFW_SOURCE_FILES:=Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
+git-add-dev: LOCALFW_BUILD_SCRIPT_FILES:=.gitignore custom_build_targets.mk lufa_build_custom.mk
+git-add-dev: TESTING_SOURCE_FILES:=Makefile LocalInclude/*.h Source/*.c SampleOutputDumps/*.dump
+git-add-dev: BASH:=$(if $(shell which bash), $(shell which bash), /bin/bash)
+git-add-dev: BASH_GITCOMMIT_SCRIPT_EXEC_LINES:='      \
+		if [ -z \"$(M)\" ]; then              \
+			git commit -m \"$(M)\";       \
+			git push origin;              \
+		elif [ -z \"$(MSG)\" ]; then          \
+			git commit -m "$(MSG)";       \
+			git push origin;              \
+		elif [ -z \"$(MESSAGE)\" ]; then      \
+			git commit -m \"$(MESSAGE)\"; \
+			git push origin;              \
+		fi                                    \
+		exit 0;                               \
+		'
 git-add-dev:
-	@make style && git add Makefile BuildScripts/custom_build_targets.mk ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
-	@cd ../../Software/DESFireLibNFCTesting && make style && \
-		git add Makefile LocalInclude/*.h Source/*.c SampleOutputDumps/*.dump
+	@make style && git add $(LOCALFW_SOURCE_FILES) 
+	@cd $(BUILD_SCR) && make style && git add -f $(LOCALFW_BUILD_SCRIPT_FILES)
+	@cd $(FWROOT)/Software/DESFireLibNFCTesting && make style && git add $(TESTING_SOURCE_FILES)
+	@$(BASH) -c $(BASH_GITCOMMIT_SCRIPT_LINES) || $(SHELL) -c $(BASH_GITCOMMIT_SCRIPT_LINES)
 
-## : Define custom targets
-include BuildScripts/custom_build_targets.mk
+configure-chameleon-usb: UDEV_RULES_CONFIG_LINES:='\n                                                \
+	\# ChameleonMini (RevG)\n                                                                    \
+	SUBSYSTEMS==\"usb\", ATTRS{idVendor}==\"16d0\", ATTRS{idProduct}==\"04b2\", GROUP=\"users\", \
+	MODE=\"0666\", SYMLINK+=\"ChameleonMini\", ENV{ID_MM_DEVICE_IGNORE}=\"1\"\n                  \
+	\# ChameleonMini (RevE)\n                                                                    \
+	SUBSYSTEMS==\"usb\", ATTRS{idVendor}==\"03eb\", ATTRS{idProduct}==\"2044\", GROUP=\"users\", \
+	MODE=\"0666\", SYMLINK+=\"ChameleonMiniE\", ENV{ID_MM_DEVICE_IGNORE}=\"1\"\n                 \
+	\# ChameleonMini DFU mode\n                                                                  \
+	SUBSYSTEMS==\"usb\", ATTRS{idVendor}==\"03eb\", ATTRS{idProduct}==\"2fde\", GROUP=\"users\", \
+	MODE=\"0666\"                                                                                \
+	'
+configure-chameleon-usb:
+	@mkdir -p $(TEMPDIR) && echo $(UDEV_RULES_CONFIG_LINES) > $(TEMPDIR)/98-ChameleonMini.rules
+	@echo ""
+	@echo "TO CONFIGURE THE CHAMELEON OVER USB, RUN THE FOLLOWING COMMANDS:"
+	@echo "    $$ sudo cp $(TEMPDIR)/98-ChameleonMini.rules /etc/udev/rules.d/"
+	@echo "    $$ sudo service udev restart"
+	@echo "    $$ sudo udevadm control --reload"
+	@echo ""
+	@echo "FOR HELP TROUBLESHOOTING THE CHAMELEON USB CONNECTION, LOOK AT THE FOLLOWING OUTPUT:"
+	@echo "    $$ dmesg | tail | grep -i dev"
+	@echo "    $$ dmesg | tail | grep -i usb"
+	@echo "    $$ sudo udevadm monitor"
+
+## : Define custom targets and standard build variants
+include $(BUILD_SCR)/custom_build_targets.mk
