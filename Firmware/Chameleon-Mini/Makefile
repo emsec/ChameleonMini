@@ -3,14 +3,15 @@
 ## : append cygwin's bin directory to the PATH environment variable
 ## : because Atmel does not ship sh.exe anymore with the toolchain.
 SHELL            = /bin/sh
-CONFIG_SETTINGS ?= 
+CONFIG_SETTINGS ?=
 SETTINGS        ?=
 
 ## : Supported configurations:
-## : CAUTION: Enabling too many configurations in the firmware 
-## :          can/will/has been known to eat up too much memory 
-## :          on the Chameleon integrated AVR and lead to stability 
-## :          problems ...
+## : CAUTION: Enabling too many configurations in the firmware
+## :          can/will/has been known to eat up too much memory
+## :          on the Chameleon integrated AVR and lead to stability
+## :          problems. Proceed carefully, or use one of the
+## :          custom build targets found in the BuildScripts/* directory
 CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_1K_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
@@ -77,7 +78,7 @@ SETTINGS	+= -DLOG_SETTING_GLOBAL
 SETTINGS	+= -DDEFAULT_SETTING=SETTINGS_FIRST
 
 ## : Default pending task timeout
-SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=65 #50 #* 100ms
+SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=65
 
 ## : Default reader threshold
 SETTINGS	+= -DDEFAULT_READER_THRESHOLD=400
@@ -121,7 +122,7 @@ CONFIG_SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
 ## :  -> Or explicitly define DESFIRE_CUSTOM_MAX_KEYS=##UINT## : (per AID),
 ## :  -> And/Or define DESFIRE_CUSTOM_MAX_APPS=##UINT##
 ## :     (total number of AID spaces available, not including the master 0x00)
-#SETTINGS  += -DMEMORY_LIMITED_TESTING
+#SETTINGS += -DMEMORY_LIMITED_TESTING
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_APPS=8
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_KEYS=6
 #SETTINGS += -DDESFIRE_CUSTOM_MAX_FILES=6
@@ -131,8 +132,6 @@ CONFIG_SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
 ## : Set a minimum incoming/outgoing log size so we do not spam the
 ## : Chameleon Mini logs to much by logging everything:
 CONFIG_SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
-#CONFIG_SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
-#CONFIG_SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=1
 #CONFIG_SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 
 ## : Enable printing of crypto tests when a new DESFire emulation instance is started:
@@ -142,36 +141,36 @@ CONFIG_SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
 ## : in PROGMEM. Note that this will slow down the read times when accessing these tables:
 #SETTINGS  += -DDESFIRE_CRYPTO1_SAVE_SPACE
 
-DESFIRE_MAINSRC = Application/DESFire
-DESFIRE_CONFIG_SETTINGS_BASE=   -DCONFIG_MF_DESFIRE_SUPPORT -DMEMORY_LIMITED_TESTING \
-				-DDESFIRE_CRYPTO1_SAVE_SPACE -DDEFAULT_CONFIGURATION=CONFIG_NONE
-
-## : Fix some issues with standard Makefile targets on MacOS 
-## : where non-GNU versions of coreutils (and Unix commands like 
-## : grep, sed, awk) lead to unexpected behavior: 
+## : Fix some issues with standard Makefile targets on MacOS
+## : where non-GNU versions of coreutils (and Unix commands like
+## : grep, sed, awk) lead to unexpected behavior:
 CHECK_SIZE_GREP_ARGS=$(if $(filter "$(shell uname -s)", "Darwin"), -Eo "[[:digit:]]+", -oP "\d+")
 
 ## : Memory definitions and objcopy flags to include sections in binaries
 ## ++ Start of data section in flash
 FLASH_DATA_ADDR         = 0x10000
 ## ++ Size of data section in flash
+## ++ Each setting is 8192 bytes ... This gives eight total settings to store tag config data
+## ++ Conservative settings of FLASH_DATA_SIZE:=0x0E000 yield seven total settings
+## ++ Unused area in the .flashdata section can be commandered to store secret data on the
+##    Chameleon that can be accessed via the flash memory functions for firmware mods
 FLASH_DATA_SIZE         = 0x10000
 FLASH_DATA_SECTION_NAME = .flashdata
 FLASH_DATA_OBJCOPY      = --set-section-flags=$(FLASH_DATA_SECTION_NAME)="alloc,load"
-## ++ Start of SPM helper section. 
+## ++ Start of SPM helper section.
 ## ++ Should be last 32 bytes in bootloader section
 SPM_HELPER_ADDR         = 0x21FE0
-SPM_HELPER_OBJCOPY      = --set-section-flags=.spmhelper="alloc,load,readonly"
+SPM_HELPER_OBJCOPY      = --set-section-flags=.spmhelper="alloc,load"
 
 ## : Build configuration
 COMMIT_ID    = $(shell git rev-parse --short HEAD)
 BUILD_DATE   = $(strip $(if $(filter $(OS), Windows_NT), "\"$(shell date /t)\"", $(shell date +'\"%Y-%m-%d\"')))
 
-## : Adding the '?=' before the `MCU` variable definition lets it be reset by an environment variable, 
-## : so that the following works (may be useful for those users working with a RevE generation 
-## : Chameleon device): 
-## : $ TARGET=atxmega32a4u make 
-## : ... OR ... 
+## : Adding the '?=' before the `MCU` variable definition lets it be reset by an environment variable,
+## : so that the following works (may be useful for those users working with a RevE generation
+## : Chameleon device):
+## : $ TARGET=atxmega32a4u make
+## : ... OR ...
 ## : $ TARGET=atxmega32a4u make <custom-target-name>
 MCU          ?= atxmega128a4u
 
@@ -217,7 +216,7 @@ SRC         +=  Application/MifareUltralight.c \
 		Application/CryptoTDEA-HWAccelerated.S \
 		Application/CryptoTDEA.c \
 		Application/CryptoAES128.c \
-		Application/CryptoCMAC.c 
+		Application/CryptoCMAC.c
 SRC         +=  Application/NTAG215.c
 SRC         +=  Application/Vicinity.c \
 		Application/Sl2s2002.c \
@@ -225,18 +224,18 @@ SRC         +=  Application/Vicinity.c \
 		Application/TITagitplus.c \
 		Application/ISO15693-A.c \
 		Application/EM4233.c
-SRC	    +=  $(DESFIRE_MAINSRC)/../MifareDESFire.c \
-                $(DESFIRE_MAINSRC)/DESFireApplicationDirectory.c \
-                $(DESFIRE_MAINSRC)/DESFireChameleonTerminal.c \
-                $(DESFIRE_MAINSRC)/DESFireCrypto.c \
-                $(DESFIRE_MAINSRC)/DESFireFile.c \
-                $(DESFIRE_MAINSRC)/DESFireISO14443Support.c \
-                $(DESFIRE_MAINSRC)/DESFireISO7816Support.c \
-                $(DESFIRE_MAINSRC)/DESFireInstructions.c \
-                $(DESFIRE_MAINSRC)/DESFireLogging.c \
-                $(DESFIRE_MAINSRC)/DESFireMemoryOperations.c \
-                $(DESFIRE_MAINSRC)/DESFirePICCControl.c \
-                $(DESFIRE_MAINSRC)/DESFireUtils.c
+SRC	    +=  Application/DESFire/../MifareDESFire.c \
+                Application/DESFire/DESFireApplicationDirectory.c \
+                Application/DESFire/DESFireChameleonTerminal.c \
+                Application/DESFire/DESFireCrypto.c \
+                Application/DESFire/DESFireFile.c \
+                Application/DESFire/DESFireISO14443Support.c \
+                Application/DESFire/DESFireISO7816Support.c \
+                Application/DESFire/DESFireInstructions.c \
+                Application/DESFire/DESFireLogging.c \
+                Application/DESFire/DESFireMemoryOperations.c \
+                Application/DESFire/DESFirePICCControl.c \
+                Application/DESFire/DESFireUtils.c
 SRC         +=  Tests/CryptoTests.c \
 		Tests/ChameleonTerminal.c
 LUFA_SRC     =  $(LUFA_SRC_USB) \
@@ -249,8 +248,8 @@ CC_FLAGS     =  -g0 \
 		-DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) \
 		-DBUILD_DATE=$(BUILD_DATE) \
 		-DCOMMIT_ID=\"$(COMMIT_ID)\" \
-		$(CONFIG_SETTINGS) \
 		$(SETTINGS) \
+		$(CONFIG_SETTINGS) \
 		-D__AVR_ATxmega128A4U__ \
 		-D__PROG_TYPES_COMPAT__ \
 		-DMAX_ENDPOINT_INDEX=4 \
@@ -270,7 +269,7 @@ CC_FLAGS     =  -g0 \
 		-fno-aggressive-loop-optimizations \
 		-fno-jump-tables \
 		-fno-common
-LD_FLAGS     =  $(CC_FLAGS) \
+LD_FLAGS     = $(CC_FLAGS) \
 		-Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 		-Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
@@ -300,8 +299,11 @@ AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/$(TARGET).eep
 ## : Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk
 include $(LUFA_PATH)/Build/lufa_sources.mk
-include $(BUILD_SCR)/lufa_build_extra.mk
 include $(LUFA_PATH)/Build/lufa_cppcheck.mk
+
+## : Define custom targets and standard build variants
+include $(BUILD_SCR)/lufa_build_extra.mk
+include $(BUILD_SCR)/custom_build_targets.mk
 
 ## : Overwrite the LUFA versions of hex/bin file generation to include spmhelper and flashdata sections
 %.hex: %.elf
@@ -396,37 +398,15 @@ local-clean:
 	@rm -rf $(OBJDIR) $(LUFA_OBJ)
 	@mkdir -p $(OBJDIR) $(LUFA_OBJDIR)
 	@$(BASH) -c $(BASH_SCRIPT_EXEC_LINES) || $(SHELL) -c $(BASH_SCRIPT_EXEC_LINES)
-
-local-clean-skip:
-
-ifdef $(NOCLEAN)
-	clean: local-clean-skip
-else
-	clean: local-clean
-endif
+clean: local-clean
 
 git-add-dev: LOCALFW_SOURCE_FILES:=Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
-git-add-dev: LOCALFW_BUILD_SCRIPT_FILES:=.gitignore custom_build_targets.mk lufa_build_custom.mk
+git-add-dev: LOCALFW_BUILD_SCRIPT_FILES:=.gitignore custom_build_targets.mk lufa_build_extra.mk
 git-add-dev: TESTING_SOURCE_FILES:=Makefile LocalInclude/*.h Source/*.c SampleOutputDumps/*.dump
-git-add-dev: BASH:=$(if $(shell which bash), $(shell which bash), /bin/bash)
-git-add-dev: BASH_GITCOMMIT_SCRIPT_EXEC_LINES:='      \
-		if [ -z \"$(M)\" ]; then              \
-			git commit -m \"$(M)\";       \
-			git push origin;              \
-		elif [ -z \"$(MSG)\" ]; then          \
-			git commit -m "$(MSG)";       \
-			git push origin;              \
-		elif [ -z \"$(MESSAGE)\" ]; then      \
-			git commit -m \"$(MESSAGE)\"; \
-			git push origin;              \
-		fi                                    \
-		exit 0;                               \
-		'
 git-add-dev:
-	@make style && git add $(LOCALFW_SOURCE_FILES) 
-	@cd $(BUILD_SCR) && make style && git add -f $(LOCALFW_BUILD_SCRIPT_FILES)
+	@make style && git add $(LOCALFW_SOURCE_FILES)
+	@cd $(BUILD_SCR) && git add -f $(LOCALFW_BUILD_SCRIPT_FILES)
 	@cd $(FWROOT)/Software/DESFireLibNFCTesting && make style && git add $(TESTING_SOURCE_FILES)
-	@$(BASH) -c $(BASH_GITCOMMIT_SCRIPT_LINES) || $(SHELL) -c $(BASH_GITCOMMIT_SCRIPT_LINES)
 
 configure-chameleon-usb: UDEV_RULES_CONFIG_LINES:='\n                                                \
 	\# ChameleonMini (RevG)\n                                                                    \
@@ -447,10 +427,7 @@ configure-chameleon-usb:
 	@echo "    $$ sudo service udev restart"
 	@echo "    $$ sudo udevadm control --reload"
 	@echo ""
-	@echo "FOR HELP TROUBLESHOOTING THE CHAMELEON USB CONNECTION, LOOK AT THE FOLLOWING OUTPUT:"
+	@echo "FOR HELP TROUBLESHOOTING THE CHAMELEON USB CONNECTION, CONSIDER THE FOLLOWING OUTPUT:"
 	@echo "    $$ dmesg | tail | grep -i dev"
 	@echo "    $$ dmesg | tail | grep -i usb"
 	@echo "    $$ sudo udevadm monitor"
-
-## : Define custom targets and standard build variants
-include $(BUILD_SCR)/custom_build_targets.mk

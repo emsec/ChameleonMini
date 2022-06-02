@@ -179,9 +179,21 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     if (BitCount == 0) {
         LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
         return ISO14443A_APP_NO_RESPONSE;
+    } else if (ByteCount >= 2 && Buffer[1] == STATUS_ADDITIONAL_FRAME &&
+               DesfireCLA(Buffer[0])) {
+        ByteCount -= 1;
+        memmove(&Buffer[0], &Buffer[1], ByteCount);
+        uint16_t ProcessedByteCount = MifareDesfireProcessCommand(Buffer, ByteCount);
+        if (ProcessedByteCount != 0) {
+            /* Re-wrap into padded APDU form */
+            Buffer[ProcessedByteCount] = Buffer[0];
+            memmove(&Buffer[0], &Buffer[1], ProcessedByteCount - 1);
+            Buffer[ProcessedByteCount - 1] = 0x91;
+            ++ProcessedByteCount;
+        }
+        return ProcessedByteCount * BITS_PER_BYTE;
     } else if (((ByteCount >= 8 && Buffer[4] == ByteCount - 8) ||
-                (ByteCount >= 5 && Buffer[4] == ByteCount - 5) ||
-                (ByteCount >= 5 && Buffer[1] == STATUS_ADDITIONAL_FRAME)) &&
+                (ByteCount >= 5 && Buffer[4] == ByteCount - 5)) &&
                DesfireCLA(Buffer[0]) && Buffer[2] == 0x00 &&
                Buffer[3] == 0x00 || Iso7816CLA(DesfireCmdCLA)) {
         /* Wrapped native command structure or ISO7816: */
@@ -234,12 +246,17 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ProcessedByteCount * BITS_PER_BYTE);
     } else if (ByteCount >= 8 && DesfireCLA(Buffer[1]) && Buffer[3] == 0x00 &&
                Buffer[4] == 0x00 && Buffer[5] == ByteCount - 8) {
+        uint8_t hf14AScanPrologue = Buffer[0];
         DesfireCmdCLA = Buffer[1];
         uint16_t IncomingByteCount = MAX(0, (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE - 1);
         memmove(&Buffer[0], &Buffer[1], IncomingByteCount);
         uint16_t UnwrappedBitCount = DesfirePreprocessAPDU(ActiveCommMode, Buffer, IncomingByteCount) * BITS_PER_BYTE;
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = (ProcessedBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+        if (ProcessedByteCount++ > 0) {
+            memmove(&Buffer[1], &Buffer[0], ProcessedByteCount);
+        }
+        Buffer[0] = hf14AScanPrologue;
         ProcessedByteCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount);
         LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ProcessedByteCount);
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ProcessedByteCount * BITS_PER_BYTE);

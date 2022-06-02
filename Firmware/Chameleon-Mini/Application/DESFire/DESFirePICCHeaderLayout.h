@@ -49,9 +49,13 @@ This notice must be retained at the top of all source files where indicated.
 
 /* Anticollision parameters */
 #define ATQA_VALUE              0x0344
+#ifndef FORCE_SAK_NOT_COMPLIANT
 #define SAK_CL1_VALUE           (ISO14443A_SAK_INCOMPLETE)
 #define SAK_CL2_VALUE           (ISO14443A_SAK_COMPLETE_COMPLIANT)
-#define SAK_UID_NOT_FINISHED    0x04
+#else
+#define SAK_CL1_VALUE           (ISO14443A_SAK_INCOMPLETE_NOT_COMPLIANT)
+#define SAK_CL2_VALUE           (ISO14443A_SAK_COMPLETE_NOT_COMPLIANT)
+#endif
 
 #define STATUS_FRAME_SIZE       (1 * 8) /* Bits */
 

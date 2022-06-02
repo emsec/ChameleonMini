@@ -30,7 +30,8 @@
 #define ISO14443A_CL_BCC_OFFSET     4
 #define ISO14443A_CL_BCC_SIZE       1 /* Byte */
 #define ISO14443A_CL_FRAME_SIZE     ((ISO14443A_CL_UID_SIZE + ISO14443A_CL_BCC_SIZE) * 8)    /* UID[N...N+3] || BCCN */
-#define ISO14443A_SAK_INCOMPLETE                0x24        // 0x04
+#define ISO14443A_SAK_INCOMPLETE                0x24
+#define ISO14443A_SAK_INCOMPLETE_NOT_COMPLIANT  0x04
 #define ISO14443A_SAK_COMPLETE_COMPLIANT        0x20
 #define ISO14443A_SAK_COMPLETE_NOT_COMPLIANT    0x00
 
@@ -39,16 +40,19 @@
 #define ISO14443A_SAK_FRAME_SIZE          (3 * BITS_PER_BYTE) /* in Bits */
 #define ISO14443A_HLTA_FRAME_SIZE         (2 * BITS_PER_BYTE) /* in Bits */
 
-#define ISO14443A_UID0_RANDOM       0x08
-#define ISO14443A_UID0_CT           0x88
-
 #define ISO14443A_CRCA_SIZE         2
+
+#define CRC_INIT                0x6363
+#define CRC_INIT_R              0xC6C6 /* Bit reversed */
 
 #define ISO14443A_CALC_BCC(ByteBuffer) \
     ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
 
 void ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount);
 bool ISO14443ACheckCRCA(const void *Buffer, uint16_t ByteCount);
+
+#define ISO14443A_UID0_RANDOM       0x08
+#define ISO14443A_UID0_CT           0x88
 
 INLINE bool ISO14443ASelect(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t SAKValue);
 INLINE bool ISO14443AWakeUp(void *Buffer, uint16_t *BitCount, uint16_t ATQAValue, bool FromHalt);
