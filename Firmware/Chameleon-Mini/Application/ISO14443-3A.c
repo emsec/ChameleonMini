@@ -53,7 +53,7 @@ bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, ui
 
 #define USE_HW_CRC
 #ifdef USE_HW_CRC
-void ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount) {
+uint16_t ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount) {
     uint8_t *DataPtr = (uint8_t *) Buffer;
 
     CRC.CTRL = CRC_RESET0_bm;
@@ -72,10 +72,12 @@ void ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount) {
     DataPtr[1] = BitReverseByte(CRC.CHECKSUM0);
 
     CRC.CTRL = CRC_SOURCE_DISABLE_gc;
+
+    return (uint16_t)(((DataPtr[0] << 8) & 0x00FF00) | (DataPtr[1] & 0x00FF));
 }
 #else
 #include <util/crc16.h>
-void ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount) {
+uint16_t ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount) {
     uint16_t Checksum = CRC_INIT;
     uint8_t *DataPtr = (uint8_t *) Buffer;
 
@@ -86,6 +88,8 @@ void ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount) {
 
     DataPtr[0] = (Checksum >> 0) & 0x00FF;
     DataPtr[1] = (Checksum >> 8) & 0x00FF;
+
+    return Checksum;
 }
 #endif
 

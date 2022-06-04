@@ -15,15 +15,6 @@ Android logger application, and with ``libnfc`` via a
 USB NFC tag reader (host-based testing code is 
 [available here](https://github.com/maxieds/ChameleonMiniDESFireStack/tree/master/Firmware/Chameleon-Mini/Application/DESFire/Testing)). 
 
-Support for DESFire tag emulation on the Chameleon Mini is complicated for at least a couple of reasons:
-1. The hardware (onboard AVR) has a small memory footprint available. Thus with all of the new tag support, 
-   storage needs for cryptographic data structures, and storage needs for large tables finding space 
-   was challenging. Much of this is resolved by storing data needed for operation using a linked, flat file type 
-   design for structures where a small amount of buffer space is needed at a time and can be filled by 
-   fetching the data from FRAM / settings space. 
-2. There is only limited public information available about the precise expectations and runtime 
-   conditions needed to write a perfect, standards-compliant DESFire tag implementation. 
-
 The firmware has been tested and known to work with the KAOS manufactured RevG Chameleon devices. 
 Unfortunately, formative RevE device support is not available due to the memory requirements to 
 run this firmware emulation. The device responds well using the ``libnfc``-based utility 
@@ -61,9 +52,328 @@ Proxmark3 NFC devices:
 [+]  SAK: 20 [1]
 [+]  ATS: 75 77 81 02 80
 [=] field dropped.
+
+[usb] pm3 --> script run debug.cmd
+[+] executing Cmd debug.cmd
+[+] args ''
+[usb|script] pm3 --> hw dbg -4
+[usb|script] pm3 --> prefs set clientdebug --full
+[=]     client debug........... full
+[usb|script] pm3 --> data setdebugmode -2
+[=] client debug level... 2 ( verbose debug messages )
+
+[#]   Debug log level......... 4 ( extended )
+
+[usb] pm3 --> hf mfdes info
+[#] pcb_blocknum 0 == 2 
+[#] [WCMD <--: : 08/08] 02 90 60 00 00 00 14 98 
+[#] pcb_blocknum 1 == 3 
+[#] [WCMD <--: : 08/08] 03 90 af 00 00 00 1f 15 
+[#] pcb_blocknum 0 == 2 
+[#] [WCMD <--: : 08/08] 02 90 af 00 00 00 34 11 
+
+[=] ---------------------------------- Tag Information ----------------------------------
+[+]               UID: 08 4F 8A 44 7D AE 83 
+[+]      Batch number: AE 83 CE E4 A5 
+[+]   Production date: week db / 20f1
+
+[=] --- Hardware Information
+[=]    raw: 04010100011805
+[=]      Vendor Id: NXP Semiconductors Germany
+[=]           Type: 0x01
+[=]        Subtype: 0x01
+[=]        Version: 0.1 ( DESFire MF3ICD40 )
+[=]   Storage size: 0x18 ( 4096 bytes )
+[=]       Protocol: 0x05 ( ISO 14443-2, 14443-3 )
+
+[=] --- Software Information
+[=]    raw: 90AF0401010001
+[=]      Vendor Id: no tag-info available
+[=]           Type: 0xAF
+[=]        Subtype: 0x04
+[=]        Version: 1.1
+[=]   Storage size: 0x00 ( 1 bytes )
+[=]       Protocol: 0x01 ( Unknown )
+
+[=] --------------------------------- Card capabilities ---------------------------------
+[#] switch_off
+
+[usb] pm3 --> hf mfdes auth -n 0 -t 3tdea -k 000000000000000000000000000000000000000000000000 -v -c native -a
+[=] Key num: 0 Key algo: 3tdea Key[24]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: n/a Command set: native Communication mode: plain
+[+] Setting ISODEP -> inactive
+[+] Setting ISODEP -> NFC-A
+[=] AID 000000 is selected
+[=] Auth: cmd: 0x1a keynum: 0x00
+[+] raw>> 1A 00 
+[+] raw<< AF EE 91 30 1E E8 F5 84 D6 C7 85 1D 05 65 13 90 A6 C6 D5 
+[#] encRndB: EE 91 30 1E E8 F5 84 D6 
+[#] RndB: CA FE BA BE 00 11 22 33 
+[#] rotRndB: FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[#] Both   : 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[+] raw>> AF 30 EB 55 F3 29 39 04 96 77 88 CE EF 33 A3 C8 7B 18 66 1A F1 62 78 A0 28 53 84 67 98 7C BB DB 03 
+[+] raw<< 00 9B 71 57 8F FB DF 80 A8 F6 EF 33 4A C6 CD F9 7A 7D BE 
+[=] Session key : 01 02 03 04 CA FE BA BE 07 08 09 10 22 33 CA FE 13 14 15 16 00 11 22 33 
+[=] Desfire  authenticated
+[+] PICC selected and authenticated succesfully
+[+] Context: 
+[=] Key num: 0 Key algo: 3tdea Key[24]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: ev1 Command set: native Communication mode: plain
+[=] Session key [24]: 01 02 03 04 CA FE BA BE 07 08 09 10 22 33 CA FE 13 14 15 16 00 11 22 33  
+[=]     IV [8]: 00 00 00 00 00 00 00 00 
+[+] Setting ISODEP -> inactive
 ```
 The DESFire configuration mode has been known to see recognition problems 
-using ``libfreefare``. 
+using the ``libfreefare`` commands ``mifare-*``. This issue may be gradually 
+resolved as the work to bring compatibility with the PM3 devices continues.
+
+## Quick configuration of cloned DESFire tags
+
+### Chameleon Mini terminal addons to support ``CONFIG=MF_DESFIRE`` modes
+
+Note that these commands are only compiled into the firmware when the compiler 
+option ``-DALLOW_DESFIRE_TERMINAL_COMMANDS`` and ``-DCONFIG_MF_DESFIRE_SUPPORT`` are 
+specified. If you do not at miniumum have a configuration, ``CONFIG=MF_DESFIRE``, then 
+these commands will not work. Note that LIVE logging should be disabled before attempting to  
+run these commands.
+
+#### Selecting a DESFire configuration
+
+```bash
+CONFIG=?
+CONFIG=MF_DESFIRE
+```
+
+#### DF_SETHDR -- Set PICC header information 
+
+The UID for the tag can be set using separate Chameleon terminal commands as 
+usual for all other configurations.
+```bash
+DF_SETHDR?
+101:OK WITH TEXT
+DF_SETHDR <ManuID|HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <HexBytes-N>
+```
+We can modify the tag header information emulated by the tag as follows:
+```bash
+DF_SETHDR=ATS xxxxxxxxxx
+DF_SETHDR=ManuID xx
+DF_SETHDR=HardwareVersion mmMM
+DF_SETHDR=SoftwareVersion mmMM
+DF_SETHDR=BatchNumber xxxxxxxxxx
+DF_SETHDR=ProductionDate WWYY
+```
+
+##### Examples:
+
+The default ATS bytes for a DESFire tag are the same as specifying:
+```bash
+DF_SETHDR=ATS 067577810280
+```
+To set the ATS bytes reported to emulate a JCOP tag:
+```bash
+DF_SETHDR=ATS 0675f7b102
+```
+
+##### Documentation for cloning specific tag types
+
+```cpp
+/* Other HW product types for DESFire tags: See page 7 of
+ * https://www.nxp.com/docs/en/application-note/AN12343.pdf
+ */
+// typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
+//     NATIVEIC_PHYS_CARD                 = 0x01,
+//     LIGHT_NATIVEIC_PHYS_CARD           = 0x08,
+//     MICROCONTROLLER_PHYS_CARDI         = 0x81,
+//     MICROCONTROLLER_PHYS_CARDII        = 0x83,
+//     JAVACARD_SECURE_ELEMENT_PHYS_CARD  = 0x91,
+//     HCE_MIFARE_2GO                     = 0xa1,
+// } DESFireHWProductCodes;
+```
+An up-to-date listing of bytes that indicate the tag manufacturer ID is 
+found in the [Proxmark3 client source](https://github.com/RfidResearchGroup/proxmark3/blob/65b9a9fb769541f5d3e255ccf2c17d1cb77ac126/client/src/cmdhf14a.c#L48):
+```cpp
+static const manufactureName_t manufactureMapping[] = {
+    // ID,  "Vendor Country"
+    { 0x01, "Motorola UK" },
+    { 0x02, "ST Microelectronics SA France" },
+    { 0x03, "Hitachi, Ltd Japan" },
+    { 0x04, "NXP Semiconductors Germany" },
+    { 0x05, "Infineon Technologies AG Germany" },
+    { 0x06, "Cylink USA" },
+    { 0x07, "Texas Instrument France" },
+    { 0x08, "Fujitsu Limited Japan" },
+    { 0x09, "Matsushita Electronics Corporation, Semiconductor Company Japan" },
+    { 0x0A, "NEC Japan" },
+    { 0x0B, "Oki Electric Industry Co. Ltd Japan" },
+    { 0x0C, "Toshiba Corp. Japan" },
+    { 0x0D, "Mitsubishi Electric Corp. Japan" },
+    { 0x0E, "Samsung Electronics Co. Ltd Korea" },
+    { 0x0F, "Hynix / Hyundai, Korea" },
+    { 0x10, "LG-Semiconductors Co. Ltd Korea" },
+    { 0x11, "Emosyn-EM Microelectronics USA" },
+    { 0x12, "INSIDE Technology France" },
+    { 0x13, "ORGA Kartensysteme GmbH Germany" },
+    { 0x14, "SHARP Corporation Japan" },
+    { 0x15, "ATMEL France" },
+    { 0x16, "EM Microelectronic-Marin SA Switzerland" },
+    { 0x17, "KSW Microtec GmbH Germany" },
+    { 0x18, "ZMD AG Germany" },
+    { 0x19, "XICOR, Inc. USA" },
+    { 0x1A, "Sony Corporation Japan" },
+    { 0x1B, "Malaysia Microelectronic Solutions Sdn. Bhd Malaysia" },
+    { 0x1C, "Emosyn USA" },
+    { 0x1D, "Shanghai Fudan Microelectronics Co. Ltd. P.R. China" },
+    { 0x1E, "Magellan Technology Pty Limited Australia" },
+    { 0x1F, "Melexis NV BO Switzerland" },
+    { 0x20, "Renesas Technology Corp. Japan" },
+    { 0x21, "TAGSYS France" },
+    { 0x22, "Transcore USA" },
+    { 0x23, "Shanghai belling corp., ltd. China" },
+    { 0x24, "Masktech Germany Gmbh Germany" },
+    { 0x25, "Innovision Research and Technology Plc UK" },
+    { 0x26, "Hitachi ULSI Systems Co., Ltd. Japan" },
+    { 0x27, "Cypak AB Sweden" },
+    { 0x28, "Ricoh Japan" },
+    { 0x29, "ASK France" },
+    { 0x2A, "Unicore Microsystems, LLC Russian Federation" },
+    { 0x2B, "Dallas Semiconductor/Maxim USA" },
+    { 0x2C, "Impinj, Inc. USA" },
+    { 0x2D, "RightPlug Alliance USA" },
+    { 0x2E, "Broadcom Corporation USA" },
+    { 0x2F, "MStar Semiconductor, Inc Taiwan, ROC" },
+    { 0x30, "BeeDar Technology Inc. USA" },
+    { 0x31, "RFIDsec Denmark" },
+    { 0x32, "Schweizer Electronic AG Germany" },
+    { 0x33, "AMIC Technology Corp Taiwan" },
+    { 0x34, "Mikron JSC Russia" },
+    { 0x35, "Fraunhofer Institute for Photonic Microsystems Germany" },
+    { 0x36, "IDS Microchip AG Switzerland" },
+    { 0x37, "Thinfilm - Kovio USA" },
+    { 0x38, "HMT Microelectronic Ltd Switzerland" },
+    { 0x39, "Silicon Craft Technology Thailand" },
+    { 0x3A, "Advanced Film Device Inc. Japan" },
+    { 0x3B, "Nitecrest Ltd UK" },
+    { 0x3C, "Verayo Inc. USA" },
+    { 0x3D, "HID Global USA" },
+    { 0x3E, "Productivity Engineering Gmbh Germany" },
+    { 0x3F, "Austriamicrosystems AG (reserved) Austria" },
+    { 0x40, "Gemalto SA France" },
+    { 0x41, "Renesas Electronics Corporation Japan" },
+    { 0x42, "3Alogics Inc Korea" },
+    { 0x43, "Top TroniQ Asia Limited Hong Kong" },
+    { 0x44, "Gentag Inc. USA" },
+    { 0x45, "Invengo Information Technology Co.Ltd China" },
+    { 0x46, "Guangzhou Sysur Microelectronics, Inc China" },
+    { 0x47, "CEITEC S.A. Brazil" },
+    { 0x48, "Shanghai Quanray Electronics Co. Ltd. China" },
+    { 0x49, "MediaTek Inc Taiwan" },
+    { 0x4A, "Angstrem PJSC Russia" },
+    { 0x4B, "Celisic Semiconductor (Hong Kong) Limited China" },
+    { 0x4C, "LEGIC Identsystems AG Switzerland" },
+    { 0x4D, "Balluff GmbH Germany" },
+    { 0x4E, "Oberthur Technologies France" },
+    { 0x4F, "Silterra Malaysia Sdn. Bhd. Malaysia" },
+    { 0x50, "DELTA Danish Electronics, Light & Acoustics Denmark" },
+    { 0x51, "Giesecke & Devrient GmbH Germany" },
+    { 0x52, "Shenzhen China Vision Microelectronics Co., Ltd. China" },
+    { 0x53, "Shanghai Feiju Microelectronics Co. Ltd. China" },
+    { 0x54, "Intel Corporation USA" },
+    { 0x55, "Microsensys GmbH Germany" },
+    { 0x56, "Sonix Technology Co., Ltd. Taiwan" },
+    { 0x57, "Qualcomm Technologies Inc USA" },
+    { 0x58, "Realtek Semiconductor Corp Taiwan" },
+    { 0x59, "Freevision Technologies Co. Ltd China" },
+    { 0x5A, "Giantec Semiconductor Inc. China" },
+    { 0x5B, "JSC Angstrem-T Russia" },
+    { 0x5C, "STARCHIP France" },
+    { 0x5D, "SPIRTECH France" },
+    { 0x5E, "GANTNER Electronic GmbH Austria" },
+    { 0x5F, "Nordic Semiconductor Norway" },
+    { 0x60, "Verisiti Inc USA" },
+    { 0x61, "Wearlinks Technology Inc. China" },
+    { 0x62, "Userstar Information Systems Co., Ltd Taiwan" },
+    { 0x63, "Pragmatic Printing Ltd. UK" },
+    { 0x64, "Associacao do Laboratorio de Sistemas Integraveis Tecnologico - LSI-TEC Brazil" },
+    { 0x65, "Tendyron Corporation China" },
+    { 0x66, "MUTO Smart Co., Ltd. Korea" },
+    { 0x67, "ON Semiconductor USA" },
+    { 0x68, "TUBITAK BILGEM Turkey" },
+    { 0x69, "Huada Semiconductor Co., Ltd China" },
+    { 0x6A, "SEVENEY France" },
+    { 0x6B, "ISSM France" },
+    { 0x6C, "Wisesec Ltd Israel" },
+    { 0x7C, "DB HiTek Co Ltd Korea" },
+    { 0x7D, "SATO Vicinity Australia" },
+    { 0x7E, "Holtek Taiwan" },
+    { 0x00, "no tag-info available" } // must be the last entry
+};
+```
+Similarly, the PM3 source maintains the authoritative way to 
+fingerprint the DESFire tag subtype in the 
+[client source files](https://github.com/RfidResearchGroup/proxmark3/blob/65b9a9fb769541f5d3e255ccf2c17d1cb77ac126/client/src/cmdhfmfp.c#L92):
+```cpp
+    if (major == 0x00)
+        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire MF3ICD40") ")", major, minor);
+    else if (major == 0x01 && minor == 0x00)
+        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire EV1") ")", major, minor);
+    else if (major == 0x12 && minor == 0x00)
+        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire EV2") ")", major, minor);
+    else if (major == 0x33 && minor == 0x00)
+        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire EV3") ")", major, minor);
+    else if (major == 0x30 && minor == 0x00)
+        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire Light") ")", major, minor);
+    else if (major == 0x11 && minor == 0x00)
+        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("Plus EV1") ")", major, minor);
+    else
+        snprintf(retStr, sizeof(buf), "%x.%x (" _YELLOW_("Unknown") ")", major, minor);
+```
+
+#### DF_COMM_MODE -- Manually sets the communication mode of the current session
+
+The supported (work in progress) DESFire communication modes include: 
+PLAINTEXT, PLAINTEXT-MAC, ENCIPHERED-CMAC-3DES, and ENCIPHERED-CMAC-AES128. 
+It should be clear from the prior commands issued in the session which ``CommMode`` 
+congiguration we are supposed to be working within. This command let's the user 
+reset it intentionally at will for testing and debugging purposes. 
+
+The syntax is as follows:
+```bash
+DF_COMM_MODE?
+DF_COMM_MODE=Plaintext
+DF_COMM_MODE=Plaintext:MAC
+DF_COMM_MODE=Enciphered:3K3DES
+DF_COMM_MODE=Enciphered:AES128
+```
+Use of this experimental command may cause unexpected results, vulnerabilities exposing 
+your keys and sensitive (a priori) protected data to hackers and sniffers, and is 
+discouraged unless you know what you are doing :) Try not to report bugs with the 
+DESFire emulation if things suddenly fail after a call to this terminal command. 
+Putting the Chameleon through a full power recycle (battery off) should reset the setting 
+to the defaults. 
+
+#### DF_LOGMODE -- Sets the depth of (LIVE) logging messages printed at runtime
+
+Syntax -- not guaranteeing that all of these are meaningful or distinct just yet:
+```bash
+DF_LOGMODE?
+DF_LOGMODE=<OFF|NORMAL|VERBOSE|DEBUGGING>
+DF_LOGMODE=<0|1|TRUE|FALSE>
+```
+
+#### DF_TESTMODE -- Sets whether the firmware emulation is run in testing/debugging mode
+
+Syntax:
+```bash
+DF_TESTMODE?
+DF_TESTMODE=<0|1|TRUE|FALSE|OFF|ON>
+```
+#### DF_COMM_MODE
+
+Syntax:
+```bash
+DF_COMM_MODE?
+DF_COMM_MODE=<Plaintext|Plaintext:MAC|Enciphered:3K3DES|Enciphered:AES128>
+```
 
 ## Supported functionality
 
@@ -127,130 +437,6 @@ using ``libfreefare``.
 | CMD_ISO7816_READ_RECORDS | 0xb2 | | :wavy_dash: :question: | Needs testing. |
 | CMD_ISO7816_APPEND_RECORD | 0xe2 | | :wavy_dash: :question: | Especially needs testing for corner case checks. |
 
-### TODO list: Suggestions for updates to the code and unsupported functionality 
-
-* Check to figure out where possibly encrypted transfers (AES CMAC) come into play after the initial
-  authentication procedure?
-* Need to handle encrypted transfer modes invoked after authenticate (term: SAM?)?
-* Need to replace the DES/3DES encryption library for something faster?
-* When setting the key data via a set command, need to initialize the key addresses, update the
-  key count in the AID, and other accounting details ...
-* Currently, all of the file transfers (read/write) are done in plaintext ...
-* The ``ReadData`` command ``offset`` input has no action at this point (TODO later) ...
-* How to accurately handle BackupDataFile types?
-
-```cpp
-case DESFIRE_FILE_BACKUP_DATA:
-        if (Rollback) {
-            CopyBlockBytes(DataAreaBlockId, DataAreaBlockId + File.BackupFile.BlockCount, File.BackupFile.BlockCount);
-        }
-        else {
-            CopyBlockBytes(DataAreaBlockId + File.BackupFile.BlockCount, DataAreaBlockId, File.BackupFile.BlockCount);
-        }
-        break;
-```
-
-* Handle how to write values directly to value files (without credit/debit type actions)? 
-* WriteRecordFile only handles/reads off continued chunks in round block sizes. 
-* **BIG Q:** Does calling ``MemoryStore()`` to frequently cause problems? This should be rare-ish when 
-  data on the tag changes?
-* Have an action where a (long) push of a button allows for
-     1. A dump of the stored internal logging data to get written LIVE-style to the serial USB
-     2. A dump of the pretty-printed DESFire tag layout to get written to the serial USB 
-* Store some compile-time randomized system bits (from openssl) to get stored to a special 
-  small enough segment within the EEPROM for reference (sort of like a secret UID data, or even
-  unique serial number that should get reprogrammed everytime the firmware is re-compiled ...  
-  1. ``#define EEPROM_ATTR __attribute__ ((section (".eeprom")))``
-
-### Chameleon Mini terminal addons to support ``CONFIG=MF_DESFIRE`` modes
-
-Note that these commands are only compiled into the firmware when the compiler 
-option ``-DALLOW_DESFIRE_TERMINAL_COMMANDS`` and ``-DCONFIG_MF_DESFIRE_SUPPORT`` are 
-specified. If you do not at miniumum have a configuration, ``CONFIG=MF_DESFIRE``, then 
-these commands will not work. Note that LIVE logging should be disabled before attempting to  
-run these commands.
-
-#### Selecting a DESFire configuration
-
-```bash
-CONFIG=?
-CONFIG=MF_DESFIRE
-```
-
-#### DF_SETHDR -- Set PICC header information 
-
-Since the UID and other precious manufacturer data are supposed to be unique to  
-tags and sacred ground upon which only manufacturers shall walk, we are going to upheave 
-this notion and hack our tag "roll your own" (tag) style. This means we can pick and 
-choose the components used to identify the tag by calling a few Chameleon terminal 
-command variants. The syntax is varied -- the numbers after the parameter name are 
-indicators for the number of bytes to include as arguments: 
-```bash
-DF_SETHDR?
-101:OK WITH TEXT
-DF_SETHDR <HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <HexBytes-N>
-```
-Likewise, as promised, we can modify the tag header information emulated by the tag as follows:
-```bash
-DF_SETHDR=ATS xxxxxxxxxx
-DF_SETHDR=HardwareVersion xxxx
-DF_SETHDR=SoftwareVersion xxxx
-DF_SETHDR=BatchNumber xxxxxxxxxx
-DF_SETHDR=ProductionDate xxxx
-```
-For example, to set the ATS bytes reported to emulate a JCOP tag:
-```bash
-DF_SETHDR=ATS 0675f7b102
-```
-Note that the UID for the tag can be set using separate Chameleon terminal commands.
-
-#### DF_COMM_MODE -- Manually sets the communication mode of the current session
-
-The supported (work in progress) DESFire communication modes include: 
-PLAINTEXT, PLAINTEXT-MAC, ENCIPHERED-CMAC-3DES, and ENCIPHERED-CMAC-AES128. 
-It should be clear from the prior commands issued in the session which ``CommMode`` 
-congiguration we are supposed to be working within. This command let's the user 
-reset it intentionally at will for testing and debugging purposes. 
-
-The syntax is as follows:
-```bash
-DF_COMM_MODE?
-DF_COMM_MODE=Plaintext
-DF_COMM_MODE=Plaintext:MAC
-DF_COMM_MODE=Enciphered:3K3DES
-DF_COMM_MODE=Enciphered:AES128
-```
-Use of this experimental command may cause unexpected results, vulnerabilities exposing 
-your keys and sensitive (a priori) protected data to hackers and sniffers, and is 
-discouraged unless you know what you are doing :) Try not to report bugs with the 
-DESFire emulation if things suddenly fail after a call to this terminal command. 
-Putting the Chameleon through a full power recycle (battery off) should reset the setting 
-to the defaults. 
-
-#### DF_LOGMODE -- Sets the depth of (LIVE) logging messages printed at runtime
-
-Syntax -- not guaranteeing that all of these are meaningful or distinct just yet:
-```bash
-DF_LOGMODE?
-DF_LOGMODE=<OFF|NORMAL|VERBOSE|DEBUGGING>
-DF_LOGMODE=<0|1|TRUE|FALSE>
-```
-
-#### DF_TESTMODE -- Sets whether the firmware emulation is run in testing/debugging mode
-
-Syntax:
-```bash
-DF_TESTMODE?
-DF_TESTMODE=<0|1|TRUE|FALSE|OFF|ON>
-```
-#### DF_COMM_MODE
-
-Syntax:
-```bash
-DF_COMM_MODE?
-DF_COMM_MODE=<Plaintext|Plaintext:MAC|Enciphered:3K3DES|Enciphered:AES128>
-```
-
 ### Links to public datasheets and online specs 
 
 The following links are the original online resource links are
@@ -260,187 +446,11 @@ archived here for documentation on how this firmware operates:
 * [NXP Application Note AN12343](https://www.nxp.com/docs/en/application-note/AN12343.pdf) 
 * [TI DESFire EV1 Tag AES Auth Specs (sloa213.pdf)](https://www.ti.com/lit/an/sloa213/sloa213.pdf)
 * [NXP Application Note AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf)
-
-### Makefile support to enable special functionality
-
-```make
-#Whether or not to customize the USB identifier settings in the firmware:
-SETTINGS  += -DENABLE_LUFAUSB_CUSTOM_VERSIONS
-
-#Whether or not to allow users Chameleon terminal access to change the DESFire configuration's
-#sensitive settings like manufacturer, serial number, etc.
-SETTINGS  += -DENABLE_PERMISSIVE_DESFIRE_SETTINGS
-SETTINGS  += -DALLOW_DESFIRE_TERMINAL_COMMANDS
-
-#Set a default logging mode for debugging with the DESFire
-#emulation code:
-SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
-#SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
-
-#Set a default testing mode setting (0 = OFF, non-NULL = ON):
-SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
-
-#Feature: Use randomized UIDs that mask the actual secret UID until
-#the tag has been issued a successful authentication sequence:
-SETTINGS  += -DDESFIRE_RANDOMIZE_UIDS_PREAUTH
-
-#Anticipating that the implementation overhead is high with the
-#maximum storage allocations for the number of possible keys per
-#application directory, and/or the total number of AID numbered
-#directory slots, the following options will tweak this limitation:
-# -> Set DESFIRE_MEMORY_LIMITED_TESTING to shrink the defaults
-# -> Or explicitly define DESFIRE_CUSTOM_MAX_KEYS=##UINT## (per AID),
-# -> And/Or define DESFIRE_CUSTOM_MAX_APPS=##UINT##
-#    (total number of AID spaces available, not including the master 0x00)
-SETTINGS  += -DDESFIRE_MEMORY_LIMITED_TESTING
-#SETTINGS += -DDESFIRE_CUSTOM_MAX_APPS=8
-#SETTINGS += -DDESFIRE_CUSTOM_MAX_KEYS=6
-#SETTINGS += -DDESFIRE_CUSTOM_MAX_FILES=6
-#SETTINGS += -DDESFIRE_USE_FACTORY_SIZES
-#SETTINGS += -DDESFIRE_MAXIMIZE_SIZES_FOR_STORAGE
-
-#Set a minimum incoming/outgoing log size so we do not spam the
-#Chameleon Mini logs to much by logging everything:
-SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
-SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
-
-#Enable printing of crypto tests when a new DESFire emulation instance is started:
-#SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
-
-#Option to save space with the "Application/Crypto1.c" code by storing large tables
-#in PROGMEM. Note that this will slow down the read times when accessing these tables:
-SETTINGS  += -DDESFIRE_CRYPTO1_SAVE_SPACE
-```
-
-### Hacking the source 
-
-For Chameleon firmware hackers and prospective modders that want to hack on and improve the DESFire 
-emulation support sources, the next points are helpful to understanding the local details of 
-how data storage is handled, and other implementation notes that should save you some time. 
-:smile: 
-
-#### Description of the FRAM storage scheme of the DESFire tag data and file system 
-
-The scheme involves nested or linked pointers to data stored in FRAM. The following
-source code snippets are useful to understanding how to load and process this storage:
-```cpp 
-typedef struct DESFIRE_FIRMWARE_PACKING {
-    /* Static data: does not change during the PICC's lifetime.
-     * We will add Chameleon Mini terminal commands to enable 
-     * resetting this data so tags can be emulated authentically. 
-     * This structure is stored verbatim (using memcpy) at the 
-     * start of the FRAM setting space for the configuration. 
-     */
-    uint8_t Uid[DESFIRE_UID_SIZE] DESFIRE_FIRMWARE_ALIGNAT;
-    uint8_t StorageSize;
-    uint8_t HwVersionMajor;
-    uint8_t HwVersionMinor;
-    uint8_t SwVersionMajor;
-    uint8_t SwVersionMinor;
-    uint8_t BatchNumber[5] DESFIRE_FIRMWARE_ALIGNAT;
-    uint8_t ProductionWeek;
-    uint8_t ProductionYear;
-    uint8_t ATSBytes[5];
-    /* Dynamic data: changes during the PICC's lifetime */
-    uint16_t FirstFreeBlock;
-    uint8_t TransactionStarted; // USED ???
-    uint8_t Spare[9] DESFIRE_FIRMWARE_ALIGNAT; // USED ???
-} DESFirePICCInfoType;
-
-typedef struct DESFIRE_FIRMWARE_PACKING {
-    BYTE  Slot;
-    BYTE  KeyCount;
-    BYTE  MaxKeyCount;
-    BYTE  FileCount;
-    BYTE  CryptoCommStandard;
-    SIZET KeySettings;            /* Block offset in FRAM */
-    SIZET FileNumbersArrayMap;    /* Block offset in FRAM */
-    SIZET FileCommSettings;       /* Block offset in FRAM */
-    SIZET FileAccessRights;       /* Block offset in FRAM */
-    SIZET FilesAddress;           /* Block offset in FRAM */
-    SIZET KeyVersionsArray;       /* Block offset in FRAM */
-    SIZET KeyTypesArray;          /* Block offset in FRAM */
-    SIZET KeyAddress;             /* Block offset in FRAM */
-    UINT  DirtyFlags; // USED ???
-} SelectedAppCacheType;
-
-BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(sizeof(SelectedAppCacheType));
-BYTE APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_KEYS);
-BYTE APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_FILES);
-BYTE APP_CACHE_FILE_COMM_SETTINGS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_FILES);
-BYTE APP_CACHE_FILE_ACCESS_RIGHTS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_FILES);
-BYTE APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_KEYS);
-BYTE APP_CACHE_KEY_TYPES_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(DESFIRE_MAX_KEYS);
-BYTE APP_CACHE_KEY_BLOCKIDS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(2 * DESFIRE_MAX_KEYS);
-BYTE APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(2 * DESFIRE_MAX_KEYS);
-BYTE APP_CACHE_MAX_KEY_BLOCK_SIZE = DESFIRE_BYTES_TO_BLOCKS(CRYPTO_MAX_KEY_SIZE);
-
-/* 
- * Defines the application directory contents.
- * The application directory maps AIDs to application slots:
- * the AID's index in `AppIds` is the slot number.
- * 
- * This is the "global" structure that gets stored in the header 
- * data for the directory. To see the actual byte-for-byte storage 
- * of the accounting data for each instantiated AID slot, refer to the 
- * `DesfireApplicationDataType` structure from above.
- */
-typedef struct DESFIRE_FIRMWARE_PACKING {
-    BYTE           FirstFreeSlot;
-    DESFireAidType AppIds[DESFIRE_MAX_SLOTS] DESFIRE_FIRMWARE_ARRAY_ALIGNAT; 
-    SIZET          AppCacheStructBlockOffset[DESFIRE_MAX_SLOTS];
-} DESFireAppDirType;
-
-void InitBlockSizes(void) {
-     DESFIRE_PICC_INFO_BLOCK_ID = 0;
-     DESFIRE_APP_DIR_BLOCK_ID = DESFIRE_PICC_INFO_BLOCK_ID +
-                                DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFirePICCInfoType));
-     DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID = DESFIRE_APP_DIR_BLOCK_ID +
-                                             DESFIRE_BYTES_TO_BLOCKS(sizeof(DESFireAppDirType));
-     DESFIRE_FIRST_FREE_BLOCK_ID = DESFIRE_APP_CACHE_DATA_ARRAY_BLOCK_ID;
-     DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = DESFIRE_FIRST_FREE_BLOCK_ID;
-}
-
-/* Data about an application's file is currently kept in this structure.
- * The location of these structures is defined by the file index.
- */
-typedef struct DESFIRE_FIRMWARE_PACKING {
-    uint8_t FileType;
-    uint8_t FileNumber;
-    uint16_t FileSize;
-    uint16_t FileDataAddress; /* FRAM address of the storage of the data for the file */
-    union DESFIRE_FIRMWARE_ALIGNAT {
-        struct DESFIRE_FIRMWARE_ALIGNAT {
-            uint16_t FileSize;
-        } StandardFile;
-        struct DESFIRE_FIRMWARE_ALIGNAT {
-            uint16_t FileSize;
-            uint8_t BlockCount;
-        } BackupFile;
-        struct DESFIRE_FIRMWARE_ALIGNAT {
-            int32_t CleanValue;
-            int32_t DirtyValue;
-            int32_t LowerLimit;
-            int32_t UpperLimit;
-            uint8_t LimitedCreditEnabled;
-            int32_t PreviousDebit;
-        } ValueFile;
-        struct DESFIRE_FIRMWARE_ALIGNAT {
-            uint16_t BlockCount;
-            uint16_t RecordPointer;
-            //uint8_t ClearPending;  // USED ???
-            uint8_t RecordSize[3];
-            uint8_t CurrentNumRecords[3];
-            uint8_t MaxRecordCount[3];
-        } RecordFile;
-    };
-} DESFireFileTypeSettings;
-
-typedef struct DESFIRE_FIRMWARE_PACKING {
-    BYTE Num;
-    DESFireFileTypeSettings File;
-} SelectedFileCacheType;
-```
+* My favorite conference submission in grad school is (by far) about this project -- even though I did not present my talk that year.
+  In rare form, the [presentation slides (tentative; see uploads)](https://archive.org/details/@maxiedschmidt) and the 
+  [accepted manuscript](https://archive.org/download/ftc2021-presentation-slides-with-notes/schmidt-ftc2021-submission.pdf) (published in print form by Springer) 
+  effectively document the scarce details of the DESFire spec and command sets gleaned while working on this project as a conference proceedings article.
+  Grace Hopper would have approved :)
 
 ## Credits 
 
@@ -451,7 +461,9 @@ for development of this project:
 * Professor [Josephine Yu](http://people.math.gatech.edu/~jyu67/) and the
   [School of Mathematics](https://math.gatech.edu) at the
   Georgia Institute of Technology for allowing me to work on this as a secondary
-  project as a Ph.D. candidate over the Summer and Fall of 2020.
+  project as a Ph.D. candidate over the Summer and Fall of 2020. 
+* More work to improve and add compatibility with the PM3 devices over the Spring of 2022 was supported by
+  Georgia Tech to work as a RA through the university COVID-19 relief funding.
 * The [KAOS manufacturers](https://shop.kasper.it) for providing support in the form of discounted Chameleon RevG
   devices to support my active development on the project.
 

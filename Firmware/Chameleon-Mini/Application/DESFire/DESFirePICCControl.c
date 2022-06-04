@@ -281,6 +281,23 @@ void FormatPicc(void) {
     /* Wipe application directory */
     memset(&AppDir, 0x00, sizeof(DESFireAppDirType));
     memset(&SelectedApp, 0x00, sizeof(SelectedAppCacheType));
+    /* Set a random new UID */
+    BYTE uidData[DESFIRE_UID_SIZE];
+    RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
+    memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
+    /* Conform to NXP Application Note AN10927 about the first
+     * byte of a randomly generated UID (refer to section 2.1.1).
+     */
+    Picc.Uid[0] = ISO14443A_UID0_RANDOM;
+    /* Randomize the initial batch number data: */
+    BYTE batchNumberData[5];
+    RandomGetBuffer(batchNumberData, 5);
+    memcpy(&Picc.BatchNumber[0], batchNumberData, 5);
+    /* Production dates should be obvious until the user changes them: */
+    Picc.ProductionWeek = 0x44;
+    Picc.ProductionYear = 0x7c;
+    /* Assign the default manufacturer ID: */
+    Picc.ManufacturerID = DESFIRE_MANUFACTURER_ID;
     /* Set the ATS bytes to defaults: */
     Picc.ATSBytes[0] = DESFIRE_EV0_ATS_TL_BYTE;
     Picc.ATSBytes[1] = DESFIRE_EV0_ATS_T0_BYTE;
@@ -313,16 +330,8 @@ void CreatePiccApp(void) {
 void FactoryFormatPiccEV0(void) {
     /* Wipe PICC data */
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
-    /* Set a random new UID */
-    BYTE uidData[DESFIRE_UID_SIZE];
-    RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
-    memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
-    /* Conform to NXP Application Note AN10927 about the first
-     * byte of a randomly generated UID (refer to section 2.1.1).
-     */
-    Picc.Uid[0] = ISO14443A_UID0_RANDOM;
     /* Initialize params to look like EV0 */
-    Picc.StorageSize = DESFIRE_STORAGE_SIZE_4K;
+    Picc.StorageSize = CardCapacityBlocks;
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV0;
     Picc.HwVersionMinor = DESFIRE_HW_MINOR_EV0;
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV0;
@@ -337,14 +346,6 @@ void FactoryFormatPiccEV0(void) {
 void FactoryFormatPiccEV1(uint8_t StorageSize) {
     /* Wipe PICC data */
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
-    /* Set a random new UID */
-    BYTE uidData[DESFIRE_UID_SIZE];
-    RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
-    memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
-    /* Conform to NXP Application Note AN10927 about the first
-     * byte of a randomly generated UID (refer to section 2.1.1).
-     */
-    Picc.Uid[0] = ISO14443A_UID0_RANDOM;
     /* Initialize params to look like EV1 */
     Picc.StorageSize = StorageSize;
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV1;

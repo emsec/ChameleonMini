@@ -28,6 +28,7 @@ This notice must be retained at the top of all source files where indicated.
 #define __DESFIRE_ISO14443_SUPPORT_H__
 
 #include "DESFireFirmwareSettings.h"
+#include "DESFireUtils.h"
 
 #include "../ISO14443-3A.h"
 #include "../../Codec/ISO14443-2A.h"
@@ -41,9 +42,9 @@ This notice must be retained at the top of all source files where indicated.
  */
 
 #define ISO14443A_CMD_RATS                  0xE0
-#define ISO14443A_RATS_FRAME_SIZE           (6 * BITS_PER_BYTE) /* Bit */
+#define ISO14443A_RATS_FRAME_SIZE           ASBITS(6)         /* Bit */
 #define ISO14443A_CMD_RNAK                  0xB2
-#define ISO14443A_CRC_FRAME_SIZE            (ISO14443A_CRCA_SIZE * BITS_PER_BYTE)
+#define ISO14443A_CRC_FRAME_SIZE            ASBITS(ISO14443A_CRCA_SIZE)
 
 #define ISO14443ACmdIsPM3WUPA(cmd)          ((cmd & 0x54) == 0x54)
 #define ISO14443ACmdIsWUPA(cmd)             ((cmd == ISO14443A_CMD_WUPA) || ISO14443ACmdIsPM3WUPA(cmd))
@@ -132,7 +133,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
 #define GetAndSetBufferCRCA(Buffer, ByteCount)     ({                                \
      uint16_t fullReturnBits = 0;                                                    \
      ISO14443AAppendCRCA(Buffer, ByteCount);                                         \
-     fullReturnBits = ByteCount * BITS_PER_BYTE + ISO14443A_CRC_FRAME_SIZE;          \
+     fullReturnBits = ASBITS(ByteCount) + ISO14443A_CRC_FRAME_SIZE;                  \
      fullReturnBits;                                                                 \
      })
 #define GetAndSetNoResponseCRCA(Buffer)            ({                                \

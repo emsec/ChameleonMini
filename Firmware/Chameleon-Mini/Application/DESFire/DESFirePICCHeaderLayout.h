@@ -100,44 +100,6 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_SW_MAJOR_EV2     0x12
 #define DESFIRE_SW_MINOR_EV2     0x01
 
-/* Other HW product types for DESFire tags: See page 7 of
- * https://www.nxp.com/docs/en/application-note/AN12343.pdf
- */
-// typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-//     NATIVEIC_PHYS_CARD                 = 0x01,
-//     LIGHT_NATIVEIC_PHYS_CARD           = 0x08,
-//     MICROCONTROLLER_PHYS_CARDI         = 0x81,
-//     MICROCONTROLLER_PHYS_CARDII        = 0x83,
-//     JAVACARD_SECURE_ELEMENT_PHYS_CARD  = 0x91,
-//     HCE_MIFARE_2GO                     = 0xa1,
-// } DESFireHWProductCodes;
-//
-// const BYTE DefaultDESFireATS[] = {
-//     0x06, 0x75, 0x77, 0x81, 0x02, 0x80
-// };
-// const BYTE DefaultJCOPDESFireATS[] = {
-//     0x06, 0x75, 0xf7, 0xb1, 0x02, 0x80
-// };
-//
-// const BYTE DEFAULT_SELECT_DESFIRE_AID[] = {
-//      0xd2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00
-// };
-// const BYTE DEFAULT_SELECT_ISO7816_AID[] = {
-//      0xa0, 0x00, 0x00, 0x00, 0x03, 0x96
-// };
-//
-// const BYTE VERSION1[] = {
-//     0x04, 0x01, 0x01, 0x01, 0x00, 0x1a, 0x05
-// };
-// const BYTE VERSION2[] = {
-//     0x04, 0x01, 0x01, 0x01, 0x03, 0x1a, 0x05
-// };
-// const BYTE VERSION3[] = {
-//    // Expected Response: 00  04  91  3a  29  93  26  80  00  00  00  00  00  39  08  91  00
-//    0x04, (BYTE) 0x91, 0x3a, 0x29, (BYTE) 0x93,
-//    0x26, (BYTE) 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x39, 0x08
-// };
-
 #define DESFIRE_STORAGE_SIZE_2K  0x16
 #define DESFIRE_STORAGE_SIZE_4K  0x18
 #define DESFIRE_STORAGE_SIZE_8K  0x1A
@@ -158,6 +120,7 @@ typedef struct {
      */
     uint8_t Uid[DESFIRE_UID_SIZE] DESFIRE_FIRMWARE_ALIGNAT;
     uint8_t StorageSize;
+    uint8_t ManufacturerID;
     uint8_t HwVersionMajor;
     uint8_t HwVersionMinor;
     uint8_t SwVersionMajor;
@@ -169,7 +132,6 @@ typedef struct {
     /* Dynamic data: changes during the PICC's lifetime */
     uint16_t FirstFreeBlock;
     uint8_t TransactionStarted;
-    //uint8_t Spare[9] DESFIRE_FIRMWARE_ALIGNAT; // USED ANYWHERE ???
 } DESFirePICCInfoType DESFIRE_FIRMWARE_PACKING;
 
 typedef struct {

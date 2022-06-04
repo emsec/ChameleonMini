@@ -78,6 +78,7 @@ void ISO144434Reset(void) {
     Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
     Iso144434BlockNumber = 1;
     ISO14443ALastDataFrameBits = 0;
+    LastReaderSentCmd = 0x00;
 }
 
 static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t BitCount) {
@@ -100,9 +101,9 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
     if (!ISO14443ACheckCRCA(Buffer, ByteCount)) {
         LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, ByteCount);
         /* ISO/IEC 14443-4, clause 7.5.5. The PICC does not attempt any error recovery. */
-        const char *debugPrintStr = PSTR("ISO14443-4: CRC fail; %04X vs %04X");
+        const char *debugPrintStr = PSTR("WARN: 14443-4: CRC fail; %04X vs %04X");
         DEBUG_PRINT_P(debugPrintStr, *(uint16_t *)&Buffer[ByteCount],
-                      ISO14443AUpdateCRCA(Buffer, ByteCount, 0x00));
+                      ISO14443AAppendCRCA(Buffer, ByteCount));
         return ISO14443A_APP_NO_RESPONSE;
     }
 
@@ -127,7 +128,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
             ISO144434SwitchState(ISO14443_4_STATE_ACTIVE);
             const char *debugPrintStr = PSTR("ISO14443-4: SEND RATS");
             LogDebuggingMsg(debugPrintStr);
-            return ByteCount * BITS_PER_BYTE; // PM3 expects no CRCA bytes
+            return ASBITS(ByteCount); // PM3 expects no CRCA bytes
         }
         case ISO14443_4_STATE_ACTIVE: {
             /* See: ISO/IEC 14443-4; 7.1 Block format */
@@ -210,7 +211,6 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
                 /* 7.5.4.3, rule 12 */
                 /* This is a NAK. Send an ACK back */
                 Buffer[0] = ISO14443_PCB_R_BLOCK_STATIC | ISO14443_PCB_R_BLOCK_ACK | MyBlockNumber;
-                //ByteCount = 1;
                 // Per the NXP data sheet MF1S50YYX_V1 (Table 10: ACK / NAK), we should return 4 bits:
                 return 4;
             } else {
@@ -220,7 +220,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
                 DEBUG_PRINT_P(debugPrintStr, __LINE__);
                 // Resend the data from the last frame:
                 if (ISO14443ALastDataFrameBits > 0) {
-                    memcpy(&Buffer[0], &ISO14443ALastDataFrame[0], (ISO14443ALastDataFrameBits + BITS_PER_BYTE - 1) / BITS_PER_BYTE);
+                    memcpy(&Buffer[0], &ISO14443ALastDataFrame[0], ASBYTES(ISO14443ALastDataFrameBits));
                     return ISO14443ALastDataFrameBits;
                 } else {
                     return ISO14443A_APP_NO_RESPONSE;
@@ -248,6 +248,9 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
             LogDebuggingMsg(debugPrintStr5);
             return ISO14443A_APP_NO_RESPONSE;
         }
+
+        default:
+            break;
 
     }
 
@@ -296,15 +299,17 @@ void ISO144433AHalt(void) {
 }
 
 bool ISO144433AIsHalt(const uint8_t *Buffer, uint16_t BitCount) {
-    return BitCount == ISO14443A_HLTA_FRAME_SIZE + ISO14443A_CRCA_SIZE * BITS_PER_BYTE
+    return BitCount == ISO14443A_HLTA_FRAME_SIZE + ASBITS(ISO14443A_CRCA_SIZE)
            && Buffer[0] == ISO14443A_CMD_HLTA
            && Buffer[1] == 0x00
-           && ISO14443ACheckCRCA(Buffer, (ISO14443A_HLTA_FRAME_SIZE + BITS_PER_BYTE - 1) / BITS_PER_BYTE);
+           && ISO14443ACheckCRCA(Buffer, ASBYTES(ISO14443A_HLTA_FRAME_SIZE));
 }
 
 uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
 
     if (BitCount == 0) {
+        ISO144434Reset();
+        ISO144433AHalt();
         return ISO14443A_APP_NO_RESPONSE;
     }
 
@@ -324,12 +329,10 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
         incrementRetryCount = false;
     } else if (ISO144433AIsHalt(Buffer, BitCount)) {
         LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
-        ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
-        LastReaderSentCmd = Cmd;
-        CheckStateRetryCount(true);
-        ISO144434Reset();
         const char *logMsg = PSTR("ISO14443-3: HALTING");
         LogDebuggingMsg(logMsg);
+        ISO144434Reset();
+        ISO144433AHalt();
         return ISO14443A_APP_NO_RESPONSE;
     }
     LastReaderSentCmd = Cmd;
@@ -357,7 +360,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             Buffer[1] = (ATQA_VALUE >> 8) & 0x00FF;
             const char *debugPrintStr = PSTR("ISO14443-4 (IDLE): ATQA");
             LogDebuggingMsg(debugPrintStr);
-            return ISO14443A_ATQA_FRAME_SIZE_BYTES * BITS_PER_BYTE;
+            return ASBITS(ISO14443A_ATQA_FRAME_SIZE_BYTES);
 
         case ISO14443_3A_STATE_READY1:
             if (Cmd == ISO14443A_CMD_SELECT_CL1) {
@@ -425,7 +428,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 return ISO14443A_SAK_FRAME_SIZE;
             }
             /* Forward to ISO/IEC 14443-4 processing code */
-            uint16_t ByteCount = (BitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+            uint16_t ByteCount = ASBYTES(BitCount);
             uint16_t ReturnBits = ISO144434ProcessBlock(Buffer, ByteCount, BitCount);
             const char *debugPrintStr2 = PSTR("ISO14443-4: ACTIVE RET");
             LogDebuggingMsg(debugPrintStr2);
@@ -437,7 +440,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
     }
 
     /* Unknown command. Reset back to idle/halt state. */
-    bool defaultReset = false; //Iso144433AState != ISO14443_3A_STATE_IDLE;
+    bool defaultReset = false;
     if (!CheckStateRetryCount(defaultReset)) {
         const char *logMsg = PSTR("ISO14443-3: RESET TO IDLE 0x%02x");
         DEBUG_PRINT_P(logMsg, Cmd);

@@ -147,50 +147,55 @@ bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount) {
     return true;
 }
 
-uint16_t DesfirePreprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize) {
+uint16_t DesfirePreprocessAPDUWrapper(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize, bool TruncateChecksumBytes) {
     switch (CommMode) {
-        case DESFIRE_COMMS_PLAINTEXT_MAC: {
             uint16_t ChecksumBytes = 0;
+        case DESFIRE_COMMS_PLAINTEXT_MAC: {
             if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
                 ChecksumBytes = 4;
-                if (!checkBufferMAC(Buffer, BufferSize, ChecksumBytes)) {
+                if (BufferSize <= ChecksumBytes || !checkBufferMAC(Buffer, BufferSize, ChecksumBytes)) {
                     return 0;
                 }
             } else if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_3K3DES) {
                 ChecksumBytes = CRYPTO_3KTDEA_BLOCK_SIZE;
-                if (!checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
+                if (BufferSize <= ChecksumBytes || !checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
                     return 0;
                 }
             } else {
                 ChecksumBytes = CRYPTO_AES_BLOCK_SIZE;
-                if (!checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
+                if (BufferSize <= ChecksumBytes || !checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
                     return 0;
                 }
             }
-            return MAX(0, BufferSize - ChecksumBytes);
+            return (TruncateChecksumBytes ? MAX(0, BufferSize - ChecksumBytes) : BufferSize);
         }
         case DESFIRE_COMMS_CIPHERTEXT_DES: {
             Decrypt3DESBuffer(BufferSize, Buffer, &Buffer[BufferSize], SessionIV, SessionKey);
             memmove(&Buffer[0], &Buffer[BufferSize], BufferSize);
-            uint16_t ChecksumBytes = CRYPTO_3KTDEA_BLOCK_SIZE;
-            if (!checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
+            ChecksumBytes = CRYPTO_3KTDEA_BLOCK_SIZE;
+            if (BufferSize <= ChecksumBytes || !checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
                 return 0;
             }
-            return MAX(0, BufferSize - ChecksumBytes);
+            return (TruncateChecksumBytes ? MAX(0, BufferSize - ChecksumBytes) : BufferSize);
         }
         case DESFIRE_COMMS_CIPHERTEXT_AES128: {
             CryptoAESDecryptBuffer(BufferSize, Buffer, &Buffer[BufferSize], SessionIV, SessionKey);
             memmove(&Buffer[0], &Buffer[BufferSize], BufferSize);
-            uint16_t ChecksumBytes = CRYPTO_AES_BLOCK_SIZE;
-            if (!checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
+            ChecksumBytes = CRYPTO_AES_BLOCK_SIZE;
+            if (BufferSize <= ChecksumBytes || !checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
                 return 0;
             }
-            return MAX(0, BufferSize - ChecksumBytes);
+            return (TruncateChecksumBytes ? MAX(0, BufferSize - ChecksumBytes) : BufferSize);
         }
-        case DESFIRE_COMMS_PLAINTEXT:
+        case DESFIRE_COMMS_PLAINTEXT: {
+            ChecksumBytes = 2;
+            if (BufferSize <= ChecksumBytes || !ISO14443ACheckCRCA(Buffer, BufferSize - ChecksumBytes)) {
+                return 0;
+            }
+            return (TruncateChecksumBytes ? MAX(0, BufferSize - ChecksumBytes) : BufferSize);
+        }
         default:
-            // Leave the CRCA bytes intact:
-            return BufferSize;
+            return (TruncateChecksumBytes ? MAX(0, BufferSize - ChecksumBytes) : BufferSize);
     }
 }
 

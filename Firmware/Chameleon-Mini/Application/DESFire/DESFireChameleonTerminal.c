@@ -71,39 +71,45 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
     dataByteCount = HexStringToBuffer(propSpecBytes, 16, propSpecBytesStr);
     if (!strcasecmp_P(hdrPropSpecStr, PSTR("ATS"))) {
         if (dataByteCount != 5) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             memcpy(&Picc.ATSBytes[0], propSpecBytes, dataByteCount);
         }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ManuID"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.ManufacturerID = propSpecBytes[0];
+        }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HardwareVersion"))) {
         if (dataByteCount != 2) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             Picc.HwVersionMajor = propSpecBytes[0];
             Picc.HwVersionMinor = propSpecBytes[1];
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SoftwareVersion"))) {
         if (dataByteCount != 2) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             Picc.SwVersionMajor = propSpecBytes[0];
             Picc.SwVersionMinor = propSpecBytes[1];
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("BatchNumber"))) {
         if (dataByteCount != 5) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             memcpy(Picc.BatchNumber, propSpecBytes, 5);
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ProductionDate"))) {
         if (dataByteCount != 2) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             Picc.ProductionWeek = propSpecBytes[0];
             Picc.ProductionYear = propSpecBytes[1];
         }
     } else {
-        StatusError = 0x01;
+        StatusError = 1;
     }
     if (StatusError) {
         CommandDESFireGetHeaderProperty(OutParam);

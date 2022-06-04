@@ -48,7 +48,7 @@
 #define ISO14443A_CALC_BCC(ByteBuffer) \
     ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
 
-void ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount);
+uint16_t ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount);
 bool ISO14443ACheckCRCA(const void *Buffer, uint16_t ByteCount);
 
 #define ISO14443A_UID0_RANDOM       0x08

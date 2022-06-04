@@ -31,6 +31,9 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "DESFireFirmwareSettings.h"
 
+#define ASBYTES(bc)  (((bc) + BITS_PER_BYTE - 1) / BITS_PER_BYTE)
+#define ASBITS(bc)   ((bc) * BITS_PER_BYTE)
+
 #define UnsignedTypeToUINT(typeValue) \
     ((UINT) typeValue)
 #define ExtractLSBLE(ui) \
@@ -69,7 +72,11 @@ bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount);
  * CommSettings and wrapped APDU format combinations are defined statically in the
  * C source file to save space in the symbol table for the firmware (ELF) binary.
  */
-uint16_t DesfirePreprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize);
+uint16_t DesfirePreprocessAPDUWrapper(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize, bool TruncateChecksumBytes);
+#define DesfirePreprocessAPDU(CommMode, Buffer, BufferSize)                \
+        DesfirePreprocessAPDUWrapper(CommMode, Buffer, BufferSize, false)
+#define DesfirePreprocessAPDUAndTruncate(CommMode, Buffer, BufferSize)     \
+        DesfirePreprocessAPDUWrapper(CommMode, Buffer, BufferSize, true)
 uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize);
 
 #endif

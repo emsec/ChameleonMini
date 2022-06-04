@@ -356,7 +356,7 @@ uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount) {
 
 uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount) {
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
-    Buffer[1] = DESFIRE_MANUFACTURER_ID;
+    Buffer[1] = Picc.ManufacturerID;
     Buffer[2] = DESFIRE_TYPE;
     Buffer[3] = DESFIRE_SUBTYPE;
     GetPiccHardwareVersionInfo(&Buffer[4]);
@@ -367,7 +367,7 @@ uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount) {
 
 uint16_t EV0CmdGetVersion2(uint8_t *Buffer, uint16_t ByteCount) {
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
-    Buffer[1] = DESFIRE_MANUFACTURER_ID;
+    Buffer[1] = Picc.ManufacturerID;
     Buffer[2] = DESFIRE_TYPE;
     Buffer[3] = DESFIRE_SUBTYPE;
     GetPiccSoftwareVersionInfo(&Buffer[4]);
@@ -1798,8 +1798,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     LogEntry(LOG_APP_NONCE_B, DesfireCommandState.RndB, CryptoChallengeResponseBytesSize);
 
     /* Encrypt RndB with the selected key and transfer it back to the PCD */
-    if (cryptoKeyType == CRYPTO_TYPE_DES || cryptoKeyType == CRYPTO_TYPE_3K3DES ||
-            cryptoKeyType == CRYPTO_TYPE_ANY) {
+    if (cryptoKeyType == CRYPTO_TYPE_DES || cryptoKeyType == CRYPTO_TYPE_3K3DES || cryptoKeyType == CRYPTO_TYPE_ANY) {
         Encrypt3DESBuffer(CryptoChallengeResponseBytesSize, DesfireCommandState.RndB,
                           &Buffer[1], IV, Key);
     } else {
@@ -1836,6 +1835,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     DesfireState = DESFIRE_IDLE;
     /* Validate command length */
     if (ByteCount != 2 * CryptoChallengeResponseBytesSize + 1) {
+        LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }

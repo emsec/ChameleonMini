@@ -131,8 +131,8 @@ CONFIG_SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
 
 ## : Set a minimum incoming/outgoing log size so we do not spam the
 ## : Chameleon Mini logs to much by logging everything:
-CONFIG_SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=1
-#CONFIG_SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
+CONFIG_SETTINGS  += -DDESFIRE_MIN_INCOMING_LOGSIZE=0
+CONFIG_SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 
 ## : Enable printing of crypto tests when a new DESFire emulation instance is started:
 #SETTINGS += -DDESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
@@ -407,6 +407,7 @@ git-add-dev:
 	@make style && git add $(LOCALFW_SOURCE_FILES)
 	@cd $(BUILD_SCR) && git add -f $(LOCALFW_BUILD_SCRIPT_FILES)
 	@cd $(FWROOT)/Software/DESFireLibNFCTesting && make style && git add $(TESTING_SOURCE_FILES)
+	@git add $(FWROOT)/Doc/DESFireSupportReadme.md
 
 configure-chameleon-usb: UDEV_RULES_CONFIG_LINES:='\n                                                \
 	\# ChameleonMini (RevG)\n                                                                    \
