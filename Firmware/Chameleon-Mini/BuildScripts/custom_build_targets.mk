@@ -1,18 +1,16 @@
 .PHONY:     mifare mifare-classic desfire desfire-dev iso-modes ntag215 vicinity sl2s2002 tagatit em4233
 .SECONDARY: custom-build
 
-TARGET_CUSTOM_BUILD_NAME     =
 DEFAULT_TAG_SUPPORT_BASE     = -DCONFIG_ISO14443A_SNIFF_SUPPORT \
                                -DCONFIG_ISO14443A_READER_SUPPORT
 SUPPORTED_TAGS_BUILD         =
 EXTRA_CONFIG_SETTINGS        =
 
-custom-build: TARGET_CUSTOM_BUILD:=$(TARGET)-$(strip $(if $(TARGET_CUSTOM_BUILD_NAME), "CustomBuild_$(TARGET_CUSTOM_BUILD_NAME)", "DefaultBuild"))
 custom-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).bin check_size
-	@cp $(TARGET).hex $(TARGET_CUSTOM_BUILD).hex
-	@cp $(TARGET).eep $(TARGET_CUSTOM_BUILD).eep
-	@cp $(TARGET).elf $(TARGET_CUSTOM_BUILD).elf
-	@cp $(TARGET).bin $(TARGET_CUSTOM_BUILD).bin
+	@cp $(TARGET).hex $(TARGET)-CustomBuild_$(TARGET_CUSTOM_BUILD_NAME).hex
+	@cp $(TARGET).eep $(TARGET)-CustomBuild_$(TARGET_CUSTOM_BUILD_NAME).eep
+	@cp $(TARGET).elf $(TARGET)-CustomBuild_$(TARGET_CUSTOM_BUILD_NAME).elf
+	@cp $(TARGET).bin $(TARGET)-CustomBuild_$(TARGET_CUSTOM_BUILD_NAME).bin
 	@echo $(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)
 	@avr-size -C -x $(TARGET).elf
 	@echo $(MSG_TIDY_ENDSEP)
@@ -21,7 +19,7 @@ custom-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).bi
 	@echo $(FMT_ANSIC_BOLD)$(FMT_ANSIC_EXCLAIM)"[!!!]"$(FMT_ANSIC_END) \
 		" 💬  "$(FMT_ANSIC_BOLD)$(FMT_ANSIC_UNDERLINE)"SUCCESS BUILDING CUSTOM FIRMWARE:"$(FMT_ANSIC_END)
 	@echo $(FMT_ANSIC_BOLD)$(FMT_ANSIC_EXCLAIM)"[!!!]"$(FMT_ANSIC_END) \
-		" 💯  "$(FMT_ANSIC_BOLD)"$(TARGET_CUSTOM_BUILD).(HEX|EEP|ELF|BIN)"$(FMT_ANSIC_END)
+		" 💯  "$(FMT_ANSIC_BOLD)"$(TARGET)-CustomBuild_$(TARGET_CUSTOM_BUILD_NAME).(HEX|EEP|ELF|BIN)"$(FMT_ANSIC_END)
 	@echo "\n"
 
 mifare: SUPPORTED_TAGS_BUILD:=\
@@ -49,7 +47,7 @@ desfire: FLASH_DATA_SIZE:=0x0E000
 desfire: SUPPORTED_TAGS_BUILD:=-DCONFIG_MF_DESFIRE_SUPPORT
 desfire: EXTRA_CONFIG_SETTINGS:=-DMEMORY_LIMITED_TESTING \
                                 -DDESFIRE_CRYPTO1_SAVE_SPACE \
-				-f-inline-small-functions
+				-finline-small-functions
 desfire: TARGET_CUSTOM_BUILD_NAME:=DESFire
 desfire: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
 desfire: custom-build

@@ -187,9 +187,9 @@ ifneq ($(UNKNOWN_SOURCE),)
 endif
 
 # Convert input source filenames into a list of required output object files
-FWSRC_OBJECT_FILES := $(addsuffix .o, $(basename   $(FULL_SOURCE)))
+FWSRC_OBJECT_FILES := $(addsuffix .o, $(basename $(FULL_SOURCE)))
 OBJECT_FILES       += $(sort $(FWSRC_OBJECT_FILES))
-LUFA_OBJECT_FILES  := $(addsuffix .o, $(shell basename $(LUFA_SRC)))
+LUFA_OBJECT_FILES  := $(addsuffix .o, $(basename $(LUFA_SRC)))
 
 # Check if an output object file directory was specified instead of the input file location
 ifneq ($(OBJDIR),.)
