@@ -46,6 +46,8 @@ uint8_t LastReaderSentCmd = 0x00;
 
 uint8_t  ISO14443ALastDataFrame[MAX_DATA_FRAME_XFER_SIZE] = { 0x00 };
 uint16_t ISO14443ALastDataFrameBits = 0;
+uint8_t  ISO14443ALastIncomingDataFrame[MAX_DATA_FRAME_XFER_SIZE] = { 0x00 };
+uint16_t ISO14443ALastIncomingDataFrameBits = 0;
 
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging) {
     if (resetByDefault || ++StateRetryCount > MAX_STATE_RETRY_COUNT) {
@@ -157,6 +159,8 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
         case ISO14443_4_STATE_LAST: {
             return ISO14443A_APP_NO_RESPONSE;
         }
+        default:
+            break;
     }
 
     switch (PCB & ISO14443_PCB_BLOCK_TYPE_MASK) {
@@ -186,9 +190,9 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
             }
             Buffer[0] = PCB;
             /* Let the DESFire application code process the input data */
-            ByteCount = MifareDesfireProcessCommand(Buffer + PrologueLength, ByteCount - PrologueLength);
+            ByteCount = MifareDesfireProcessCommand(&Buffer[PrologueLength], ByteCount - PrologueLength);
             /* Short-circuit in case the app decides not to respond at all */
-            if (ByteCount == ISO14443A_APP_NO_RESPONSE) {
+            if (ByteCount == 0) {
                 const char *debugPrintStr = PSTR("ISO14443-4: APP_NO_RESP");
                 LogDebuggingMsg(debugPrintStr);
                 return ISO14443A_APP_NO_RESPONSE;
@@ -295,6 +299,7 @@ void ISO144433AReset(void) {
 void ISO144433AHalt(void) {
     ISO144433ASwitchState(ISO14443_3A_STATE_HALT);
     Iso144433AIdleState = ISO14443_3A_STATE_HALT;
+    ISO144433AReset();
     StateRetryCount = 0x00;
 }
 
@@ -318,23 +323,25 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
     /* Wakeup and Request may occure in all states */
     bool checkStateRetryStatus = CheckStateRetryCount(false);
     bool incrementRetryCount = true;
-    if ((Cmd == ISO14443A_CMD_REQA) && (LastReaderSentCmd == ISO14443A_CMD_REQA) && !checkStateRetryStatus) {
-        /* Catch timing issues where the reader sends multiple
-           REQA bytes, in between which we would have already sent
-           back a response, so that we should not reset. */
-        incrementRetryCount = false;
-    } else if (Cmd == ISO14443A_CMD_REQA || ISO14443ACmdIsWUPA(Cmd)) {
-        ISO144434Reset();
+    if (Cmd == ISO14443A_CMD_REQA) {
+        LOG_AT_LEVEL(LogEntry(LOG_INFO_APP_CMD_REQA, NULL, 0), VERBOSE);
+        //ISO144434Reset();
         ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
         incrementRetryCount = false;
+    } else if (ISO14443ACmdIsWUPA(Cmd)) {
+        LOG_AT_LEVEL(LogEntry(LOG_INFO_APP_CMD_WUPA, NULL, 0), VERBOSE);
+        //ISO144434Reset();
+        ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
+        incrementRetryCount = false;
+        //return ISO14443A_APP_NO_RESPONSE;
     } else if (ISO144433AIsHalt(Buffer, BitCount)) {
-        LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
+        LOG_AT_LEVEL(LogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0), VERBOSE);
         const char *logMsg = PSTR("ISO14443-3: HALTING");
         LogDebuggingMsg(logMsg);
-        ISO144434Reset();
         ISO144433AHalt();
         return ISO14443A_APP_NO_RESPONSE;
     }
+
     LastReaderSentCmd = Cmd;
     if (incrementRetryCount) {
         StateRetryCount += 1;
@@ -424,8 +431,26 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 LogDebuggingMsg(logMsg);
             } else if (Cmd == ISO14443A_CMD_SELECT_CL3) {
                 Buffer[0] = ISO14443A_SAK_COMPLETE_NOT_COMPLIANT;
-                ISO14443AAppendCRCA(Buffer, 1);
+                ISO14443AAppendCRCA(&Buffer[0], 1);
                 return ISO14443A_SAK_FRAME_SIZE;
+            } else if (Cmd == ISO14443A_CMD_DESELECT) {
+                LOG_AT_LEVEL(LogEntry(LOG_INFO_APP_CMD_DESELECT, NULL, 0), VERBOSE);
+                /* See if the process can make sense of the first byte: */
+                //uint16_t ByteCount = ASBYTES(BitCount);
+                //uint16_t ReturnBits = ISO144434ProcessBlock(Buffer, ByteCount, BitCount);
+                //if (ReturnBits > 0) {
+                //    return ReturnBits;
+                //}
+                /* Otherwise (doesn't seem to work): Return a HALT frame to the reader: */
+                //Buffer[0] = ISO14443A_CMD_HLTA;
+                //Buffer[1] = 0x00;
+                //ISO14443AAppendCRCA(&Buffer[0], 2);
+                //ISO144434SwitchState(ISO14443_3A_STATE_HALT);
+                //return ISO14443A_DESELECT_FRAME_SIZE;
+                /* Otherwise: Return a WUPA frame to the reader to reset: */
+                //Buffer[0] = ISO14443A_CMD_WUPA;
+                //ISO144434SwitchState(ISO14443_3A_STATE_HALT);
+                //return ASBITS(1);
             }
             /* Forward to ISO/IEC 14443-4 processing code */
             uint16_t ByteCount = ASBYTES(BitCount);
@@ -439,7 +464,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
 
     }
 
-    /* Unknown command. Reset back to idle/halt state. */
+    /* Fallthrough: Unknown command. Reset back to idle/halt state. */
     bool defaultReset = false;
     if (!CheckStateRetryCount(defaultReset)) {
         const char *logMsg = PSTR("ISO14443-3: RESET TO IDLE 0x%02x");

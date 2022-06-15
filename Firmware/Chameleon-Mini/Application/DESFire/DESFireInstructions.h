@@ -104,10 +104,6 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     CMD_ISO7816_UPDATE_BINARY = 0xD6,
     CMD_ISO7816_APPEND_RECORD = 0xE2,
 
-    /* Space for undocumented command codes --
-     * Need command codes and parameters to make these work moving forward: */
-    //CMD_READ_SIGNATURE /* See page 87 of AN12343.pdf (for Mifare DESFire Light tags) */
-
 } DESFireCommandType;
 
 typedef uint16_t (*InsCodeHandlerFunc)(uint8_t *Buffer, uint16_t ByteCount);

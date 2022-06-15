@@ -193,14 +193,17 @@ ifneq ($(UNKNOWN_SOURCE),)
 endif
 
 # Convert input source filenames into a list of required output object files
-FWSRC_OBJECT_FILES := $(addsuffix .o, $(basename $(FULL_SOURCE)))
-OBJECT_FILES       += $(sort $(FWSRC_OBJECT_FILES))
-LUFA_OBJECT_FILES  := $(addsuffix .o, $(basename $(LUFA_SRC)))
+FWSRC_OBJECT_FILES     := $(addsuffix .o, $(basename $(FULL_SOURCE)))
+OBJECT_FILES           += $(sort $(FWSRC_OBJECT_FILES))
+CHAMELEON_OBJECT_FILES := $(addsuffix .o, $(basename $(SRC)))
+LUFA_OBJECT_FILES      := $(addsuffix .o, $(basename $(LUFA_SRC)))
 
 # Check if an output object file directory was specified instead of the input file location
 ifneq ("$(OBJDIR)",".")
    # Prefix all the object filenames with the output object file directory path
-   OBJECT_FILES   := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(OBJECT_FILES)))
+   OBJECT_FILES           := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(OBJECT_FILES)))
+   CHAMELEON_OBJECT_FILES := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(CHAMELEON_OBJECT_FILES)))
+   LUFA_OBJECT_FILES      := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(LUFA_OBJECT_FILES)))
 
    # Check if any object file (without path) appears more than once in the object file list
    ifneq ($(words $(sort $(OBJECT_FILES))), $(words $(OBJECT_FILES)))

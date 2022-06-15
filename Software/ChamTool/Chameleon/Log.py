@@ -86,7 +86,10 @@ eventTypes = {
     0x90: { 'name': 'APP AUTH',       'decoder': binaryDecoder },
     0x91: { 'name': 'APP HALT',       'decoder': binaryDecoder },
     0x92: { 'name': 'APP UNKNOWN',    'decoder': binaryDecoder },
-    
+    0x93: { 'name': 'APP REQA',       'decoder': binaryDecoser },
+    0x94: { 'name': 'APP WUPA',       'decoder': binaryDecoser },
+    0x95: { 'name': 'APP DESELECT',   'decoder': binaryDecoser },
+
     0xA0: { 'name': 'APP AUTHING' ,    'decoder': binaryDecoder },
     0xA1: { 'name': 'APP AUTHED',      'decoder': binaryDecoder },
 

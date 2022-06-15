@@ -52,6 +52,18 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DEBUGGING   = 3,
 } DESFireLoggingMode;
 
+#ifndef DESFIRE_DEFAULT_LOGGING_MODE
+#define DESFIRE_DEFAULT_LOGGING_MODE   (OFF)
+#endif
+
+#define LOG_AT_LEVEL(cmdToRun, loggingThreshold)                  ({ \
+     do {                                                            \
+          if (loggingThreshold >= DESFIRE_DEFAULT_LOGGING_MODE) {    \
+	       cmdToRun;                                             \
+	  }                                                          \
+     } while(0);                                                     \
+     })
+
 extern DESFireLoggingMode LocalLoggingMode;
 
 /*

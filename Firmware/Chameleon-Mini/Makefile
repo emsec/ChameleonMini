@@ -282,7 +282,6 @@ LD_FLAGS     = $(CC_FLAGS) \
 		-Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) \
 		-Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
-LUFA_OBJDIR  = LUFABin
 TEMPDIR      = $(OBJDIR)/Temp
 OBJECT_FILES =
 FWROOT       = ../..
@@ -395,18 +394,11 @@ style:
 	    --style=google --pad-oper --unpad-paren --pad-header              \
 	    --align-pointer=name {} \;
 
-local-clean: BASH:=$(if $(shell which bash), $(shell which bash), /bin/bash)
-local-clean: BASH_SCRIPT_EXEC_LINES:='                                               \
-		for lufaobj in $$(ls $(LUFA_OBJDIR)); do                             \
-		     lobj_basename=$$(basename $$lufaobj);                           \
-		     ln -s $(LUFA_OBJDIR)/$$lobj_basename $(OBJDIR)/$$lobj_basename; \
-		done                                                                 \
-		'
 local-clean:
 	@rm -f  $(TARGET)*.{elf,hex,eep,bin,lss,map}
-	@rm -rf $(OBJDIR) $(LUFA_OBJ)
-	@mkdir -p $(OBJDIR) $(LUFA_OBJDIR)
-	@$(BASH) -c $(BASH_SCRIPT_EXEC_LINES) || $(SHELL) -c $(BASH_SCRIPT_EXEC_LINES)
+	## : Try to avoid rebuilding the LUFA objects that rarely change:
+	@rm -f $(CHAMELEON_OBJECT_FILES)
+	@mkdir -p $(OBJDIR)
 clean: local-clean
 
 git-add-dev: LOCALFW_SOURCE_FILES:=Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
@@ -417,6 +409,7 @@ git-add-dev:
 	@cd $(BUILD_SCR) && git add -f $(LOCALFW_BUILD_SCRIPT_FILES)
 	@cd $(FWROOT)/Software/DESFireLibNFCTesting && make style && git add $(TESTING_SOURCE_FILES)
 	@git add $(FWROOT)/Doc/DESFireSupportReadme.md
+	@cd $(FWROOT)/Software/ChamTool && git add ./*.py ./*/*.py
 
 configure-chameleon-usb: UDEV_RULES_CONFIG_LINES:='\n                                                \
 	\# ChameleonMini (RevG)\n                                                                    \

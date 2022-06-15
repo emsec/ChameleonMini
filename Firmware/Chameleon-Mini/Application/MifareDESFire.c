@@ -47,6 +47,11 @@ This notice must be retained at the top of all source files where indicated.
 #define MIFARE_DESFIRE_EV1     (0x01)
 #define MIFARE_DESFIRE_EV2     (0x02)
 
+#define IsControlCmd(Buffer, BitCount)  \
+	(BitCount > 0 && \
+	 ((Buffer[0] == ISO14443A_CMD_WUPA) || \
+	  (Buffer[0] == ISO14443A_CMD_REQA)))
+
 DesfireStateType DesfireState = DESFIRE_HALT;
 DesfireStateType DesfirePreviousState = DESFIRE_IDLE;
 bool DesfireFromHalt = false;
@@ -127,10 +132,15 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
 
     if (ByteCount == 0) {
         return ISO14443A_APP_NO_RESPONSE;
+    } else if (MutualAuthenticateCmd(Buffer[0])) {
+        LastReaderSentCmd = Buffer[0];
     } else if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         DesfireState = DESFIRE_IDLE;
+        LastReaderSentCmd = Buffer[0];
         uint16_t ReturnBytes = CallInstructionHandler(Buffer, ByteCount);
         return ReturnBytes;
+    } else {
+        LastReaderSentCmd = Buffer[0];
     }
 
     uint16_t ReturnBytes = 0;
@@ -152,6 +162,18 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
             break;
         case DESFIRE_AES_AUTHENTICATE2:
             ReturnBytes = DesfireCmdAuthenticateAES2(Buffer, ByteCount);
+            break;
+        case DESFIRE_ISO7816_EXT_AUTH:
+            DEBUG_PRINT_P(PSTR("TODO -- ISO7816-ExtAuth"));
+            ReturnBytes = ISO14443A_APP_NO_RESPONSE;
+            break;
+        case DESFIRE_ISO7816_INT_AUTH:
+            DEBUG_PRINT_P(PSTR("TODO -- ISO7816-IntAuth"));
+            ReturnBytes = ISO14443A_APP_NO_RESPONSE;
+            break;
+        case DESFIRE_ISO7816_GET_CHALLENGE:
+            DEBUG_PRINT_P(PSTR("TODO -- ISO7816-GetChall"));
+            ReturnBytes = ISO14443A_APP_NO_RESPONSE;
             break;
         case DESFIRE_READ_DATA_FILE:
             ReturnBytes = ReadDataFileIterator(Buffer);
@@ -226,6 +248,18 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     uint16_t ReturnedBytes = 0;
     uint16_t ByteCount = ASBYTES(BitCount);
     LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, Buffer, ByteCount);
+    if (ByteCount > 1 &&
+            !memcmp(&Buffer[0], &ISO14443ALastIncomingDataFrame[0], MIN(ASBYTES(ISO14443ALastIncomingDataFrameBits), ByteCount))) {
+        /* The PCD resent the same data frame (probably a synchronization issue):
+         * Send out the same data as last time:
+        */
+        memcpy(&Buffer[0], &ISO14443ALastDataFrame[0], ASBYTES(ISO14443ALastDataFrameBits));
+        return ISO14443ALastDataFrameBits;
+    } else {
+        memcpy(&ISO14443ALastIncomingDataFrame[0], &Buffer[0], ByteCount);
+        ISO14443ALastIncomingDataFrameBits = BitCount;
+        LastReaderSentCmd = Buffer[0];
+    }
     if (ByteCount >= 3 && Buffer[2] == STATUS_ADDITIONAL_FRAME &&
             DesfireStateExpectingAdditionalFrame(DesfireState)) {
         /* [PM3-V1] : Handle the ISO-prologue-only-wrapped version of the additional frame data: */

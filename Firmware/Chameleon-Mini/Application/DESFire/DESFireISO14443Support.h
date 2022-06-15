@@ -45,6 +45,8 @@ This notice must be retained at the top of all source files where indicated.
 #define ISO14443A_RATS_FRAME_SIZE           ASBITS(6)         /* Bit */
 #define ISO14443A_CMD_RNAK                  0xB2
 #define ISO14443A_CRC_FRAME_SIZE            ASBITS(ISO14443A_CRCA_SIZE)
+#define ISO14443A_CMD_DESELECT              0xC2
+#define ISO14443A_DESELECT_FRAME_SIZE       (ISO14443A_HLTA_FRAME_SIZE + ASBITS(ISO14443A_CRCA_SIZE))
 
 #define ISO14443ACmdIsPM3WUPA(cmd)          ((cmd & 0x54) == 0x54)
 #define ISO14443ACmdIsWUPA(cmd)             ((cmd == ISO14443A_CMD_WUPA) || ISO14443ACmdIsPM3WUPA(cmd))
@@ -101,6 +103,8 @@ extern uint8_t LastReaderSentCmd;
 #define MAX_DATA_FRAME_XFER_SIZE            (64)
 extern uint8_t  ISO14443ALastDataFrame[MAX_DATA_FRAME_XFER_SIZE];
 extern uint16_t ISO14443ALastDataFrameBits;
+extern uint8_t  ISO14443ALastIncomingDataFrame[MAX_DATA_FRAME_XFER_SIZE];
+extern uint16_t ISO14443ALastIncomingDataFrameBits;
 
 INLINE ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t BufferBitCount) {
     uint16_t ISO14443ALastDataFrameBytes = MIN((BufferBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE, MAX_DATA_FRAME_XFER_SIZE);
@@ -113,7 +117,7 @@ INLINE ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t Buff
 
 /* Setup some fuzzy response handling for problematic readers like the ACR122U */
 
-#define MAX_STATE_RETRY_COUNT               (0x0a)
+#define MAX_STATE_RETRY_COUNT               (0x0b)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault);
 bool CheckStateRetryCount2(bool resetByDefault, bool performLogging);
