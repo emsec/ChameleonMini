@@ -1,10 +1,11 @@
 .PHONY:     mifare mifare-classic desfire desfire-dev iso-modes ntag215 vicinity sl2s2002 tagatit em4233
 .SECONDARY: custom-build
 
-ECHOFLAGS=-e
-ECHO = $(shell which echo) $(ECHOFLAGS)
+ECHO = echo $(ECHOFLAGS)
 ifeq ("$(shell uname -s)", "Darwin")
 	ECHOFLAGS=
+else
+	ECHOFLAGS=-e
 endif
 
 DEFAULT_TAG_SUPPORT_BASE     = -DCONFIG_ISO14443A_SNIFF_SUPPORT \

@@ -146,6 +146,15 @@ CONFIG_SETTINGS  += -DDESFIRE_MIN_OUTGOING_LOGSIZE=0
 ## : grep, sed, awk) lead to unexpected behavior:
 CHECK_SIZE_GREP_ARGS=$(if $(filter "$(shell uname -s)", "Darwin"), -Eo "[[:digit:]]+", -oP "\d+")
 
+## Support 'fancy' ANSI terminal colors and unicode emojis
+## (idea from the PM3 command line utilities):
+ECHO = echo $(ECHOFLAGS)
+ifeq ("$(shell uname -s)", "Darwin")
+     ECHOFLAGS=
+else
+     ECHOFLAGS=-e
+endif
+
 ## : Memory definitions and objcopy flags to include sections in binaries
 ## ++ Start of data section in flash
 FLASH_DATA_ADDR         = 0x10000
@@ -307,28 +316,28 @@ include $(BUILD_SCR)/custom_build_targets.mk
 
 ## : Overwrite the LUFA versions of hex/bin file generation to include spmhelper and flashdata sections
 %.hex: %.elf
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_OBJCPY_CMD) Extracting $(FMT_ANSIC_LIGHTRED)HEX$(FMT_ANSIC_END) file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_OBJCPY_CMD) Extracting $(FMT_ANSIC_LIGHTRED)HEX$(FMT_ANSIC_END) file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 %.bin: %.elf
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_OBJCPY_CMD) Extracting $(FMT_ANSIC_LIGHTRED)BIN$(FMT_ANSIC_END) file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_OBJCPY_CMD) Extracting $(FMT_ANSIC_LIGHTRED)BIN$(FMT_ANSIC_END) file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 ## : Extract SPMHelper in the last 32 Byte of the bootloader section to externally combine it with any bootloader
 spmhelper: $(TARGET).elf
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_OBJCPY_CMD) Extracting $(FMT_ANSIC_LIGHTRED)SPM$(FMT_ANSIC_END) helper \
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_OBJCPY_CMD) Extracting $(FMT_ANSIC_LIGHTRED)SPM$(FMT_ANSIC_END) helper \
 		$(FMT_ANSIC_LIGHTRED)HEX$(FMT_ANSIC_END) file \
 		from $(FMT_FILENAME_BEGIN)$(TARGET).elf$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 ## : Program the device using avrdude
 program: $(TARGET).hex $(TARGET).eep check_size
@@ -422,13 +431,13 @@ configure-chameleon-usb: UDEV_RULES_CONFIG_LINES:='\n                           
 	'
 configure-chameleon-usb:
 	@mkdir -p $(TEMPDIR) && echo $(UDEV_RULES_CONFIG_LINES) > $(TEMPDIR)/98-ChameleonMini.rules
-	@echo ""
-	@echo "TO CONFIGURE THE CHAMELEON OVER USB, RUN THE FOLLOWING COMMANDS:"
-	@echo "    $$ sudo cp $(TEMPDIR)/98-ChameleonMini.rules /etc/udev/rules.d/"
-	@echo "    $$ sudo service udev restart"
-	@echo "    $$ sudo udevadm control --reload"
-	@echo ""
-	@echo "FOR HELP TROUBLESHOOTING THE CHAMELEON USB CONNECTION, CONSIDER THE FOLLOWING OUTPUT:"
-	@echo "    $$ dmesg | tail | grep -i dev"
-	@echo "    $$ dmesg | tail | grep -i usb"
-	@echo "    $$ sudo udevadm monitor"
+	@$(ECHO) ""
+	@$(ECHO) "TO CONFIGURE THE CHAMELEON OVER USB, RUN THE FOLLOWING COMMANDS:"
+	@$(ECHO) "    $$ sudo cp $(TEMPDIR)/98-ChameleonMini.rules /etc/udev/rules.d/"
+	@$(ECHO) "    $$ sudo service udev restart"
+	@$(ECHO) "    $$ sudo udevadm control --reload"
+	@$(ECHO) ""
+	@$(ECHO) "FOR HELP TROUBLESHOOTING THE CHAMELEON USB CONNECTION, CONSIDER THE FOLLOWING OUTPUT:"
+	@$(ECHO) "    $$ dmesg | tail | grep -i dev"
+	@$(ECHO) "    $$ dmesg | tail | grep -i usb"
+	@$(ECHO) "    $$ sudo udevadm monitor"

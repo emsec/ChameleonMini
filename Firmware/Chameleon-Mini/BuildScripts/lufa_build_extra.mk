@@ -85,10 +85,11 @@ LUFA_BUILD_PROVIDED_MACROS +=
 # -----------------------------------------------------------------------------
 
 SHELL = /bin/sh
-ECHOFLAGS=-e
-ECHO = $(shell which echo) $(ECHOFLAGS)
+ECHO = echo $(ECHOFLAGS)
 ifeq ("$(shell uname -s)", "Darwin")
 	ECHOFLAGS=
+else
+	ECHOFLAGS=-e
 endif
 
 ERROR_IF_UNSET   ?= $(if $(filter undefined, $(origin $(strip $(1)))), $(error Makefile $(strip $(1)) value not set))
