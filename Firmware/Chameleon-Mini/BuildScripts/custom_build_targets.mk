@@ -1,6 +1,12 @@
 .PHONY:     mifare mifare-classic desfire desfire-dev iso-modes ntag215 vicinity sl2s2002 tagatit em4233
 .SECONDARY: custom-build
 
+ECHOFLAGS=-e
+ECHO = $(shell which echo) $(ECHOFLAGS)
+ifeq ("$(shell uname -s)", "Darwin")
+	ECHOFLAGS=
+endif
+
 DEFAULT_TAG_SUPPORT_BASE     = -DCONFIG_ISO14443A_SNIFF_SUPPORT \
                                -DCONFIG_ISO14443A_READER_SUPPORT
 SUPPORTED_TAGS_BUILD         =
@@ -11,16 +17,16 @@ custom-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).bi
 	@cp $(TARGET).eep $(TARGET)-CustomBuild_$(TARGET_CUSTOM_BUILD_NAME).eep
 	@cp $(TARGET).elf $(TARGET)-CustomBuild_$(TARGET_CUSTOM_BUILD_NAME).elf
 	@cp $(TARGET).bin $(TARGET)-CustomBuild_$(TARGET_CUSTOM_BUILD_NAME).bin
-	@echo $(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)
+	@$(ECHO) $(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)
 	@avr-size -C -x $(TARGET).elf
-	@echo $(MSG_TIDY_ENDSEP)
+	@$(ECHO) $(MSG_TIDY_ENDSEP)
 	@avr-size -B -x $(TARGET).elf
-	@echo "\n"$(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)"\n"
-	@echo $(FMT_ANSIC_BOLD)$(FMT_ANSIC_EXCLAIM)"[!!!]"$(FMT_ANSIC_END) \
+	@$(ECHO) "\n"$(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)$(MSG_TIDY_ENDSEP)"\n"
+	@$(ECHO) $(FMT_ANSIC_BOLD)$(FMT_ANSIC_EXCLAIM)"[!!!]"$(FMT_ANSIC_END) \
 		" 💬  "$(FMT_ANSIC_BOLD)$(FMT_ANSIC_UNDERLINE)"SUCCESS BUILDING CUSTOM FIRMWARE:"$(FMT_ANSIC_END)
-	@echo $(FMT_ANSIC_BOLD)$(FMT_ANSIC_EXCLAIM)"[!!!]"$(FMT_ANSIC_END) \
+	@$(ECHO) $(FMT_ANSIC_BOLD)$(FMT_ANSIC_EXCLAIM)"[!!!]"$(FMT_ANSIC_END) \
 		" 💯  "$(FMT_ANSIC_BOLD)"$(TARGET)-CustomBuild_$(TARGET_CUSTOM_BUILD_NAME).(HEX|EEP|ELF|BIN)"$(FMT_ANSIC_END)
-	@echo "\n"
+	@$(ECHO) "\n"
 
 mifare: SUPPORTED_TAGS_BUILD:=\
                 -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT \

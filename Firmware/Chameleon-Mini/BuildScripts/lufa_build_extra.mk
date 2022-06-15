@@ -85,6 +85,11 @@ LUFA_BUILD_PROVIDED_MACROS +=
 # -----------------------------------------------------------------------------
 
 SHELL = /bin/sh
+ECHOFLAGS=-e
+ECHO = $(shell which echo) $(ECHOFLAGS)
+ifeq ("$(shell uname -s)", "Darwin")
+	ECHOFLAGS=
+endif
 
 ERROR_IF_UNSET   ?= $(if $(filter undefined, $(origin $(strip $(1)))), $(error Makefile $(strip $(1)) value not set))
 ERROR_IF_EMPTY   ?= $(if $(strip $($(strip $(1)))), , $(error Makefile $(strip $(1)) option cannot be blank))
@@ -155,16 +160,16 @@ FMT_FILENAME_BEGIN              := $(FMT_ANSIC_BOLD)$(FMT_ANSIC_MAGENTA)
 FMT_NEWLINE                     := $(FMT_ANSIC_RESET)$(FMT_ANSIC_END)
 
 # Output Messages
-MSG_INFO_MESSAGE                := '🧞 ['$(FMT_CMDHL_BEGIN)'INFO'$(FMT_CMDHL_END)']    :'
-MSG_COMPILE_CMD                 := '🪛 ['$(FMT_CMDHL_BEGIN)'GCC'$(FMT_CMDHL_END)']     :'
-MSG_ASSEMBLE_CMD                := '🪛 ['$(FMT_CMDHL_BEGIN)'GAS'$(FMT_CMDHL_END)']     :'
-MSG_NM_CMD                      := '🪛 [$(FMT_CMDHL_BEGIN)'NM'$(FMT_CMDHL_END)']      :'
-MSG_REMOVE_CMD                  := '🧞 ['$(FMT_CMDHL_BEGIN)'RM'$(FMT_CMDHL_END)']      :'
-MSG_SIZE_CMD                    := '🧞 ['$(FMT_CMDHL_BEGIN)'SIZE'$(FMT_CMDHL_END)']    :'
-MSG_LINK_CMD                    := '🪛 ['$(FMT_CMDHL_BEGIN)'LNK'$(FMT_CMDHL_END)']     :'
-MSG_ARCHIVE_CMD                 := '🪛 ['$(FMT_CMDHL_BEGIN)'AR'$(FMT_CMDHL_END)']      :'
-MSG_OBJCPY_CMD                  := '🧞 ['$(FMT_CMDHL_BEGIN)'OBJCPY'$(FMT_CMDHL_END)']  :'
-MSG_OBJDMP_CMD                  := '🧞 ['$(FMT_CMDHL_BEGIN)'OBJDMP'$(FMT_CMDHL_END)']  :'
+MSG_INFO_MESSAGE                := '🧞'' ['$(FMT_CMDHL_BEGIN)'INFO'$(FMT_CMDHL_END)']    :'
+MSG_COMPILE_CMD                 := '🪛'' ['$(FMT_CMDHL_BEGIN)'GCC'$(FMT_CMDHL_END)']     :'
+MSG_ASSEMBLE_CMD                := '🪛'' ['$(FMT_CMDHL_BEGIN)'GAS'$(FMT_CMDHL_END)']     :'
+MSG_NM_CMD                      := '🪛'' ['$(FMT_CMDHL_BEGIN)'NM'$(FMT_CMDHL_END)']      :'
+MSG_REMOVE_CMD                  := '🧞'' ['$(FMT_CMDHL_BEGIN)'RM'$(FMT_CMDHL_END)']      :'
+MSG_SIZE_CMD                    := '🧞'' ['$(FMT_CMDHL_BEGIN)'SIZE'$(FMT_CMDHL_END)']    :'
+MSG_LINK_CMD                    := '🪛'' ['$(FMT_CMDHL_BEGIN)'LNK'$(FMT_CMDHL_END)']     :'
+MSG_ARCHIVE_CMD                 := '🪛'' ['$(FMT_CMDHL_BEGIN)'AR'$(FMT_CMDHL_END)']      :'
+MSG_OBJCPY_CMD                  := '🧞'' ['$(FMT_CMDHL_BEGIN)'OBJCPY'$(FMT_CMDHL_END)']  :'
+MSG_OBJDMP_CMD                  := '🧞'' ['$(FMT_CMDHL_BEGIN)'OBJDMP'$(FMT_CMDHL_END)']  :'
 MSG_NEWLINE                     := $(FMT_NEWLINE)"\n"
 MSG_CMDSEP_LINE                 := ' ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ '
 MSG_CMDSEP_LINE_V2              := ' :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: '
@@ -192,7 +197,7 @@ OBJECT_FILES       += $(sort $(FWSRC_OBJECT_FILES))
 LUFA_OBJECT_FILES  := $(addsuffix .o, $(basename $(LUFA_SRC)))
 
 # Check if an output object file directory was specified instead of the input file location
-ifneq ($(OBJDIR),.)
+ifneq ("$(OBJDIR)",".")
    # Prefix all the object filenames with the output object file directory path
    OBJECT_FILES   := $(addprefix $(patsubst %/,%,$(OBJDIR))/, $(notdir $(OBJECT_FILES)))
 
@@ -263,35 +268,35 @@ endif
 
 # Pre-build informational target, to give compiler and project name information when building
 build_begin:
-	@echo $(MSG_INFO_MESSAGE) Begin compilation of project \"$(TARGET)\"...
-	@echo ""
+	@$(ECHO) $(MSG_INFO_MESSAGE) Begin compilation of project \"$(TARGET)\"...
+	@$(ECHO) ""
 	@$(CROSS)-gcc --version
 
 # Post-build informational target, to project name information when building has completed
 build_end:
-	@echo $(MSG_INFO_MESSAGE) Finished building project \"$(TARGET)\".
+	@$(ECHO) $(MSG_INFO_MESSAGE) Finished building project \"$(TARGET)\".
 
 # Prints size information of a compiled application (FLASH, RAM and EEPROM usages)
 size: $(TARGET).elf
-	@echo $(MSG_SIZE_CMD) Determining size of \"$<\"
-	@echo ""
+	@$(ECHO) $(MSG_SIZE_CMD) Determining size of \"$<\"
+	@$(ECHO) ""
 	$(CROSS)-size $(SIZE_MCU_FLAG) $(SIZE_FORMAT_FLAG) $<
 
 # Prints size information on the symbols within a compiled application in decimal bytes
 symbol-sizes: $(TARGET).elf
-	@echo $(MSG_NM_CMD) Extracting \"$<\" symbols with decimal byte sizes
+	@$(ECHO) $(MSG_NM_CMD) Extracting \"$<\" symbols with decimal byte sizes
 	$(CROSS)-nm --size-sort --demangle --radix=d $<
 
 # Cleans intermediary build files, leaving only the compiled application files
 mostlyclean:
-	@echo $(MSG_REMOVE_CMD) Removing object files of \"$(TARGET)\"
+	@$(ECHO) $(MSG_REMOVE_CMD) Removing object files of \"$(TARGET)\"
 	rm -f $(OBJECT_FILES)
-	@echo $(MSG_REMOVE_CMD) Removing dependency files of \"$(TARGET)\"
+	@$(ECHO) $(MSG_REMOVE_CMD) Removing dependency files of \"$(TARGET)\"
 	rm -f $(DEPENDENCY_FILES)
 
 # Cleans all build files, leaving only the original source code
 clean: mostlyclean
-	@echo $(MSG_REMOVE_CMD) Removing output files of \"$(TARGET)\"
+	@$(ECHO) $(MSG_REMOVE_CMD) Removing output files of \"$(TARGET)\"
 	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).eep $(TARGET).map $(TARGET).lss $(TARGET).sym lib$(TARGET).a
 
 # Performs a complete build of the user application and prints size information afterwards
@@ -312,104 +317,104 @@ $(FULL_SOURCE):
 
 # Compiles an input C source file and generates an assembly listing for it
 %.s: %.c $(MAKEFILE_LIST)
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_COMPILE_CMD) Generating assembly from C file $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_COMPILE_CMD) Generating assembly from C file $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-gcc -S $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) $< -o $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Compiles an input C++ source file and generates an assembly listing for it
 %.s: %.cpp $(MAKEFILE_LIST)
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_COMPILE_CMD) Generating assembly from C++ file $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_COMPILE_CMD) Generating assembly from C++ file $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-gcc -S $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) $< -o $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Compiles an input C source file and generates a linkable object file for it
-$(OBJDIR)*/%.o: %.c $(MAKEFILE_LIST)
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_COMPILE_CMD) Compiling C file $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+$(OBJDIR)/%.o: %.c $(MAKEFILE_LIST)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_COMPILE_CMD) Compiling C file $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_C_FLAGS) $(CC_FLAGS) $(C_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Compiles an input C++ source file and generates a linkable object file for it
-$(OBJDIR)*/%.o: %.cpp $(MAKEFILE_LIST)
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_COMPILE_CMD) Compiling C++ file $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+$(OBJDIR)/%.o: %.cpp $(MAKEFILE_LIST)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_COMPILE_CMD) Compiling C++ file $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_CPP_FLAGS) $(CC_FLAGS) $(CPP_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Assembles an input ASM source file and generates a linkable object file for it
-$(OBJDIR)*/%.o: %.S $(MAKEFILE_LIST)
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_ASSEMBLE_CMD) Assembling $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+$(OBJDIR)/%.o: %.S $(MAKEFILE_LIST)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_ASSEMBLE_CMD) Assembling $(FMT_FILENAME_BEGIN)\"$(notdir $<)\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-gcc -c $(BASE_CC_FLAGS) $(BASE_ASM_FLAGS) $(CC_FLAGS) $(ASM_FLAGS) -MMD -MP -MF $(@:%.o=%.d) $< -o $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Generates a library archive file from the user application, which can be linked into other applications
 .PRECIOUS  : $(OBJECT_FILES)
 .SECONDARY : %.a
 %.a: $(OBJECT_FILES)
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_ARCHIVE_CMD) Archiving object files into $(FMT_FILENAME_BEGIN)\"$@\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_ARCHIVE_CMD) Archiving object files into $(FMT_FILENAME_BEGIN)\"$@\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-ar rcs $@ $(OBJECT_FILES)
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Generates an ELF debug file from the user application, which can be further processed for FLASH and EEPROM data
 # files, or used for programming and debugging directly
 .PRECIOUS  : $(OBJECT_FILES)
 .SECONDARY : %.elf
 %.elf: $(OBJECT_FILES)
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_LINK_CMD) Linking object files into $(FMT_FILENAME_BEGIN)\"$@\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_LINK_CMD) Linking object files into $(FMT_FILENAME_BEGIN)\"$@\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-gcc $^ -o $@ $(BASE_LD_FLAGS) $(LD_FLAGS)
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Extracts out the loadable FLASH memory data from the project ELF file, and creates an Intel HEX format file of it
 %.hex: %.elf
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_OBJCPY_CMD) Extracting HEX file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_OBJCPY_CMD) Extracting HEX file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $< $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Extracts out the loadable FLASH memory data from the project ELF file, and creates an Binary format file of it
 %.bin: %.elf
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_OBJCPY_CMD) Extracting BIN file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_OBJCPY_CMD) Extracting BIN file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $< $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Extracts out the loadable EEPROM memory data from the project ELF file, and creates an Intel HEX format file of it
 %.eep: %.elf
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_OBJCPY_CMD) Extracting EEP file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_OBJCPY_CMD) Extracting EEP file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 --no-change-warnings $< $@ || exit 0
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Creates an assembly listing file from an input project ELF file, containing interleaved assembly and source data
 %.lss: %.elf
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_OBJDMP_CMD) Extracting LSS file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_OBJDMP_CMD) Extracting LSS file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-objdump -h -d -S -z $< > $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Creates a symbol file listing the loadable and discarded symbols from an input project ELF file
 %.sym: %.elf
-	@echo $(MSG_TIDY_PRE_FORMATTING)
-	@echo $(MSG_NM_CMD) Extracting SYM file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
-	@echo $(MSG_TIDY_INTERMED_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_PRE_FORMATTING)
+	@$(ECHO) $(MSG_NM_CMD) Extracting SYM file data from $(FMT_FILENAME_BEGIN)\"$<\"$(MSG_NEWLINE)
+	@$(ECHO) $(MSG_TIDY_INTERMED_FORMATTING)
 	$(CROSS)-nm -n $< > $@
-	@echo $(MSG_TIDY_POST_FORMATTING)
+	@$(ECHO) $(MSG_TIDY_POST_FORMATTING)
 
 # Include build dependency files
 -include $(DEPENDENCY_FILES)
