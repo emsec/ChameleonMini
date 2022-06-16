@@ -58,7 +58,7 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 
 #define LOG_AT_LEVEL(cmdToRun, loggingThreshold)                  ({ \
      do {                                                            \
-          if (loggingThreshold >= DESFIRE_DEFAULT_LOGGING_MODE) {    \
+          if (loggingThreshold <= DESFIRE_DEFAULT_LOGGING_MODE) {    \
 	       cmdToRun;                                             \
 	  }                                                          \
      } while(0);                                                     \
