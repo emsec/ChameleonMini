@@ -150,68 +150,6 @@ void DebugPrintP(const char *fmt, ...);
 #define LogDebuggingMsg(msg)      ({})
 #endif
 
-/*#define DesfireLogIncoming(incBuf, bitCount)                                             ({ \
-    uint8_t logLength = 0;                                                                   \
-    do {                                                                                     \
-        logLength = BufferToHexString(__InternalStringBuffer, STRING_BUFFER_SIZE,            \
-			              incBuf, (bitCount + 7) / 8);                           \
-        snprintf_P(__InternalStringBuffer + logLength, PSTR(" [#=%d] <-- IN"),               \
-		   bitCount);                                                                \
-	logLength = StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE);                \
-	DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, __InternalStringBuffer, logLength);  \
-    } while(0);                                                                              \
-    })
-
-#define DesfireLogOutgoing(incBuf, bitCount)                                             ({ \
-    uint8_t logLength = 0;                                                                    \
-    do {                                                                                      \
-        logLength = BufferToHexString(__InternalStringBuffer, STRING_BUFFER_SIZE,             \
-			              incBuf, (bitCount + 7) / 8);                            \
-        snprintf_P(__InternalStringBuffer + logLength, PSTR(" [#=%d] --> OUT"),               \
-		   bitCount);                                                                 \
-	logLength = StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE);                 \
-	DesfireLogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, __InternalStringBuffer, logLength);   \
-    } while(0);                                                                               \
-    })
-*/
-
 #define DesfireLogISOStateChange(state, logCode)    ({})
-/*#define DesfireLogISOStateChange(state, logCode)                                         ({ \
-    const char *stateSymbName = NULL;                                                         \
-    uint8_t logLength = 0x00;                                                                 \
-    do {                                                                                      \
-        switch(state) {                                                                       \
-            case ISO14443_3A_STATE_IDLE:                                                      \
-	        stateSymbName = PSTR("ISO14443_3A_STATE_IDLE");                               \
-		break;                                                                        \
-	    case ISO14443_3A_STATE_READY1:                                                    \
-	        stateSymbName = PSTR("ISO14443_3A_STATE_READY1");                             \
-		break;                                                                        \
-	    case ISO14443_3A_STATE_READY2:                                                    \
-	        stateSymbName = PSTR("ISO14443_3A_STATE_READY2");                             \
-		break;                                                                        \
-	    case ISO14443_3A_STATE_ACTIVE:                                                    \
-	        stateSymbName = PSTR("ISO14443_3A_STATE_ACTIVE");                             \
-		break;                                                                        \
-	    case ISO14443_3A_STATE_HALT:                                                      \
-	        stateSymbName = PSTR("ISO14443_3A_STATE_HALT");                               \
-		break;                                                                        \
-	    case ISO14443_4_STATE_EXPECT_RATS:                                                \
-		stateSymbName = PSTR("ISO14443_4_STATE_EXPECT_RATS");                         \
-		break;                                                                        \
-	    case ISO14443_4_STATE_ACTIVE:                                                     \
-		stateSymbName = PSTR("ISO14443_4_STATE_ACTIVE");                              \
-		break;                                                                        \
-	    default:                                                                          \
-	        stateSymbName = PSTR("UNKNOWN_STATE");                                        \
-		break;                                                                        \
-        }                                                                                     \
-        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR(" => "));                 \
-	strcat_P(__InternalStringBuffer, stateSymbName);                                      \
-        logLength = StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE);                 \
-	DesfireLogEntry(logCode, __InternalStringBuffer, logLength);                          \
-    } while(0);                                                                               \
-    })
-*/
 
 #endif
