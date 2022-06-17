@@ -223,7 +223,7 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
 }
 
 // Enumulate as a card to send card responds
-ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
+ISR_SHARED isr_ISO14443_2A_CODEC_TIMER_LOADMOD_OVF_VECT(void) {
     /* Bit rate timer. Output a half bit on the output. */
 
     static void *JumpTable[] = {
@@ -386,6 +386,7 @@ void ISO14443ACodecInit(void) {
 
     isr_func_TCD0_CCC_vect = &isr_Reader14443_2A_TCD0_CCC_vect;
     isr_func_CODEC_DEMOD_IN_INT0_VECT = &isr_ISO14443_2A_TCD0_CCC_vect;
+    isr_func_CODEC_TIMER_LOADMOD_OVF_VECT = &isr_ISO14443_2A_CODEC_TIMER_LOADMOD_OVF_VECT;
     CodecInitCommon();
     StartDemod();
 }

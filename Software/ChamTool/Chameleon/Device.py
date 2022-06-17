@@ -27,6 +27,8 @@ class Device:
     COMMAND_GREEN_LED = "LEDGREEN"
     COMMAND_RED_LED = "LEDRED"
     COMMAND_THRESHOLD = "THRESHOLD"
+    COMMAND_AUTOCALIBRATE = "AUTOCALIBRATE"
+    COMMAND_AUTOTHRESHOLD = "AUTOTHRESHOLD"
     COMMAND_UPGRADE = "upgrade"
 
     STATUS_CODE_OK = 100
@@ -276,6 +278,12 @@ class Device:
             return self.getCmdSuggestions(self.COMMAND_THRESHOLD)
         else:
             return self.getSetCmd(self.COMMAND_THRESHOLD, value)
+
+    def cmdAutoCalibrate(self):
+       return self.returnCmd(self.COMMAND_AUTOCALIBRATE)
+
+    def cmdAutoThreshold(self, newLogMode):
+        return self.getSetCmd(self.COMMAND_AUTOTHRESHOLD, newLogMode)
 
     def cmdUpgrade(self):
         # Execute command

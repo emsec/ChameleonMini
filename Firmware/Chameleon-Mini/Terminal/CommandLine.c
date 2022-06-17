@@ -334,6 +334,15 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .GetFunc        = NO_FUNCTION
     },
 #endif
+#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
+    {
+        .Command        = COMMAND_AUTOTHRESHOLD,
+        .ExecFunc       = NO_FUNCTION,
+        .ExecParamFunc  = NO_FUNCTION,
+        .SetFunc        = CommandSetAutoThreshold,
+        .GetFunc        = CommandGetAutoThreshold
+    },
+#endif
 #ifdef ENABLE_RUNTESTS_TERMINAL_COMMAND
 #include "../Tests/ChameleonTerminalInclude.c"
 #endif
