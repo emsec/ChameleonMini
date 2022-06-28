@@ -10,7 +10,7 @@ endif
 
 DEFAULT_TAG_SUPPORT_BASE     = -DCONFIG_ISO14443A_SNIFF_SUPPORT \
                                -DCONFIG_ISO14443A_READER_SUPPORT
-SUPPORTED_TAGS_BUILD         =
+SUPPORTED_TAGS_BUILD         = $(DEFAULT_TAG_SUPPORT_BASE)
 EXTRA_CONFIG_SETTINGS        =
 
 custom-build: local-clean $(TARGET).elf $(TARGET).hex $(TARGET).eep $(TARGET).bin check_size

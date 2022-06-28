@@ -66,41 +66,36 @@ static uint16_t recent_th = 0;
 
 static bool last_cycle_successful = false;
 
-void SniffISO15693AppTimeout(void)
-{
+void SniffISO15693AppTimeout(void) {
     CodecThresholdSet(recent_th);
     SniffISO15693AppReset();
 }
 
-void SniffISO15693AppInit(void)
-{
+void SniffISO15693AppInit(void) {
     Sniff15693CurrentCommand = Sniff15693_Do_Nothing;
     autocalib_state = AUTOCALIB_INIT;
 }
 
-void SniffISO15693AppReset(void)
-{
+void SniffISO15693AppReset(void) {
     SniffISO15693AppInit();
 }
 
 
-void SniffISO15693AppTask(void)
-{
-    
-}
-
-void SniffISO15693AppTick(void)
-{
+void SniffISO15693AppTask(void) {
 
 }
 
-INLINE void SniffISO15693InitAutocalib(void){
+void SniffISO15693AppTick(void) {
+
+}
+
+INLINE void SniffISO15693InitAutocalib(void) {
     uint16_t floor_noise = SniffISO15693GetFloorNoise();
     /* We search b/w: */
     /*   0.5 * DemodFloorNoiseLevel --> 1.5 * DemodFloorNoiseLevel */
     min_th = floor_noise >> 1;
     max_th = floor_noise + (floor_noise >> 1);
-    if(min_th >= max_th) {
+    if (min_th >= max_th) {
         min_th = 0;
         max_th = 0xFFF;
     }
@@ -125,10 +120,10 @@ INLINE void SniffISO15693InitAutocalib(void){
     return;
 }
 
-INLINE void SniffISO15693FinishAutocalib(void){
+INLINE void SniffISO15693FinishAutocalib(void) {
     uint16_t new_th;
     CommandStatusIdType ReturnStatusID = COMMAND_ERR_INVALID_USAGE_ID;
-    if(min_succ_th > 0) {
+    if (min_succ_th > 0) {
         /* In this case AUTOCALIBRATION was successfull */
         new_th = (min_succ_th + max_succ_th) >> 1;
         CodecThresholdSet(new_th);
@@ -140,7 +135,7 @@ INLINE void SniffISO15693FinishAutocalib(void){
         }
 #endif /*#ifdef ISO15693_DEBUG_LOG*/
         ReturnStatusID = COMMAND_INFO_OK_WITH_TEXT_ID;
-    }else{
+    } else {
         /* This means we never received a valid frame - Error*/
         CodecThresholdSet(recent_th);
         /* ReturnStatusID already set to error code */
@@ -149,7 +144,7 @@ INLINE void SniffISO15693FinishAutocalib(void){
     CommandLinePendingTaskFinished(ReturnStatusID, NULL);
 }
 
-INLINE void SniffISO15693IncrementThreshold(void){
+INLINE void SniffISO15693IncrementThreshold(void) {
 
     /* So increment the threshold */
     /* Steps of 3*16=48 are sufficient for us */
@@ -162,17 +157,16 @@ INLINE void SniffISO15693IncrementThreshold(void){
         LogEntry(LOG_INFO_GENERIC, str, strlen(str));
     }
 #endif /*#ifdef ISO15693_DEBUG_LOG*/
-    if(curr_th >= max_th) {
+    if (curr_th >= max_th) {
         /* We are finished now */
         /* Evaluate the results */
         SniffISO15693FinishAutocalib();
     }
 }
 
-uint16_t SniffISO15693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
-{
+uint16_t SniffISO15693AppProcess(uint8_t *FrameBuf, uint16_t FrameBytes) {
 
-    bool crc_chk = ISO15693CheckCRC(FrameBuf, FrameBytes-ISO15693_CRC16_SIZE);
+    bool crc_chk = ISO15693CheckCRC(FrameBuf, FrameBytes - ISO15693_CRC16_SIZE);
 
 #ifdef ISO15693_DEBUG_LOG
     char str[64];
@@ -185,31 +179,31 @@ uint16_t SniffISO15693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
             return 0;
         }
         case Sniff15693_Autocalibrate: {
-            switch(autocalib_state){
-                case(AUTOCALIB_INIT):
+            switch (autocalib_state) {
+                case (AUTOCALIB_INIT):
                     SniffISO15693InitAutocalib();
-                    if(SniffTrafficSource == TRAFFIC_CARD)
+                    if (SniffTrafficSource == TRAFFIC_CARD)
                         autocalib_state = AUTOCALIB_CARD_DATA;
                     else
                         autocalib_state = AUTOCALIB_READER_DATA;
                     break;
-                case(AUTOCALIB_READER_DATA): /* Means last time we have received reader data */
-                    if(SniffTrafficSource == TRAFFIC_READER){
+                case (AUTOCALIB_READER_DATA): /* Means last time we have received reader data */
+                    if (SniffTrafficSource == TRAFFIC_READER) {
                         /* Second time Reader Data received */
                         /* This means no card data received */
                         /* If we had successful tries before */
                         /* we need to record it as threshold max here */
-                        if(last_cycle_successful == true){
+                        if (last_cycle_successful == true) {
                             max_succ_th = GlobalSettings.ActiveSettingPtr->ReaderThreshold -
-                                            CODEC_THRESHOLD_CALIBRATE_STEPS;
+                                          CODEC_THRESHOLD_CALIBRATE_STEPS;
 #ifdef ISO15693_DEBUG_LOG
                             sprintf(str, "Sniff15693: Updated max_succ_th (%d) ", max_succ_th);
                             LogEntry(LOG_INFO_GENERIC, str, strlen(str));
 #endif /*#ifdef ISO15693_DEBUG_LOG*/
                         }
                         last_cycle_successful = false;
-                    }else{
-                        if (crc_chk){
+                    } else {
+                        if (crc_chk) {
                             /* We have received card data now */
                             /* Threshold is in a good range */
                             /* if min_succ_th was never set ( == 0) */
@@ -226,9 +220,9 @@ uint16_t SniffISO15693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                     }
                     SniffISO15693IncrementThreshold();
                     break;
-                case(AUTOCALIB_CARD_DATA): /* Means last time we have received card data */
-                    if(SniffTrafficSource == TRAFFIC_CARD){
-                        if (crc_chk){
+                case (AUTOCALIB_CARD_DATA): /* Means last time we have received card data */
+                    if (SniffTrafficSource == TRAFFIC_CARD) {
+                        if (crc_chk) {
                             /* We have received card data now */
                             /* Threshold is in a good range */
                             /* if min_succ_th was never set ( == 0) */
@@ -242,7 +236,7 @@ uint16_t SniffISO15693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes)
                         LogEntry(LOG_INFO_GENERIC, str, strlen(str));
 #endif /*#ifdef ISO15693_DEBUG_LOG*/
                         SniffISO15693IncrementThreshold();
-                    }else{
+                    } else {
                         autocalib_state = AUTOCALIB_READER_DATA;
                     }
                     break;

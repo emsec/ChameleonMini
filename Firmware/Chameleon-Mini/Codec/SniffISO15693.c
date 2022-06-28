@@ -275,10 +275,10 @@ INLINE void SNIFF_ISO15693_READER_EOC_VCD(void) {
 
 
 /* Inline function to set the threshold, if bAutoThreshold is enabled*/
-INLINE void SetDacCh0Data(uint16_t ch0data){
+INLINE void SetDacCh0Data(uint16_t ch0data) {
     /* TODO: Check if either of the branches can be avoided */
     /* to optimize the performance */
-    if(bAutoThreshold){
+    if (bAutoThreshold) {
         if (ch0data < 0xFFF)
             DACB.CH0DATA = ch0data;
         else
@@ -642,14 +642,14 @@ ISR_SHARED isr_SNIFF_ISO15693_CODEC_TIMER_LOADMOD_OVF_VECT(void) {
                     CardSniffDeinit();
 
                 } else {
-                    DataRegister  = ( (SampleRegisterL & 0b00000011) == 0b00000001) << 3;
-                    DataRegister |= ( (SampleRegisterL & 0b00001100) == 0b00000100) << 2;
-                    DataRegister |= ( (SampleRegisterL & 0b00110000) == 0b00010000) << 1;
-                    DataRegister |= ( (SampleRegisterL & 0b11000000) == 0b01000000); /* Bottom 2 bits */
-                    DataRegister |= ( (SampleRegisterH & 0b00000011) == 0b00000001) << 7;
-                    DataRegister |= ( (SampleRegisterH & 0b00001100) == 0b00000100) << 6;
-                    DataRegister |= ( (SampleRegisterH & 0b00110000) == 0b00010000) << 5;
-                    DataRegister |= ( (SampleRegisterH & 0b11000000) == 0b01000000) << 4;
+                    DataRegister  = ((SampleRegisterL & 0b00000011) == 0b00000001) << 3;
+                    DataRegister |= ((SampleRegisterL & 0b00001100) == 0b00000100) << 2;
+                    DataRegister |= ((SampleRegisterL & 0b00110000) == 0b00010000) << 1;
+                    DataRegister |= ((SampleRegisterL & 0b11000000) == 0b01000000);  /* Bottom 2 bits */
+                    DataRegister |= ((SampleRegisterH & 0b00000011) == 0b00000001) << 7;
+                    DataRegister |= ((SampleRegisterH & 0b00001100) == 0b00000100) << 6;
+                    DataRegister |= ((SampleRegisterH & 0b00110000) == 0b00010000) << 5;
+                    DataRegister |= ((SampleRegisterH & 0b11000000) == 0b01000000) << 4;
 
                     *CodecBufferPtr = DataRegister;
                     CodecBufferPtr++;
@@ -710,7 +710,7 @@ void SniffISO15693CodecInit(void) {
     Function used by the Terminal command to display (GET)
     the state of the Autothreshold Feature.
 ************************************************************/
-bool SniffISO15693GetAutoThreshold(void){
+bool SniffISO15693GetAutoThreshold(void) {
     return bAutoThreshold;
 }
 
@@ -720,7 +720,7 @@ bool SniffISO15693GetAutoThreshold(void){
     If it is disabled: The threshold will be taken from
     GlobalSettings.ActiveSettingPtr->ReaderThreshold
 ************************************************************/
-void SniffISO15693CtrlAutoThreshold(bool enable){
+void SniffISO15693CtrlAutoThreshold(bool enable) {
     bAutoThreshold = enable;
     return;
 }
@@ -730,7 +730,7 @@ void SniffISO15693CtrlAutoThreshold(bool enable){
     FloorNoise can be used to define the scanning range for the
     Autocalibration.
 ************************************************************/
-uint16_t SniffISO15693GetFloorNoise(void){
+uint16_t SniffISO15693GetFloorNoise(void) {
     return DemodFloorNoiseLevel;
 }
 
@@ -784,7 +784,7 @@ void SniffISO15693CodecTask(void) {
 
     }
 
-    if(Flags.CardDemodFinished) {
+    if (Flags.CardDemodFinished) {
         Flags.CardDemodFinished = 0;
 
         if (CardByteCount > 0) {

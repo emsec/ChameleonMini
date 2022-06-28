@@ -663,7 +663,7 @@ CommandStatusIdType CommandExecAutocalibrate(char *OutMessage) {
     /* Only execute autocalibration if the codec does not use autothreshold */
     /* It needs to be disabled by the AUTOTHRESHOLD=DISABLE command */
     if ((GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO15693_SNIFF) &&
-        (SniffISO15693GetAutoThreshold() == false)){
+            (SniffISO15693GetAutoThreshold() == false)) {
         ApplicationReset();
 
         Sniff15693CurrentCommand = Sniff15693_Autocalibrate;
@@ -694,25 +694,25 @@ CommandStatusIdType CommandExecClone(char *OutMessage) {
 #endif
 
 #ifdef CONFIG_ISO15693_SNIFF_SUPPORT
-CommandStatusIdType CommandGetAutoThreshold(char *OutParam){
+CommandStatusIdType CommandGetAutoThreshold(char *OutParam) {
 
     /* Only Execute the command if the current configuration is CONFIG_ISO15693_SNIFF */
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF)
         return COMMAND_ERR_INVALID_USAGE_ID;
 
     /* Get Autothreshold mode */
-    if(SniffISO15693GetAutoThreshold())
+    if (SniffISO15693GetAutoThreshold())
         snprintf(OutParam, TERMINAL_BUFFER_SIZE, "%c (enabled)", COMMAND_CHAR_TRUE);
     else
         snprintf(OutParam, TERMINAL_BUFFER_SIZE, "%c - (disabled)", COMMAND_CHAR_FALSE);
     /* In case of overflow, snprintf does not write the terminating '\0' */
     /* so we should make sure it gets terminated */
-    OutParam[TERMINAL_BUFFER_SIZE-1] = '\0';
+    OutParam[TERMINAL_BUFFER_SIZE - 1] = '\0';
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetAutoThreshold(char *OutMessage, const char *InParam){
+CommandStatusIdType CommandSetAutoThreshold(char *OutMessage, const char *InParam) {
 
     /* Only Execute the command if the current configuration is CONFIG_ISO15693_SNIFF */
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF)
@@ -722,7 +722,7 @@ CommandStatusIdType CommandSetAutoThreshold(char *OutMessage, const char *InPara
         snprintf(OutMessage, TERMINAL_BUFFER_SIZE, "%c (enable), %c (disable)", COMMAND_CHAR_TRUE, COMMAND_CHAR_FALSE);
         /* In case of overflow, snprintf does not write the terminating '\0' */
         /* so we should make sure it gets terminated */
-        OutMessage[TERMINAL_BUFFER_SIZE-1] = '\0';
+        OutMessage[TERMINAL_BUFFER_SIZE - 1] = '\0';
         return COMMAND_INFO_OK_WITH_TEXT_ID;
     } else if (InParam[0] == COMMAND_CHAR_TRUE) {
         SniffISO15693CtrlAutoThreshold(true);
