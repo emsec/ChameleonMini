@@ -332,9 +332,9 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #endif
 #ifdef CONFIG_ISO15693_SNIFF_SUPPORT
     [CONFIG_ISO15693_SNIFF] = {
-        .CodecInitFunc = ISO15693CodecInit,
-        .CodecDeInitFunc = ISO15693CodecDeInit,
-        .CodecTaskFunc = ISO15693CodecTask,
+        .CodecInitFunc = SniffISO15693CodecInit,
+        .CodecDeInitFunc = SniffISO15693CodecDeInit,
+        .CodecTaskFunc = SniffISO15693CodecTask,
         .ApplicationInitFunc = SniffISO15693AppInit,
         .ApplicationInitRunOnceFunc = SniffISO15693AppInit,
         .ApplicationResetFunc = SniffISO15693AppReset,
