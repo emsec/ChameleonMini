@@ -215,7 +215,8 @@ SRC         +=  Codec/Codec.c \
 		Codec/Reader14443-2A.c \
 		Codec/SniffISO14443-2A.c \
 		Codec/Reader14443-ISR.S \
-		Codec/ISO15693.c
+		Codec/ISO15693.c \
+		Codec/SniffISO15693.c
 SRC         +=  Application/MifareUltralight.c \
 		Application/MifareClassic.c \
 		Application/ISO14443-3A.c \
@@ -232,7 +233,8 @@ SRC         +=  Application/Vicinity.c \
 		Application/TITagitstandard.c \
 		Application/TITagitplus.c \
 		Application/ISO15693-A.c \
-		Application/EM4233.c
+		Application/EM4233.c \
+		Application/Sniff15693.c
 SRC	    +=  Application/DESFire/../MifareDESFire.c \
                 Application/DESFire/DESFireApplicationDirectory.c \
                 Application/DESFire/DESFireChameleonTerminal.c \
