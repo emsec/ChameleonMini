@@ -226,14 +226,6 @@ DESFire emulation if things suddenly fail after a call to this terminal command.
 Putting the Chameleon through a full power recycle (battery off) should reset the setting 
 to the defaults. 
 
-#### DF_LOGMODE -- Sets the depth of (LIVE) logging messages printed at runtime
-
-Syntax -- not guaranteeing that all of these are meaningful or distinct just yet:
-```bash
-DF_LOGMODE=0
-DF_LOGMODE=1
-```
-
 ## Supported functionality
 
 ### Tables of tested support for active commands

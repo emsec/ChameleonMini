@@ -1,5 +1,4 @@
-#if defined(CONFIG_ISO14443A_READER_SUPPORT) || \
-     defined(CONFIG_ISO14443A_SNIFF_SUPPORT)
+#if defined(CONFIG_ISO14443A_READER_SUPPORT) || defined(CONFIG_ISO14443A_SNIFF_SUPPORT)
 
 #include "Reader14443A.h"
 #include "LEDHook.h"
@@ -99,8 +98,8 @@ static const CardIdentificationType PROGMEM CardIdentificationList[] = {
     [CardType_NXP_MIFARE_Classic_1k] 		= { .ATQA = 0x0004, .ATQARelevant = true, .SAK = 0x08, .SAKRelevant = true, .ATSRelevant = false, .Manufacturer = "NXP", .Type = "MIFARE Classic 1k" },
     [CardType_NXP_MIFARE_Classic_4k] 		= { .ATQA = 0x0002, .ATQARelevant = true, .SAK = 0x18, .SAKRelevant = true, .ATSRelevant = false, .Manufacturer = "NXP", .Type = "MIFARE Classic 4k" },
     [CardType_NXP_MIFARE_Ultralight]        = { .ATQA = 0x0044, .ATQARelevant = true, .SAK = 0x00, .SAKRelevant = true, .ATSRelevant = false, .Manufacturer = "NXP", .Type = "MIFARE Ultralight" },
-//        [CardType_NXP_MIFARE_Ultralight_C]      = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight C" },
-//        [CardType_NXP_MIFARE_Ultralight_EV1]    = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=false, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight EV1" },
+    //[CardType_NXP_MIFARE_Ultralight_C]      = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=true, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight C" },
+    //[CardType_NXP_MIFARE_Ultralight_EV1]    = { .ATQA=0x0044, .ATQARelevant=true, .SAK=0x00, .SAKRelevant=false, .ATSRelevant=false, .Manufacturer="NXP", .Type="MIFARE Ultralight EV1" },
     // for the following two, setting ATSRelevant to true would cause checking the ATS value, but the NXP paper for distinguishing cards does not recommend this
     [CardType_NXP_MIFARE_DESFire] 			= { .ATQA = 0x0344, .ATQARelevant = true, .SAK = 0x20, .SAKRelevant = true, .ATSRelevant = false, .ATSSize = 5, .ATS = {0x75, 0x77, 0x81, 0x02, 0x80}, .Manufacturer = "NXP", .Type = "MIFARE DESFire" },
     [CardType_NXP_MIFARE_DESFire_EV1] 		= { .ATQA = 0x0344, .ATQARelevant = true, .SAK = 0x20, .SAKRelevant = true, .ATSRelevant = false, .ATSSize = 5, .ATS = {0x75, 0x77, 0x81, 0x02, 0x80}, .Manufacturer = "NXP", .Type = "MIFARE DESFire EV1" },

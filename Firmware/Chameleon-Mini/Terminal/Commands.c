@@ -21,6 +21,7 @@
 #ifdef CONFIG_ISO15693_SNIFF_SUPPORT
 #include "../Codec/SniffISO15693.h"
 #endif /*#ifdef CONFIG_ISO15693_SNIFF_SUPPORT*/
+
 extern Reader14443Command Reader14443CurrentCommand;
 extern Sniff14443Command Sniff14443CurrentCommand;
 

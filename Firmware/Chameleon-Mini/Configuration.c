@@ -69,9 +69,10 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
     { .Id = CONFIG_EM4233,	                  .Text = "EM4233" },
 #endif
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-    { .Id = CONFIG_MF_DESFIRE,                       .Text = "MF_DESFIRE" },
-    { .Id = CONFIG_MF_DESFIRE_2KEV1,                 .Text = "MF_DESFIRE_2KEV1" },
-    { .Id = CONFIG_MF_DESFIRE_4KEV1,                 .Text = "MF_DESFIRE_4KEV1" },
+    { .Id = CONFIG_MF_DESFIRE,                  .Text = "MF_DESFIRE" },
+    { .Id = CONFIG_MF_DESFIRE_2KEV1,            .Text = "MF_DESFIRE_2KEV1" },
+    { .Id = CONFIG_MF_DESFIRE_4KEV1,            .Text = "MF_DESFIRE_4KEV1" },
+    { .Id = CONFIG_MF_DESFIRE_4KEV2,            .Text = "MF_DESFIRE_4KEV2" },
 #endif
 };
 

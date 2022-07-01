@@ -33,25 +33,13 @@ This notice must be retained at the top of all source files where indicated.
     .ExecFunc       = NO_FUNCTION,
     .ExecParamFunc  = NO_FUNCTION,
     .SetFunc        = CommandDESFireSetHeaderProperty,
-    .GetFunc        = CommandDESFireGetHeaderProperty
-}, {
-    .Command        = DFCOMMAND_LOGGING_MODE,
-    .ExecFunc       = NO_FUNCTION,
-    .ExecParamFunc  = NO_FUNCTION,
-    .SetFunc        = CommandDESFireSetLoggingMode,
-    .GetFunc        = CommandDESFireGetLoggingMode
-}, {
-    .Command        = DFCOMMAND_TESTING_MODE,
-    .ExecFunc       = NO_FUNCTION,
-    .ExecParamFunc  = NO_FUNCTION,
-    .SetFunc        = CommandDESFireSetTestingMode,
-    .GetFunc        = CommandDESFireGetTestingMode
+    .GetFunc        = NO_FUNCTION
 }, {
     .Command        = DFCOMMAND_COMM_MODE,
     .ExecFunc       = NO_FUNCTION,
     .ExecParamFunc  = NO_FUNCTION,
     .SetFunc        = CommandDESFireSetCommMode,
-    .GetFunc        = CommandDESFireGetCommMode
+    .GetFunc        = NO_FUNCTION
 },
 
 #endif
