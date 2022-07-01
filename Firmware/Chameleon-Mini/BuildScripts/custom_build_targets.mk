@@ -63,7 +63,7 @@ desfire: TARGET_CUSTOM_BUILD_NAME:=DESFire
 desfire: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
 desfire: custom-build
 
-desfire-dev: FLASH_DATA_SIZE_CONST:=0C000 # Six settings (save some space): 6 * 0x2000
+desfire-dev: FLASH_DATA_SIZE_CONST:=08000 # Four settings (save some space): 4 * 0x2000
 desfire-dev: FLASH_DATA_SIZE:=0x$(FLASH_DATA_SIZE_CONST)
 desfire-dev: FLASH_DATA_SIZE_UPPER_CONST:=20000
 desfire-dev: FLASH_DATA_ADDR:=0x$(shell echo "obase=16;ibase=16;$(FLASH_DATA_SIZE_UPPER_CONST)-$(FLASH_DATA_SIZE_CONST)" | bc)
@@ -74,7 +74,8 @@ desfire-dev: EXTRA_CONFIG_SETTINGS:=-DMEMORY_LIMITED_TESTING      \
                 		-DDESFIRE_MIN_OUTGOING_LOGSIZE=0         \
                 		-DDESFIRE_MIN_INCOMING_LOGSIZE=0         \
                 		-DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING \
-                		-DDESFIRE_DEFAULT_TESTING_MODE=1
+                		-DDESFIRE_DEFAULT_TESTING_MODE=1         \
+					-DDESFIRE_DEBUGGING=1
 desfire-dev: TARGET_CUSTOM_BUILD_NAME:=DESFire_DEV
 desfire-dev: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
 desfire-dev: custom-build

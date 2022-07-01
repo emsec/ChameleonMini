@@ -59,6 +59,8 @@ SIZET DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = 0;
 SIZET DESFIRE_FIRST_FREE_BLOCK_ID = 0;
 SIZET CardCapacityBlocks = 0;
 
+uint16_t DesfireATQAValue = DESFIRE_DEFAULT_ATQA_VALUE;
+
 void InitBlockSizes(void) {
     DESFIRE_PICC_INFO_BLOCK_ID = 0;
     DESFIRE_APP_DIR_BLOCK_ID = DESFIRE_PICC_INFO_BLOCK_ID +
@@ -103,13 +105,13 @@ TransferStatus PiccToPcdTransfer(uint8_t *Buffer) {
         //}
         /* Encrypt */
         //Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, XferBytes);
-        //Status.IsComplete = TransferState.ReadData.Encryption.AvailablePlaintext == 0;
+        Status.IsComplete = TransferState.ReadData.Encryption.AvailablePlaintext == 0;
         Status.BytesProcessed = XferBytes;
         Status.IsComplete = TransferState.ReadData.BytesLeft == 0;
     } else {
         /* Final encryption block */
         //Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, 0);
-        //Status.IsComplete = true;
+        Status.IsComplete = true;
         Status.BytesProcessed = 0;
         Status.IsComplete = true;
     }
@@ -144,7 +146,7 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
             SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_AES128:
-            // A.k.a., CommMode=FULL from NXP application note AN12343:
+            /* A.k.a., CommMode=FULL from NXP application note AN12343: */
             TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCMAC;
             TransferState.Checksums.FinalFunc = &TransferChecksumFinalCMAC;
             TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT; // TODO ???
@@ -210,9 +212,8 @@ void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
     MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
-        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory reset -- EV0"));
-        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer,
-                 StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
+        DEBUG_PRINT_P(PSTR("Factory reset -- EV0"));
+        RUN_ON_DESFIRE_DEBUG(LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0));
         FactoryFormatPiccEV0();
     } else {
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
@@ -230,14 +231,33 @@ void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
     MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
-        snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE, PSTR("Factory reset -- EV1"));
-        LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) __InternalStringBuffer,
-                 StringLength(__InternalStringBuffer, STRING_BUFFER_SIZE));
+        DEBUG_PRINT_P(PSTR("Factory reset -- EV1"));
+        RUN_ON_DESFIRE_DEBUG(LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0));
         FactoryFormatPiccEV1(StorageSize);
     } else {
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
+}
+
+void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC) {
+#ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
+    RunCryptoUnitTests();
+#endif
+    /* Init backend */
+    InitBlockSizes();
+    CardCapacityBlocks = StorageSize;
+    MemoryRecall();
+    ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
+    if (formatPICC) {
+        DEBUG_PRINT_P(PSTR("Factory reset -- EV1"));
+        RUN_ON_DESFIRE_DEBUG(LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0));
+        FactoryFormatPiccEV2(StorageSize);
+    } else {
+        ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
+        SelectPiccApp();
+    }
+
 }
 
 void ResetPiccBackend(void) {
@@ -293,9 +313,9 @@ void FormatPicc(void) {
     BYTE batchNumberData[5];
     RandomGetBuffer(batchNumberData, 5);
     memcpy(&Picc.BatchNumber[0], batchNumberData, 5);
-    /* Production dates should be obvious until the user changes them: */
-    Picc.ProductionWeek = 0x44;
-    Picc.ProductionYear = 0x7c;
+    /* Default production date -- until the user changes them: */
+    Picc.ProductionWeek = 0x00;
+    Picc.ProductionYear = 0x00;
     /* Assign the default manufacturer ID: */
     Picc.ManufacturerID = DESFIRE_MANUFACTURER_ID;
     /* Set the ATS bytes to defaults: */
@@ -352,6 +372,22 @@ void FactoryFormatPiccEV1(uint8_t StorageSize) {
     Picc.HwVersionMinor = DESFIRE_HW_MINOR_EV1;
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV1;
     Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV1;
+    /* Reset the free block pointer */
+    Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
+    /* Continue with user data initialization */
+    SynchronizePICCInfo();
+    FormatPicc();
+}
+
+void FactoryFormatPiccEV2(uint8_t StorageSize) {
+    /* Wipe PICC data */
+    memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
+    /* Initialize params to look like EV1 */
+    Picc.StorageSize = StorageSize;
+    Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV2;
+    Picc.HwVersionMinor = DESFIRE_HW_MINOR_EV2;
+    Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV2;
+    Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV2;
     /* Reset the free block pointer */
     Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
     /* Continue with user data initialization */

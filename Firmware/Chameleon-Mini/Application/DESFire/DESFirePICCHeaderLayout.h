@@ -30,44 +30,42 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireFirmwareSettings.h"
 #include "DESFireISO14443Support.h"
 
-#define DESFIRE_PICC_APP_SLOT          0x00
-#define DESFIRE_MASTER_KEY_ID          0x00
+#define DESFIRE_PICC_APP_SLOT           0x00
+#define DESFIRE_MASTER_KEY_ID           0x00
 
-#define DESFIRE_NATIVE_CLA             0x90
-#define DESFIRE_ISO7816_CLA            0x00
+#define DESFIRE_NATIVE_CLA              0x90
+#define DESFIRE_ISO7816_CLA             0x00
 
 /* Storage allocation constants */
-#define DESFIRE_BLOCK_SIZE                (1)  /* Bytes */
-#define DESFIRE_BYTES_TO_BLOCKS(x)        ( ((x) + DESFIRE_BLOCK_SIZE - 1) / DESFIRE_BLOCK_SIZE )
+#define DESFIRE_BLOCK_SIZE              (1)  /* Bytes */
+#define DESFIRE_BYTES_TO_BLOCKS(x)      (((x) + DESFIRE_BLOCK_SIZE - 1) / DESFIRE_BLOCK_SIZE)
 
-#define DESFIRE_UID_SIZE                  ISO14443A_UID_SIZE_DOUBLE
-#define DESFIRE_MAX_PAYLOAD_SIZE          (64) /* Bytes */
+#define DESFIRE_UID_SIZE                ISO14443A_UID_SIZE_DOUBLE
+#define DESFIRE_MAX_PAYLOAD_SIZE        (64) /* Bytes */
 
 /*
  * Definitions pertaining to on-card data
  */
 
 /* Anticollision parameters */
-#define ATQA_VALUE              0x0344
+#define DESFIRE_DEFAULT_ATQA_VALUE      0x0344
+extern uint16_t DesfireATQAValue;
+
 #ifndef FORCE_SAK_NOT_COMPLIANT
-#define SAK_CL1_VALUE           (ISO14443A_SAK_INCOMPLETE)
-#define SAK_CL2_VALUE           (ISO14443A_SAK_COMPLETE_COMPLIANT)
+#define SAK_CL1_VALUE                   (ISO14443A_SAK_INCOMPLETE)
+#define SAK_CL2_VALUE                   (ISO14443A_SAK_COMPLETE_COMPLIANT)
 #else
-#define SAK_CL1_VALUE           (ISO14443A_SAK_INCOMPLETE_NOT_COMPLIANT)
-#define SAK_CL2_VALUE           (ISO14443A_SAK_COMPLETE_NOT_COMPLIANT)
+#define SAK_CL1_VALUE                   (ISO14443A_SAK_INCOMPLETE_NOT_COMPLIANT)
+#define SAK_CL2_VALUE                   (ISO14443A_SAK_COMPLETE_NOT_COMPLIANT)
 #endif
 
-#define STATUS_FRAME_SIZE       (1 * 8) /* Bits */
+#define STATUS_FRAME_SIZE               (1 * 8) /* Bits */
 
-#define DESFIRE_EV0_ATS_TL_BYTE 0x06 /* TL: ATS length, 6 bytes */
-#define DESFIRE_EV0_ATS_T0_BYTE 0x75 /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
-#define DESFIRE_EV0_ATS_TA_BYTE 0x00 /* TA: Only the lowest bit rate is supported (normal is 0x77) */
-#define DESFIRE_EV0_ATS_TB_BYTE 0x81 /* TB: taken from the DESFire spec */
-#define DESFIRE_EV0_ATS_TC_BYTE 0x02 /* TC: taken from the DESFire spec */
-
-#define GET_LE16(p)     (*((uint16_t*)&(p)[0]))
-#define GET_LE24(p)     (*((__uint24*)&(p)[0]))
-#define GET_LE32(p)     (*((uint32_t*)&(p)[0]))
+#define DESFIRE_EV0_ATS_TL_BYTE         0x06 /* TL: ATS length, 6 bytes */
+#define DESFIRE_EV0_ATS_T0_BYTE         0x75 /* T0: TA, TB, TC present; max accepted frame is 64 bytes */
+#define DESFIRE_EV0_ATS_TA_BYTE         0x00 /* TA: Only the lowest bit rate is supported (normal is 0x77) */
+#define DESFIRE_EV0_ATS_TB_BYTE         0x81 /* TB: taken from the DESFire spec */
+#define DESFIRE_EV0_ATS_TC_BYTE         0x02 /* TC: taken from the DESFire spec */
 
 /* Defines for GetVersion */
 #define ID_PHILIPS_NXP                  0x04
@@ -80,36 +78,42 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_SW_PROTOCOL_TYPE        0x05
 
 /** Source: http://www.proxmark.org/forum/viewtopic.php?id=2982 **/
-/* DESFire EV0 versions */
-#define DESFIRE_HW_MAJOR_EV0     0x00
-#define DESFIRE_HW_MINOR_EV0     0x01
-#define DESFIRE_SW_MAJOR_EV0     0x00
-#define DESFIRE_SW_MINOR_EV0     0x01
+#define MIFARE_DESFIRE_EV0              0x00
+#define MIFARE_DESFIRE_EV1              0x01
+#define MIFARE_DESFIRE_EV2              0x02
 
-#define IsPiccEV0(picc)          (picc.HwVersionMajor == DESFIRE_HW_MAJOR_EV0 && picc.SwVersionMajor == DESFIRE_SW_MAJOR_EV0)
+/* DESFire EV0 versions */
+#define DESFIRE_HW_MAJOR_EV0            0x00
+#define DESFIRE_HW_MINOR_EV0            0x01
+#define DESFIRE_SW_MAJOR_EV0            0x00
+#define DESFIRE_SW_MINOR_EV0            0x01
+
+#define IsPiccEV0(picc)                              \
+     (picc.HwVersionMajor == DESFIRE_HW_MAJOR_EV0 && \
+      picc.SwVersionMajor == DESFIRE_SW_MAJOR_EV0)
 
 /* DESFire EV1 versions */
-#define DESFIRE_HW_MAJOR_EV1     0x01
-#define DESFIRE_HW_MINOR_EV1     0x01
-#define DESFIRE_SW_MAJOR_EV1     0x01
-#define DESFIRE_SW_MINOR_EV1     0x01
+#define DESFIRE_HW_MAJOR_EV1            0x01
+#define DESFIRE_HW_MINOR_EV1            0x01
+#define DESFIRE_SW_MAJOR_EV1            0x01
+#define DESFIRE_SW_MINOR_EV1            0x01
 
 /* DESFire EV2 versions */
-#define DESFIRE_HW_MAJOR_EV2     0x12
-#define DESFIRE_HW_MINOR_EV2     0x01
-#define DESFIRE_SW_MAJOR_EV2     0x12
-#define DESFIRE_SW_MINOR_EV2     0x01
+#define DESFIRE_HW_MAJOR_EV2            0x12
+#define DESFIRE_HW_MINOR_EV2            0x01
+#define DESFIRE_SW_MAJOR_EV2            0x12
+#define DESFIRE_SW_MINOR_EV2            0x01
 
-#define DESFIRE_STORAGE_SIZE_2K  0x16
-#define DESFIRE_STORAGE_SIZE_4K  0x18
-#define DESFIRE_STORAGE_SIZE_8K  0x1A
+#define DESFIRE_STORAGE_SIZE_2K         0x16
+#define DESFIRE_STORAGE_SIZE_4K         0x18
+#define DESFIRE_STORAGE_SIZE_8K         0x1A
 
 /*
  * Defines the global PICC configuration.
  * This is located in the very first block on the card.
  */
-#define PICC_FORMAT_BYTE                   (0x00)
-#define PICC_EMPTY_BYTE                    (0x00)
+#define PICC_FORMAT_BYTE                0x00
+#define PICC_EMPTY_BYTE                 0x00
 
 typedef struct {
     /* Static data: does not change during the PICC's lifetime.
@@ -148,7 +152,6 @@ typedef struct {
     SIZET KeyVersionsArray;       /* Block offset in FRAM */
     SIZET KeyTypesArray;          /* Block offset in FRAM */
     SIZET KeyAddress;             /* Block offset in FRAM */
-    //UINT  DirtyFlags;           // USED ANYWHERE ???
 } SelectedAppCacheType DESFIRE_FIRMWARE_PACKING;
 
 extern BYTE SELECTED_APP_CACHE_TYPE_BLOCK_SIZE;

@@ -39,12 +39,6 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_MIN_OUTGOING_LOGSIZE       (1)
 #endif
 
-INLINE void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize) {
-    if (DESFIRE_MIN_OUTGOING_LOGSIZE <= BufSize) {
-        LogEntry(LogCode, (void *) LogDataBuffer, BufSize);
-    }
-}
-
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     OFF         = 0,
     NORMAL      = 1,
@@ -55,14 +49,6 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 #ifndef DESFIRE_DEFAULT_LOGGING_MODE
 #define DESFIRE_DEFAULT_LOGGING_MODE   (OFF)
 #endif
-
-#define LOG_AT_LEVEL(cmdToRun, loggingThreshold)                  ({ \
-     do {                                                            \
-          if (loggingThreshold <= DESFIRE_DEFAULT_LOGGING_MODE) {    \
-	       cmdToRun;                                             \
-	  }                                                          \
-     } while(0);                                                     \
-     })
 
 extern DESFireLoggingMode LocalLoggingMode;
 
@@ -75,41 +61,40 @@ extern DESFireLoggingMode LocalLoggingMode;
  */
 extern BYTE LocalTestingMode;
 
-void DESFireLogErrorMessage(char *fmtMsg, ...);
-void DESFireLogStatus(BYTE *bufMsg, SIZET bufSize);
-void DESFireLogDebuggingMessage(char *fmtMsg, ...);
-void DESFireLogSourceCodeTODO(char *implNoteMsg, char *srcFileLoggingData);
-void DESFireLogIncomingData(BYTE *byteBuf, SIZET bufLength);
-void DESFireLogOutgoingData(BYTE *byteBuf, SIZET bufLength);
-void DESFireLogNativeCommand(BYTE *Buffer, SIZET ByteCount);
-void DESFireLogISO1443Command(BYTE *Buffer, SIZET ByteCount);
-void DESFireLogISO7816Command(BYTE *Buffer, SIZET ByteCount);
-void DESFireLogSetProtectedData(BYTE *pdataBuf, SIZET byteBufSize);
-void DESFireLogPICCHardReset(BYTE *strBuf, SIZET strLength);
-void DESFireLogPICCSoftReset(BYTE *strBuf, SIZET strLength);
+void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize);
+void DesfireLogISOStateChange(int state, int logCode);
 
-void DebugPrintP(const char *fmt, ...);
-#define DEBUG_PRINT(fmt, ...)      DebugPrintP(PSTR(fmt), ##__VA_ARGS__)
-
+#ifdef DESFIRE_DEBUGGING && DESFIRE_DEBUGGING != 0
 #define DEBUG_PRINT_P(fmtStr, ...)                                    ({ \
     uint8_t logLength = 0;                                               \
     do {                                                                 \
         snprintf_P((char *) __InternalStringBuffer, STRING_BUFFER_SIZE,  \
-		           fmtStr, ##__VA_ARGS__);                       \
-	logLength = StringLength((char *) __InternalStringBuffer,        \
-			         STRING_BUFFER_SIZE);                    \
-	DesfireLogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR,                   \
-			(char *) __InternalStringBuffer, logLength);     \
+		         fmtStr, ##__VA_ARGS__);                               \
+	   logLength = StringLength((char *) __InternalStringBuffer,        \
+		                       STRING_BUFFER_SIZE);                    \
+	   DesfireLogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR,                   \
+			         (char *) __InternalStringBuffer, logLength);     \
     } while(0);                                                          \
     })
+#else
+#define DEBUG_PRINT_P(fmtStr, ...)                               ({})
+#endif
+
+#ifdef DESFIRE_DEBUGGING && DESFIRE_DEBUGGING != 0
+#define RUN_ON_DESFIRE_DEBUG(cppStmtToRun)                       ({ \
+        cppStmtToRun;                                               \
+        })
+#else
+#define RUN_ON_DESFIRE_DEBUG(cppStmtToRun)                       ({})
+#endif
 
 #define GetSourceFileLoggingData()                               ({ \
         char *strBuffer;                                            \
         do {                                                        \
-	    snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,  \
-                   PSTR("@@ LINE #%d in *%s @@"),                   \
-			       __LINE__, __FILE__);                 \
-	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';  \
+	    snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,     \
+                   PSTR(" @@ LINE #%d in *%s @@"),                  \
+			    __LINE__, __FILE__);                             \
+	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';     \
         } while(0);                                                 \
         strBuffer = __InternalStringBuffer;                         \
         strBuffer;                                                  \
@@ -136,20 +121,5 @@ void DebugPrintP(const char *fmt, ...);
     strBuffer = __InternalStringBuffer;                         \
     strBuffer;                                                  \
     })
-
-#if defined(DESFIRE_DEFAULT_LOGGING_MODE) && DESFIRE_DEFAULT_LOGGING_MODE != 0
-#define LogDebuggingMsg(msg)                                                                        ({ \
-    do {                                                                                               \
-         strncpy_P((char *) __InternalStringBuffer, msg, STRING_BUFFER_SIZE);                          \
-         uint8_t sbufLength = StringLength((char *) __InternalStringBuffer, STRING_BUFFER_SIZE);       \
-         LogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, (void *) __InternalStringBuffer,                     \
-                  sbufLength);                                                                         \
-    } while(0);                                                                                        \
-    })
-#else
-#define LogDebuggingMsg(msg)      ({})
-#endif
-
-#define DesfireLogISOStateChange(state, logCode)    ({})
 
 #endif

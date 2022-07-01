@@ -34,6 +34,10 @@ This notice must be retained at the top of all source files where indicated.
 #define ASBYTES(bc)  (((bc) + BITS_PER_BYTE - 1) / BITS_PER_BYTE)
 #define ASBITS(bc)   ((bc) * BITS_PER_BYTE)
 
+#define GET_LE16(p)     (*((uint16_t*)&(p)[0]))
+#define GET_LE24(p)     (*((__uint24*)&(p)[0]))
+#define GET_LE32(p)     (*((uint32_t*)&(p)[0]))
+
 #define UnsignedTypeToUINT(typeValue) \
     ((UINT) typeValue)
 #define ExtractLSBLE(ui) \
@@ -68,7 +72,7 @@ bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount);
  * SessionKey arrays are initialized in the Authenticate(Legacy|ISO|AES) commands
  * used to initiate the working session from PCD <--> PICC.
  *
- * Helper methods to format and encode quirky or pathological cases of the
+ * Helper methods to format and encode quirky cases of the
  * CommSettings and wrapped APDU format combinations are defined statically in the
  * C source file to save space in the symbol table for the firmware (ELF) binary.
  */

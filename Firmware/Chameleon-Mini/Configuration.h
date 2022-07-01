@@ -74,6 +74,7 @@ typedef enum  {
     CONFIG_MF_DESFIRE,
     CONFIG_MF_DESFIRE_2KEV1,
     CONFIG_MF_DESFIRE_4KEV1,
+    CONFIG_MF_DESFIRE_4KEV2,
 #endif
     /* This HAS to be the last element */
     CONFIG_COUNT

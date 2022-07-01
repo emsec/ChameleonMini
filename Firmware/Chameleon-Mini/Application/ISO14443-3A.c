@@ -11,10 +11,8 @@
 #include "DESFire/DESFireISO14443Support.h"
 
 bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t SAKValue) {
-
     uint8_t *DataPtr = (uint8_t *) Buffer;
     uint8_t NVB = DataPtr[1];
-
     switch (NVB) {
 
         case ISO14443A_NVB_AC_START:
@@ -30,10 +28,7 @@ bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, ui
         case ISO14443A_NVB_AC_END:
             /* End of anticollision procedure.
              * Send SAK CLn if we are selected. */
-            if ((DataPtr[2] == UidCL[0]) &&
-                    (DataPtr[3] == UidCL[1]) &&
-                    (DataPtr[4] == UidCL[2]) &&
-                    (DataPtr[5] == UidCL[3])) {
+            if (!memcmp(&DataPtr[2], &UidCL[0], 4)) {
                 DataPtr[0] = SAKValue;
                 ISO14443AAppendCRCA(Buffer, 1);
                 *BitCount = ISO14443A_SAK_FRAME_SIZE;

@@ -29,7 +29,6 @@ This notice must be retained at the top of all source files where indicated.
 #include "../../Terminal/Terminal.h"
 #include "../../Terminal/Commands.h"
 #include "../../Settings.h"
-
 #include "DESFireChameleonTerminal.h"
 #include "DESFireFirmwareSettings.h"
 #include "DESFirePICCControl.h"
@@ -49,7 +48,7 @@ CommandStatusIdType ExitOnInvalidConfigurationError(char *OutParam) {
 #ifndef DISABLE_PERMISSIVE_DESFIRE_SETTINGS
 CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-               PSTR("%s <ATS-5|HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <HexBytes-N>"),
+               PSTR("%s <ATS(N=5)|ATQA(N=4)|HardwareVersion(N=2)|SoftwareVersion(N=2)|BatchNumber(N=5)|ProductionDate(N=2)> <N-HexDataBytes>"),
                DFCOMMAND_SET_HEADER);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
@@ -73,6 +72,14 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
         if (dataByteCount != 5) {
             StatusError = 1;
         } else {
+            memcpy(&Picc.ATSBytes[0], propSpecBytes, dataByteCount);
+        }
+    }
+    if (!strcasecmp_P(hdrPropSpecStr, PSTR("ATQA"))) {
+        if (dataByteCount != 2) {
+            StatusError = 1;
+        } else {
+            DesfireATQAValue = ((propSpecBytes[0] << 8) & 0xFF00) | (propSpecBytes[1] & 0x00FF);
             memcpy(&Picc.ATSBytes[0], propSpecBytes, dataByteCount);
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ManuID"))) {

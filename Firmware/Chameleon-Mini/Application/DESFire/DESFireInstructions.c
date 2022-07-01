@@ -1155,7 +1155,6 @@ uint16_t EV0CmdGetFileSettings(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdChangeFileSettings(uint8_t *Buffer, uint16_t ByteCount) {
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }
@@ -1618,10 +1617,6 @@ uint16_t EV0CmdClearRecords(uint8_t *Buffer, uint16_t ByteCount) {
         Status = STATUS_LENGTH_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-
-
-
-    DESFireLogSourceCodeTODO("", GetSourceFileLoggingData());
     Buffer[0] = STATUS_ILLEGAL_COMMAND_CODE; // TODO
     return DESFIRE_STATUS_RESPONSE_SIZE;
 }

@@ -37,19 +37,15 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFire/DESFireISO7816Support.h"
 #include "DESFire/DESFireInstructions.h"
 
-/* The core functions used outside of this implementation
- * to describe the DESFire emulation to the Chameleon firmware:
- */
-void ResetLocalStructureData(void);
-void MifareDesfireReset(void);
 void MifareDesfireEV0AppInit(void);
 void MifareDesfireEV0AppInitRunOnce(void);
 void MifareDesfire2kEV1AppInit(void);
 void MifareDesfire2kEV1AppInitRunOnce(void);
 void MifareDesfire4kEV1AppInit(void);
 void MifareDesfire4kEV1AppInitRunOnce(void);
-void MifareDesfire8kEV1AppInit(void);
-void MifareDesfire8kEV1AppInitRunOnce(void);
+void MifareDesfire4kEV2AppInit(void);
+void MifareDesfire4kEV2AppInitRunOnce(void);
+
 void MifareDesfireAppReset(void);
 void MifareDesfireAppTick(void);
 void MifareDesfireAppTask(void);
@@ -58,18 +54,15 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount);
 
+void MifareDesfireReset(void);
+void ResetLocalStructureData(void);
+void ResetISOState(void);
+
 void MifareDesfireGetUid(ConfigurationUidType Uid);
 void MifareDesfireSetUid(ConfigurationUidType Uid);
 
-/* Helper function definitions since we need them
- * elsewhere in the backend, and so we do not need to
- * declare them as static in the source.
- */
-#define DesfireCLA(cmdCode) \
-    ((cmdCode == DESFIRE_NATIVE_CLA) || Iso7816CLA(cmdCode))
-
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-    DESFIRE_HALT,
+    DESFIRE_HALT = ISO14443_3A_STATE_HALT + 1,
     DESFIRE_IDLE,
     DESFIRE_IDLE2,
     DESFIRE_GET_VERSION2,
@@ -88,6 +81,17 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_WRITE_DATA_FILE,
 } DesfireStateType;
 
+extern DesfireStateType DesfireState;
+extern DesfireStateType DesfirePreviousState;
+
+extern Iso7816WrappedCommandType_t Iso7816CmdType;
+
+extern bool DesfireFromHalt;
+extern BYTE DesfireCmdCLA;
+
+#define DesfireCLA(cmdCode) \
+    ((cmdCode == DESFIRE_NATIVE_CLA) || Iso7816CLA(cmdCode))
+
 #define DesfireStateExpectingAdditionalFrame(dfState)  \
 	((dfState == DESFIRE_GET_VERSION2)          || \
 	 (dfState == DESFIRE_GET_VERSION3)          || \
@@ -102,11 +106,5 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 	((cmdCode == CMD_ISO7816_EXTERNAL_AUTHENTICATE) || \
 	 (cmdCode == CMD_ISO7816_INTERNAL_AUTHENTICATE) || \
 	 (cmdCode == CMD_ISO7816_GET_CHALLENGE))
-
-extern DesfireStateType DesfireState;
-extern DesfireStateType DesfirePreviousState;
-extern bool DesfireFromHalt;
-extern BYTE DesfireCmdCLA;
-extern Iso7816WrappedCommandType_t Iso7816CmdType;
 
 #endif /* MIFAREDESFIRE_H_ */

@@ -115,16 +115,14 @@ INLINE ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t Buff
     return BufferBitCount;
 }
 
-/* Setup some fuzzy response handling for problematic readers like the ACR122U */
-
-#define MAX_STATE_RETRY_COUNT               (0x0b)
+#define MAX_STATE_RETRY_COUNT               (0x04)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault);
-bool CheckStateRetryCount2(bool resetByDefault, bool performLogging);
+bool CheckStateRetryCountWithLogging(bool resetByDefault, bool performLogging);
 
 /* Support functions */
 void ISO144434SwitchState(Iso144434StateType NewState);
-void ISO144434SwitchState2(Iso144434StateType NewState, bool performLogging);
+void ISO144434SwitchStateWithLogging(Iso144434StateType NewState, bool performLogging);
 
 void ISO144434Reset(void);
 static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t BitCount);
@@ -133,6 +131,7 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
  * ISO/IEC 14443-3A implementation
  */
 #define ISO14443A_CRCA_INIT      ((uint16_t) 0x6363)
+uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t InitCRCA);
 
 #define GetAndSetBufferCRCA(Buffer, ByteCount)     ({                                \
      uint16_t fullReturnBits = 0;                                                    \
@@ -147,17 +146,15 @@ static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint1
      fullReturnBits;                                                                 \
      })
 
-uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t InitCRCA);
-
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-    /* The card is powered up but not selected */
-    ISO14443_3A_STATE_IDLE = ISO14443_4_STATE_LAST,
-    /* Entered on REQA or WUPA; anticollision is being performed */
+    /* The card is powered up but not selected: */
+    ISO14443_3A_STATE_IDLE = ISO14443_4_STATE_LAST + 1,
+    /* Entered on REQA or WUP --  anticollision is being performed: */
     ISO14443_3A_STATE_READY1,
     ISO14443_3A_STATE_READY2,
-    /* Entered when the card has been selected */
+    /* Entered when the card has been selected: */
     ISO14443_3A_STATE_ACTIVE,
-    /* Something went wrong or we've received a halt command */
+    /* Something went wrong or we've received a halt command: */
     ISO14443_3A_STATE_HALT,
 } Iso144433AStateType;
 

@@ -365,17 +365,17 @@ dfu-prog: $(TARGET).hex $(TARGET).eep check_size
 	dfu-programmer $(MCU) reset
 
 check_size: BASH:=$(if $(shell which bash), $(shell which bash), /bin/bash)
-check_size: BASH_SCRIPT_EXEC_LINES:='                                                                         \
+check_size: BASH_SCRIPT_EXEC_LINES:='                                                                      \
 	set -e;                                                                                               \
 	if [[ ! -f $(TARGET).elf ]]; then                                                                     \
-		exit 0;                                                                                       \
+		exit 0;                                                                                          \
 	fi;                                                                                                   \
 	PROGMEM_SIZE=$$(avr-size $(TARGET).elf | grep $(CHECK_SIZE_GREP_ARGS) | sed -n 4p);                   \
 	MAX_PRGMEM_SIZE=$$(printf "%d\n" $(FLASH_DATA_ADDR));                                                 \
 	if [[ $$PROGMEM_SIZE -gt $$MAX_PRGMEM_SIZE ]]; then                                                   \
-		echo \"make: *** $(TARGET).elf Application Section size $$PROGMEM_SIZE \"                     \
-		echo \"excedes maximum allowed $$MAX_PRGMEM_SIZE. Please disable some features in Makefile\"; \
-		exit 1;                                                                                       \
+	     $(ECHO) \"make: *** $(TARGET).elf Application Section size $$PROGMEM_SIZE \"                     \
+		$(ECHO) \"excedes maximum allowed $$MAX_PRGMEM_SIZE. Please disable some features in Makefile\"; \
+		exit 1;                                                                                          \
 	fi;                                                                                                   \
 	'
 check_size:

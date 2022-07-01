@@ -88,8 +88,10 @@ typedef enum {
     ISO7816_WRAPPED_CMD_TYPE_STANDARD             = 1,
     ISO7816_WRAPPED_CMD_TYPE_PM3RAW               = 2,
     ISO7816_WRAPPED_CMD_TYPE_PM3_ADDITIONAL_FRAME = 3,
-    /* ??? Others ??? */
+    /* TODO -- Others ??? */
 } Iso7816WrappedCommandType_t;
+
+extern Iso7816WrappedCommandType_t Iso7816CmdType;
 
 Iso7816WrappedCommandType_t IsWrappedISO7816CommandType(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t SetIso7816WrappedParametersType(uint8_t *Buffer, uint16_t ByteCount);

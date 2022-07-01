@@ -1,132 +1,5 @@
 # Chameleon Mini firmware support for DESFire tag emulation
 
-The project began based on a few open source Java-based emulation projects (Android based) and the 
-prior initial work to add this support on the Chameleon Mini by **@dev-zzo**. 
-The starting point of the current firmware code for this project was compiled from 
-[this firmware mod fork](https://github.com/dev-zzo/ChameleonMini/tree/desfire) as 
-were the known instruction (command) and status codes from the 
-[Android HCE (Java based code)](https://github.com/jekkos/android-hce-desfire) 
-repository maintained by **@jekkos**. 
-After that point, **@maxieds** reorganized and began work modifying and debugging the 
-compiled source base in [this repository](https://github.com/maxieds/ChameleonMiniDESFireStack). 
-Most of the preliminary testing of these firmware mods was done using the 
-[Chameleon Mini Live Debugger](https://github.com/maxieds/ChameleonMiniLiveDebugger) 
-Android logger application, and with ``libnfc`` via a 
-USB NFC tag reader (host-based testing code is 
-[available here](https://github.com/maxieds/ChameleonMiniDESFireStack/tree/master/Firmware/Chameleon-Mini/Application/DESFire/Testing)). 
-
-The firmware has been tested and known to work with the KAOS manufactured RevG Chameleon devices. 
-Unfortunately, formative RevE device support is not available due to the memory requirements to 
-run this firmware emulation. The device responds well using the ``libnfc``-based utility 
-``nfc-anticol``:
-```bash
-NFC reader: SCM Micro / SCL3711-NFC&RW opened
-
-Sent bits:     26 (7 bits)
-Received bits: 03  44  
-Sent bits:     93  20  
-Received bits: 88  23  77  00  dc  
-Sent bits:     93  70  88  23  77  00  dc  4b  b3  
-Received bits: 04  
-Sent bits:     95  20  
-Received bits: 0b  99  bf  98  b5  
-Sent bits:     95  70  0b  99  bf  98  b5  2f  24  
-Received bits: 20  
-Sent bits:     e0  50  bc  a5  
-Received bits: 75  77  81  02  80  
-Sent bits:     50  00  57  cd  
-
-Found tag with
- UID: 2377000b99bf98
-ATQA: 4403
- SAK: 20
- ATS: 75  77  81  02  80
-```
-More testing needs to be done to fine tune support for interfacing the Chameleon 
-with live, in-the-wild DESFire tag readers in practice. It has been verified to work with the 
-Proxmark3 NFC devices: 
-```bash
-[usb] pm3 --> hf 14a read
-[+]  UID: 4A D9 BA 11 B9 97 57
-[+] ATQA: 44 03
-[+]  SAK: 20 [1]
-[+]  ATS: 75 77 81 02 80
-[=] field dropped.
-
-[usb] pm3 --> script run debug.cmd
-[+] executing Cmd debug.cmd
-[+] args ''
-[usb|script] pm3 --> hw dbg -4
-[usb|script] pm3 --> prefs set clientdebug --full
-[=]     client debug........... full
-[usb|script] pm3 --> data setdebugmode -2
-[=] client debug level... 2 ( verbose debug messages )
-
-[#]   Debug log level......... 4 ( extended )
-
-[usb] pm3 --> hf mfdes info
-[#] pcb_blocknum 0 == 2 
-[#] [WCMD <--: : 08/08] 02 90 60 00 00 00 14 98 
-[#] pcb_blocknum 1 == 3 
-[#] [WCMD <--: : 08/08] 03 90 af 00 00 00 1f 15 
-[#] pcb_blocknum 0 == 2 
-[#] [WCMD <--: : 08/08] 02 90 af 00 00 00 34 11 
-
-[=] ---------------------------------- Tag Information ----------------------------------
-[+]               UID: 08 4F 8A 44 7D AE 83 
-[+]      Batch number: AE 83 CE E4 A5 
-[+]   Production date: week db / 20f1
-
-[=] --- Hardware Information
-[=]    raw: 04010100011805
-[=]      Vendor Id: NXP Semiconductors Germany
-[=]           Type: 0x01
-[=]        Subtype: 0x01
-[=]        Version: 0.1 ( DESFire MF3ICD40 )
-[=]   Storage size: 0x18 ( 4096 bytes )
-[=]       Protocol: 0x05 ( ISO 14443-2, 14443-3 )
-
-[=] --- Software Information
-[=]    raw: 90AF0401010001
-[=]      Vendor Id: no tag-info available
-[=]           Type: 0xAF
-[=]        Subtype: 0x04
-[=]        Version: 1.1
-[=]   Storage size: 0x00 ( 1 bytes )
-[=]       Protocol: 0x01 ( Unknown )
-
-[=] --------------------------------- Card capabilities ---------------------------------
-[#] switch_off
-
-[usb] pm3 --> hf mfdes auth -n 0 -t 3tdea -k 000000000000000000000000000000000000000000000000 -v -c native -a
-[=] Key num: 0 Key algo: 3tdea Key[24]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
-[=] Secure channel: n/a Command set: native Communication mode: plain
-[+] Setting ISODEP -> inactive
-[+] Setting ISODEP -> NFC-A
-[=] AID 000000 is selected
-[=] Auth: cmd: 0x1a keynum: 0x00
-[+] raw>> 1A 00 
-[+] raw<< AF EE 91 30 1E E8 F5 84 D6 C7 85 1D 05 65 13 90 A6 C6 D5 
-[#] encRndB: EE 91 30 1E E8 F5 84 D6 
-[#] RndB: CA FE BA BE 00 11 22 33 
-[#] rotRndB: FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
-[#] Both   : 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
-[+] raw>> AF 30 EB 55 F3 29 39 04 96 77 88 CE EF 33 A3 C8 7B 18 66 1A F1 62 78 A0 28 53 84 67 98 7C BB DB 03 
-[+] raw<< 00 9B 71 57 8F FB DF 80 A8 F6 EF 33 4A C6 CD F9 7A 7D BE 
-[=] Session key : 01 02 03 04 CA FE BA BE 07 08 09 10 22 33 CA FE 13 14 15 16 00 11 22 33 
-[=] Desfire  authenticated
-[+] PICC selected and authenticated succesfully
-[+] Context: 
-[=] Key num: 0 Key algo: 3tdea Key[24]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
-[=] Secure channel: ev1 Command set: native Communication mode: plain
-[=] Session key [24]: 01 02 03 04 CA FE BA BE 07 08 09 10 22 33 CA FE 13 14 15 16 00 11 22 33  
-[=]     IV [8]: 00 00 00 00 00 00 00 00 
-[+] Setting ISODEP -> inactive
-```
-The DESFire configuration mode has been known to see recognition problems 
-using the ``libfreefare`` commands ``mifare-*``. This issue may be gradually 
-resolved as the work to bring compatibility with the PM3 devices continues.
-
 ## Quick configuration of cloned DESFire tags
 
 ### Chameleon Mini terminal addons to support ``CONFIG=MF_DESFIRE`` modes
@@ -142,20 +15,19 @@ run these commands.
 ```bash
 CONFIG=?
 CONFIG=MF_DESFIRE
+CONFIG=MF_DESFIRE_2KEV1
+CONFIG=MF_DESFIRE_4KEV1
+CONFIG=MF_DESFIRE_4KEV2
 ```
 
 #### DF_SETHDR -- Set PICC header information 
 
 The UID for the tag can be set using separate Chameleon terminal commands as 
 usual for all other configurations.
-```bash
-DF_SETHDR?
-101:OK WITH TEXT
-DF_SETHDR <ManuID|HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <HexBytes-N>
-```
-We can modify the tag header information emulated by the tag as follows:
+We can modify the remaining tag header information emulated by the tag as follows:
 ```bash
 DF_SETHDR=ATS xxxxxxxxxx
+DF_SETHDR=ATQA xxxx
 DF_SETHDR=ManuID xx
 DF_SETHDR=HardwareVersion mmMM
 DF_SETHDR=SoftwareVersion mmMM
@@ -172,6 +44,10 @@ DF_SETHDR=ATS 067577810280
 To set the ATS bytes reported to emulate a JCOP tag:
 ```bash
 DF_SETHDR=ATS 0675f7b102
+```
+To reset the ATQA value returned in the anticollision loop handshaking:
+```
+DF_SETHDR=ATQA 2838
 ```
 
 ##### Documentation for cloning specific tag types
@@ -338,7 +214,6 @@ reset it intentionally at will for testing and debugging purposes.
 
 The syntax is as follows:
 ```bash
-DF_COMM_MODE?
 DF_COMM_MODE=Plaintext
 DF_COMM_MODE=Plaintext:MAC
 DF_COMM_MODE=Enciphered:3K3DES
@@ -355,24 +230,8 @@ to the defaults.
 
 Syntax -- not guaranteeing that all of these are meaningful or distinct just yet:
 ```bash
-DF_LOGMODE?
-DF_LOGMODE=<OFF|NORMAL|VERBOSE|DEBUGGING>
-DF_LOGMODE=<0|1|TRUE|FALSE>
-```
-
-#### DF_TESTMODE -- Sets whether the firmware emulation is run in testing/debugging mode
-
-Syntax:
-```bash
-DF_TESTMODE?
-DF_TESTMODE=<0|1|TRUE|FALSE|OFF|ON>
-```
-#### DF_COMM_MODE
-
-Syntax:
-```bash
-DF_COMM_MODE?
-DF_COMM_MODE=<Plaintext|Plaintext:MAC|Enciphered:3K3DES|Enciphered:AES128>
+DF_LOGMODE=0
+DF_LOGMODE=1
 ```
 
 ## Supported functionality
@@ -469,6 +328,21 @@ for development of this project:
 
 ### Sources of external code and open information about the DESFire specs
 
+The project began based on a few open source Java-based emulation projects (Android based) and the 
+prior initial work to add this support on the Chameleon Mini by **@dev-zzo**. 
+The starting point of the current firmware code for this project was compiled from 
+[this firmware mod fork](https://github.com/dev-zzo/ChameleonMini/tree/desfire) as 
+were the known instruction (command) and status codes from the 
+[Android HCE (Java based code)](https://github.com/jekkos/android-hce-desfire) 
+repository maintained by **@jekkos**. 
+After that point, **@maxieds** reorganized and began work modifying and debugging the 
+compiled source base in [this repository](https://github.com/maxieds/ChameleonMiniDESFireStack). 
+Most of the preliminary testing of these firmware mods was done using the 
+[Chameleon Mini Live Debugger](https://github.com/maxieds/ChameleonMiniLiveDebugger) 
+Android logger application, and with ``libnfc`` via a 
+USB NFC tag reader (host-based testing code is 
+[available here](https://github.com/maxieds/ChameleonMiniDESFireStack/tree/master/Firmware/Chameleon-Mini/Application/DESFire/Testing)). 
+
 The source code for much of this implementation has been directly adapted, or modified, from mostly Java
 language open source code for Android using several primary sources. Where possible, the license and credits
 for the original sources for this ``avr-gcc``-compatible C language code are as specified in the next
@@ -478,26 +352,3 @@ repositories and code bases:
 * [Android HCE Framework Library (kevinvalk)](https://github.com/kevinvalk/android-hce-framework)
 * [AVRCryptoLib in C](https://github.com/cantora/avr-crypto-lib)
 * [LibFreefare DESFire Code (mostly as a reference and check point)](https://github.com/nfc-tools/libfreefare/tree/master/libfreefare)
-
-### Clarification: Where the local licenses apply
-
-The code that is not already under direct license (see below) is released according to the normal
-[license for the firmware](https://github.com/emsec/ChameleonMini/blob/master/LICENSE.txt).
-Additional licenses that apply only to the code used within this DESFire stack implementation,
-or to the open source libraries used to derive this code,
-are indicated within the local firmware directories.
-
-### DESFire sources header comments 
-
-```
-The DESFire stack portion of this firmware source is free software written by Maxie Dion Schmidt (@maxieds): You can redistribute it and/or modify it under the terms of this license.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-The complete source distribution of this firmware is available at the following link: https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
-
-Based in part on the original DESFire code created by @dev-zzo (GitHub handle) [Dmitry Janushkevich] available at https://github.com/dev-zzo/ChameleonMini/tree/desfire.
-
-This notice must be retained at the top of all source files where indicated.
-```
-
