@@ -866,7 +866,7 @@ uint16_t Reader14443AAppProcess(uint8_t *Buffer, uint16_t BitCount) {
                             cfgid = -1;
                     }
 
-                    if (cfgid > -1) {
+                    if (cfgid > -1) { /* TODO: Consider wrapping strings with PSTR(...): */
                         CommandLinePendingTaskFinished(COMMAND_INFO_OK_WITH_TEXT_ID, "Cloned OK!");
                         /* Notify LED. blink when clone is done - ToDo: maybe use other LEDHook */
                         LEDHook(LED_SETTING_CHANGE, LED_BLINK_2X);

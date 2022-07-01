@@ -39,40 +39,18 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_MIN_OUTGOING_LOGSIZE       (1)
 #endif
 
-typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-    OFF         = 0,
-    NORMAL      = 1,
-    VERBOSE     = 2,
-    DEBUGGING   = 3,
-} DESFireLoggingMode;
-
-#ifndef DESFIRE_DEFAULT_LOGGING_MODE
-#define DESFIRE_DEFAULT_LOGGING_MODE   (OFF)
-#endif
-
-extern DESFireLoggingMode LocalLoggingMode;
-
-/*
- * This variable can be toggled to indicated whether to employ
- * testable pseudo-randomness in the encrypted transfers.
- * When this value id non-zero, then any random session numbers
- * (e.g., RndB) and IV salt vectors should default back to
- * predictable constant values for testing purposes.
- */
-extern BYTE LocalTestingMode;
-
 void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize);
 void DesfireLogISOStateChange(int state, int logCode);
 
-#ifdef DESFIRE_DEBUGGING && DESFIRE_DEBUGGING != 0
+#ifdef DESFIRE_DEBUGGING
 #define DEBUG_PRINT_P(fmtStr, ...)                                    ({ \
     uint8_t logLength = 0;                                               \
     do {                                                                 \
         snprintf_P((char *) __InternalStringBuffer, STRING_BUFFER_SIZE,  \
-		         fmtStr, ##__VA_ARGS__);                               \
+		         (const char *) fmtStr, ##__VA_ARGS__);                \
 	   logLength = StringLength((char *) __InternalStringBuffer,        \
 		                       STRING_BUFFER_SIZE);                    \
-	   DesfireLogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR,                   \
+	   DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT,               \
 			         (char *) __InternalStringBuffer, logLength);     \
     } while(0);                                                          \
     })
@@ -80,19 +58,11 @@ void DesfireLogISOStateChange(int state, int logCode);
 #define DEBUG_PRINT_P(fmtStr, ...)                               ({})
 #endif
 
-#ifdef DESFIRE_DEBUGGING && DESFIRE_DEBUGGING != 0
-#define RUN_ON_DESFIRE_DEBUG(cppStmtToRun)                       ({ \
-        cppStmtToRun;                                               \
-        })
-#else
-#define RUN_ON_DESFIRE_DEBUG(cppStmtToRun)                       ({})
-#endif
-
 #define GetSourceFileLoggingData()                               ({ \
         char *strBuffer;                                            \
         do {                                                        \
 	    snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,     \
-                   PSTR(" @@ LINE #%d in *%s @@"),                  \
+                   PSTR("@@ LINE #%d in \"%s\" @@"),                \
 			    __LINE__, __FILE__);                             \
 	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';     \
         } while(0);                                                 \
@@ -103,10 +73,10 @@ void DesfireLogISOStateChange(int state, int logCode);
 #define GetSymbolNameString(symbolName)                          ({ \
         char *strBuffer;                                            \
         do {                                                        \
-        strncpy_P(__InternalStringBuffer2, PSTR(#symbolName),       \
-                  DATA_BUFFER_SIZE_SMALL);                          \
+        strncpy_P(__InternalStringBuffer, PSTR(#symbolName),        \
+                  STRING_BUFFER_SIZE);                              \
         } while(0);                                                 \
-        strBuffer = __InternalStringBuffer2;                        \
+        strBuffer = __InternalStringBuffer;                         \
         strBuffer;                                                  \
         })
 

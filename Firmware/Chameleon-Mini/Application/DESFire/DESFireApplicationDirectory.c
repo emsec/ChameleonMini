@@ -703,7 +703,7 @@ uint16_t DeleteApp(const DESFireAidType Aid) {
     AppDir.FirstFreeSlot = MIN(Slot, AppDir.FirstFreeSlot);
     SynchronizeAppDir();
     if (!IsPiccAppSelected()) {
-        InvalidateAuthState(0x00);
+        InvalidateAuthState(0);
     }
     SelectAppBySlot(DESFIRE_PICC_APP_SLOT);
     return STATUS_OPERATION_OK;
@@ -720,11 +720,11 @@ TransferStatus GetApplicationIdsTransfer(uint8_t *Buffer) {
     Status.BytesProcessed = 0;
     for (EntryIndex = TransferState.GetApplicationIds.NextIndex;
             EntryIndex < DESFIRE_MAX_SLOTS; ++EntryIndex) {
-        if ((AppDir.AppIds[EntryIndex][0] | AppDir.AppIds[EntryIndex][1] |
-                AppDir.AppIds[EntryIndex][2]) == 0)
+        if ((AppDir.AppIds[EntryIndex][0] | AppDir.AppIds[EntryIndex][1] | AppDir.AppIds[EntryIndex][2]) == 0) {
             continue;
+        }
         /* If it won't fit -- remember and return */
-        if (Status.BytesProcessed >= TERMINAL_BUFFER_SIZE) { // TODO ??? 19 / Magic Number ???
+        if (Status.BytesProcessed >= TERMINAL_BUFFER_SIZE) {
             TransferState.GetApplicationIds.NextIndex = EntryIndex;
             Status.IsComplete = false;
             return Status;

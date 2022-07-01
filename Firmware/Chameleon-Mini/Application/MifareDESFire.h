@@ -37,6 +37,9 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFire/DESFireISO7816Support.h"
 #include "DESFire/DESFireInstructions.h"
 
+#define DesfireCLA(cmdCode) \
+    ((cmdCode == DESFIRE_NATIVE_CLA) || Iso7816CLA(cmdCode))
+
 void MifareDesfireEV0AppInit(void);
 void MifareDesfireEV0AppInitRunOnce(void);
 void MifareDesfire2kEV1AppInit(void);
@@ -64,7 +67,6 @@ void MifareDesfireSetUid(ConfigurationUidType Uid);
 typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_HALT = ISO14443_3A_STATE_HALT + 1,
     DESFIRE_IDLE,
-    DESFIRE_IDLE2,
     DESFIRE_GET_VERSION2,
     DESFIRE_GET_VERSION3,
     DESFIRE_GET_APPLICATION_IDS2,
@@ -81,17 +83,6 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_WRITE_DATA_FILE,
 } DesfireStateType;
 
-extern DesfireStateType DesfireState;
-extern DesfireStateType DesfirePreviousState;
-
-extern Iso7816WrappedCommandType_t Iso7816CmdType;
-
-extern bool DesfireFromHalt;
-extern BYTE DesfireCmdCLA;
-
-#define DesfireCLA(cmdCode) \
-    ((cmdCode == DESFIRE_NATIVE_CLA) || Iso7816CLA(cmdCode))
-
 #define DesfireStateExpectingAdditionalFrame(dfState)  \
 	((dfState == DESFIRE_GET_VERSION2)          || \
 	 (dfState == DESFIRE_GET_VERSION3)          || \
@@ -106,5 +97,13 @@ extern BYTE DesfireCmdCLA;
 	((cmdCode == CMD_ISO7816_EXTERNAL_AUTHENTICATE) || \
 	 (cmdCode == CMD_ISO7816_INTERNAL_AUTHENTICATE) || \
 	 (cmdCode == CMD_ISO7816_GET_CHALLENGE))
+
+extern DesfireStateType DesfireState;
+extern DesfireStateType DesfirePreviousState;
+
+extern Iso7816WrappedCommandType_t Iso7816CmdType;
+
+extern bool DesfireFromHalt;
+extern BYTE DesfireCmdCLA;
 
 #endif /* MIFAREDESFIRE_H_ */

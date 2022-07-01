@@ -213,7 +213,7 @@ void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
         DEBUG_PRINT_P(PSTR("Factory reset -- EV0"));
-        RUN_ON_DESFIRE_DEBUG(LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0));
+        DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV0();
     } else {
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
@@ -232,7 +232,7 @@ void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
         DEBUG_PRINT_P(PSTR("Factory reset -- EV1"));
-        RUN_ON_DESFIRE_DEBUG(LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0));
+        DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV1(StorageSize);
     } else {
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
@@ -251,7 +251,7 @@ void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC) {
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
         DEBUG_PRINT_P(PSTR("Factory reset -- EV1"));
-        RUN_ON_DESFIRE_DEBUG(LogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0));
+        DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV2(StorageSize);
     } else {
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
@@ -278,7 +278,9 @@ void GetPiccHardwareVersionInfo(uint8_t *Buffer) {
 void GetPiccSoftwareVersionInfo(uint8_t *Buffer) {
     Buffer[0] = Picc.SwVersionMajor;
     Buffer[1] = Picc.SwVersionMinor;
-    Buffer[2] = Picc.StorageSize;
+    uint16_t cardCapacityBlocks = GetCardCapacityBlocks();
+    uint8_t freeMemoryBytes = (uint8_t)(cardCapacityBlocks * DESFIRE_BLOCK_SIZE);
+    Buffer[2] = freeMemoryBytes;
 }
 
 void GetPiccManufactureInfo(uint8_t *Buffer) {
@@ -302,9 +304,9 @@ void FormatPicc(void) {
     memset(&AppDir, 0x00, sizeof(DESFireAppDirType));
     memset(&SelectedApp, 0x00, sizeof(SelectedAppCacheType));
     /* Set a random new UID */
-    BYTE uidData[DESFIRE_UID_SIZE];
-    RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
-    memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
+    BYTE uidData[DESFIRE_UID_SIZE - 1];
+    RandomGetBuffer(uidData, DESFIRE_UID_SIZE - 1);
+    memcpy(&Picc.Uid[1], uidData, DESFIRE_UID_SIZE - 1);
     /* Conform to NXP Application Note AN10927 about the first
      * byte of a randomly generated UID (refer to section 2.1.1).
      */
@@ -314,8 +316,8 @@ void FormatPicc(void) {
     RandomGetBuffer(batchNumberData, 5);
     memcpy(&Picc.BatchNumber[0], batchNumberData, 5);
     /* Default production date -- until the user changes them: */
-    Picc.ProductionWeek = 0x00;
-    Picc.ProductionYear = 0x00;
+    Picc.ProductionWeek = 0x01;
+    Picc.ProductionYear = 0x01;
     /* Assign the default manufacturer ID: */
     Picc.ManufacturerID = DESFIRE_MANUFACTURER_ID;
     /* Set the ATS bytes to defaults: */
@@ -338,13 +340,13 @@ void CreatePiccApp(void) {
     BYTE MasterAppAID[] = { 0x00, 0x00, 0x00 };
     BYTE statusCode = CreateApp(MasterAppAID, DESFIRE_MAX_KEYS, 0x0f);
     if (statusCode != STATUS_OPERATION_OK) {
-        const char *loggingMsg = PSTR("CreateApp returned -- %d\n");
-        DEBUG_PRINT_P(loggingMsg, statusCode);
+        DEBUG_PRINT_P(PSTR("CreateApp returned -- %d\n"), statusCode);
     }
     SelectPiccApp();
     memset(&Key, 0x00, sizeof(CryptoKeyBufferType));
     WriteAppKey(0x00, 0x00, Key, sizeof(CryptoKeyBufferType));
     SynchronizeAppDir();
+    SynchronizePICCInfo();
 }
 
 void FactoryFormatPiccEV0(void) {

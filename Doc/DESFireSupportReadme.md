@@ -2,13 +2,7 @@
 
 ## Quick configuration of cloned DESFire tags
 
-### Chameleon Mini terminal addons to support ``CONFIG=MF_DESFIRE`` modes
-
-Note that these commands are only compiled into the firmware when the compiler 
-option ``-DALLOW_DESFIRE_TERMINAL_COMMANDS`` and ``-DCONFIG_MF_DESFIRE_SUPPORT`` are 
-specified. If you do not at miniumum have a configuration, ``CONFIG=MF_DESFIRE``, then 
-these commands will not work. Note that LIVE logging should be disabled before attempting to  
-run these commands.
+### Chameleon Mini terminal addons to support DESFire tag configurations
 
 #### Selecting a DESFire configuration
 
@@ -47,6 +41,7 @@ DF_SETHDR=ATS 0675f7b102
 ```
 To reset the ATQA value returned in the anticollision loop handshaking:
 ```
+DF_SETHDR=ATQA 0344
 DF_SETHDR=ATQA 2838
 ```
 

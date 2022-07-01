@@ -76,21 +76,23 @@ void LogInit(void) {
         result = true;
         WriteEEPBlock((uint16_t) &LogFRAMAddrValid, &result, 1);
     }
-
     LogEntry(LOG_INFO_SYSTEM_BOOT, NULL, 0);
 }
 
 void LogTick(void) {
-    // The logging functionality slows down the timings of data exchanges between
-    // Chameleon emulated tags and readers, so schedule the logging writes to
-    // happen only on intervals that will be outside of timing windows for individual xfers
-    // initiated from PICC <--> PCD (e.g., currently approximately every 600ms):
-    if ((++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0) {
-        if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE)
+    /*
+     * The logging functionality slows down the timings of data exchanges between
+     *  Chameleon emulated tags and readers, so schedule the logging writes to
+     * happen only on intervals that will be outside of timing windows for individual xfers
+     * initiated from PICC <--> PCD (e.g., currently approximately every 600ms):
+     */
+    if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE) {
+        if ((++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0) {
             AtomicLiveLogTick();
-        if (EnableLogSRAMtoFRAM)
-            LogSRAMToFRAM();
-        LiveLogModePostTickCount = 0;
+            LiveLogModePostTickCount = 0;
+        }
+    } else if (EnableLogSRAMtoFRAM) {
+        LogSRAMToFRAM();
     }
 }
 

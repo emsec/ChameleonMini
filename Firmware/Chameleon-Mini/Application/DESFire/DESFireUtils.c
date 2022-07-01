@@ -74,10 +74,10 @@ int32_t Int32FromByteBuffer(uint8_t *byteBuffer) {
     if (byteBuffer == NULL) {
         return 0;
     }
-    int32_t b0 = byteBuffer[0];
-    int32_t b1 = (byteBuffer[1] << 8) & 0x0000ff00;
-    int32_t b2 = (byteBuffer[2] << 16) & 0x00ff0000;
-    int32_t b3 = (byteBuffer[3] << 24) & 0xff000000;
+    int32_t b0 = (int32_t) byteBuffer[0];
+    int32_t b1 = ((int32_t) byteBuffer[1] << 8) & 0x0000ff00;
+    int32_t b2 = ((int32_t) byteBuffer[2] << 16) & 0x00ff0000;
+    int32_t b3 = ((int32_t) byteBuffer[3] << 24) & 0xff000000;
     return b0 | b1 | b2 | b3;
 }
 
@@ -94,8 +94,7 @@ uint16_t DesfireAddParityBits(uint8_t *Buffer, uint16_t BitCount) {
     if (BitCount % 8)
         return BitCount;
     uint8_t *currByte, * tmpByte;
-    uint8_t *const lastByte = Buffer + BitCount / 8 + BitCount / 64; // starting address + number of bytes +
-    // number of parity bytes
+    uint8_t *const lastByte = Buffer + BitCount / 8 + BitCount / 64; // starting address + number of bytes + number of parity bytes
     currByte = Buffer + BitCount / 8 - 1;
     uint8_t parity;
     memset(currByte + 1, 0, lastByte - currByte);                 // zeroize all bytes used for parity bits
@@ -116,7 +115,7 @@ uint16_t DesfireAddParityBits(uint8_t *Buffer, uint16_t BitCount) {
 }
 
 uint16_t DesfireRemoveParityBits(uint8_t *Buffer, uint16_t BitCount) {
-    // Short frame, no parity bit is added
+    /* Short frame, no parity bit is added: */
     if (BitCount == 7)
         return 7;
 
@@ -148,8 +147,8 @@ bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount) {
 }
 
 uint16_t DesfirePreprocessAPDUWrapper(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize, bool TruncateChecksumBytes) {
+    uint16_t ChecksumBytes = 0;
     switch (CommMode) {
-            uint16_t ChecksumBytes = 0;
         case DESFIRE_COMMS_PLAINTEXT_MAC: {
             if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
                 ChecksumBytes = 4;
@@ -205,7 +204,7 @@ uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t Buff
             if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {
                 return appendBufferMAC(SessionKey, Buffer, BufferSize);
             } else {
-                // AES-128 or 3DES:
+                /* AES-128 or 3DES: */
                 uint16_t MacedBytes = appendBufferCMAC(DesfireCommandState.CryptoMethodType, SessionKey, Buffer, BufferSize, SessionIV);
                 memcpy(SessionIV, &Buffer[BufferSize], MacedBytes - BufferSize);
                 return MacedBytes;
@@ -213,7 +212,7 @@ uint16_t DesfirePostprocessAPDU(uint8_t CommMode, uint8_t *Buffer, uint16_t Buff
             break;
         }
         case DESFIRE_COMMS_CIPHERTEXT_DES: {
-            // TripleDES:
+            /* TripleDES: */
             uint16_t CryptoBlockSize = CRYPTO_3KTDEA_BLOCK_SIZE;
             uint16_t BlockPadding = 0;
             if ((BufferSize % CryptoBlockSize) != 0) {

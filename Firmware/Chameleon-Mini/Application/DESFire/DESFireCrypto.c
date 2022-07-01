@@ -216,7 +216,7 @@ uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8
 }
 
 uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const uint8_t *Key) {
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
+    DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
     return STATUS_OPERATION_OK;
 }
 #endif
@@ -322,7 +322,7 @@ uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count) {
 }
 
 uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count) {
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
+    DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
     return 0;
 }
 

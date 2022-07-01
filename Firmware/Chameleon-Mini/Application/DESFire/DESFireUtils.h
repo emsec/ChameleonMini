@@ -60,6 +60,12 @@ uint16_t DesfireAddParityBits(uint8_t *Buffer, uint16_t bits);
 uint16_t DesfireRemoveParityBits(uint8_t *Buffer, uint16_t BitCount);
 bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount);
 
+#ifdef DESFIRE_DEBUGGING
+#define DesfireDebuggingOn      (DESFIRE_DEBUGGING != 0)
+#else
+#define DesfireDebuggingOn      (false)
+#endif
+
 /* Add utility wrapper functions to perform pre and postprocessing on
  * the raw input APDU commands sent by the PCD depending on which
  * CommMode (PLAINTEXT|PLAINTEXT-MAC|ENCIPHERED-CMAC-3DES|ECIPHERED-CMAC-AES128)

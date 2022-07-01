@@ -116,20 +116,22 @@ typedef struct {
 /* Helper and batch process functions */
 uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount);
 
-/*
- * The following section implements:
- * DESFire EV0 / D40 specific commands
- */
-
+/* DESFire EV0 / D40 specific commands: */
 uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdGetVersion2(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdGetVersion3(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t EV0CmdAuthenticateLegacy2(uint8_t *Buffer, uint16_t ByteCount);
 
+/* Other authenticate commands: */
 uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount);
 uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount);
+
+/* ISO7816 authenticate commands: */
+uint16_t ISO7816CmdGetChallenge(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t ISO7816CmdExternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount);
+uint16_t ISO7816CmdInternalAuthenticate(uint8_t *Buffer, uint16_t ByteCount);
 
 #endif

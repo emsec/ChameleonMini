@@ -101,14 +101,8 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 #SETTINGS += -DDISABLE_PERMISSIVE_DESFIRE_SETTINGS
 #SETTINGS += -DDISABLE_DESFIRE_TERMINAL_COMMANDS
 
-## : Set a default logging mode for debugging with the DESFire
-## : emulation code:
-#CONFIG_SETTINGS  += -DDESFIRE_DEFAULT_LOGGING_MODE=DEBUGGING
-CONFIG_SETTINGS += -DDESFIRE_DEFAULT_LOGGING_MODE=OFF
-
-## : Set a default testing mode setting (0 = OFF, non-NULL = ON):
-CONFIG_SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=0
-#CONFIG_SETTINGS  += -DDESFIRE_DEFAULT_TESTING_MODE=1
+## : Enable extra verbose logging messages for debugging:
+#CONFIG_SETTINGS  += -DDESFIRE_DEBUGGING=1
 
 ## : Feature: Use randomized UIDs that mask the actual secret UID until
 ## : the tag has been issued a successful authentication sequence:

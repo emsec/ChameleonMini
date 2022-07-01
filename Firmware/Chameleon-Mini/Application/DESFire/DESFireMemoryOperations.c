@@ -37,7 +37,6 @@ This notice must be retained at the top of all source files where indicated.
 #define BLOCKWISE_IO_MULTIPLIER           (DESFIRE_BLOCK_SIZE)
 
 volatile char __InternalStringBuffer[STRING_BUFFER_SIZE] = { 0 };
-char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL] = { 0 };
 
 void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count) {
     if (StartBlock * BLOCKWISE_IO_MULTIPLIER >= MEMORY_SIZE_PER_SETTING) {

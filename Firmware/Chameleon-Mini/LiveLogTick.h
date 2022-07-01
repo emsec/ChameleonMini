@@ -23,7 +23,7 @@
 #define sei_memory() __asm volatile( "sei" ::: "memory" )
 
 #ifndef FLUSH_LOGS_ON_SPACE_ERROR
-#define FLUSH_LOGS_ON_SPACE_ERROR       (1)
+#define FLUSH_LOGS_ON_SPACE_ERROR            (1)
 #endif
 typedef struct LogBlockListNode {
     uint8_t                  *logBlockDataStart;
@@ -36,7 +36,7 @@ extern LogBlockListNode *LogBlockListBegin;
 extern LogBlockListNode *LogBlockListEnd;
 extern uint8_t LogBlockListElementCount;
 
-#define LIVE_LOGGER_POST_TICKS               (6)
+#define LIVE_LOGGER_POST_TICKS              (7)
 extern uint8_t LiveLogModePostTickCount;
 
 INLINE bool AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *logData, uint8_t logDataSize);
@@ -46,6 +46,7 @@ INLINE bool LiveLogTick(void);
 
 INLINE bool
 AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *logData, uint8_t logDataSize) {
+    cli_memory();
     bool status = true;
     if ((logDataSize + 4 + 3 + LOG_BLOCK_LIST_NODE_SIZE > LogMemLeft) && (LogMemPtr != LogMem)) {
         if (FLUSH_LOGS_ON_SPACE_ERROR) {
@@ -80,6 +81,7 @@ AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *
     } else {
         status = false;
     }
+    sei_memory();
     return status;
 }
 
@@ -93,7 +95,10 @@ FreeLogBlocks(void) {
 
 INLINE bool
 AtomicLiveLogTick(void) {
-    return LiveLogTick();
+    //cli_memory();
+    bool opStatus = LiveLogTick();
+    //sei_memory();
+    return opStatus;
 }
 
 INLINE bool
@@ -103,7 +108,6 @@ LiveLogTick(void) {
     while (LogBlockListElementCount > 0) {
         TerminalFlushBuffer();
         TerminalSendBlock(logBlockCurrent.logBlockDataStart, logBlockCurrent.logBlockDataSize);
-        TerminalFlushBuffer();
         tempBlockPtr = logBlockCurrent.nextBlock;
         if (tempBlockPtr != NULL) {
             memcpy(&logBlockCurrent, tempBlockPtr, sizeof(LogBlockListNode));
@@ -114,6 +118,7 @@ LiveLogTick(void) {
     }
     FreeLogBlocks();
     LiveLogModePostTickCount = 0;
+    TerminalFlushBuffer();
     return true;
 }
 

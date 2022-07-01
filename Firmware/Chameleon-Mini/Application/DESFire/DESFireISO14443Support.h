@@ -75,8 +75,8 @@ This notice must be retained at the top of all source files where indicated.
 #define ISO14443_PCB_S_WTX                  (ISO14443_PCB_S_BLOCK_STATIC | 0x30)
 #define ISO14443A_CMD_PPS                   0xD0
 
-#define IS_ISO14443A_4_COMPLIANT(buf)       (buf[0] & 0x20)
-#define MAKE_ISO14443A_4_COMPLIANT(buf)     (buf[0] |= 0x20)
+#define IS_ISO14443A_4_COMPLIANT(bufByte)   (bufByte & 0x20)
+#define MAKE_ISO14443A_4_COMPLIANT(bufByte) (bufByte |= 0x20)
 
 /*
  * ISO/IEC 14443-4 implementation
@@ -100,22 +100,14 @@ extern uint8_t LastReaderSentCmd;
 
 /* Configure saving last data frame state so can resend on ACK from the PCD */
 
-#define MAX_DATA_FRAME_XFER_SIZE            (64)
+#define MAX_DATA_FRAME_XFER_SIZE            (72)
 extern uint8_t  ISO14443ALastDataFrame[MAX_DATA_FRAME_XFER_SIZE];
 extern uint16_t ISO14443ALastDataFrameBits;
 extern uint8_t  ISO14443ALastIncomingDataFrame[MAX_DATA_FRAME_XFER_SIZE];
 extern uint16_t ISO14443ALastIncomingDataFrameBits;
+uint16_t ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t BufferBitCount);
 
-INLINE ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t BufferBitCount) {
-    uint16_t ISO14443ALastDataFrameBytes = MIN((BufferBitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE, MAX_DATA_FRAME_XFER_SIZE);
-    if (ISO14443ALastDataFrameBytes > 0) {
-        memcpy(ISO14443ALastDataFrame, &Buffer[0], ISO14443ALastDataFrameBytes);
-    }
-    ISO14443ALastDataFrameBits = BufferBitCount;
-    return BufferBitCount;
-}
-
-#define MAX_STATE_RETRY_COUNT               (0x04)
+#define MAX_STATE_RETRY_COUNT               (0x0B)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault);
 bool CheckStateRetryCountWithLogging(bool resetByDefault, bool performLogging);
@@ -125,12 +117,12 @@ void ISO144434SwitchState(Iso144434StateType NewState);
 void ISO144434SwitchStateWithLogging(Iso144434StateType NewState, bool performLogging);
 
 void ISO144434Reset(void);
-static uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t BitCount);
+uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t BitCount);
 
 /*
  * ISO/IEC 14443-3A implementation
  */
-#define ISO14443A_CRCA_INIT      ((uint16_t) 0x6363)
+#define ISO14443A_CRCA_INIT                 ((uint16_t) 0x6363)
 uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t InitCRCA);
 
 #define GetAndSetBufferCRCA(Buffer, ByteCount)     ({                                \
@@ -141,7 +133,7 @@ uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t
      })
 #define GetAndSetNoResponseCRCA(Buffer)            ({                                \
      uint16_t fullReturnBits = 0;                                                    \
-     ISO14443AAppendCRCA(Buffer, 0);                                                 \
+     ISO14443AUpdateCRCA(Buffer, 0, ISO14443A_CRCA_INIT);                            \
      fullReturnBits = ISO14443A_CRC_FRAME_SIZE;                                      \
      fullReturnBits;                                                                 \
      })
@@ -150,8 +142,10 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     /* The card is powered up but not selected: */
     ISO14443_3A_STATE_IDLE = ISO14443_4_STATE_LAST + 1,
     /* Entered on REQA or WUP --  anticollision is being performed: */
-    ISO14443_3A_STATE_READY1,
-    ISO14443_3A_STATE_READY2,
+    ISO14443_3A_STATE_READY_CL1,
+    ISO14443_3A_STATE_READY_CL1_NVB_END,
+    ISO14443_3A_STATE_READY_CL2,
+    ISO14443_3A_STATE_READY_CL2_NVB_END,
     /* Entered when the card has been selected: */
     ISO14443_3A_STATE_ACTIVE,
     /* Something went wrong or we've received a halt command: */
