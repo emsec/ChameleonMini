@@ -102,7 +102,7 @@ eventTypes = {
     0xD1: { 'name': 'APP DESFIRE NONCE B',  'decoder': binaryDecoder },
     0xD2: { 'name': 'APP DESFIRE NONCE AB', 'decoder': binaryDecoder },
  
-    0xE0: { 'name': 'APP DESFIRE GENERIC ERROR',         'decoder': binaryDecoder },
+    0xE0: { 'name': 'APP DESFIRE GENERIC ERROR',         'decoder': textDecoder },
     0xE1: { 'name': 'APP DESFIRE STATUS INFO',           'decoder': binaryDecoder },
     0xE2: { 'name': 'APP DESFIRE DEBUG OUTPUT',          'decoder': binaryDecoder },
     0xE3: { 'name': 'APP DESFIRE INCOMING',              'decoder': binaryDecoder },
