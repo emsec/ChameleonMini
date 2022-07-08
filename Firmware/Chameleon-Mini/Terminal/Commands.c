@@ -21,6 +21,7 @@
 #ifdef CONFIG_ISO15693_SNIFF_SUPPORT
 #include "../Codec/SniffISO15693.h"
 #endif /*#ifdef CONFIG_ISO15693_SNIFF_SUPPORT*/
+
 extern Reader14443Command Reader14443CurrentCommand;
 extern Sniff14443Command Sniff14443CurrentCommand;
 
@@ -48,9 +49,8 @@ CommandStatusIdType CommandSetConfig(char *OutMessage, const char *InParam) {
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         ConfigurationGetList(OutMessage, TERMINAL_BUFFER_SIZE);
         return COMMAND_INFO_OK_WITH_TEXT_ID;
-    } else if (ConfigurationSetByName(InParam)) {
-        MemoryClear();
-        ConfigurationSetByName(InParam);
+    } else if (ConfigurationByNameIsValid(InParam)) {
+        ConfigurationSetByName(InParam, true);
         SETTING_UPDATE(GlobalSettings.ActiveSettingPtr->Configuration);
         return COMMAND_INFO_OK_ID;
     } else {
@@ -532,7 +532,7 @@ CommandStatusIdType CommandExecCloneMFU(char *OutMessage) {
 #ifndef CONFIG_ISO14443A_READER_SUPPORT
     return COMMAND_ERR_INVALID_USAGE_ID;
 #else
-    ConfigurationSetById(CONFIG_ISO14443A_READER);
+    ConfigurationSetById(CONFIG_ISO14443A_READER, false);
     ApplicationReset();
 
     Reader14443CurrentCommand = Reader14443_Clone_MF_Ultralight;
@@ -664,7 +664,7 @@ CommandStatusIdType CommandExecAutocalibrate(char *OutMessage) {
     /* Only execute autocalibration if the codec does not use autothreshold */
     /* It needs to be disabled by the AUTOTHRESHOLD=DISABLE command */
     if ((GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_ISO15693_SNIFF) &&
-        (SniffISO15693GetAutoThreshold() == false)){
+            (SniffISO15693GetAutoThreshold() == false)) {
         ApplicationReset();
 
         Sniff15693CurrentCommand = Sniff15693_Autocalibrate;
@@ -680,7 +680,7 @@ CommandStatusIdType CommandExecClone(char *OutMessage) {
 #ifndef CONFIG_ISO14443A_READER_SUPPORT
     return COMMAND_ERR_INVALID_USAGE_ID;
 #else
-    ConfigurationSetById(CONFIG_ISO14443A_READER);
+    ConfigurationSetById(CONFIG_ISO14443A_READER, false);
 
     ApplicationReset();
 
@@ -695,25 +695,25 @@ CommandStatusIdType CommandExecClone(char *OutMessage) {
 #endif
 
 #ifdef CONFIG_ISO15693_SNIFF_SUPPORT
-CommandStatusIdType CommandGetAutoThreshold(char *OutParam){
+CommandStatusIdType CommandGetAutoThreshold(char *OutParam) {
 
     /* Only Execute the command if the current configuration is CONFIG_ISO15693_SNIFF */
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF)
         return COMMAND_ERR_INVALID_USAGE_ID;
 
     /* Get Autothreshold mode */
-    if(SniffISO15693GetAutoThreshold())
+    if (SniffISO15693GetAutoThreshold())
         snprintf(OutParam, TERMINAL_BUFFER_SIZE, "%c (enabled)", COMMAND_CHAR_TRUE);
     else
         snprintf(OutParam, TERMINAL_BUFFER_SIZE, "%c - (disabled)", COMMAND_CHAR_FALSE);
     /* In case of overflow, snprintf does not write the terminating '\0' */
     /* so we should make sure it gets terminated */
-    OutParam[TERMINAL_BUFFER_SIZE-1] = '\0';
+    OutParam[TERMINAL_BUFFER_SIZE - 1] = '\0';
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetAutoThreshold(char *OutMessage, const char *InParam){
+CommandStatusIdType CommandSetAutoThreshold(char *OutMessage, const char *InParam) {
 
     /* Only Execute the command if the current configuration is CONFIG_ISO15693_SNIFF */
     if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF)
@@ -723,7 +723,7 @@ CommandStatusIdType CommandSetAutoThreshold(char *OutMessage, const char *InPara
         snprintf(OutMessage, TERMINAL_BUFFER_SIZE, "%c (enable), %c (disable)", COMMAND_CHAR_TRUE, COMMAND_CHAR_FALSE);
         /* In case of overflow, snprintf does not write the terminating '\0' */
         /* so we should make sure it gets terminated */
-        OutMessage[TERMINAL_BUFFER_SIZE-1] = '\0';
+        OutMessage[TERMINAL_BUFFER_SIZE - 1] = '\0';
         return COMMAND_INFO_OK_WITH_TEXT_ID;
     } else if (InParam[0] == COMMAND_CHAR_TRUE) {
         SniffISO15693CtrlAutoThreshold(true);

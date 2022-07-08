@@ -1,19 +1,11 @@
-/* TestAuthenticateAES128.c */
+/* TestAuthenticateLegacy.c */
 
 #include "LibNFCUtils.h"
 #include "LibNFCWrapper.h"
 #include "DesfireUtils.h"
 #include "CryptoUtils.h"
 
-/*
- * See Notes: https://stackoverflow.com/questions/52520044/desfire-ev1-communication-how-to-assign-iv
- */
-
 int main(int argc, char **argv) {
-
-    if (!TestAESEncyptionRoutines()) {
-        return EXIT_FAILURE;
-    }
 
     nfc_context *nfcCtxt;
     nfc_device  *nfcPnd = GetNFCDeviceDriver(&nfcCtxt);
@@ -30,15 +22,8 @@ int main(int argc, char **argv) {
     if (GetApplicationIds(nfcPnd)) {
         return EXIT_FAILURE;
     }
-
-    // First, authenticate with the legacy command (PICC master key):
+    // Start ISO authentication (default key, blank setting of all zeros):
     if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_LEGACY,
-                     MASTER_KEY_INDEX, ZERO_KEY)) {
-        return EXIT_FAILURE;
-    }
-
-    // Start AES authentication (default key, blank setting of all zeros):
-    if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
                      MASTER_KEY_INDEX, ZERO_KEY)) {
         return EXIT_FAILURE;
     }

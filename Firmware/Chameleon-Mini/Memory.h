@@ -8,8 +8,9 @@
 #ifndef MEMORY_H_
 #define MEMORY_H_
 
-#define MEMORY_SIZE					(FLASH_DATA_SIZE) /* From makefile */
-#define MEMORY_INIT_VALUE			0x00
+#define MEMORY_SIZE			(FLASH_DATA_SIZE) /* From Makefile */
+#define MEMORY_INIT_VALUE		0x00
+
 #define MEMORY_SIZE_PER_SETTING		8192
 
 #ifndef __ASSEMBLER__
@@ -17,8 +18,8 @@
 
 void MemoryInit(void);
 void MemoryReadBlock(void *Buffer, uint16_t Address, uint16_t ByteCount);
-void MemoryReadBlockInSetting(void *Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryWriteBlock(const void *Buffer, uint16_t Address, uint16_t ByteCount);
+void MemoryReadBlockInSetting(void *Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryWriteBlockInSetting(const void *Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryClear(void);
 

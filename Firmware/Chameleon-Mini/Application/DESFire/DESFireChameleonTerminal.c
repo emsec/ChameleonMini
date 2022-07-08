@@ -29,34 +29,22 @@ This notice must be retained at the top of all source files where indicated.
 #include "../../Terminal/Terminal.h"
 #include "../../Terminal/Commands.h"
 #include "../../Settings.h"
-
 #include "DESFireChameleonTerminal.h"
 #include "DESFireFirmwareSettings.h"
 #include "DESFirePICCControl.h"
 #include "DESFireLogging.h"
 
 bool IsDESFireConfiguration(void) {
-    return GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE;
-}
-
-CommandStatusIdType ExitOnInvalidConfigurationError(char *OutParam) {
-    if (OutParam != NULL) {
-        sprintf_P(OutParam, PSTR("Invalid Configuration: Set `CONFIG=MF_DESFIRE`.\r\n"));
-    }
-    return COMMAND_ERR_INVALID_USAGE_ID;
+    return GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE ||
+           GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE_2KEV1 ||
+           GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE_4KEV1 ||
+           GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE_4KEV2;
 }
 
 #ifndef DISABLE_PERMISSIVE_DESFIRE_SETTINGS
-CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam) {
-    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-               PSTR("%s <ATS-5|HardwareVersion-2|SoftwareVersion-2|BatchNumber-5|ProductionDate-2> <HexBytes-N>"),
-               DFCOMMAND_SET_HEADER);
-    return COMMAND_INFO_OK_WITH_TEXT_ID;
-}
-
 CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *InParams) {
     if (!IsDESFireConfiguration()) {
-        ExitOnInvalidConfigurationError(OutParam);
+        return COMMAND_ERR_INVALID_USAGE_ID;
     }
     char hdrPropSpecStr[24];
     char propSpecBytesStr[16];
@@ -64,49 +52,61 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
     SIZET dataByteCount = 0x00;
     BYTE StatusError = 0x00;
     if (!sscanf_P(InParams, PSTR("%24s %12s"), hdrPropSpecStr, propSpecBytesStr)) {
-        CommandDESFireGetHeaderProperty(OutParam);
         return COMMAND_ERR_INVALID_PARAM_ID;
     }
     hdrPropSpecStr[23] = propSpecBytesStr[15] = '\0';
     dataByteCount = HexStringToBuffer(propSpecBytes, 16, propSpecBytesStr);
     if (!strcasecmp_P(hdrPropSpecStr, PSTR("ATS"))) {
         if (dataByteCount != 5) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             memcpy(&Picc.ATSBytes[0], propSpecBytes, dataByteCount);
         }
+    }
+    if (!strcasecmp_P(hdrPropSpecStr, PSTR("ATQA"))) {
+        if (dataByteCount != 2) {
+            StatusError = 1;
+        } else {
+            DesfireATQAValue = ((propSpecBytes[0] << 8) & 0xFF00) | (propSpecBytes[1] & 0x00FF);
+            memcpy(&Picc.ATSBytes[0], propSpecBytes, dataByteCount);
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ManuID"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.ManufacturerID = propSpecBytes[0];
+        }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HardwareVersion"))) {
         if (dataByteCount != 2) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             Picc.HwVersionMajor = propSpecBytes[0];
             Picc.HwVersionMinor = propSpecBytes[1];
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SoftwareVersion"))) {
         if (dataByteCount != 2) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             Picc.SwVersionMajor = propSpecBytes[0];
             Picc.SwVersionMinor = propSpecBytes[1];
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("BatchNumber"))) {
         if (dataByteCount != 5) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             memcpy(Picc.BatchNumber, propSpecBytes, 5);
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ProductionDate"))) {
         if (dataByteCount != 2) {
-            StatusError = 0x01;
+            StatusError = 1;
         } else {
             Picc.ProductionWeek = propSpecBytes[0];
             Picc.ProductionYear = propSpecBytes[1];
         }
     } else {
-        StatusError = 0x01;
+        StatusError = 1;
     }
     if (StatusError) {
-        CommandDESFireGetHeaderProperty(OutParam);
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
     SynchronizePICCInfo();
@@ -114,127 +114,31 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
 }
 #endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */
 
-CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InParams) {
+CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InParams) {
     if (!IsDESFireConfiguration()) {
-        ExitOnInvalidConfigurationError(OutParam);
-    }
-    char pprintListSpecStr[32];
-    BYTE StatusError = 0x00;
-    if (!sscanf_P(InParams, PSTR("%31s"), pprintListSpecStr)) {
-        StatusError = 0x01;
-    } else {
-        pprintListSpecStr[31] = '\0';
-        if (!strcasecmp_P(pprintListSpecStr, PSTR("FullImage"))) {
-            PrettyPrintPICCImageData((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
-        } else if (!strcasecmp_P(pprintListSpecStr, PSTR("HeaderData"))) {
-            PrettyPrintPICCHeaderData((BYTE *) OutParam, TERMINAL_BUFFER_SIZE, 0x01);
-        } else {
-            StatusError = 0x01;
-        }
-    }
-    if (StatusError) {
-        snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-                   PSTR("%s <FullImage|HeaderData>"),
-                   DFCOMMAND_LAYOUT_PPRINT);
         return COMMAND_ERR_INVALID_USAGE_ID;
-    }
-    return COMMAND_INFO_OK_WITH_TEXT_ID;
-}
-
-CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam) {
-    if (!IsDESFireConfiguration()) {
-        ExitOnInvalidConfigurationError(OutParam);
-    }
-    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-               PSTR("Chameleon-Mini DESFire enabled firmware built on %s "
-                    "based on %s from \r\n"
-                    "https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.\r\n"
-                    "Revision: %s\r\n"),
-               DESFIRE_FIRMWARE_BUILD_TIMESTAMP,
-               DESFIRE_FIRMWARE_GIT_COMMIT_ID,
-               DESFIRE_FIRMWARE_REVISION);
-    return COMMAND_INFO_OK_WITH_TEXT_ID;
-}
-
-CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam) {
-    if (!IsDESFireConfiguration()) {
-        ExitOnInvalidConfigurationError(OutParam);
-    }
-    switch (LocalLoggingMode) {
-        case OFF:
-            snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("OFF"));
-            break;
-        case NORMAL:
-            snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("NORMAL"));
-            break;
-        case VERBOSE:
-            snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("VERBOSE"));
-            break;
-        case DEBUGGING:
-            snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("DEBUGGING"));
-            break;
-        default:
-            break;
-    }
-    return COMMAND_INFO_OK_WITH_TEXT_ID;
-}
-
-CommandStatusIdType CommandDESFireSetLoggingMode(char *OutParam, const char *InParams) {
-    if (!IsDESFireConfiguration()) {
-        ExitOnInvalidConfigurationError(OutParam);
     }
     char valueStr[16];
     if (!sscanf_P(InParams, PSTR("%15s"), valueStr)) {
         return COMMAND_ERR_INVALID_PARAM_ID;
     }
     valueStr[15] = '\0';
-    if (!strcasecmp_P(valueStr, PSTR("1")) || !strcasecmp_P(valueStr, PSTR("TRUE")) ||
-            !strcasecmp_P(valueStr, PSTR("ON"))) {
-        LocalLoggingMode = NORMAL;
-        return COMMAND_INFO_OK_ID;
-    } else if (!strcasecmp_P(valueStr, PSTR("0")) || !strcasecmp_P(valueStr, PSTR("FALSE")) ||
-               !strcasecmp_P(valueStr, PSTR("OFF"))) {
-        LocalLoggingMode = OFF;
-        return COMMAND_INFO_OK_ID;
-    } else if (!strcasecmp_P(valueStr, PSTR("VERBOSE"))) {
-        LocalLoggingMode = VERBOSE;
-        return COMMAND_INFO_OK_ID;
-    } else if (!strcasecmp_P(valueStr, PSTR("DEBUGGING"))) {
-        LocalLoggingMode = DEBUGGING;
-        return COMMAND_INFO_OK_ID;
-    } else {
-        snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%s <ON|OFF|VERBOSE|DEBUGGING>"),
-                   DFCOMMAND_LOGGING_MODE);
-        return COMMAND_ERR_INVALID_USAGE_ID;
-    }
-}
-
-CommandStatusIdType CommandDESFireGetTestingMode(char *OutParam) {
-    if (!IsDESFireConfiguration()) {
-        ExitOnInvalidConfigurationError(OutParam);
-    } else if (LocalTestingMode) {
-        return COMMAND_INFO_TRUE_ID;
-    }
-    return COMMAND_INFO_FALSE_ID;
-}
-
-CommandStatusIdType CommandDESFireSetTestingMode(char *OutParam, const char *InParams) {
-    if (!IsDESFireConfiguration()) {
-        ExitOnInvalidConfigurationError(OutParam);
-    }
-    char valueStr[16];
-    if (!sscanf_P(InParams, PSTR("%15s"), valueStr)) {
-        return COMMAND_ERR_INVALID_PARAM_ID;
-    }
-    valueStr[15] = '\0';
-    if (!strcasecmp_P(valueStr, PSTR("1")) || !strcasecmp_P(valueStr, PSTR("TRUE")) ||
-            !strcasecmp_P(valueStr, PSTR("ON"))) {
-        LocalTestingMode = 0x01;
-        return COMMAND_INFO_TRUE_ID;
-    } else if (!strcasecmp_P(valueStr, PSTR("0")) || !strcasecmp_P(valueStr, PSTR("FALSE")) ||
-               !strcasecmp_P(valueStr, PSTR("OFF"))) {
-        LocalTestingMode = 0x00;
-        return COMMAND_INFO_FALSE_ID;
+    if (!strcasecmp_P(valueStr, PSTR("Plaintext"))) {
+        DesfireCommMode = DESFIRE_COMMS_PLAINTEXT;
+        DesfireCommandState.ActiveCommMode = DesfireCommMode;
+        return COMMAND_INFO_OK;
+    } else if (!strcasecmp_P(valueStr, PSTR("Plaintext:MAC"))) {
+        DesfireCommMode = DESFIRE_COMMS_PLAINTEXT_MAC;
+        DesfireCommandState.ActiveCommMode = DesfireCommMode;
+        return COMMAND_INFO_OK;
+    } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:3K3DES"))) {
+        DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_DES;
+        DesfireCommandState.ActiveCommMode = DesfireCommMode;
+        return COMMAND_INFO_OK;
+    } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:AES128"))) {
+        DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_AES128;
+        DesfireCommandState.ActiveCommMode = DesfireCommMode;
+        return COMMAND_INFO_OK;
     }
     return COMMAND_ERR_INVALID_USAGE_ID;
 }

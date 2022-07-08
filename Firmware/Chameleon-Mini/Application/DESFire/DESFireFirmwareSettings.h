@@ -34,20 +34,21 @@ This notice must be retained at the top of all source files where indicated.
 
 #define DESFIRE_FIRMWARE_DEBUGGING                  (1)
 
-#define DESFIRE_FIRMWARE_BUILD_TIMESTAMP            (BUILD_DATE)
-#define DESFIRE_FIRMWARE_GIT_COMMIT_ID              (COMMIT_ID)
-#define DESFIRE_FIRMWARE_REVISION                   ("0.0.2")
-#define DESFIRE_FIRMWARE_PICC_LAYOUT_REVISION       (0x02)
+#define DESFIRE_FIRMWARE_BUILD_TIMESTAMP            PSTR(BUILD_DATE)
+#define DESFIRE_FIRMWARE_GIT_COMMIT_ID              PSTR(COMMIT_ID)
+#define DESFIRE_FIRMWARE_REVISION                   PSTR("1.0.0-testing")
+#define DESFIRE_FIRMWARE_PICC_LAYOUT_REVISION       (0x03)
 
 #define DESFIRE_LITTLE_ENDIAN                       (1)
 
-#define DESFIRE_PICC_STRUCT_PACKING                 //__attribute__((aligned(1)))
+#define DESFIRE_PICC_STRUCT_PACKING                 __attribute__((aligned(1)))
 #define DESFIRE_FIRMWARE_PACKING                    __attribute__((packed))
 #define DESFIRE_FIRMWARE_ALIGNAT                    __attribute__((aligned(1)))
-#define DESFIRE_PICC_ARRAY_ALIGNAT                  //__attribute__((aligned(1)))
-#define DESFIRE_FIRMWARE_ARRAY_ALIGNAT              //__attribute__((aligned(1)))
-#define DESFIRE_FIRMWARE_ENUM_PACKING               //__attribute__((aligned(1)))
-#define DESFIRE_FIRMWARE_NOINIT                     //__attribute__ ((section (".noinit")))
+#define DESFIRE_PICC_ARRAY_ALIGNAT                  __attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_ARRAY_ALIGNAT              __attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_ENUM_PACKING               __attribute__((aligned(1)))
+#define DESFIRE_FIRMWARE_NOINIT                     __attribute__((section(".noinit")))
+#define DESFIRE_DFFRAM_SECTION                      __attribute__((section(DESFIRE_DFFRAM_SECTION_NAME)))
 
 /* Some standard boolean interpreted and other values for types and return values: */
 typedef int      BOOL;

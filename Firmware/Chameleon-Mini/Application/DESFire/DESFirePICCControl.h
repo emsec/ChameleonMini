@@ -114,18 +114,26 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings);
 uint8_t WriteDataFilterSetup(uint8_t CommSettings);
 
 /* PICC management */
-void InitialisePiccBackendEV0(uint8_t StorageSize);
-void InitialisePiccBackendEV1(uint8_t StorageSize);
+void FormatPicc(void);
+void CreatePiccApp(void);
+
+void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC);
+void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC);
+void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC);
+
+void FactoryFormatPiccEV0(void);
+void FactoryFormatPiccEV1(uint8_t StorageSize);
+void FactoryFormatPiccEV2(uint8_t StorageSize);
+
 void ResetPiccBackend(void);
+
 bool IsEmulatingEV1(void);
+
 void GetPiccHardwareVersionInfo(uint8_t *Buffer);
 void GetPiccSoftwareVersionInfo(uint8_t *Buffer);
 void GetPiccManufactureInfo(uint8_t *Buffer);
 uint8_t GetPiccKeySettings(void);
-void FormatPicc(void);
-void CreatePiccApp(void);
-void FactoryFormatPiccEV0(void);
-void FactoryFormatPiccEV1(uint8_t StorageSize);
+
 void GetPiccUid(ConfigurationUidType Uid);
 void SetPiccUid(ConfigurationUidType Uid);
 

@@ -42,8 +42,6 @@ This notice must be retained at the top of all source files where indicated.
 
 void SynchronizeAppDir(void) {
     WriteBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
-    //SIZET appCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[SelectedApp.Slot];
-    //WriteBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
 }
 
 BYTE PMKConfigurationChangeable(void) {
@@ -123,7 +121,7 @@ BYTE AMKAllKeysFrozen(void) {
 }
 
 SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
-    if (AppSlot >= DESFIRE_MAX_SLOTS) {
+    if (AppSlot >= AppDir.FirstFreeSlot || AppSlot >= DESFIRE_MAX_SLOTS) {
         return 0x00;
     }
     SelectedAppCacheType appCache;
@@ -159,7 +157,7 @@ SIZET GetAppProperty(DesfireCardLayout propId, BYTE AppSlot) {
 }
 
 void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value) {
-    if (AppSlot >= DESFIRE_MAX_SLOTS) {
+    if (AppSlot >= AppDir.FirstFreeSlot || AppSlot >= DESFIRE_MAX_SLOTS) {
         return;
     }
     SelectedAppCacheType appCache;
@@ -210,6 +208,8 @@ void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value) {
 
 bool KeyIdValid(uint8_t AppSlot, uint8_t KeyId) {
     if (KeyId >= DESFIRE_MAX_KEYS || KeyId >= ReadMaxKeyCount(AppSlot)) {
+        const char *debugMsg = PSTR("INVKEY-KeyId(%02x)-RdMax(%02x)");
+        DEBUG_PRINT_P(debugMsg, KeyId, ReadMaxKeyCount(AppSlot));
         return false;
     }
     return true;
@@ -508,8 +508,10 @@ void SelectAppBySlot(uint8_t AppSlot) {
     if (appCacheSelectedBlockId == 0) {
         return;
     }
-    SIZET prevAppCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[SelectedApp.Slot];
-    WriteBlockBytes(&SelectedApp, prevAppCacheSelectedBlockId, sizeof(SelectedAppCacheType));
+    if (SelectedApp.Slot != (uint8_t) -1) {
+        SIZET prevAppCacheSelectedBlockId = AppDir.AppCacheStructBlockOffset[SelectedApp.Slot];
+        WriteBlockBytes(&SelectedApp, prevAppCacheSelectedBlockId, sizeof(SelectedAppCacheType));
+    }
     ReadBlockBytes(&SelectedApp, appCacheSelectedBlockId, sizeof(SelectedAppCacheType));
     SelectedApp.Slot = AppSlot;
     SynchronizeAppDir();
@@ -556,8 +558,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     bool initMasterApp = false;
 
     /* Verify this AID has not been allocated yet */
-    if ((Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00) &&
-            AppDir.FirstFreeSlot == 0) {
+    if ((Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00) && AppDir.FirstFreeSlot == 0) {
         Slot = 0;
         initMasterApp = true;
     } else if ((Aid[0] == 0x00) && (Aid[1] == 0x00) && (Aid[2] == 0x00)) {
@@ -584,6 +585,8 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     /* Allocate storage for the application structure itself */
     AppDir.AppCacheStructBlockOffset[Slot] = AllocateBlocks(SELECTED_APP_CACHE_TYPE_BLOCK_SIZE);
     if (AppDir.AppCacheStructBlockOffset[Slot] == 0) {
+        const char *debugMsg = PSTR("X - alloc blks, slot = %d");
+        DEBUG_PRINT_P(debugMsg, Slot);
         return STATUS_OUT_OF_EEPROM_ERROR;
     }
     /* Allocate storage for the application components */
@@ -593,7 +596,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     appCacheData.KeyCount = 1; // Master Key
     appCacheData.MaxKeyCount = KeyCount;
     appCacheData.FileCount = 0;
-    appCacheData.CryptoCommStandard = DESFIRE_DEFAULT_COMMS_STANDARD;
+    appCacheData.CryptoCommStandard = DesfireCommMode;
     appCacheData.KeySettings = AllocateBlocks(APP_CACHE_KEY_SETTINGS_ARRAY_BLOCK_SIZE);
     if (appCacheData.KeySettings == 0) {
         return STATUS_OUT_OF_EEPROM_ERROR;
@@ -624,7 +627,9 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
         return STATUS_OUT_OF_EEPROM_ERROR;
     } else {
         SIZET fileAccessRightsData[DESFIRE_MAX_FILES];
-        memset(fileAccessRightsData, 0x0f, sizeof(SIZET) * DESFIRE_MAX_FILES);
+        for (int fidx = 0; fidx < DESFIRE_MAX_FILES; fidx++) {
+            fileAccessRightsData[fidx] = 0x000f;
+        }
         WriteBlockBytes(fileAccessRightsData, appCacheData.FileAccessRights, sizeof(SIZET) * DESFIRE_MAX_FILES);
     }
     appCacheData.KeyVersionsArray = AllocateBlocks(APP_CACHE_KEY_VERSIONS_ARRAY_BLOCK_SIZE);
@@ -639,9 +644,9 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     if (appCacheData.KeyTypesArray == 0) {
         return STATUS_OUT_OF_EEPROM_ERROR;
     } else {
-        BYTE keyTypesData[DESFIRE_MAX_KEYS];
-        memset(keyTypesData, 0x00, DESFIRE_MAX_KEYS);
-        WriteBlockBytes(keyTypesData, appCacheData.KeyTypesArray, DESFIRE_MAX_KEYS);
+        BYTE keyTypesData[APP_CACHE_KEY_TYPES_ARRAY_BLOCK_SIZE * DESFIRE_BLOCK_SIZE];
+        memset(keyTypesData, 0x00, APP_CACHE_KEY_TYPES_ARRAY_BLOCK_SIZE * DESFIRE_BLOCK_SIZE);
+        WriteBlockBytes(keyTypesData, appCacheData.KeyTypesArray, APP_CACHE_KEY_TYPES_ARRAY_BLOCK_SIZE * DESFIRE_BLOCK_SIZE);
     }
     appCacheData.FilesAddress = AllocateBlocks(APP_CACHE_FILE_BLOCKIDS_ARRAY_BLOCK_SIZE);
     if (appCacheData.FilesAddress == 0) {
@@ -698,7 +703,7 @@ uint16_t DeleteApp(const DESFireAidType Aid) {
     AppDir.FirstFreeSlot = MIN(Slot, AppDir.FirstFreeSlot);
     SynchronizeAppDir();
     if (!IsPiccAppSelected()) {
-        InvalidateAuthState(0x00);
+        InvalidateAuthState(0);
     }
     SelectAppBySlot(DESFIRE_PICC_APP_SLOT);
     return STATUS_OPERATION_OK;
@@ -715,11 +720,11 @@ TransferStatus GetApplicationIdsTransfer(uint8_t *Buffer) {
     Status.BytesProcessed = 0;
     for (EntryIndex = TransferState.GetApplicationIds.NextIndex;
             EntryIndex < DESFIRE_MAX_SLOTS; ++EntryIndex) {
-        if ((AppDir.AppIds[EntryIndex][0] | AppDir.AppIds[EntryIndex][1] |
-                AppDir.AppIds[EntryIndex][2]) == 0)
+        if ((AppDir.AppIds[EntryIndex][0] | AppDir.AppIds[EntryIndex][1] | AppDir.AppIds[EntryIndex][2]) == 0) {
             continue;
+        }
         /* If it won't fit -- remember and return */
-        if (Status.BytesProcessed >= TERMINAL_BUFFER_SIZE) { // TODO ??? 19 / Magic Number ???
+        if (Status.BytesProcessed >= TERMINAL_BUFFER_SIZE) {
             TransferState.GetApplicationIds.NextIndex = EntryIndex;
             Status.IsComplete = false;
             return Status;

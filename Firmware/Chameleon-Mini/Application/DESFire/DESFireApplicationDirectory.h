@@ -35,46 +35,36 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_MAX_FILES_EV0             16
 #define DESFIRE_MAX_FILES_EV1             32
 
-#if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_APPS)
-#define DESFIRE_MAX_APPS                       (6)
-#elif defined(DESFIRE_CUSTOM_MAX_APPS)
+#ifdef MEMORY_LIMITED_TESTING
+#define DESFIRE_MAX_APPS                       (3)
+#else
+#ifdef DESFIRE_CUSTOM_MAX_APPS
 #define DESFIRE_MAX_APPS                       (DESFIRE_CUSTOM_MAX_APPS)
 #else
 #define DESFIRE_MAX_APPS                       (28)
 #endif
-
-#define DESFIRE_MAX_SLOTS                           (DESFIRE_MAX_APPS + 1)
-
-#if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_FILES)
-#define DESFIRE_MAX_FILES                      (6)
-#elif defined(DESFIRE_CUSTOM_MAX_FILES)
-#define DESFIRE_MAX_FILES                      (DESFIRE_CUSTOM_MAX_FILES)
-#else
-#define DESFIRE_MAX_FILES                      (DESFIRE_MAX_FILES_EV1)
 #endif
 
-#if defined(DESFIRE_MEMORY_LIMITED_TESTING) && !defined(DESFIRE_CUSTOM_MAX_KEYS)
-#define DESFIRE_MAX_KEYS                       (4)
-#elif defined(DESFIRE_CUSTOM_MAX_KEYS)
+#define DESFIRE_MAX_SLOTS                      (DESFIRE_MAX_APPS + 1)
+
+#ifdef MEMORY_LIMITED_TESTING
+#define DESFIRE_MAX_FILES                      (4)
+#else
+#ifdef DESFIRE_CUSTOM_MAX_FILES
+#define DESFIRE_MAX_FILES                      (DESFIRE_CUSTOM_MAX_FILES)
+#else
+#define DESFIRE_MAX_FILES                      (DESFIRE_MAX_FILES_EV0)
+#endif
+#endif
+
+#ifdef MEMORY_LIMITED_TESTING
+#define DESFIRE_MAX_KEYS                       (2)
+#else
+#ifdef DESFIRE_CUSTOM_MAX_KEYS
 #define DESFIRE_MAX_KEYS                       (DESFIRE_CUSTOM_MAX_KEYS)
 #else
 #define DESFIRE_MAX_KEYS                       (14)
 #endif
-
-#ifdef DESFIRE_USE_FACTORY_SIZES
-#undef  DESFIRE_CUSTOM_MAX_APPS
-#define DESFIRE_CUSTOM_MAX_APPS                (28)
-#undef  DESFIRE_CUSTOM_MAX_KEYS
-#define DESFIRE_CUSTOM_MAX_KEYS                (14)
-#undef  DESFIRE_CUSTOM_MAX_FILES
-#define DESFIRE_CUSTOM_MAX_FILES               (DESFIRE_MAX_FILES_EV1)
-#elif defined(DESFIRE_MAXIMIZE_SIZES_FOR_STORAGE)
-#undef  DESFIRE_CUSTOM_MAX_APPS
-#define DESFIRE_CUSTOM_MAX_APPS                (DESFIRE_EEPROM_BLOCK_SIZE - 1)
-#undef  DESFIRE_CUSTOM_MAX_KEYS
-#define DESFIRE_CUSTOM_MAX_KEYS                (DESFIRE_EEPROM_BLOCK_SIZE)
-#undef  DESFIRE_CUSTOM_MAX_FILES
-#define DESFIRE_CUSTOM_MAX_FILES               (DESFIRE_EEPROM_BLOCK_SIZE)
 #endif
 
 /* Mifare DESFire EV1 Application crypto operations */

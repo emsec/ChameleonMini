@@ -38,24 +38,12 @@ bool IsDESFireConfiguration(void);
 
 #ifndef DISABLE_PERMISSIVE_DESFIRE_SETTINGS
 #define DFCOMMAND_SET_HEADER                  "DF_SETHDR"
-CommandStatusIdType CommandDESFireGetHeaderProperty(char *OutParam);
 CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutMessage, const char *InParams);
-#endif
+#endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */
 
-#define DFCOMMAND_LAYOUT_PPRINT               "DF_PPRINT_PICC"
-CommandStatusIdType CommandDESFireLayoutPPrint(char *OutParam, const char *InParams);
+#define DFCOMMAND_COMM_MODE                   "DF_COMM_MODE"
+CommandStatusIdType CommandDESFireSetCommMode(char *OutMessage, const char *InParams);
 
-#define DFCOMMAND_FIRMWARE_INFO               "DF_FWINFO"
-CommandStatusIdType CommandDESFireFirmwareInfo(char *OutParam);
+#endif /* DESFire Support */
 
-#define DFCOMMAND_LOGGING_MODE                "DF_LOGMODE"
-CommandStatusIdType CommandDESFireGetLoggingMode(char *OutParam);
-CommandStatusIdType CommandDESFireSetLoggingMode(char *OutMessage, const char *InParams);
-
-#define DFCOMMAND_TESTING_MODE                "DF_TESTMODE"
-CommandStatusIdType CommandDESFireGetTestingMode(char *OutParam);
-CommandStatusIdType CommandDESFireSetTestingMode(char *OutMessage, const char *InParams);
-
-#endif
-
-#endif
+#endif /* __DESFIRE_CHAMELEON_TERMINAL_H__ */

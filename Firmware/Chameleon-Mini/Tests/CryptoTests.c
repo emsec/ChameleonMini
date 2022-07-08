@@ -4,6 +4,7 @@
 
 #include "CryptoTests.h"
 
+#ifdef ENABLE_CRYPTO_TDEA_TESTS
 bool CryptoTDEATestCase1(char *OutParam, uint16_t MaxOutputLength) {
     const uint8_t ZeroBlock[CRYPTO_DES_BLOCK_SIZE] = {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -53,7 +54,55 @@ bool CryptoTDEATestCase2(char *OutParam, uint16_t MaxOutputLength) {
     }
     return true;
 }
+#endif
 
+#ifdef ENABLE_CRYPTO_3DES_TESTS
+// Data from:
+// https://boringssl.googlesource.com/boringssl/+/2490/crypto/cipher/test/cipher_test.txt#33
+bool Crypto3DESTestCase1(char *OutParam, uint16_t MaxOutputLength) {
+    const uint8_t KeyData[3 * CRYPTO_DES_BLOCK_SIZE] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xf1, 0xe0, 0xd3, 0xc2, 0xb5, 0xa4, 0x97, 0x86,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+    const uint8_t PlainText[4 * CRYPTO_DES_BLOCK_SIZE] = {
+        0x37, 0x36, 0x35, 0x34, 0x33, 0x32, 0x31, 0x20,
+        0x4E, 0x6F, 0x77, 0x20, 0x69, 0x73, 0x20, 0x74,
+        0x68, 0x65, 0x20, 0x74, 0x69, 0x6D, 0x65, 0x20,
+        0x66, 0x6F, 0x72, 0x20, 0x00, 0x00, 0x00, 0x00
+    };
+    const uint8_t CipherText[4 * CRYPTO_DES_BLOCK_SIZE] = {
+        0x3F, 0xE3, 0x01, 0xC9, 0x62, 0xAC, 0x01, 0xD0,
+        0x22, 0x13, 0x76, 0x3C, 0x1C, 0xBD, 0x4C, 0xDC,
+        0x79, 0x96, 0x57, 0xC0, 0x64, 0xEC, 0xF5, 0xD4,
+        0x1C, 0x67, 0x38, 0x12, 0xCF, 0xDE, 0x96, 0x75
+    };
+    const uint8_t IV[CRYPTO_DES_BLOCK_SIZE] = {
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+    uint8_t tempBuffer[4 * CRYPTO_DES_BLOCK_SIZE];
+    uint16_t dataBytes = 4 * CRYPTO_DES_BLOCK_SIZE;
+    Encrypt3DESBuffer(dataBytes, PlainText, tempBuffer, IV, KeyData);
+    if (memcmp(tempBuffer, CipherText, dataBytes)) {
+        strcat_P(OutParam, PSTR("> ENC: "));
+        OutParam += 7;
+        BufferToHexString(OutParam, MaxOutputLength - 7, tempBuffer, dataBytes);
+        strcat_P(OutParam, PSTR("\r\n"));
+        return false;
+    }
+    Decrypt3DESBuffer(dataBytes, tempBuffer, CipherText, IV, KeyData);
+    if (memcmp(tempBuffer, PlainText, dataBytes)) {
+        strcat_P(OutParam, PSTR("> DEC: "));
+        OutParam += 7;
+        BufferToHexString(OutParam, MaxOutputLength - 7, tempBuffer, dataBytes);
+        strcat_P(OutParam, PSTR("\r\n"));
+        return false;
+    }
+    return true;
+}
+#endif
+
+#ifdef ENABLE_CRYPTO_AES_TESTS
 bool CryptoAESTestCase1(char *OutParam, uint16_t MaxOutputLength) {
     // Key from FIPS-197: 00010203 04050607 08090A0B 0C0D0E0
     const uint8_t KeyData[CRYPTO_AES_KEY_SIZE] = {
@@ -136,5 +185,6 @@ bool CryptoAESTestCase2(char *OutParam, uint16_t MaxOutputLength) {
     }
     return true;
 }
+#endif
 
 #endif /* ENABLE_CRYPTO_TESTS */

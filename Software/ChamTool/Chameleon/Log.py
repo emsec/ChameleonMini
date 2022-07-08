@@ -87,7 +87,10 @@ eventTypes = {
     0x90: { 'name': 'APP AUTH',       'decoder': binaryDecoder },
     0x91: { 'name': 'APP HALT',       'decoder': binaryDecoder },
     0x92: { 'name': 'APP UNKNOWN',    'decoder': binaryDecoder },
-    
+    0x93: { 'name': 'APP REQA',       'decoder': binaryDecoder },
+    0x94: { 'name': 'APP WUPA',       'decoder': binaryDecoder },
+    0x95: { 'name': 'APP DESELECT',   'decoder': binaryDecoder },
+
     0xA0: { 'name': 'APP AUTHING' ,    'decoder': binaryDecoder },
     0xA1: { 'name': 'APP AUTHED',      'decoder': binaryDecoder },
 
@@ -99,7 +102,7 @@ eventTypes = {
     0xD1: { 'name': 'APP DESFIRE NONCE B',  'decoder': binaryDecoder },
     0xD2: { 'name': 'APP DESFIRE NONCE AB', 'decoder': binaryDecoder },
  
-    0xE0: { 'name': 'APP DESFIRE GENERIC ERROR',         'decoder': binaryDecoder },
+    0xE0: { 'name': 'APP DESFIRE GENERIC ERROR',         'decoder': textDecoder },
     0xE1: { 'name': 'APP DESFIRE STATUS INFO',           'decoder': binaryDecoder },
     0xE2: { 'name': 'APP DESFIRE DEBUG OUTPUT',          'decoder': binaryDecoder },
     0xE3: { 'name': 'APP DESFIRE INCOMING',              'decoder': binaryDecoder },

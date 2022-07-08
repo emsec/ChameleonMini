@@ -8,10 +8,17 @@
 CommandStatusIdType CommandRunTests(char *OutParam) {
     const ChameleonTestType testCases[] = {
 #ifdef ENABLE_CRYPTO_TESTS
+#ifdef ENABLE_CRYPTO_TDEA_TESTS
         &CryptoTDEATestCase1,
         &CryptoTDEATestCase2,
+#endif
+#ifdef ENABLE_CRYPTO_3DES_TESTS
+        &Crypto3DESTestCase1,
+#endif
+#ifdef ENABLE_CRYPTO_AES_TESTS
         &CryptoAESTestCase1,
         &CryptoAESTestCase2,
+#endif
 #endif
     };
     uint32_t t;

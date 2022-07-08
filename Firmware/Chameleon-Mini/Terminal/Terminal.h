@@ -16,7 +16,11 @@
 #define TERMINAL_VBUS_PORT      PORTD
 #define TERMINAL_VBUS_MASK      PIN5_bm
 
+#ifdef MEMORY_LIMITED_TESTING
+#define TERMINAL_BUFFER_SIZE    256 // 384
+#else
 #define TERMINAL_BUFFER_SIZE	512
+#endif
 
 typedef enum {
     TERMINAL_UNINITIALIZED,

@@ -33,10 +33,8 @@ This notice must be retained at the top of all source files where indicated.
 /* Reserve some space on the stack (text / data segment) for intermediate
    storage of strings and data we need to write so we do not have to rely
    on a bothersome heap-based scheme for passing pointers to functions: */
-#define DATA_BUFFER_SIZE_SMALL              (32)
-#define STRING_BUFFER_SIZE                  (92)
+#define STRING_BUFFER_SIZE                  (48)
 extern volatile char __InternalStringBuffer[STRING_BUFFER_SIZE];
-extern char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL];
 
 /*
  * EEPROM and FRAM memory management routines:
@@ -47,15 +45,11 @@ void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count);
 #define WriteBlockBytes(Buffer, StartBlock, Count)                 \
     WriteBlockBytesMain(Buffer, StartBlock, Count);
 
-void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count);
-
 uint16_t AllocateBlocksMain(uint16_t BlockCount);
 #define AllocateBlocks(BlockCount)                                 \
     AllocateBlocksMain(BlockCount);
 
 BYTE GetCardCapacityBlocks(void);
-
-void MemsetBlockBytes(uint8_t initValue, SIZET startBlock, SIZET byteCount);
 
 /* File data transfer related routines: */
 void ReadDataEEPROMSource(uint8_t *Buffer, uint8_t Count);

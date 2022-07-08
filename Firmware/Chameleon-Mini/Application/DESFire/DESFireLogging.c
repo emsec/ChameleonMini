@@ -28,49 +28,68 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "../../Log.h"
 #include "../../Terminal/Terminal.h"
-
+#include "DESFireISO14443Support.h"
 #include "DESFireLogging.h"
 
-#ifdef DESFIRE_DEFAULT_DEBUGGING_MODE
-DESFireLoggingMode LocalLoggingMode = DESFIRE_DEFAULT_LOGGING_MODE;
+#ifdef DESFIRE_DEBUGGING
+void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize) {
+    if (BufSize >= DESFIRE_MIN_OUTGOING_LOGSIZE) {
+        LogEntry(LogCode, (void *) LogDataBuffer, BufSize);
+    }
+}
 #else
-DESFireLoggingMode LocalLoggingMode = DEBUGGING;
+void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize) {}
 #endif
 
-#ifdef DESFIRE_DEFAULT_TESTING_MODE
-BYTE LocalTestingMode = DESFIRE_DEFAULT_TESTING_MODE;
+#ifdef DESFIRE_DEBUGGING
+void DesfireLogISOStateChange(int state, int logCode) {
+    const char *statePrintName;
+    int logLength = 0;
+    do {
+        switch (state) {
+            case ISO14443_4_STATE_EXPECT_RATS:
+                statePrintName = PSTR("ISO14443_4_STATE_EXPECT_RATS");
+                break;
+            case ISO14443_4_STATE_ACTIVE:
+                statePrintName = PSTR("ISO14443_4_STATE_ACTIVE");
+                break;
+            case ISO14443_4_STATE_LAST:
+                statePrintName = PSTR("ISO14443_4_STATE_LAST");
+                break;
+            case ISO14443_3A_STATE_IDLE:
+                statePrintName = PSTR("ISO14443_3A_STATE_IDLE");
+                break;
+            case ISO14443_3A_STATE_READY_CL1:
+                statePrintName = PSTR("ISO14443_3A_STATE_READY_CL1");
+                break;
+            case ISO14443_3A_STATE_READY_CL1_NVB_END:
+                statePrintName = PSTR("ISO14443_3A_STATE_READY_CL1_NVB_END");
+                break;
+            case ISO14443_3A_STATE_READY_CL2:
+                statePrintName = PSTR("ISO14443_3A_STATE_READY_CL2");
+                break;
+            case ISO14443_3A_STATE_READY_CL2_NVB_END:
+                statePrintName = PSTR("ISO14443_3A_STATE_READY_CL2_NVB_END");
+                break;
+            case ISO14443_3A_STATE_ACTIVE:
+                statePrintName = PSTR("ISO14443_3A_STATE_ACTIVE");
+                break;
+            case ISO14443_3A_STATE_HALT:
+                statePrintName = PSTR("ISO14443_3A_STATE_HALT");
+                break;
+            default:
+                statePrintName = PSTR("Unknown state");
+                break;
+        }
+    } while (0);
+    snprintf_P((char *) __InternalStringBuffer, STRING_BUFFER_SIZE, PSTR(""));
+    strcat_P((char *) __InternalStringBuffer, statePrintName);
+    logLength = StringLength((char *) __InternalStringBuffer,
+                             STRING_BUFFER_SIZE);
+    DesfireLogEntry(logCode, (char *) __InternalStringBuffer, logLength);
+}
 #else
-BYTE LocalTestingMode = 0x00;
+void DesfireLogISOStateChange(int state, int logCode) {}
 #endif
-
-void DESFireLogErrorMessage(char *fmtMsg, ...) {
-    char Format[80];
-    char Buffer[80];
-    va_list args;
-    strcpy_P(Format, fmtMsg);
-    va_start(args, fmtMsg);
-    vsnprintf(Buffer, sizeof(Buffer), Format, args);
-    va_end(args);
-    LogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR, Buffer, StringLength(Buffer, 80) + 1);
-}
-
-void DESFireLogSourceCodeTODO(char *implNoteMsg, char *srcFileLoggingData) {
-    char *bigDataBuffer = (char *) __InternalStringBuffer;
-    snprintf_P(bigDataBuffer, STRING_BUFFER_SIZE, PSTR("%s: %s"),
-               implNoteMsg, srcFileLoggingData);
-    SIZET logMsgBufferSize = StringLength(bigDataBuffer, STRING_BUFFER_SIZE);
-    LogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT, bigDataBuffer, logMsgBufferSize + 1);
-}
-
-void DebugPrintP(const char *fmt, ...) {
-    char Format[80];
-    char Buffer[80];
-    va_list args;
-    strcpy_P(Format, fmt);
-    va_start(args, fmt);
-    vsnprintf(Buffer, sizeof(Buffer), Format, args);
-    va_end(args);
-    TerminalSendString(Buffer);
-}
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

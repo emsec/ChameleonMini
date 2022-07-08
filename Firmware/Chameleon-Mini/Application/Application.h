@@ -30,6 +30,14 @@ INLINE void ApplicationInit(void) {
     ActiveConfiguration.ApplicationInitFunc();
 }
 
+INLINE void ApplicationInitRunOnce(void) {
+    if (ActiveConfiguration.ApplicationInitRunOnceFunc != NULL) {
+        ActiveConfiguration.ApplicationInitRunOnceFunc();
+    } else {
+        ActiveConfiguration.ApplicationInitFunc();
+    }
+}
+
 INLINE void ApplicationTask(void) {
     ActiveConfiguration.ApplicationTaskFunc();
 }
@@ -44,7 +52,6 @@ INLINE uint16_t ApplicationProcess(uint8_t *ByteBuffer, uint16_t ByteCount) {
 
 INLINE void ApplicationReset(void) {
     ActiveConfiguration.ApplicationResetFunc();
-    //LogEntry(LOG_INFO_RESET_APP, NULL, 0);
 }
 
 INLINE void ApplicationGetUid(ConfigurationUidType Uid) {

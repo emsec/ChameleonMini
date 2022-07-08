@@ -26,6 +26,7 @@ This notice must be retained at the top of all source files where indicated.
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
 
+#include "../../Common.h"
 #include "../../Memory.h"
 
 #include "DESFireMemoryOperations.h"
@@ -33,76 +34,39 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireFile.h"
 #include "DESFireLogging.h"
 
+#define BLOCKWISE_IO_MULTIPLIER           (DESFIRE_BLOCK_SIZE)
+
 volatile char __InternalStringBuffer[STRING_BUFFER_SIZE] = { 0 };
-char __InternalStringBuffer2[DATA_BUFFER_SIZE_SMALL] = { 0 };
 
 void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count) {
-    if (StartBlock * DESFIRE_EEPROM_BLOCK_SIZE >= MEMORY_SIZE_PER_SETTING) {
-        const char *rbbLogMsg = PSTR("RBB Start Block Too Large -- %d -- %d");
-        DEBUG_PRINT_P(rbbLogMsg, StartBlock, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE);
+    if (StartBlock * BLOCKWISE_IO_MULTIPLIER >= MEMORY_SIZE_PER_SETTING) {
+        const char *rbbLogMsg = PSTR("RBB Too Lg - %d / %d");
+        DEBUG_PRINT_P(rbbLogMsg, StartBlock, MEMORY_SIZE_PER_SETTING);
         return;
     }
-    //else if(StartBlock == 0) {
-    //    const char *logWarningMsg = PSTR("WARNING: Reading NULL Address!");
-    //    DEBUG_PRINT_P(logWarningMsg);
-    //}
-    MemoryReadBlockInSetting(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
+    MemoryReadBlockInSetting(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
 }
 
 void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count) {
-    if (StartBlock * DESFIRE_EEPROM_BLOCK_SIZE >= MEMORY_SIZE_PER_SETTING) {
-        const char *wbbLogMsg = PSTR("WBB Start Block Too Large -- %d -- %s");
-        DEBUG_PRINT_P(wbbLogMsg, StartBlock, __InternalStringBuffer2);
+    if (StartBlock * BLOCKWISE_IO_MULTIPLIER >= MEMORY_SIZE_PER_SETTING) {
+        const char *wbbLogMsg = PSTR("WBB Too Lg - %d / %d");
+        DEBUG_PRINT_P(wbbLogMsg, StartBlock, MEMORY_SIZE_PER_SETTING);
         return;
     }
-    //else if(StartBlock == 0) {
-    //    const char *logWarningMsg = PSTR("WARNING: Writing NULL! -- %s");
-    //    DEBUG_PRINT_P(logWarningMsg, __InternalStringBuffer2);
-    //}
-    MemoryWriteBlockInSetting(Buffer, StartBlock * DESFIRE_EEPROM_BLOCK_SIZE, Count);
-}
-
-void CopyBlockBytes(SIZET DestBlock, SIZET SrcBlock, SIZET Count) {
-    uint8_t Buffer[DESFIRE_EEPROM_BLOCK_SIZE];
-    uint16_t SrcOffset = SrcBlock;
-    uint16_t DestOffset = DestBlock;
-    while (Count > 0) {
-        SIZET bytesToWrite = MIN(Count, DESFIRE_EEPROM_BLOCK_SIZE);
-        ReadBlockBytes(Buffer, SrcOffset, bytesToWrite);
-        WriteBlockBytes(Buffer, DestOffset, bytesToWrite);
-        SrcOffset += 1;
-        DestOffset += 1;
-        Count -= DESFIRE_EEPROM_BLOCK_SIZE;
-    }
+    MemoryWriteBlockInSetting(Buffer, StartBlock * BLOCKWISE_IO_MULTIPLIER, Count);
 }
 
 uint16_t AllocateBlocksMain(uint16_t BlockCount) {
     uint16_t Block;
     /* Check if we have space */
     Block = Picc.FirstFreeBlock;
-    if (Block + BlockCount < Block || Block + BlockCount >= MEMORY_SIZE_PER_SETTING / DESFIRE_EEPROM_BLOCK_SIZE) {
+    if (Block + BlockCount < Block || Block + BlockCount >= MEMORY_SIZE_PER_SETTING / BLOCKWISE_IO_MULTIPLIER) {
         return 0;
     }
     Picc.FirstFreeBlock = Block + BlockCount;
-    DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = Picc.FirstFreeBlock;
+    DESFIRE_FIRST_FREE_BLOCK_ID = Picc.FirstFreeBlock;
     SynchronizePICCInfo();
     return Block;
-}
-
-/* TODO: Why doesn't this work ??? -- It freezes the AVR chip when run !! */
-void MemsetBlockBytes(uint8_t initValue, SIZET startBlock, SIZET byteCount) {
-    BYTE fillerBuf[DESFIRE_EEPROM_BLOCK_SIZE];
-    memset(fillerBuf, initValue, DESFIRE_EEPROM_BLOCK_SIZE);
-    SIZET writeAddr = startBlock;
-    while (byteCount > 0) {
-        WriteBlockBytes(&fillerBuf[0], writeAddr, MIN(DESFIRE_EEPROM_BLOCK_SIZE, byteCount));
-        ++writeAddr;
-        if (byteCount > DESFIRE_EEPROM_BLOCK_SIZE) {
-            byteCount -= DESFIRE_EEPROM_BLOCK_SIZE;
-        } else {
-            break;
-        }
-    }
 }
 
 uint8_t GetCardCapacityBlocks(void) {

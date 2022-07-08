@@ -76,21 +76,23 @@ void LogInit(void) {
         result = true;
         WriteEEPBlock((uint16_t) &LogFRAMAddrValid, &result, 1);
     }
-
     LogEntry(LOG_INFO_SYSTEM_BOOT, NULL, 0);
 }
 
 void LogTick(void) {
-    // The logging functionality slows down the timings of data exchanges between
-    // Chameleon emulated tags and readers, so schedule the logging writes to
-    // happen only on intervals that will be outside of timing windows for individual xfers
-    // initiated from PICC <--> PCD (e.g., currently approximately every 600ms):
-    if ((++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0) {
-        if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE)
+    /*
+     * The logging functionality slows down the timings of data exchanges between
+     *  Chameleon emulated tags and readers, so schedule the logging writes to
+     * happen only on intervals that will be outside of timing windows for individual xfers
+     * initiated from PICC <--> PCD (e.g., currently approximately every 600ms):
+     */
+    if (GlobalSettings.ActiveSettingPtr->LogMode == LOG_MODE_LIVE) {
+        if ((++LiveLogModePostTickCount % LIVE_LOGGER_POST_TICKS) == 0) {
             AtomicLiveLogTick();
-        if (EnableLogSRAMtoFRAM)
-            LogSRAMToFRAM();
-        LiveLogModePostTickCount = 0;
+            LiveLogModePostTickCount = 0;
+        }
+    } else if (EnableLogSRAMtoFRAM) {
+        LogSRAMToFRAM();
     }
 }
 
@@ -213,7 +215,6 @@ void LogGetModeList(char *List, uint16_t BufferSize) {
 void LogSRAMToFRAM(void) {
     if (LogMemLeft < LOG_SIZE) {
         uint16_t FRAM_Free = FRAM_LOG_SIZE - (LogFRAMAddr - FRAM_LOG_START_ADDR);
-
         if (FRAM_Free >= LOG_SIZE - LogMemLeft) {
             MemoryWriteBlock(LogMem, LogFRAMAddr, LOG_SIZE - LogMemLeft);
             LogFRAMAddr += LOG_SIZE - LogMemLeft;
@@ -223,13 +224,15 @@ void LogSRAMToFRAM(void) {
             // not everything fits in FRAM, simply write as much as possible to FRAM
             MemoryWriteBlock(LogMem, LogFRAMAddr, FRAM_Free);
             memmove(LogMem, LogMem + FRAM_Free, LOG_SIZE - FRAM_Free); // FRAM_Free is < LOG_SIZE - LogMemLeft and thus also < LOG_SIZE
-
             LogMemPtr -= FRAM_Free;
             LogMemLeft += FRAM_Free;
             LogFRAMAddr += FRAM_Free;
             MemoryWriteBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
         } else {
-            // TODO handle the case in which the FRAM is full
+            // TODO: handle the case in which the FRAM is full ???
+            // Notify the user by repeatedly blinking the LED:
+            LEDHook(LED_LOG_MEM_FULL, LED_BLINK_8X);
+            LEDHook(LED_LOG_MEM_FULL, LED_BLINK_8X);
         }
     }
 }

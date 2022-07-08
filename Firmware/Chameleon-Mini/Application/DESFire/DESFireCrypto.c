@@ -40,16 +40,15 @@ This notice must be retained at the top of all source files where indicated.
 
 CryptoKeyBufferType SessionKey = { 0 };
 CryptoIVBufferType SessionIV = { 0 };
-BYTE SessionIVByteSize = { 0 };
+BYTE SessionIVByteSize = 0;
+BYTE DesfireCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 
 uint16_t AESCryptoKeySizeBytes = 0;
 CryptoAESConfig_t AESCryptoContext = { 0 };
-DesfireAESCryptoKey AESCryptoSessionKey = { 0 };
-DesfireAESCryptoKey AESCryptoIVBuffer = { 0 };
 
-uint8_t Authenticated = 0x00;
+bool Authenticated = false;
 uint8_t AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
-uint8_t AuthenticatedWithPICCMasterKey = 0x00;
+bool AuthenticatedWithPICCMasterKey = false;
 uint8_t CryptoAuthMethod = CRYPTO_TYPE_ANY;
 uint8_t ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 
@@ -57,12 +56,15 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
     if (!keepPICCAuthData) {
         AuthenticatedWithPICCMasterKey = DESFIRE_NOT_AUTHENTICATED;
     }
-    Authenticated = 0x00;
+    Authenticated = false;
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
-    AuthenticatedWithPICCMasterKey = 0x00;
+    AuthenticatedWithPICCMasterKey = false;
     Iso7816FileSelected = false;
     CryptoAuthMethod = CRYPTO_TYPE_ANY;
     ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
+    DesfireCommMode = ActiveCommMode;
+    memset(&SessionKey[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
+    memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
 }
 
 bool IsAuthenticated(void) {
@@ -71,14 +73,16 @@ bool IsAuthenticated(void) {
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
     switch (cryptoType) {
+        case CRYPTO_TYPE_ANY:
+            return CRYPTO_3KTDEA_KEY_SIZE;
         case CRYPTO_TYPE_2KTDEA:
             return CRYPTO_2KTDEA_KEY_SIZE;
         case CRYPTO_TYPE_3K3DES:
             return CRYPTO_3KTDEA_KEY_SIZE;
         case CRYPTO_TYPE_AES128:
-            return 16;
+            return CRYPTO_AES_BLOCK_SIZE;
         default:
-            return 8;
+            return CRYPTO_DES_BLOCK_SIZE;
     }
 }
 
@@ -121,6 +125,38 @@ const char *GetCommSettingsDesc(uint8_t cryptoType) {
     }
 }
 
+/* Code is adapted from @github/andrade/nfcjlib */
+bool generateSessionKey(uint8_t *sessionKey, uint8_t *rndA, uint8_t *rndB, uint16_t cryptoType) {
+    switch (cryptoType) {
+        case CRYPTO_TYPE_DES:
+            memcpy(sessionKey, rndA, 4);
+            memcpy(sessionKey + 4, rndB, 4);
+            break;
+        case CRYPTO_TYPE_2KTDEA:
+            memcpy(sessionKey, rndA, 4);
+            memcpy(sessionKey + 4, rndB, 4);
+            memcpy(sessionKey + 8, rndA + 4, 4);
+            memcpy(sessionKey + 12, rndB + 4, 4);
+            break;
+        case CRYPTO_TYPE_3K3DES:
+            memcpy(sessionKey, rndA, 4);
+            memcpy(sessionKey + 4, rndB, 4);
+            memcpy(sessionKey + 8, rndA + 6, 4);
+            memcpy(sessionKey + 12, rndB + 6, 4);
+            memcpy(sessionKey + 16, rndA + 12, 4);
+            memcpy(sessionKey + 20, rndB + 12, 4);
+            break;
+        case CRYPTO_TYPE_AES128:
+            memcpy(sessionKey, rndA, 4);
+            memcpy(sessionKey + 4, rndB, 4);
+            memcpy(sessionKey + 8, rndA + 12, 4);
+            memcpy(sessionKey + 12, rndB + 12, 4);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
 
 BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
     switch (authCmdMethod) {
@@ -138,9 +174,12 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod) {
     }
 }
 
-void InitAESCryptoKeyData(DesfireAESCryptoKey *cryptoKeyData) {
-    memset(cryptoKeyData, 0x00, sizeof(DesfireAESCryptoKey));
+void InitAESCryptoKeyData(void) {
+    memset(&SessionKey[0], 0x00, CRYPTO_MAX_KEY_SIZE);
+    memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
 }
+
+#ifdef ENABLE_CRYPTO_TESTS
 uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8_t *Key) {
     uint8_t AvailablePlaintext = TransferState.ReadData.Encryption.AvailablePlaintext;
     uint8_t TempBuffer[(DESFIRE_MAX_PAYLOAD_AES_BLOCKS + 1) * CRYPTO_DES_BLOCK_SIZE];
@@ -177,9 +216,10 @@ uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8
 }
 
 uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const uint8_t *Key) {
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
+    DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
     return STATUS_OPERATION_OK;
 }
+#endif
 
 /* Checksum routines */
 
@@ -246,6 +286,12 @@ uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer) {
     return 4;
 }
 
+void TransferChecksumUpdateCMAC(const uint8_t *Buffer, uint8_t Count) {} // TODO
+
+uint8_t TransferChecksumFinalCMAC(uint8_t *Buffer) {
+    return 0x00; // TODO
+}
+
 /* Encryption routines */
 
 uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count) {
@@ -276,7 +322,7 @@ uint8_t TransferEncryptTDEASend(uint8_t *Buffer, uint8_t Count) {
 }
 
 uint8_t TransferEncryptTDEAReceive(uint8_t *Buffer, uint8_t Count) {
-    LogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
+    DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA_ENC, Buffer, Count);
     return 0;
 }
 

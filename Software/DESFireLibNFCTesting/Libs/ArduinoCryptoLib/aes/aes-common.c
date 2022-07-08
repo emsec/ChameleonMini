@@ -1,22 +1,22 @@
 /*
-The DESFire stack portion of this firmware source 
-is free software written by Maxie Dion Schmidt (@maxieds): 
+The DESFire stack portion of this firmware source
+is free software written by Maxie Dion Schmidt (@maxieds):
 You can redistribute it and/or modify
 it under the terms of this license.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The complete source distribution of  
+The complete source distribution of
 this firmware is available at the following link:
 https://github.com/maxieds/ChameleonMiniFirmwareDESFireStack.
 
-Based in part on the original DESFire code created by  
-@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at  
+Based in part on the original DESFire code created by
+@dev-zzo (GitHub handle) [Dmitry Janushkevich] available at
 https://github.com/dev-zzo/ChameleonMini/tree/desfire.
 
-This notice must be retained at the top of all source files where indicated. 
+This notice must be retained at the top of all source files where indicated.
 */
 
 /*
@@ -26,7 +26,7 @@ This notice must be retained at the top of all source files where indicated.
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
@@ -34,7 +34,7 @@ This notice must be retained at the top of all source files where indicated.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
@@ -44,10 +44,10 @@ This notice must be retained at the top of all source files where indicated.
 /* aes-common.c : Common utilities for AES encryption. */
 
 #ifdef HOST_BUILD
-    #undef  pgm_read_byte
-    #define pgm_read_byte(addr)   ((uint8_t) *(addr))
-    #undef  PROGMEM
-    #define PROGMEM
+#undef  pgm_read_byte
+#define pgm_read_byte(addr)   ((uint8_t) *(addr))
+#undef  PROGMEM
+#define PROGMEM
 #endif
 
 /**
@@ -150,12 +150,11 @@ static uint8_t const K[8] = {
     (0x1B << 1) ^ 0x1B,
     (0x1B << 2),
     (0x1B << 2) ^ 0x1B,
-    (0x1B << 2) ^ (0x1B << 1),
-    (0x1B << 2) ^ (0x1B << 1) ^ 0x1B
+    (0x1B << 2) ^(0x1B << 1),
+    (0x1B << 2) ^(0x1B << 1) ^ 0x1B
 };
 
-void cleanContext(void *dest, size_t size)
-{
+void cleanContext(void *dest, size_t size) {
     // Force the use of volatile so that we actually clear the memory.
     // Otherwise the compiler might optimise the entire contents of this
     // function away, which will not be secure.
@@ -163,11 +162,10 @@ void cleanContext(void *dest, size_t size)
     while (size > 0) {
         *d++ = 0;
         --size;
-    }   
+    }
 }
 
-bool secure_compare(const void *data1, const void *data2, size_t len)
-{
+bool secure_compare(const void *data1, const void *data2, size_t len) {
     uint8_t result = 0;
     const uint8_t *d1 = (const uint8_t *)data1;
     const uint8_t *d2 = (const uint8_t *)data2;
@@ -178,8 +176,7 @@ bool secure_compare(const void *data1, const void *data2, size_t len)
     return (bool)((((uint16_t)0x0100) - result) >> 8);
 }
 
-void subBytesAndShiftRows(uint8_t *output, const uint8_t *input)
-{   
+void subBytesAndShiftRows(uint8_t *output, const uint8_t *input) {
     OUT(0, 0) = pgm_read_byte(sbox + IN(0, 0));
     OUT(0, 1) = pgm_read_byte(sbox + IN(1, 1));
     OUT(0, 2) = pgm_read_byte(sbox + IN(2, 2));
@@ -198,8 +195,7 @@ void subBytesAndShiftRows(uint8_t *output, const uint8_t *input)
     OUT(3, 3) = pgm_read_byte(sbox + IN(2, 3));
 }
 
-void inverseShiftRowsAndSubBytes(uint8_t *output, const uint8_t *input)
-{   
+void inverseShiftRowsAndSubBytes(uint8_t *output, const uint8_t *input) {
     OUT(0, 0) = pgm_read_byte(sbox_inverse + IN(0, 0));
     OUT(0, 1) = pgm_read_byte(sbox_inverse + IN(3, 1));
     OUT(0, 2) = pgm_read_byte(sbox_inverse + IN(2, 2));
@@ -218,8 +214,7 @@ void inverseShiftRowsAndSubBytes(uint8_t *output, const uint8_t *input)
     OUT(3, 3) = pgm_read_byte(sbox_inverse + IN(0, 3));
 }
 
-void mixColumn(uint8_t *output, uint8_t *input)
-{   
+void mixColumn(uint8_t *output, uint8_t *input) {
     uint16_t t; // Needed by the gmul2 macro.
     uint8_t a = input[0];
     uint8_t b = input[1];
@@ -235,8 +230,7 @@ void mixColumn(uint8_t *output, uint8_t *input)
     output[3] = a2 ^ a ^ b ^ c ^ d2;
 }
 
-void inverseMixColumn(uint8_t *output, const uint8_t *input)
-{
+void inverseMixColumn(uint8_t *output, const uint8_t *input) {
     uint16_t t; // Needed by the gmul2, gmul4, and gmul8 macros.
     uint8_t a = input[0];
     uint8_t b = input[1];
@@ -260,8 +254,7 @@ void inverseMixColumn(uint8_t *output, const uint8_t *input)
     output[3] = a8 ^ a2 ^ a ^ b8 ^ b4 ^ b ^ c8 ^ c ^ d8 ^ d4 ^ d2;
 }
 
-void keyScheduleCore(uint8_t *output, const uint8_t *input, uint8_t iteration)
-{
+void keyScheduleCore(uint8_t *output, const uint8_t *input, uint8_t iteration) {
     // Rcon(i), 2^i in the Rijndael finite field, for i = 0..10.
     // http://en.wikipedia.org/wiki/Rijndael_key_schedule
     static uint8_t const rcon[11] PROGMEM = {
@@ -274,8 +267,7 @@ void keyScheduleCore(uint8_t *output, const uint8_t *input, uint8_t iteration)
     output[3] = pgm_read_byte(sbox + input[0]);
 }
 
-void applySbox(uint8_t *output, const uint8_t *input)
-{
+void applySbox(uint8_t *output, const uint8_t *input) {
     output[0] = pgm_read_byte(sbox + input[0]);
     output[1] = pgm_read_byte(sbox + input[1]);
     output[2] = pgm_read_byte(sbox + input[2]);

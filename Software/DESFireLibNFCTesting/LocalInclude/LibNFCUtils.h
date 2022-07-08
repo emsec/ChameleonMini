@@ -104,135 +104,132 @@
 #endif
 
 static inline uint8_t oddparity(const uint8_t bt) {
-  // cf http://graphics.stanford.edu/~seander/bithacks.html#ParityParallel
-  return (0x9669 >> ((bt ^ (bt >> 4)) & 0xF)) & 1;
+    // cf http://graphics.stanford.edu/~seander/bithacks.html#ParityParallel
+    return (0x9669 >> ((bt ^ (bt >> 4)) & 0xF)) & 1;
 }
 
 static inline void oddparity_bytes_ts(const uint8_t *pbtData, const size_t szLen, uint8_t *pbtPar) {
-  size_t  szByteNr;
-  // Calculate the parity bits for the command
-  for (szByteNr = 0; szByteNr < szLen; szByteNr++) {
-    pbtPar[szByteNr] = oddparity(pbtData[szByteNr]);
-  }
+    size_t  szByteNr;
+    // Calculate the parity bits for the command
+    for (szByteNr = 0; szByteNr < szLen; szByteNr++) {
+        pbtPar[szByteNr] = oddparity(pbtData[szByteNr]);
+    }
 }
 
 static inline void print_hex(const uint8_t *pbtData, const size_t szLen) {
-  size_t  szPos;
-  for (szPos = 0; szPos < szLen; szPos++) {
-    if((szPos > 0) && (szPos % 8) == 0) {
-      printf("| ");
+    size_t  szPos;
+    for (szPos = 0; szPos < szLen; szPos++) {
+        if ((szPos > 0) && (szPos % 8) == 0) {
+            printf("| ");
+        }
+        printf("%02x ", pbtData[szPos]);
     }
-    printf("%02x ", pbtData[szPos]);
-  }
-  printf("\n");
+    printf("\n");
 }
 
 static inline void print_hex_bits(const uint8_t *pbtData, const size_t szBits) {
-  uint8_t uRemainder;
-  size_t  szPos;
-  size_t  szBytes = szBits / 8;
-  for (szPos = 0; szPos < szBytes; szPos++) {
-    printf("%02x  ", pbtData[szPos]);
-  }
-  uRemainder = szBits % 8;
-  // Print the rest bits
-  if (uRemainder != 0) {
-    if (uRemainder < 5)
-      printf("%01x (%d bits)", pbtData[szBytes], uRemainder);
-    else
-      printf("%02x (%d bits)", pbtData[szBytes], uRemainder);
-  }
-  printf("\n");
+    uint8_t uRemainder;
+    size_t  szPos;
+    size_t  szBytes = szBits / 8;
+    for (szPos = 0; szPos < szBytes; szPos++) {
+        printf("%02x  ", pbtData[szPos]);
+    }
+    uRemainder = szBits % 8;
+    // Print the rest bits
+    if (uRemainder != 0) {
+        if (uRemainder < 5)
+            printf("%01x (%d bits)", pbtData[szBytes], uRemainder);
+        else
+            printf("%02x (%d bits)", pbtData[szBytes], uRemainder);
+    }
+    printf("\n");
 }
 
 static inline void print_hex_par(const uint8_t *pbtData, const size_t szBits, const uint8_t *pbtDataPar) {
-  uint8_t uRemainder;
-  size_t  szPos;
-  size_t  szBytes = szBits / 8;
-  for (szPos = 0; szPos < szBytes; szPos++) {
-    printf("%02x", pbtData[szPos]);
-    if (oddparity(pbtData[szPos]) != pbtDataPar[szPos]) {
-      printf("! ");
-    } else {
-      printf("  ");
+    uint8_t uRemainder;
+    size_t  szPos;
+    size_t  szBytes = szBits / 8;
+    for (szPos = 0; szPos < szBytes; szPos++) {
+        printf("%02x", pbtData[szPos]);
+        if (oddparity(pbtData[szPos]) != pbtDataPar[szPos]) {
+            printf("! ");
+        } else {
+            printf("  ");
+        }
     }
-  }
-  uRemainder = szBits % 8;
-  // Print the rest bits, these cannot have parity bit
-  if (uRemainder != 0) {
-    if (uRemainder < 5)
-      printf("%01x (%d bits)", pbtData[szBytes], uRemainder);
-    else
-      printf("%02x (%d bits)", pbtData[szBytes], uRemainder);
-  }
-  printf("\n");
+    uRemainder = szBits % 8;
+    // Print the rest bits, these cannot have parity bit
+    if (uRemainder != 0) {
+        if (uRemainder < 5)
+            printf("%01x (%d bits)", pbtData[szBytes], uRemainder);
+        else
+            printf("%02x (%d bits)", pbtData[szBytes], uRemainder);
+    }
+    printf("\n");
 }
 
 static inline void print_nfc_target(const nfc_target *pnt, bool verbose) {
-  char *s;
-  str_nfc_target(&s, pnt, verbose);
-  printf("%s", s);
-  nfc_free(s);
+    char *s;
+    str_nfc_target(&s, pnt, verbose);
+    printf("%s", s);
+    nfc_free(s);
 }
 
 typedef struct {
-     size_t  recvSzRx;
-     uint8_t *rxDataBuf;
-     size_t  maxRxDataSize;
+    size_t  recvSzRx;
+    uint8_t *rxDataBuf;
+    size_t  maxRxDataSize;
 } RxData_t;
 
-static inline RxData_t * InitRxDataStruct(size_t bufSize) {
-     RxData_t *rxData = malloc(sizeof(RxData_t));
-     if(rxData == NULL) {
-          return NULL;
-     }
-     rxData->recvSzRx = 0;
-     rxData->rxDataBuf = malloc(bufSize);
-     memset(rxData->rxDataBuf, 0x00, bufSize);
-     if(rxData->rxDataBuf == NULL) {
-          free(rxData);
-          return NULL;
-     }
-     rxData->maxRxDataSize = bufSize;
+static inline RxData_t *InitRxDataStruct(size_t bufSize) {
+    RxData_t *rxData = malloc(sizeof(RxData_t));
+    if (rxData == NULL) {
+        return NULL;
+    }
+    rxData->recvSzRx = 0;
+    rxData->rxDataBuf = malloc(bufSize);
+    memset(rxData->rxDataBuf, 0x00, bufSize);
+    if (rxData->rxDataBuf == NULL) {
+        free(rxData);
+        return NULL;
+    }
+    rxData->maxRxDataSize = bufSize;
 }
 
 static inline void FreeRxDataStruct(RxData_t *rxData, bool freeInputPtr) {
-     if(rxData != NULL) {
-          free(rxData->rxDataBuf);
-          if(freeInputPtr) {
-              free(rxData);
-          }
-          else {
-              rxData->recvSzRx = 0;
-              rxData->maxRxDataSize = 0;
-              rxData->rxDataBuf = NULL;
-          }
-     }
+    if (rxData != NULL) {
+        free(rxData->rxDataBuf);
+        if (freeInputPtr) {
+            free(rxData);
+        } else {
+            rxData->recvSzRx = 0;
+            rxData->maxRxDataSize = 0;
+            rxData->rxDataBuf = NULL;
+        }
+    }
 }
 
 static inline bool
-libnfcTransmitBits(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBits, RxData_t *rxData)
-{
-  uint32_t cycles = 0;
-  if ((rxData->recvSzRx = nfc_initiator_transceive_bits(pnd, pbtTx, szTxBits, NULL, 
-                             rxData->rxDataBuf, rxData->maxRxDataSize, NULL)) < 0) {
-      fprintf(stderr, "    -- Error transceiving Bits: %s\n", nfc_strerror(pnd));
-      return false;
-  }
-  return true;
+libnfcTransmitBits(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBits, RxData_t *rxData) {
+    uint32_t cycles = 0;
+    if ((rxData->recvSzRx = nfc_initiator_transceive_bits(pnd, pbtTx, szTxBits, NULL,
+                                                          rxData->rxDataBuf, rxData->maxRxDataSize, NULL)) < 0) {
+        fprintf(stderr, "    -- Error transceiving Bits: %s\n", nfc_strerror(pnd));
+        return false;
+    }
+    return true;
 }
 
 static inline bool
-libnfcTransmitBytes(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTx, RxData_t *rxData)
-{
-  uint32_t cycles = 0;
-  int res;
-  if ((res = nfc_initiator_transceive_bytes(pnd, pbtTx, szTx, rxData->rxDataBuf, rxData->maxRxDataSize, 0)) < 0) {
-      fprintf(stderr, "    -- Error transceiving Bytes: %s\n", nfc_strerror(pnd));
-      return false;
-  }
-  rxData->recvSzRx = res;
-  return true;
+libnfcTransmitBytes(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTx, RxData_t *rxData) {
+    uint32_t cycles = 0;
+    int res;
+    if ((res = nfc_initiator_transceive_bytes(pnd, pbtTx, szTx, rxData->rxDataBuf, rxData->maxRxDataSize, 0)) < 0) {
+        fprintf(stderr, "    -- Error transceiving Bytes: %s\n", nfc_strerror(pnd));
+        return false;
+    }
+    rxData->recvSzRx = res;
+    return true;
 }
 
 #endif

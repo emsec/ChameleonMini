@@ -15,7 +15,7 @@ void SniffISO15693AppInit(void);
 void SniffISO15693AppReset(void);
 void SniffISO15693AppTask(void);
 void SniffISO15693AppTick(void);
-uint16_t SniffISO15693AppProcess(uint8_t* FrameBuf, uint16_t FrameBytes);
+uint16_t SniffISO15693AppProcess(uint8_t *FrameBuf, uint16_t FrameBytes);
 void SniffISO15693AppTimeout(void);
 
 typedef enum {

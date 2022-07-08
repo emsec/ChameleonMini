@@ -81,4 +81,3 @@ uint16_t HexStringToBuffer(void *Buffer, uint16_t MaxBytes, const char *HexIn) {
 
     return ByteCount;
 }
-

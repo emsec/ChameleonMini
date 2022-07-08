@@ -12,7 +12,11 @@
 #include <stdbool.h>
 #include <avr/pgmspace.h>
 
+#ifdef MEMORY_LIMITED_TESTING
+#define MAP_TEXT_BUF_SIZE               24
+#else
 #define MAP_TEXT_BUF_SIZE		32
+#endif
 #define MAP_MAX_TEXT_SIZE		(MAP_TEXT_BUF_SIZE - 1)
 
 typedef uint8_t MapIdType;
