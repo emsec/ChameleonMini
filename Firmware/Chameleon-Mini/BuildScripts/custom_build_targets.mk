@@ -67,8 +67,7 @@ desfire-dev: FLASH_DATA_SIZE:=0x$(FLASH_DATA_SIZE_CONST)
 desfire-dev: FLASH_DATA_SIZE_UPPER_CONST:=20000
 desfire-dev: FLASH_DATA_ADDR:=0x$(shell echo $$(( 0x$(FLASH_DATA_SIZE_UPPER_CONST) - 0x$(FLASH_DATA_SIZE_CONST) )) | xargs -0 printf %X)
 desfire-dev: SUPPORTED_TAGS_BUILD:=-DCONFIG_MF_DESFIRE_SUPPORT
-desfire-dev: EXTRA_CONFIG_SETTINGS:=-DMEMORY_LIMITED_TESTING      \
-                         -DDESFIRE_CRYPTO1_SAVE_SPACE             \
+desfire-dev: EXTRA_CONFIG_SETTINGS:=-DDESFIRE_CRYPTO1_SAVE_SPACE  \
 			 -finline-small-functions                 \
 			 -DDESFIRE_MIN_OUTGOING_LOGSIZE=0         \
 			 -DDESFIRE_MIN_INCOMING_LOGSIZE=0         \

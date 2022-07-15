@@ -30,6 +30,7 @@ This notice must be retained at the top of all source files where indicated.
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
 
 #include "../Common.h"
+#include "../Memory.h"
 #include "Reader14443A.h"
 
 #include "MifareDESFire.h"
@@ -76,6 +77,7 @@ static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool
             InitialisePiccBackendEV0(StorageSize, FormatPICC);
             break;
     }
+    MemoryStore(); /* Make sure the randomized UID and PICC header data are preserved */
     DesfireCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 }
 
@@ -133,6 +135,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
     } else if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         DesfireState = DESFIRE_IDLE;
     }
+    DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, (void *) Buffer, ByteCount);
 
     uint16_t ReturnBytes = 0;
     switch (DesfireState) {
@@ -187,7 +190,6 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
         DEBUG_PRINT_P(PSTR("RESEND LAST"));
         memcpy(&Buffer[0], &ISO14443ALastIncomingDataFrame[0], ASBYTES(ISO14443ALastIncomingDataFrameBits));
         return ISO14443ALastIncomingDataFrameBits;
-        //return ISO14443A_APP_NO_RESPONSE;
     }
     DesfireCmdCLA = Buffer[0];
     if (ByteCount >= 2 && Buffer[1] == STATUS_ADDITIONAL_FRAME && DesfireCLA(Buffer[0])) {
@@ -267,8 +269,8 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
         ProcessedByteCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount + 2);
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ASBITS(ProcessedByteCount));
-    } else if (ByteCount >= 5 && DesfireCLA(Buffer[0]) && Buffer[1] == STATUS_ADDITIONAL_FRAME &&
-               Buffer[2] == 0x00 && Buffer[3] == 0x00 && Buffer[4] == ByteCount - 9 &&
+    } else if (ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[1] == STATUS_ADDITIONAL_FRAME &&
+               Buffer[2] == 0x00 && Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8 &&
                DesfireStateExpectingAdditionalFrame(DesfireState)) {
         /* [PM3-V2] : Handle the native-wrapped version of the additional frame data: */
         uint16_t checkSumPostVerifyBytes = DesfirePreprocessAPDUAndTruncate(ActiveCommMode, Buffer, ByteCount);

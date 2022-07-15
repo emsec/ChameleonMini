@@ -57,6 +57,8 @@
 
 #include <nfc/nfc.h>
 
+#include "GeneralUtils.h"
+
 /**
  * @macro DBG
  * @brief Print a message of standard output only in DEBUG mode
@@ -176,9 +178,9 @@ static inline void print_nfc_target(const nfc_target *pnt, bool verbose) {
 }
 
 typedef struct {
-    size_t  recvSzRx;
-    uint8_t *rxDataBuf;
-    size_t  maxRxDataSize;
+    volatile size_t  recvSzRx;
+    volatile uint8_t *rxDataBuf;
+    volatile size_t  maxRxDataSize;
 } RxData_t;
 
 static inline RxData_t *InitRxDataStruct(size_t bufSize) {
@@ -210,19 +212,18 @@ static inline void FreeRxDataStruct(RxData_t *rxData, bool freeInputPtr) {
 }
 
 static inline bool
-libnfcTransmitBits(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBits, RxData_t *rxData) {
-    uint32_t cycles = 0;
-    if ((rxData->recvSzRx = nfc_initiator_transceive_bits(pnd, pbtTx, szTxBits, NULL,
-                                                          rxData->rxDataBuf, rxData->maxRxDataSize, NULL)) < 0) {
+libnfcTransmitBits(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTxBytes, RxData_t *rxData) {
+    int res;
+    if ((res = nfc_initiator_transceive_bits(pnd, pbtTx, ASBITS(szTxBytes), NULL, rxData->rxDataBuf, ASBITS(rxData->maxRxDataSize), NULL)) < 0) {
         fprintf(stderr, "    -- Error transceiving Bits: %s\n", nfc_strerror(pnd));
         return false;
     }
+    rxData->recvSzRx = res;
     return true;
 }
 
 static inline bool
 libnfcTransmitBytes(nfc_device *pnd, const uint8_t *pbtTx, const size_t szTx, RxData_t *rxData) {
-    uint32_t cycles = 0;
     int res;
     if ((res = nfc_initiator_transceive_bytes(pnd, pbtTx, szTx, rxData->rxDataBuf, rxData->maxRxDataSize, 0)) < 0) {
         fprintf(stderr, "    -- Error transceiving Bytes: %s\n", nfc_strerror(pnd));

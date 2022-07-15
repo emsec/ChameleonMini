@@ -1787,6 +1787,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
         Encrypt2K3DESBuffer(CryptoChallengeResponseBytesSize, DesfireCommandState.RndB,
                             &Buffer[1], IV, Key);
     }
+    DesfireLogEntry(LOG_INFO_DESFIRE_STATUS_INFO, (void *) IV, CryptoChallengeResponseBytesSize);
 
     /* Scrub the key */
     memset(Key, 0, keySize);
@@ -1817,7 +1818,6 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     DesfireState = DESFIRE_IDLE;
     /* Validate command length */
     if (ByteCount != 2 * CryptoChallengeResponseBytesSize + 1) {
-        DesfireLogEntry(LOG_INFO_DESFIRE_OUTGOING_DATA, Buffer, ByteCount);
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -1845,6 +1845,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
         Decrypt2K3DESBuffer(2 * CryptoChallengeResponseBytesSize, challengeRndAB,
                             &Buffer[1], IV, Key);
     }
+    DesfireLogEntry(LOG_INFO_DESFIRE_STATUS_INFO, (void *) IV, CryptoChallengeResponseBytesSize);
     RotateArrayLeft(challengeRndAB + CryptoChallengeResponseBytesSize, challengeRndB,
                     CryptoChallengeResponseBytesSize);
     memcpy(challengeRndA, challengeRndAB, CryptoChallengeResponseBytesSize);
@@ -1866,6 +1867,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
         Encrypt2K3DESBuffer(CryptoChallengeResponseBytesSize, challengeRndAB,
                             &Buffer[1], IV, Key);
     }
+    DesfireLogEntry(LOG_INFO_DESFIRE_STATUS_INFO, (void *) IV, CryptoChallengeResponseBytesSize);
 
     /* Create the session key based on the previous exchange */
     generateSessionKey(SessionKey, challengeRndA, challengeRndB, cryptoKeyType);

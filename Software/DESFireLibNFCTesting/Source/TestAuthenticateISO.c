@@ -7,9 +7,10 @@
 
 int main(int argc, char **argv) {
 
-    if (!Test3DESEncyptionRoutines()) {
-        return EXIT_FAILURE;
-    }
+    /* Comment out old test code that uses CBC mode by default: */
+    //if (!Test3DESEncyptionRoutines()) {
+    //    return EXIT_FAILURE;
+    //}
 
     nfc_context *nfcCtxt;
     nfc_device  *nfcPnd = GetNFCDeviceDriver(&nfcCtxt);
@@ -28,10 +29,9 @@ int main(int argc, char **argv) {
     }
 
     // First, authenticate with the legacy command (PICC master key):
-    if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_LEGACY,
-                     MASTER_KEY_INDEX, ZERO_KEY)) {
-        return EXIT_FAILURE;
-    }
+    //if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_LEGACY, MASTER_KEY_INDEX, ZERO_KEY)) {
+    //    return EXIT_FAILURE;
+    //}
 
     // Start ISO authentication (default key, blank setting of all zeros):
     if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,

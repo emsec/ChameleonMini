@@ -8,6 +8,10 @@
 #define MIN(x, y)                    ((x) <= (y) ? (x) : (y))
 #define MAX(x, y)                    ((x) <= (y) ? (y) : (y))
 
+#define BITS_PER_BYTE                (8)
+#define ASBITS(byteCount)            ((byteCount) * BITS_PER_BYTE)
+#define ASBYTES(bitCount)            ((bitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE)
+
 static inline void InvalidateAuthState(void) {
     memset(CRYPTO_RNDB_STATE, 0x00, 8);
     AUTHENTICATED = false;

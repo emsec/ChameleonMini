@@ -3,7 +3,7 @@
 #ifndef __LOCAL_CONFIG_H__
 #define __LOCAL_CONFIG_H__
 
-#define MAX_FRAME_LENGTH             (264)
+#define MAX_FRAME_LENGTH             (255) // (64)
 #define APPLICATION_AID_LENGTH       (3)
 
 static const uint8_t MASTER_APPLICATION_AID[] = {
