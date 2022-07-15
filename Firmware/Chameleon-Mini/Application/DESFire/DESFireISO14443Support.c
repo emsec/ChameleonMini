@@ -315,10 +315,14 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
         ISO144433AHalt();
         return ISO14443A_APP_NO_RESPONSE;
     } else if (CheckStateRetryCount(false)) {
-        DEBUG_PRINT_P(PSTR("ISO14443-3: RESETTING -- TOO MANY TRIES"));
-        ISO144433AReset();
-        ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
-        return ISO14443A_APP_NO_RESPONSE;
+        /* ??? TODO: Is this the correct action ??? */
+        DEBUG_PRINT_P(PSTR("ISO14443-3: RESETTING"));
+        ISO144433AHalt();
+        Buffer[0] == ISO14443A_CMD_HLTA;
+        Buffer[1] == 0x00;
+        ISO14443AAppendCRCA(Buffer, ASBYTES(ISO14443A_HLTA_FRAME_SIZE));
+        return ISO14443A_HLTA_FRAME_SIZE + ASBITS(ISO14443A_CRCA_SIZE);
+        //return ISO14443A_APP_NO_RESPONSE;
     }
 
     /* This implements ISO 14443-3A state machine */
@@ -331,7 +335,6 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 break;
             } else {
                 ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
-                return ISO14443A_APP_NO_RESPONSE;
             }
 
         case ISO14443_3A_STATE_IDLE:
@@ -414,8 +417,8 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             } else if (Cmd == ISO14443A_CMD_DESELECT) {
                 /* This has been observed to happen at this stage when swiping the
                  * Chameleon running CONFIG=MF_DESFIRE on an ACR122 USB external reader.
-                * ??? What are we supposed to return in this case ???
-                              */
+                 * ??? TODO: What are we supposed to return in this case ???
+                 */
                 DesfireLogEntry(LOG_INFO_APP_CMD_DESELECT, NULL, 0);
                 //return ISO14443A_APP_NO_RESPONSE;
                 return BitCount;

@@ -182,12 +182,15 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
-    DesfireCmdCLA = Buffer[0];
     size_t ByteCount = ASBYTES(BitCount);
     if (ByteCount == 0) {
-        DEBUG_PRINT_P(PSTR("RESENDING LAST FRAME"));
-        return ISO14443A_APP_NO_RESPONSE;
-    } else if (ByteCount >= 2 && Buffer[1] == STATUS_ADDITIONAL_FRAME && DesfireCLA(Buffer[0])) {
+        DEBUG_PRINT_P(PSTR("RESEND LAST"));
+        memcpy(&Buffer[0], &ISO14443ALastIncomingDataFrame[0], ASBYTES(ISO14443ALastIncomingDataFrameBits));
+        return ISO14443ALastIncomingDataFrameBits;
+        //return ISO14443A_APP_NO_RESPONSE;
+    }
+    DesfireCmdCLA = Buffer[0];
+    if (ByteCount >= 2 && Buffer[1] == STATUS_ADDITIONAL_FRAME && DesfireCLA(Buffer[0])) {
         ByteCount -= 1;
         memmove(&Buffer[0], &Buffer[1], ByteCount);
         uint16_t ProcessedByteCount = MifareDesfireProcessCommand(Buffer, ByteCount);

@@ -104,7 +104,7 @@ extern uint8_t  ISO14443ALastIncomingDataFrame[MAX_DATA_FRAME_XFER_SIZE];
 extern uint16_t ISO14443ALastIncomingDataFrameBits;
 uint16_t ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t BufferBitCount);
 
-#define MAX_STATE_RETRY_COUNT               (0x0B)
+#define MAX_STATE_RETRY_COUNT               (0xFF)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault);
 bool CheckStateRetryCountWithLogging(bool resetByDefault, bool performLogging);

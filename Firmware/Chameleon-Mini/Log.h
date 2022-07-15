@@ -4,9 +4,9 @@
 #include "Common.h"
 
 #ifdef MEMORY_LIMITED_TESTING
-#define LOG_SIZE                1024
+#define LOG_SIZE              1664   // 1024
 #else
-#define LOG_SIZE	        2048
+#define LOG_SIZE	          2048
 #endif
 #define FRAM_LOG_ADDR_ADDR	0x4000 // start of the second half of FRAM
 #define FRAM_LOG_START_ADDR	0x4002 // directly after the address
