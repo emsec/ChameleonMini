@@ -53,11 +53,11 @@ BYTE DesfireCmdCLA = DESFIRE_NATIVE_CLA;
 
 uint16_t ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t BufferBitCount) {
     if (BufferBitCount > 0) {
-        uint16_t ISO14443ALastDataFrameBytes = MIN(ASBYTES(BufferBitCount), MAX_DATA_FRAME_XFER_SIZE);
-        memcpy(&ISO14443ALastDataFrame[0], &Buffer[0], ISO14443ALastDataFrameBytes);
-        ISO14443ALastDataFrameBits = BufferBitCount;
+        uint16_t ISO14443ALastIncomingDataFrameBytes = MIN(ASBYTES(BufferBitCount), MAX_DATA_FRAME_XFER_SIZE);
+        memcpy(&ISO14443ALastIncomingDataFrame[0], &Buffer[0], ISO14443ALastIncomingDataFrameBytes);
+        ISO14443ALastIncomingDataFrameBits = MIN(BufferBitCount, ASBITS(MAX_DATA_FRAME_XFER_SIZE));
     }
-    return BufferBitCount;
+    return ISO14443ALastIncomingDataFrameBits;
 }
 
 static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool FormatPICC) {
@@ -133,7 +133,6 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
     } else if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         DesfireState = DESFIRE_IDLE;
     }
-    LastReaderSentCmd = Buffer[0];
 
     uint16_t ReturnBytes = 0;
     switch (DesfireState) {
@@ -186,6 +185,7 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
     DesfireCmdCLA = Buffer[0];
     size_t ByteCount = ASBYTES(BitCount);
     if (ByteCount == 0) {
+        DEBUG_PRINT_P(PSTR("RESENDING LAST FRAME"));
         return ISO14443A_APP_NO_RESPONSE;
     } else if (ByteCount >= 2 && Buffer[1] == STATUS_ADDITIONAL_FRAME && DesfireCLA(Buffer[0])) {
         ByteCount -= 1;
@@ -237,18 +237,15 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
 
 uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     uint16_t ReturnBytes = 0;
-    uint16_t ByteCount = ASBYTES(BitCount);
-    if (ByteCount >= 1 && BitCount == ISO14443ALastIncomingDataFrameBits && ISO14443ALastDataFrameBits > 0 &&
+    uint16_t ByteCount = MIN(ASBYTES(BitCount), MAX_DATA_FRAME_XFER_SIZE);
+    if (ISO14443ALastIncomingDataFrameBits > 0 && BitCount == ISO14443ALastIncomingDataFrameBits &&
             !memcmp(&Buffer[0], &ISO14443ALastIncomingDataFrame[0], ByteCount)) {
         /* The PCD resent the same data frame (probably a synchronization issue):
-         * Send out the same data as last time:
+         * Send out the same data as last time -- already the same as the Buffer contents:
          */
-        memcpy(&Buffer[0], &ISO14443ALastDataFrame[0], ASBYTES(ISO14443ALastDataFrameBits));
-        return ISO14443ALastDataFrameBits;
+        return ISO14443ALastIncomingDataFrameBits;
     } else {
-        memcpy(&ISO14443ALastIncomingDataFrame[0], &Buffer[0], ByteCount);
-        ISO14443ALastIncomingDataFrameBits = BitCount;
-        LastReaderSentCmd = Buffer[0];
+        ISO14443ALastIncomingDataFrameBits = ISO14443AStoreLastDataFrameAndReturn(Buffer, BitCount);
     }
     if (ByteCount >= 3 && Buffer[2] == STATUS_ADDITIONAL_FRAME && DesfireStateExpectingAdditionalFrame(DesfireState)) {
         /* [PM3-V1] : Handle the ISO-prologue-only-wrapped version of the additional frame data: */

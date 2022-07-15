@@ -96,13 +96,10 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
 extern Iso144434StateType Iso144434State;
 extern uint8_t Iso144434BlockNumber;
 extern uint8_t Iso144434CardID;
-extern uint8_t LastReaderSentCmd;
 
 /* Configure saving last data frame state so can resend on ACK from the PCD */
 
 #define MAX_DATA_FRAME_XFER_SIZE            (72)
-extern uint8_t  ISO14443ALastDataFrame[MAX_DATA_FRAME_XFER_SIZE];
-extern uint16_t ISO14443ALastDataFrameBits;
 extern uint8_t  ISO14443ALastIncomingDataFrame[MAX_DATA_FRAME_XFER_SIZE];
 extern uint16_t ISO14443ALastIncomingDataFrameBits;
 uint16_t ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t BufferBitCount);

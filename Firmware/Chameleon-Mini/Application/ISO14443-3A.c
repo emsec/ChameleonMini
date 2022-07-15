@@ -10,7 +10,7 @@
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
 #include "DESFire/DESFireISO14443Support.h"
 
-bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t SAKValue) {
+bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t UidByteCount, uint8_t SAKValue) {
     uint8_t *DataPtr = (uint8_t *) Buffer;
     uint8_t NVB = DataPtr[1];
     switch (NVB) {
@@ -18,7 +18,7 @@ bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, ui
             /* Start of anticollision procedure.
              * Send whole UID CLn + BCC
              */
-            memcpy(&DataPtr[0], &UidCL[0], 4);
+            memcpy(&DataPtr[0], &UidCL[0], UidByteCount);
             DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
             *BitCount = ISO14443A_CL_FRAME_SIZE;
             return false;
@@ -26,7 +26,7 @@ bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, ui
             /* End of anticollision procedure.
              * Send SAK CLn if we are selected.
              */
-            if (!memcmp(&DataPtr[2], &UidCL[0], 4)) {
+            if (!memcmp(&DataPtr[2], &UidCL[0], UidByteCount)) {
                 DataPtr[0] = SAKValue;
                 ISO14443AAppendCRCA(Buffer, 1);
                 *BitCount = ISO14443A_SAK_FRAME_SIZE;
@@ -48,7 +48,7 @@ bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, ui
                 ||
                 (CollisionByteCount < 4 && memcmp(UidCL, &DataPtr[2], CollisionByteCount) == 0 && (UidCL[CollisionByteCount] & mask) == (DataPtr[CollisionByteCount + 2] & mask))
             ) {
-                memcpy(&DataPtr[0], &UidCL[0], 4);
+                memcpy(&DataPtr[0], &UidCL[0], UidByteCount);
                 DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
                 *BitCount = ISO14443A_CL_FRAME_SIZE;
                 return false;

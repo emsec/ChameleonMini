@@ -10,7 +10,7 @@ endif
 
 DEFAULT_TAG_SUPPORT_BASE     = -DCONFIG_ISO14443A_SNIFF_SUPPORT  \
                                -DCONFIG_ISO14443A_READER_SUPPORT \
-						 -DCONFIG_MF_ULTRALIGHT_SUPPORT
+			       -DCONFIG_MF_ULTRALIGHT_SUPPORT
 SUPPORTED_TAGS_BUILD         =
 EXTRA_CONFIG_SETTINGS        =
 
@@ -54,11 +54,11 @@ mifare-classic: custom-build
 desfire: FLASH_DATA_SIZE_CONST:=0C000 # Six settings (save some space): 6 * 0x2000
 desfire: FLASH_DATA_SIZE:=0x$(FLASH_DATA_SIZE_CONST)
 desfire: FLASH_DATA_SIZE_UPPER_CONST:=20000
-desfire: FLASH_DATA_ADDR:=0x$(shell echo "obase=16;ibase=16;$(FLASH_DATA_SIZE_UPPER_CONST)-$(FLASH_DATA_SIZE_CONST)" | bc)
+desfire: FLASH_DATA_ADDR:=0x$(shell echo $$(( 0x$(FLASH_DATA_SIZE_UPPER_CONST) - 0x$(FLASH_DATA_SIZE_CONST) )) | xargs -0 printf %X)
 desfire: SUPPORTED_TAGS_BUILD:=-DCONFIG_MF_DESFIRE_SUPPORT
 desfire: EXTRA_CONFIG_SETTINGS:=-DMEMORY_LIMITED_TESTING     \
                                 -DDESFIRE_CRYPTO1_SAVE_SPACE \
-						  -finline-small-functions
+				-finline-small-functions
 desfire: TARGET_CUSTOM_BUILD_NAME:=DESFire
 desfire: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
 desfire: custom-build
@@ -66,14 +66,14 @@ desfire: custom-build
 desfire-dev: FLASH_DATA_SIZE_CONST:=08000 # Four settings (save some space): 4 * 0x2000
 desfire-dev: FLASH_DATA_SIZE:=0x$(FLASH_DATA_SIZE_CONST)
 desfire-dev: FLASH_DATA_SIZE_UPPER_CONST:=20000
-desfire-dev: FLASH_DATA_ADDR:=0x$(shell echo "obase=16;ibase=16;$(FLASH_DATA_SIZE_UPPER_CONST)-$(FLASH_DATA_SIZE_CONST)" | bc)
+desfire-dev: FLASH_DATA_ADDR:=0x$(shell echo $$(( 0x$(FLASH_DATA_SIZE_UPPER_CONST) - 0x$(FLASH_DATA_SIZE_CONST) )) | xargs -0 printf %X)
 desfire-dev: SUPPORTED_TAGS_BUILD:=-DCONFIG_MF_DESFIRE_SUPPORT
 desfire-dev: EXTRA_CONFIG_SETTINGS:=-DMEMORY_LIMITED_TESTING      \
                          -DDESFIRE_CRYPTO1_SAVE_SPACE             \
-					-finline-small-functions                 \
-                		-DDESFIRE_MIN_OUTGOING_LOGSIZE=0         \
-                		-DDESFIRE_MIN_INCOMING_LOGSIZE=0         \
-					-DDESFIRE_DEBUGGING=1
+			 -finline-small-functions                 \
+			 -DDESFIRE_MIN_OUTGOING_LOGSIZE=0         \
+			 -DDESFIRE_MIN_INCOMING_LOGSIZE=0         \
+			 -DDESFIRE_DEBUGGING=1
 desfire-dev: TARGET_CUSTOM_BUILD_NAME:=DESFire_DEV
 desfire-dev: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
 desfire-dev: custom-build
