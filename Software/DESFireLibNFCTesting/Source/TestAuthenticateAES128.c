@@ -11,10 +11,6 @@
 
 int main(int argc, char **argv) {
 
-    if (!TestAESEncyptionRoutines()) {
-        return EXIT_FAILURE;
-    }
-
     nfc_context *nfcCtxt;
     nfc_device  *nfcPnd = GetNFCDeviceDriver(&nfcCtxt);
     if (nfcPnd == NULL) {

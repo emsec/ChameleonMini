@@ -399,7 +399,7 @@ clean: local-clean
 
 git-add-dev: LOCALFW_SOURCE_FILES:=Makefile ./*.{c,h} ./*/*.{c,h} ./*/*/*.{c,h}
 git-add-dev: LOCALFW_BUILD_SCRIPT_FILES:=.gitignore custom_build_targets.mk lufa_build_extra.mk
-git-add-dev: TESTING_SOURCE_FILES:=Makefile LocalInclude/*.h Source/*.c Libs/ArduinoCryptoLib/* Libs/ArduinoCryptoLib/*/*.{c,h} SampleOutputDumps/*.dump
+git-add-dev: TESTING_SOURCE_FILES:=Makefile LocalInclude/*.h Source/*.c SampleOutputDumps/*.dump
 git-add-dev:
 	@make style && git add $(LOCALFW_SOURCE_FILES)
 	@cd $(BUILD_SCR) && git add -f $(LOCALFW_BUILD_SCRIPT_FILES)

@@ -5,13 +5,12 @@
 CC=gcc
 CFLAGS_BASE= -ILocalInclude -ISource \
 		-g -O0 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t \
-		`pkg-config libnfc --cflags` -I/usr/local/opt/openssl/include \
-		-DHOST_BUILD -DCRYPTO_AES_DEFAULT=1 \
-		-ILibs/ArduinoCryptoLib
+		`pkg-config libnfc --cflags` -I/usr/local/opt/openssl/include                   \
+		-DHOST_BUILD -DCRYPTO_AES_DEFAULT=1
 #LD=gcc-10   # for MacOS
 LD=gcc
 LDFLAGS_BASE= $(CFLAGS) -lc `pkg-config libnfc --libs` \
-		 -L/usr/local/opt/openssl/lib -lssl -lcrypto
+		 -L/usr/local/opt/openssl/lib -L/usr/lib64 -lssl -lssl3 -lcrypto
 
 ifeq ("$(shell uname -s)", "Darwin")
     CC=/usr/local/opt/llvm/bin/clang-13
@@ -28,30 +27,31 @@ BINEXT=exe
 OBJDIR=./Obj
 OBJEXT=o
 
-LIBNFC_SUPPORTED_DRIVERS= -DDRIVER_PN53X_USB_ENABLED \
-					 -DDRIVER_PCSC_ENABLED \
-					 -DDRIVER_ACR122_PCSC_ENABLED \
-					 -DDRIVER_ACR122_USB_ENABLED \
-					 -DDRIVER_ACR122S_ENABLED \
-					 -DDRIVER_ARYGON_ENABLED \
-					 -DDRIVER_PN532_UART_ENABLED \
-					 -DDRIVER_PN532_SPI_ENABLED \
-					 -DDRIVER_PN532_I2C_ENABLED \
+LIBNFC_SUPPORTED_DRIVERS= -DDRIVER_PN53X_USB_ENABLED                   \
+					 -DDRIVER_PCSC_ENABLED         \
+					 -DDRIVER_ACR122_PCSC_ENABLED  \
+					 -DDRIVER_ACR122_USB_ENABLED   \
+					 -DDRIVER_ACR122S_ENABLED      \
+					 -DDRIVER_ARYGON_ENABLED       \
+					 -DDRIVER_PN532_UART_ENABLED   \
+					 -DDRIVER_PN532_SPI_ENABLED    \
+					 -DDRIVER_PN532_I2C_ENABLED    \
 					 -DDRIVER_PN71XX_ENABLED
-LIBNFC_CUSTOM_CONFIG= -DLIBNFC_LOGLEVEL=NFC_LOG_PRIORITY_DEBUG \
+LIBNFC_CUSTOM_CONFIG= -DLIBNFC_LOGLEVEL=NFC_LOG_PRIORITY_DEBUG                                    \
 				  -ULOG_CATEGORY -DLOG_CATEGORY=\"DESFireTesting.libnfc.general\" \
 				  -ULOG_GROUP -DLOG_GROUP=NFC_LOG_GROUP_GENERAL
 CFLAGS+= $(LIBNFC_SUPPORTED_DRIVERS) $(LIBNFC_CUSTOM_CONFIG)
 
-FILE_BASENAMES=NFCAntiCollisionMod \
-			   TestAuthenticateLegacy \
-			   TestAuthenticateAES128 \
-			   TestAuthenticateISO \
-			   TestGeneralCommands \
-			   TestKeyManagementCommands \
-			   TestApplicationManagementCommands \
-			   TestFileManagementCommandsSupport \
-			   TestDataManipulationCommandsSupport \
+FILE_BASENAMES=NFCAntiCollisionMod                              \
+			   TestAuthenticateLegacy               \
+			   TestAuthenticateAES128               \
+			   TestAuthenticateISO                  \
+			   TestGeneralCommands                  \
+			   TestKeyManagementCommands            \
+			   TestApplicationManagementCommands    \
+			   TestApplicationManagementCommands2   \
+			   TestFileManagementCommandsSupport    \
+			   TestDataManipulationCommandsSupport  \
 			   TestDataManipulationCommandsSupport2 \
 			   TestDataManipulationCommandsSupport3
 
@@ -70,7 +70,7 @@ $(OBJDIR)/%.$(OBJEXT): Source/%.c
 	@/bin/bash ./Scripts/LibNFCObjectDefsRename.sh $@
 
 $(BINDIR)/%.$(BINEXT): $(OBJDIR)/%.$(OBJEXT)
-	$(LD) $(LDFLAGS) $< -o $@
+	$(LD) $< -o $@ $(LDFLAGS)
 
 prelims:
 	@mkdir -p ./Obj ./Bin

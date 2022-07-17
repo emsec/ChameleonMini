@@ -21,13 +21,13 @@ int main(int argc, char **argv) {
     if (SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
         fprintf(stdout, "    -- !! Error selecting PICC (Master) AID by default !!\n");
         return EXIT_FAILURE;
-    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
+    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,
                             MASTER_KEY_INDEX, ZERO_KEY)) {
-        fprintf(stdout, "    -- !! Error authenticating with AES !!\n");
+        fprintf(stdout, "    -- !! Error authenticating !!\n");
         return EXIT_FAILURE;
     }
 
-    if (ChangeKeyCommand(nfcPnd, 0x00, ZERO_KEY, DESFIRE_CRYPTO_AUTHTYPE_AES128)) {
+    if (ChangeKeyCommand(nfcPnd, 0x00, ZERO_KEY, DESFIRE_CRYPTO_AUTHTYPE_ISODES)) {
         fprintf(stdout, "    -- !! GetVersion failed !!\n");
         return EXIT_FAILURE;
     }
@@ -35,9 +35,9 @@ int main(int argc, char **argv) {
     if (SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
         fprintf(stdout, "    -- !! Error selecting PICC (Master) AID by default !!\n");
         return EXIT_FAILURE;
-    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
+    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,
                             MASTER_KEY_INDEX, ZERO_KEY)) {
-        fprintf(stdout, "    -- !! Error authenticating with AES !!\n");
+        fprintf(stdout, "    -- !! Error authenticating !!\n");
         return EXIT_FAILURE;
     }
 

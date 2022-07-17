@@ -1709,11 +1709,11 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
      * in the event of an error.
      */
     KeyId = Buffer[1];
-    if (!AuthenticatedWithPICCMasterKey && KeyId != DESFIRE_MASTER_KEY_ID) {
+    if (!Authenticated || !AuthenticatedWithPICCMasterKey) {
+        InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
+    } else if (KeyId != DESFIRE_MASTER_KEY_ID) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
-    } else {
-        InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
     }
 
     /* Validate number of keys: less than max */

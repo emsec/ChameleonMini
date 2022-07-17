@@ -6,10 +6,12 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <openssl/des.h>
+#include <openssl/conf.h>
 #include <openssl/rand.h>
-
-#include <ArduinoCryptoLib-SingleSource.c>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/aes.h>
+#include <openssl/des.h>
 
 #include "LibNFCUtils.h"
 
@@ -60,14 +62,11 @@ static const uint8_t TEST_KEY1[] = {
 
 static const uint8_t TEST_KEY1_INDEX = 0x01;
 
-typedef AES128Context DesfireAESCryptoContext;
-
 typedef struct {
     uint8_t  *keyData;
     size_t   keySize;
     uint8_t  *ivData;
     size_t   ivSize;
-    DesfireAESCryptoContext cryptoCtx;
 } CryptoData_t;
 
 #define CryptoMemoryXOR(inputBuf, destBuf, bufSize) ({ \
@@ -78,27 +77,6 @@ typedef struct {
           *(out++) ^= *(in++);                         \
      }                                                 \
      })
-
-static inline void DesfireAESCryptoInit(uint8_t *initKeyBuffer, uint16_t bufSize,
-                                        DesfireAESCryptoContext *cryptoCtx) {
-    if (initKeyBuffer == NULL || cryptoCtx == NULL) {
-        return;
-    }
-    aes128InitContext(cryptoCtx);
-    aes128SetKey(cryptoCtx, initKeyBuffer, bufSize);
-}
-
-static inline void PrintAESCryptoContext(DesfireAESCryptoContext *cryptoCtx) {
-    if (cryptoCtx == NULL) {
-        return;
-    }
-    fprintf(stdout, "    -- SCHED = ");
-    print_hex(cryptoCtx->schedule, 16);
-    fprintf(stdout, "    -- REV   = ");
-    print_hex(cryptoCtx->reverse, 16);
-    fprintf(stdout, "    -- KEY   = ");
-    print_hex(cryptoCtx->keyData, 16);
-}
 
 /* Set the last operation mode (ECB or CBC) init for the context */
 static uint8_t __CryptoAESOpMode = CRYPTO_AES_ECB_MODE;
@@ -113,42 +91,34 @@ static inline size_t EncryptAES128(const uint8_t *plainSrcBuf, size_t bufSize,
     } else {
         memset(&IV[0], 0x00, AES128_BLOCK_SIZE);
     }
-    DesfireAESCryptoContext *cryptoCtx = &(cdata.cryptoCtx);
-    DesfireAESCryptoInit(cdata.keyData, cdata.keySize, cryptoCtx);
     if ((bufSize % AES128_BLOCK_SIZE) != 0) {
         return 0xBE;
     }
-    for (int blk = 0; blk < bufBlocks; blk++) {
-        if (__CryptoAESOpMode == CRYPTO_AES_CBC_MODE) {
-            if (blk == 0) {
-                memcpy(inputBlock, &plainSrcBuf[0], AES128_BLOCK_SIZE);
-                CryptoMemoryXOR(IV, inputBlock, AES128_BLOCK_SIZE);
-            } else {
-                memcpy(inputBlock, &encDestBuf[(blk - 1) * AES128_BLOCK_SIZE], AES128_BLOCK_SIZE);
-                CryptoMemoryXOR(&plainSrcBuf[blk * AES128_BLOCK_SIZE], inputBlock, AES128_BLOCK_SIZE);
-            }
-            aes128EncryptBlock(cryptoCtx, encDestBuf + blk * AES128_BLOCK_SIZE, inputBlock);
-            if (blk + 1 == bufBlocks) {
-                memcpy(IV, inputBlock, AES128_BLOCK_SIZE);
-            }
-        } else { /* ECB mode */
-            memcpy(inputBlock, &plainSrcBuf[blk * AES128_BLOCK_SIZE], AES128_BLOCK_SIZE);
-            CryptoMemoryXOR(IV, inputBlock, AES128_BLOCK_SIZE);
-            aes128EncryptBlock(cryptoCtx, encDestBuf + blk * AES128_BLOCK_SIZE, inputBlock);
-            memcpy(IV, encDestBuf + blk * AES128_BLOCK_SIZE, AES128_BLOCK_SIZE);
+    EVP_CIPHER_CTX *aesCtx = EVP_CIPHER_CTX_new();
+    int aesOpInitStatus = 1;
+    if (__CryptoAESOpMode == CRYPTO_AES_CBC_MODE) {
+        aesOpInitStatus = EVP_EncryptInit_ex(aesCtx, EVP_aes_128_cbc(), NULL, cdata.keyData, cdata.ivData);
+    } else { /* ECB mode */
+        aesOpInitStatus = EVP_EncryptInit_ex(aesCtx, EVP_aes_128_ecb(), NULL, cdata.keyData, cdata.ivData);
+    }
+    int ctextLength = 0, ctextInitLength = 0;
+    if (aesOpInitStatus != 1) {
+        ctextLength = 0xBE00 | aesOpInitStatus;
+    } else if (EVP_EncryptUpdate(aesCtx, encDestBuf, &ctextInitLength, plainSrcBuf, bufSize) != 1) {
+        ctextLength = 0;
+    } else {
+        ctextLength = ctextInitLength;
+        if (EVP_EncryptFinal_ex(aesCtx, &encDestBuf[ctextInitLength], &ctextInitLength) != 1) {
+            ctextLength += ctextInitLength;
         }
     }
-    if (cdata.ivData != NULL) {
-        memcpy(cdata.ivData, &IV[0], AES128_BLOCK_SIZE);
-    }
-    return bufSize;
+    EVP_CIPHER_CTX_free(aesCtx);
+    return ctextLength;
 }
 
 static inline size_t DecryptAES128(const uint8_t *encSrcBuf, size_t bufSize,
                                    uint8_t *plainDestBuf, CryptoData_t cdata) {
-    DesfireAESCryptoContext *cryptoCtx = &(cdata.cryptoCtx);
-    DesfireAESCryptoInit(cdata.keyData, cdata.keySize, cryptoCtx);
-    size_t bufBlocks = (bufSize + AES128_BLOCK_SIZE - 1) / AES128_BLOCK_SIZE;
+    size_t bufBlocks = bufSize / AES128_BLOCK_SIZE;
     bool padLastBlock = (bufSize % AES128_BLOCK_SIZE) != 0;
     uint8_t IV[AES128_BLOCK_SIZE], inputBlock[AES128_BLOCK_SIZE];
     if (cdata.ivData != NULL) {
@@ -159,30 +129,26 @@ static inline size_t DecryptAES128(const uint8_t *encSrcBuf, size_t bufSize,
     if ((bufSize % AES128_BLOCK_SIZE) != 0) {
         return 0xBE;
     }
-    for (int blk = 0; blk < bufBlocks; blk++) {
-        if (__CryptoAESOpMode == CRYPTO_AES_CBC_MODE) {
-            aes128DecryptBlock(cryptoCtx, inputBlock, encSrcBuf + blk * AES128_BLOCK_SIZE);
-            if (blk == 0) {
-                memcpy(plainDestBuf + blk * AES128_BLOCK_SIZE, inputBlock, AES128_BLOCK_SIZE);
-                CryptoMemoryXOR(IV, plainDestBuf + blk * AES128_BLOCK_SIZE, AES128_BLOCK_SIZE);
-            } else {
-                memcpy(plainDestBuf + blk * AES128_BLOCK_SIZE, inputBlock, AES128_BLOCK_SIZE);
-                CryptoMemoryXOR(&encSrcBuf[(blk - 1) * AES128_BLOCK_SIZE],
-                                plainDestBuf + blk * AES128_BLOCK_SIZE, AES128_BLOCK_SIZE);
-            }
-            if (blk + 1 == bufBlocks) {
-                memcpy(IV, inputBlock, AES128_BLOCK_SIZE);
-            }
-        } else { /* ECB mode */
-            aes128DecryptBlock(cryptoCtx, plainDestBuf + blk * AES128_BLOCK_SIZE, encSrcBuf + blk * AES128_BLOCK_SIZE);
-            CryptoMemoryXOR(IV, plainDestBuf + blk * AES128_BLOCK_SIZE, AES128_BLOCK_SIZE);
-            memcpy(IV, encSrcBuf + blk * AES128_BLOCK_SIZE, AES128_BLOCK_SIZE);
+    EVP_CIPHER_CTX *aesCtx = EVP_CIPHER_CTX_new();
+    int aesOpInitStatus = 1;
+    if (__CryptoAESOpMode == CRYPTO_AES_CBC_MODE) {
+        aesOpInitStatus = EVP_DecryptInit_ex(aesCtx, EVP_aes_128_cbc(), NULL, cdata.keyData, cdata.ivData);
+    } else { /* ECB mode */
+        aesOpInitStatus = EVP_DecryptInit_ex(aesCtx, EVP_aes_128_ecb(), NULL, cdata.keyData, cdata.ivData);
+    }
+    int ctextLength = 0, ctextInitLength = 0;
+    if (aesOpInitStatus != 1) {
+        ctextLength = 0xBE00 | aesOpInitStatus;
+    } else if (EVP_DecryptUpdate(aesCtx, plainDestBuf, &ctextInitLength, encSrcBuf, bufSize) != 1) {
+        ctextLength = 0;
+    } else {
+        ctextLength = ctextInitLength;
+        if (EVP_DecryptFinal_ex(aesCtx, &plainDestBuf[ctextInitLength], &ctextInitLength) != 1) {
+            ctextLength += ctextInitLength;
         }
     }
-    if (cdata.ivData != NULL) {
-        memcpy(cdata.ivData, &IV[0], AES128_BLOCK_SIZE);
-    }
-    return bufSize;
+    EVP_CIPHER_CTX_free(aesCtx);
+    return ctextLength;
 }
 
 /* Set the last operation mode (ECB or CBC) init for the context */
@@ -362,151 +328,6 @@ static inline size_t DecryptDES(const uint8_t *encSrcBuf, size_t bufSize,
         memcpy(IVIn, IV, CRYPTO_DES_BLOCK_SIZE);
     }
     return bufSize;
-}
-
-
-static inline bool TestAESEncyptionRoutines(void) {
-    fprintf(stdout, ">>> TestAESEncryptionRoutines [non-DESFire command]:\n");
-    const uint8_t keyData[] = {
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-        0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
-    };
-    const uint8_t ptData[] = {
-        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-        0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
-    };
-    const uint8_t ctData[] = {
-        0xc8, 0xa3, 0x31, 0xff, 0x8e, 0xdd, 0x3d, 0xb1,
-        0x75, 0xe1, 0x54, 0x5d, 0xbe, 0xfb, 0x76, 0x0b
-    };
-    CryptoData_t cdata;
-    cdata.keyData = keyData;
-    cdata.keySize = 16;
-    uint8_t pt[16], pt2[16], ct[16];
-    EncryptAES128(ptData, 16, ct, cdata);
-    DecryptAES128(ct, 16, pt2, cdata);
-    fprintf(stdout, "    -- : PT = ");
-    print_hex(ptData, 16);
-    fprintf(stdout, "    -- : CT = ");
-    print_hex(ctData, 16);
-    fprintf(stdout, "    -- : CT = ");
-    print_hex(ct, 16);
-    fprintf(stdout, "    -- : PT = ");
-    print_hex(pt2, 16);
-    bool status = true;
-    if (memcmp(ct, ctData, 16)) {
-        fprintf(stdout, "    -- CT does NOT match !!\n");
-        status = false;
-    } else {
-        fprintf(stdout, "    -- CT matches.\n");
-    }
-    if (memcmp(pt2, ptData, 16)) {
-        fprintf(stdout, "    -- Decrypted PT from CT does NOT match !!\n");
-        status = false;
-    } else {
-        fprintf(stdout, "    -- Decrypted PT from CT matches.\n");
-    }
-    fprintf(stdout, "\n");
-    return status;
-}
-
-static inline bool Test3DESEncyptionRoutines(void) {
-    fprintf(stdout, ">>> Test3DESEncryptionRoutines [non-DESFire command]:\n");
-    const uint8_t keyData[] = {
-        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-        0xf1, 0xe0, 0xd3, 0xc2, 0xb5, 0xa4, 0x97, 0x86,
-        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
-    };
-    const uint8_t ptData[] = {
-        0x37, 0x36, 0x35, 0x34, 0x33, 0x32, 0x31, 0x20,
-        0x4E, 0x6F, 0x77, 0x20, 0x69, 0x73, 0x20, 0x74,
-        0x68, 0x65, 0x20, 0x74, 0x69, 0x6D, 0x65, 0x20,
-        0x66, 0x6F, 0x72, 0x20, 0x00, 0x00, 0x00, 0x00
-    };
-    const uint8_t ctData[] = {
-        0x3F, 0xE3, 0x01, 0xC9, 0x62, 0xAC, 0x01, 0xD0,
-        0x22, 0x13, 0x76, 0x3C, 0x1C, 0xBD, 0x4C, 0xDC,
-        0x79, 0x96, 0x57, 0xC0, 0x64, 0xEC, 0xF5, 0xD4,
-        0x1C, 0x67, 0x38, 0x12, 0xCF, 0xDE, 0x96, 0x75
-    };
-    const uint8_t IV[] = {
-        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
-    };
-    CryptoData_t cdata;
-    cdata.keyData = keyData;
-    cdata.keySize = 3 * 8;
-    const uint16_t testDataSize = 4 * 8;
-    uint8_t pt[testDataSize], ct[testDataSize];
-    Encrypt3DES(ptData, testDataSize, ct, IV, cdata);
-    Decrypt3DES(ctData, testDataSize, pt, IV, cdata);
-    fprintf(stdout, "    -- : PT [FIXED] = ");
-    print_hex(ptData, testDataSize);
-    fprintf(stdout, "    -- : CT [FIXED] = ");
-    print_hex(ctData, testDataSize);
-    fprintf(stdout, "    -- : CT [ENC]   = ");
-    print_hex(ct, testDataSize);
-    fprintf(stdout, "    -- : PT [DEC]   = ");
-    print_hex(pt, testDataSize);
-    bool status = true;
-    if (memcmp(ct, ctData, testDataSize)) {
-        fprintf(stdout, "    -- CT does NOT match !!\n");
-        status = false;
-    } else {
-        fprintf(stdout, "    -- CT matches.\n");
-    }
-    if (memcmp(pt, ptData, testDataSize)) {
-        fprintf(stdout, "    -- Decrypted PT from CT does NOT match !!\n");
-        status = false;
-    } else {
-        fprintf(stdout, "    -- Decrypted PT from CT matches.\n");
-    }
-    fprintf(stdout, "\n");
-    return status;
-}
-
-static inline bool TestLegacyDESEncyptionRoutines(void) {
-    fprintf(stdout, ">>> TestLegacyDESEncryptionRoutines [non-DESFire command]:\n");
-    const uint8_t keyData[] = {
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    };
-    const uint8_t ptData[] = {
-        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-        0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF
-    };
-    const uint8_t ctData[] = {
-        0x3e, 0xf0, 0xa8, 0x91, 0xcf, 0x8e, 0xd9, 0x90,
-        0xc4, 0x77, 0xeb, 0x09, 0x02, 0xf0, 0xc5, 0x4a
-    };
-    CryptoData_t cdata;
-    cdata.keyData = keyData;
-    cdata.keySize = 8;
-    const uint16_t testDataSize = 2 * 8;
-    uint8_t pt[testDataSize], ct[testDataSize];
-    EncryptDES(ptData, testDataSize, ct, NULL, cdata);
-    DecryptDES(ctData, testDataSize, pt, NULL, cdata);
-    fprintf(stdout, "    -- : PT [FIXED] = ");
-    print_hex(ptData, testDataSize);
-    fprintf(stdout, "    -- : CT [FIXED] = ");
-    print_hex(ctData, testDataSize);
-    fprintf(stdout, "    -- : CT [ENC]   = ");
-    print_hex(ct, testDataSize);
-    fprintf(stdout, "    -- : PT [DEC]   = ");
-    print_hex(pt, testDataSize);
-    bool status = true;
-    if (memcmp(ct, ctData, testDataSize)) {
-        fprintf(stdout, "    -- CT does NOT match !!\n");
-        status = false;
-    } else {
-        fprintf(stdout, "    -- CT matches.\n");
-    }
-    if (memcmp(pt, ptData, testDataSize)) {
-        fprintf(stdout, "    -- Decrypted PT from CT does NOT match !!\n");
-        status = false;
-    } else {
-        fprintf(stdout, "    -- Decrypted PT from CT matches.\n");
-    }
-    fprintf(stdout, "\n");
-    return status;
 }
 
 static inline int GenerateRandomBytes(uint8_t *destBuf, size_t numBytes) {

@@ -21,9 +21,9 @@ int main(int argc, char **argv) {
     if (SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
         fprintf(stdout, "    -- !! Error selecting new AID by default !!\n");
         return EXIT_FAILURE;
-    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
+    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,
                             MASTER_KEY_INDEX, ZERO_KEY)) {
-        fprintf(stdout, "    -- !! Error authenticating with AES !!\n");
+        fprintf(stdout, "    -- !! Error authenticating !!\n");
         return EXIT_FAILURE;
     }
 
@@ -34,9 +34,9 @@ int main(int argc, char **argv) {
     } else if (SelectApplication(nfcPnd, aidToCreate, APPLICATION_AID_LENGTH)) {
         fprintf(stdout, "    -- !! Error selecting new AID by default !!\n");
         return EXIT_FAILURE;
-    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_AES128,
+    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,
                             MASTER_KEY_INDEX, ZERO_KEY)) {
-        fprintf(stdout, "    -- !! Error authenticating with AES !!\n");
+        fprintf(stdout, "    -- !! Error authenticating !!\n");
         return EXIT_FAILURE;
     }
 
@@ -48,12 +48,10 @@ int main(int argc, char **argv) {
     if (CreateLinearRecordFile(nfcPnd, 0x01, 0x00, 0x0f, 2, 6)) {
         fprintf(stdout, "    -- !! Error creating linear record file !!\n");
         return EXIT_FAILURE;
-    }
-    //else if(CreateCyclicRecordFile(nfcPnd, 0x02, 0x00, 0x0f, 3, 84)) {
-    //    fprintf(stdout, "    -- !! Error creating cyclic record file !!\n");
-    //    return EXIT_FAILURE;
-    //}
-    else if (GetFileIds(nfcPnd)) {
+    } else if (CreateCyclicRecordFile(nfcPnd, 0x02, 0x00, 0x0f, 3, 84)) {
+        fprintf(stdout, "    -- !! Error creating cyclic record file !!\n");
+        return EXIT_FAILURE;
+    } else if (GetFileIds(nfcPnd)) {
         fprintf(stdout, "    -- !! Error listing file IDs !!\n");
         return EXIT_FAILURE;
     } else if (ReadRecordsCommand(nfcPnd, 0x01, 0, 6)) {
@@ -65,15 +63,13 @@ int main(int argc, char **argv) {
     } else if (ReadRecordsCommand(nfcPnd, 0x01, 0, 6)) {
         fprintf(stdout, "    -- !! Error reading records !!\n");
         return EXIT_FAILURE;
-    }
-    /*else if(WriteRecordsCommand(nfcPnd, 0x02, 0, 84, dataBufLarge)) {
+    } else if (WriteRecordsCommand(nfcPnd, 0x02, 0, 84, dataBufLarge)) {
         fprintf(stdout, "    -- !! Error writing large records !!\n");
         return EXIT_FAILURE;
-    }
-    else if(ReadRecordsCommand(nfcPnd, 0x02, 0, 84)) {
+    } else if (ReadRecordsCommand(nfcPnd, 0x02, 0, 84)) {
         fprintf(stdout, "    -- !! Error reading large records !!\n");
         return EXIT_FAILURE;
-    }*/
+    }
     // TODO: Still need to test the ClearRecordFile command ...
 
     FreeNFCDeviceDriver(&nfcCtxt, &nfcPnd);
