@@ -9,7 +9,7 @@
 #include "CryptoAES128.h"
 
 /* Set the last operation mode (ECB or CBC) init for the context */
-static uint8_t __CryptoDESOpMode = CRYPTO_DES_ECB_MODE;
+uint8_t __CryptoDESOpMode = CRYPTO_DES_ECB_MODE;
 
 static void CryptoEncryptCBCBuffer(CryptoTDEA_CBCSpec *CryptoSpec, uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IVIn, const uint8_t *Keys);
 static void CryptoEncryptCBCBuffer(CryptoTDEA_CBCSpec *CryptoSpec, uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IVIn, const uint8_t *Keys) {

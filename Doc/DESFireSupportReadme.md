@@ -221,6 +221,23 @@ DESFire emulation if things suddenly fail after a call to this terminal command.
 Putting the Chameleon through a full power recycle (battery off) should reset the setting 
 to the defaults. 
 
+#### DF_COMM_MODE -- Manually sets the communication mode of the current session
+
+This commanf sets the encryption mode for cryptographic operations. 
+The two supported modes are ECB and CBC. 
+The default mode for AES and DES (all types) of encryption is ECB mode. 
+This is the supported mode for DESFire tags using the latest Proxmark3 software. 
+
+The syntax is demonstrated by the following examples:
+```bash
+DF_ENCMODE=ECB
+DF_ENCMODE=DES:ECB
+DF_ENCMODE=AES:ECB
+DF_ENCMODE=CBC
+DF_ENCMODE=DES:CBC
+DF_ENCMODE=AES:CBC
+```
+
 ## Supported functionality
 
 ### Tables of tested support for active commands
@@ -283,6 +300,33 @@ to the defaults.
 | CMD_ISO7816_READ_RECORDS | 0xb2 | | :wavy_dash: :question: | Needs testing. |
 | CMD_ISO7816_APPEND_RECORD | 0xe2 | | :wavy_dash: :question: | Especially needs testing for corner case checks. |
 
+### Proxmark3 (PM3) compatibility and support 
+
+The next PM3 commands are known to work with the Chameleon DESFire tag emulation (using both the RDV4 and Easy device types). 
+The sample outputs obtained running the ``pm3`` command line utility below may vary by usage and proximity to the PM3 hardware.
+
+#### Getting a summary of tag information
+
+```bash
+TODO
+```
+
+#### ISODES authentication with the PICC and PICC master key
+
+```bash
+TODO
+```
+
+### Compatibility with external USB readers and LibNFC
+
+The DESFire configurations are known to work with the anticollision and RATS handshaking utility ``nfc-anticol`` from LibNFC. 
+The Mifare DESFire commands installed by LibFreeFare have not been tested nor confirmed to work with the Chameleon Mini. 
+The developers are actively working to ensure compatibility of the Chameleon DESFire emulation with external USB readers used 
+running ``pcscd`` and ``pcsc_spy``. This support is not yet functional with tests using ACR-122 and HID Omnikey 5022CL readers. 
+The DESFire support for the Chameleon Mini is tested with the LibNFC-based source code 
+[developed in this directory]() with 
+[sample dumps and output here]().
+
 ### Links to public datasheets and online specs 
 
 The following links are the original online resource links are
@@ -342,7 +386,12 @@ repositories and code bases:
 
 ## New development sources of DESFire support for the Chameleon Mini
 
-David Oswald has added a [DESFire emulation project](https://github.com/orgs/emsec/projects?type=classic) to organize tasks in progress for DESFire emulation support on the Chameleon Mini. The [original development sources](https://github.com/maxieds/ChameleonMiniDESFireStack/releases) are now archived and not kept up to date. Development sources for pull request projects in progress by **@maxieds** are [located here](https://github.com/maxieds/ChameleonMini). For example, a newer branch can be built by running
+David Oswald has added a [DESFire emulation project](https://github.com/orgs/emsec/projects?type=classic) to organize tasks in 
+progress for DESFire emulation support on the Chameleon Mini. The 
+[original development sources](https://github.com/maxieds/ChameleonMiniDESFireStack/releases) are now archived and 
+not kept up to date with the latest firmware pull requests and development sources. There are development sources for pull request projects in 
+progress written by **@maxieds** are [located here](https://github.com/maxieds/ChameleonMini). 
+For example, a newer branch can be built by running
 ```bash
 $ git clone https://github.com/maxieds/ChameleonMini.git
 $ cd ChameleonMini
@@ -350,4 +399,4 @@ $ git checkout DESFireNFCExternalUSBReaderPatches-LibNFCTestCode
 $ cd Firmware/ChameleonMini
 $ make desfire-dev
 ```
-Other GitHub users are developing mods of the emsec firmware sources for projects such as Mifare DESFire Plus support elsewhere.
+Other GitHub users are developing modifications of the main firmware sources for projects that include Mifare DESFire Plus support elsewhere.

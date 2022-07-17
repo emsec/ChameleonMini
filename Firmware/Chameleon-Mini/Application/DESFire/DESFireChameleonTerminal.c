@@ -145,4 +145,46 @@ CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InPara
     return COMMAND_ERR_INVALID_USAGE_ID;
 }
 
+CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+    char valueStr[16];
+    if (!sscanf_P(InParams, PSTR("%15s"), valueStr)) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+    valueStr[15] = '\0';
+    char *modeStartPos = strchr(valueStr, ':');
+    bool setAESCryptoMode = true, setDESCryptoMode = true;
+    bool ecbModeEnabled = true;
+    if (modeStartPos == NULL) {
+        modeStartPos = &valueStr;
+    } else {
+        uint8_t prefixLength = (uint8_t)(modeStartPos - valueStr);
+        if (prefixLength == 0) {
+            return COMMAND_ERR_INVALID_USAGE_ID;
+        } else if (!strncasecmp_P(valueStr, PSTR("DES"), prefixLength)) {
+            setAESCryptoMode = false;
+        } else if (!strncasecmp_P(valueStr, PSTR("AES"), prefixLength)) {
+            setDESCryptoMode = false;
+        } else {
+            return COMMAND_ERR_INVALID_USAGE_ID;
+        }
+    }
+    if (!strcasecmp_P(modeStartPos, PSTR("ECB"))) {
+        ecbModeEnabled = true;
+    } else if (!strcasecmp_P(modeStartPos, PSTR("CBC"))) {
+        ecbModeEnabled = false;
+    } else {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+    if (setDESCryptoMode) {
+        __CryptoDESOpMode = ecbModeEnabled ? CRYPTO_DES_ECB_MODE : CRYPTO_DES_CBC_MODE;
+    }
+    if (setAESCryptoMode) {
+        __CryptoAESOpMode = ecbModeEnabled ? CRYPTO_AES_ECB_MODE : CRYPTO_AES_CBC_MODE;
+    }
+    return COMMAND_INFO_OK;
+}
+
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

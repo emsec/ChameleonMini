@@ -45,7 +45,7 @@ static aes_callback_t __CryptoAESCallbackFunc = NULL;
 static CryptoAESBlock_t __CryptoAES_IVData = { 0 };
 
 /* Set the last operation mode (ECB or CBC) init for the context */
-static uint8_t __CryptoAESOpMode = CRYPTO_AES_ECB_MODE;
+uint8_t __CryptoAESOpMode = CRYPTO_AES_ECB_MODE;
 
 void aes_start(void) {
     AES.CTRL |= AES_START_bm;

@@ -40,6 +40,12 @@ This notice must be retained at the top of all source files where indicated.
     .ExecParamFunc  = NO_FUNCTION,
     .SetFunc        = CommandDESFireSetCommMode,
     .GetFunc        = NO_FUNCTION
+}, {
+    .Command        = DFCOMMAND_SET_ENCMODE,
+    .ExecFunc       = NO_FUNCTION,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = CommandDESFireSetEncryptionMode,
+    .GetFunc        = NO_FUNCTION
 },
 
 #endif

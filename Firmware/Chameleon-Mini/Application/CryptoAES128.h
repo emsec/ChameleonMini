@@ -46,12 +46,14 @@
 #define CRYPTO_AES_KEY_SIZE_192            1     // 192-bit
 #define CRYPTO_AES_KEY_SIZE_256            2     // 256-bit
 
-/* AES Operation cipher mode */
+/* AES Operation cipher modes */
 #define CRYPTO_AES_ECB_MODE                0     // Electronic Code Book mode
 #define CRYPTO_AES_CBC_MODE                1     // Cipher Block Chaining mode
-#define CRYPTO_AES_OFB_MODE                2     // Output FeedBack mode
-#define CRYPTO_AES_CFB_MODE                3     // Cipher FeedBack mode
-#define CRYPTO_AES_CTR_MODE                4     // Counter mode
+#define CRYPTO_AES_OFB_MODE                2     // Output FeedBack mode (NOT SUPPORTED)
+#define CRYPTO_AES_CFB_MODE                3     // Cipher FeedBack mode (NOT SUPPORTED)
+#define CRYPTO_AES_CTR_MODE                4     // Counter mode (NOT SUPPORTED)
+
+extern uint8_t __CryptoAESOpMode;
 
 /* AES URAD Type */
 #define CRYPTO_AES_URAT_INPUTWRITE_DMA     0     // Input Data Register written during the data processing in DMA mode

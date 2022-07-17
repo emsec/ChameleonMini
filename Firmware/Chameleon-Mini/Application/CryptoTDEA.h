@@ -27,9 +27,11 @@ PCD's side.
 
 */
 
-/* DES Operation cipher mode */
+/* DES Operation cipher modes */
 #define CRYPTO_DES_ECB_MODE                0     // Electronic Code Book mode
 #define CRYPTO_DES_CBC_MODE                1     // Cipher Block Chaining mode
+
+extern uint8_t __CryptoDESOpMode;
 
 /* Key sizes, in bytes */
 #define CRYPTO_DES_KEY_SIZE         8 /* Bytes */
