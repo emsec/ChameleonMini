@@ -216,6 +216,7 @@ void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV0();
     } else {
+        MemoryRestoreDesfireHeaderBytes();
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
@@ -235,6 +236,7 @@ void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV1(StorageSize);
     } else {
+        MemoryRestoreDesfireHeaderBytes();
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
@@ -254,6 +256,7 @@ void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC) {
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV2(StorageSize);
     } else {
+        MemoryRestoreDesfireHeaderBytes();
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
@@ -332,7 +335,8 @@ void FormatPicc(void) {
     SynchronizeAppDir();
     /* Initialize the root app data */
     CreatePiccApp();
-    MemoryStore();
+    //MemoryStore();
+    MemoryStoreDesfireHeaderBytes();
 }
 
 void CreatePiccApp(void) {

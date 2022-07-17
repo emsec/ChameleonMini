@@ -1,0 +1,22 @@
+>>> Select Application By AID:
+    -> 90 5a 00 00 03 00 00 00 | 00 
+    <- 91 00 
+
+>>> GetApplicationIds command:
+    -> 90 6a 00 00 00 00 
+    <- 91 00 
+
+>>> Start ISO Authenticate:
+    -> 90 1a 00 00 01 00 00 
+    <- ee 91 30 1e e8 f5 84 d6 | c7 85 1d 05 65 13 90 a6 | 91 af 
+    -- IV       = c7 85 1d 05 65 13 90 a6 
+    -- IV       = c5 25 0d 7e 64 7e 43 d7 
+    -- RNDA     = bc e1 65 56 92 10 6f 94 | f7 e3 9a a6 b0 90 3c 9e 
+    -- RNDB     = ca fe ba be 00 11 22 33 | ca fe ba be 00 11 22 33 
+    -- CHAL     = bc e1 65 56 92 10 6f 94 | f7 e3 9a a6 b0 90 3c 9e | fe ba be 00 11 22 33 ca | fe ba be 00 11 22 33 ca 
+    -- ENC-CHAL = 93 ee 86 d9 87 d1 88 9a | 4b 5c 95 04 f1 52 b0 dd | 65 83 d1 db 79 15 10 03 | c5 25 0d 7e 64 7e 43 d7 
+    -> 90 af 00 00 20 93 ee 86 | d9 87 d1 88 9a 4b 5c 95 | 04 f1 52 b0 dd 65 83 d1 | db 79 15 10 03 c5 25 0d | 7e 64 7e 43 d7 00 
+    <- c1 db ec f1 8a 53 de 82 | be 7d 33 28 1f a5 2e 91 | 91 00 83 d1 
+    -- IV       = be 7d 33 28 1f a5 2e 91 
+       ... AUTH OK! :)
+

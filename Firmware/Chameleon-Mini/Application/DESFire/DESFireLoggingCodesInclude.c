@@ -28,11 +28,7 @@ This notice must be retained at the top of all source files where indicated.
 
 #ifndef __DESFIRE_LOGGING_CODES_INCLUDE_C__
 #define __DESFIRE_LOGGING_CODES_INCLUDE_C__
-/* Intended to log all routine, complete transaction records (verbose output), and
-   to source a list of debugging messages and TODO items in the
-   developing DESFire emulation support within the firmware sources.
-   These codes should almost immediately be supported for use of the Chameleon Mini
-   devices with the Chameleon Mini Live Debugger logger application for Android: */
+
 LOG_ERR_DESFIRE_GENERIC_ERROR                = 0xE0,
 LOG_INFO_DESFIRE_STATUS_INFO                 = 0xE1,
 LOG_INFO_DESFIRE_DEBUGGING_OUTPUT            = 0xE2,
@@ -49,14 +45,16 @@ LOG_INFO_DESFIRE_PROTECTED_DATA_SET          = 0xEC,
 LOG_INFO_DESFIRE_PROTECTED_DATA_SET_VERBOSE  = 0xED,
 
 /* DESFire app */
-LOG_APP_AUTH_KEY            = 0xD0, ///< The key used for authentication
-LOG_APP_NONCE_B             = 0xD1, ///< Nonce B's value (generated)
-LOG_APP_NONCE_AB            = 0xD2, ///< Nonces A and B values (received)
+LOG_APP_AUTH_KEY                             = 0xD0, ///< The key used for authentication
+LOG_APP_NONCE_B                              = 0xD1, ///< Nonce B's value (generated)
+LOG_APP_NONCE_AB                             = 0xD2, ///< Nonces A and B values (received)
+LOG_APP_SESSION_IV                           = 0xD3, ///< Contents of the session IV buffer
 
 /* ISO 14443 related entries */
-LOG_ISO14443_3A_STATE           = 0x53,
-LOG_ISO14443_4_STATE            = 0x54,
-LOG_ISO14443A_APP_NO_RESPONSE   = 0x55,
+LOG_ISO14443_3A_STATE                        = 0x53,
+LOG_ISO14443_4_STATE                         = 0x54,
+LOG_ISO14443A_APP_NO_RESPONSE                = 0x55,
+
 #endif
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

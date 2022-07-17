@@ -29,10 +29,10 @@ This notice must be retained at the top of all source files where indicated.
 #include "../../Terminal/Terminal.h"
 #include "../../Terminal/Commands.h"
 #include "../../Settings.h"
-#include "../../Memory.h"
 #include "DESFireChameleonTerminal.h"
 #include "DESFireFirmwareSettings.h"
 #include "DESFirePICCControl.h"
+#include "DESFireMemoryOperations.h"
 #include "DESFireLogging.h"
 
 bool IsDESFireConfiguration(void) {
@@ -111,7 +111,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
     SynchronizePICCInfo();
-    MemoryStore();
+    MemoryStoreDesfireHeaderBytes();
     return COMMAND_INFO_OK_ID;
 }
 #endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */

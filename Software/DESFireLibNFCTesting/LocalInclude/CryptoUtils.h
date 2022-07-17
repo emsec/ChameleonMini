@@ -13,34 +13,36 @@
 
 #include "LibNFCUtils.h"
 
-/* DES Operation cipher mode */
-#define CRYPTO_DES_ECB_MODE                  0     // Electronic Code Book mode
-#define CRYPTO_DES_CBC_MODE                  1     // Cipher Block Chaining mode
+/* DES Operation cipher modes: */
+#define CRYPTO_DES_ECB_MODE                      0     // Electronic Code Book mode
+#define CRYPTO_DES_CBC_MODE                      1     // Cipher Block Chaining mode
 
-/* AES Operation cipher mode */
-#define CRYPTO_AES_ECB_MODE                  0     // Electronic Code Book mode
-#define CRYPTO_AES_CBC_MODE                  1     // Cipher Block Chaining mode
+/* AES Operation cipher modes: */
+#define CRYPTO_AES_ECB_MODE                      0     // Electronic Code Book mode
+#define CRYPTO_AES_CBC_MODE                      1     // Cipher Block Chaining mode
 
-#define DESFIRE_CRYPTO_AUTHTYPE_AES128      (1)
-#define DESFIRE_CRYPTO_AUTHTYPE_ISODES      (2)
-#define DESFIRE_CRYPTO_AUTHTYPE_LEGACY      (3)
+#define DESFIRE_CRYPTO_AUTHTYPE_AES128          (1)
+#define DESFIRE_CRYPTO_AUTHTYPE_ISODES          (2)
+#define DESFIRE_CRYPTO_AUTHTYPE_LEGACY          (3)
 
-#define CRYPTO_DES_KEY_SIZE                 (8)
-#define CRYPTO_3KTDEA_KEY_SIZE              (3 * CRYPTO_DES_KEY_SIZE)
+#define CRYPTO_DES_BLOCK_SIZE                   (8)
+#define CRYPTO_3KTDEA_BLOCK_SIZE                (CRYPTO_DES_BLOCK_SIZE)
+#define AES128_BLOCK_SIZE                       (16)
+#define CRYPTO_MAX_BLOCK_SIZE                   (16)
 
-#define CRYPTO_DES_BLOCK_SIZE               (8)
-#define CRYPTO_3KTDEA_BLOCK_SIZE            (CRYPTO_DES_BLOCK_SIZE)
-#define AES128_BLOCK_SIZE                   (16)
-#define CRYPTO_MAX_BLOCK_SIZE               (16)
+#define CRYPTO_DES_KEY_SIZE                     (CRYPTO_DES_BLOCK_SIZE)
+#define CRYPTO_3KTDEA_KEY_SIZE                  (3 * CRYPTO_DES_KEY_SIZE)
+#define CRYPTO_AES128_KEY_SIZE                  (AES128_BLOCK_SIZE)
 
 typedef uint8_t CryptoAESBlock_t[AES128_BLOCK_SIZE];
 static uint8_t SessionIV[CRYPTO_MAX_BLOCK_SIZE];
 
 /* Key sizes, block sizes (in bytes): */
-#define CRYPTO_MAX_KEY_SIZE                 (24)
-#define CRYPTO_MAX_BLOCK_SIZE               (16)
+#define CRYPTO_MAX_KEY_SIZE                     (24)
+#define CRYPTO_MAX_BLOCK_SIZE                   (16)
 
-#define CRYPTO_CHALLENGE_RESPONSE_SIZE      (16)
+#define CRYPTO_CHALLENGE_RESPONSE_SIZE          (16)
+#define CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY   (8)
 
 static const uint8_t ZERO_KEY[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -234,7 +236,7 @@ static inline size_t Decrypt2K3DES(const uint8_t *encSrcBuf, size_t bufSize,
 static inline size_t Encrypt3DES(const uint8_t *plainSrcBuf, size_t bufSize,
                                  uint8_t *encDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
     DES_key_schedule keySched1, keySched2, keySched3;
-    uint8_t *IV = SessionIV;
+    uint8_t IV[CRYPTO_DES_BLOCK_SIZE];
     uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[CRYPTO_DES_BLOCK_SIZE]), *kd3 = &(cdata.keyData[2 * CRYPTO_DES_BLOCK_SIZE]);
     DES_set_key(kd1, &keySched1);
     DES_set_key(kd2, &keySched2);
@@ -256,13 +258,16 @@ static inline size_t Encrypt3DES(const uint8_t *plainSrcBuf, size_t bufSize,
             memcpy(IV, &encDestBuf[blk * CRYPTO_DES_BLOCK_SIZE], CRYPTO_DES_BLOCK_SIZE);
         }
     }
+    if (IVIn != NULL) {
+        memcpy(IVIn, IV, CRYPTO_DES_BLOCK_SIZE);
+    }
     return bufSize;
 }
 
 static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize,
                                  uint8_t *plainDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
     DES_key_schedule keySched1, keySched2, keySched3;
-    uint8_t *IV = SessionIV;
+    uint8_t IV[CRYPTO_DES_BLOCK_SIZE];
     uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[CRYPTO_DES_BLOCK_SIZE]), *kd3 = &(cdata.keyData[2 * CRYPTO_DES_BLOCK_SIZE]);
     DES_set_key(kd1, &keySched1);
     DES_set_key(kd2, &keySched2);
@@ -283,6 +288,9 @@ static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize,
             CryptoMemoryXOR(IV, &plainDestBuf[blk * CRYPTO_DES_BLOCK_SIZE], CRYPTO_DES_BLOCK_SIZE);
             memcpy(IV, &encSrcBuf[blk * CRYPTO_DES_BLOCK_SIZE], CRYPTO_DES_BLOCK_SIZE);
         }
+    }
+    if (IVIn != NULL) {
+        memcpy(IVIn, IV, CRYPTO_DES_BLOCK_SIZE);
     }
     return bufSize;
 }
@@ -497,10 +505,11 @@ static inline void RotateArrayRight(uint8_t *srcBuf, uint8_t *destBuf, size_t bu
 }
 
 static inline void RotateArrayLeft(uint8_t *srcBuf, uint8_t *destBuf, size_t bufSize) {
+    uint8_t lastDataByte = srcBuf[bufSize - 1];
     for (int bidx = 1; bidx < bufSize; bidx++) {
         destBuf[bidx] = srcBuf[bidx - 1];
     }
-    destBuf[0] = srcBuf[bufSize - 1];
+    destBuf[0] = lastDataByte;
 }
 
 static inline void ConcatByteArrays(uint8_t *arrA, size_t arrASize,

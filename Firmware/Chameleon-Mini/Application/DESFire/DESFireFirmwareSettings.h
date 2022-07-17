@@ -36,8 +36,8 @@ This notice must be retained at the top of all source files where indicated.
 
 #define DESFIRE_FIRMWARE_BUILD_TIMESTAMP            PSTR(BUILD_DATE)
 #define DESFIRE_FIRMWARE_GIT_COMMIT_ID              PSTR(COMMIT_ID)
-#define DESFIRE_FIRMWARE_REVISION                   PSTR("1.0.0-testing")
-#define DESFIRE_FIRMWARE_PICC_LAYOUT_REVISION       (0x03)
+#define DESFIRE_FIRMWARE_REVISION                   PSTR("1.0.1-beta")
+#define DESFIRE_FIRMWARE_PICC_LAYOUT_REVISION       (0x04)
 
 #define DESFIRE_LITTLE_ENDIAN                       (1)
 
@@ -64,7 +64,8 @@ typedef uint32_t UINT;
 #define IsFalse(rcond)                               (rcond == FALSE)
 
 /* Allow users to modify typically reserved and protected read-only data on the tag
-   like the manufacturer bytes and the serial number (set in Makefile)? */
+ * like the manufacturer bytes and the serial number (set in Makefile):
+ */
 #ifdef ENABLE_PERMISSIVE_DESFIRE_SETTINGS
 #define DESFIRE_ALLOW_PROTECTED_MODIFY         (1)
 #else
@@ -72,7 +73,8 @@ typedef uint32_t UINT;
 #endif
 
 /* Whether to auto select application ID and file before the user (input system)
-   even invokes an ISO SELECT APPLICATION [0x00 0xa4 0x04] command? */
+ * even invokes an ISO SELECT APPLICATION [0x00 0xa4 0x04] command:
+ */
 #define DESFIRE_LEGACY_SUPPORT                      (0)
 
 #endif

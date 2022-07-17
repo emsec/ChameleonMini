@@ -28,11 +28,6 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // First, authenticate with the legacy command (PICC master key):
-    //if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_LEGACY, MASTER_KEY_INDEX, ZERO_KEY)) {
-    //    return EXIT_FAILURE;
-    //}
-
     // Start ISO authentication (default key, blank setting of all zeros):
     if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,
                      MASTER_KEY_INDEX, ZERO_KEY)) {

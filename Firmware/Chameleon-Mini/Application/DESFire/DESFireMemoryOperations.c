@@ -27,6 +27,7 @@ This notice must be retained at the top of all source files where indicated.
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
 
 #include "../../Common.h"
+#include "../../Settings.h"
 #include "../../Memory.h"
 
 #include "DESFireMemoryOperations.h"
@@ -86,6 +87,25 @@ uint8_t GetCardCapacityBlocks(void) {
             return 0;
     }
     return MaxFreeBlocks - Picc.FirstFreeBlock;
+}
+
+/* TODO: Note: If things suddenly start to break, this code is a good first place to look ... */
+void MemoryStoreDesfireHeaderBytes(void) {
+    void *PiccHeaderDataAddr = (void *) &Picc;
+    uint16_t PiccHeaderDataSize = sizeof(Picc);
+    /* Place the header data in EEPROM in the space directly below the settings structures
+     * (see function SettingsUpdate in "../../Settings.h"):
+     */
+    uintptr_t EEWriteAddr = (uintptr_t)PiccHeaderDataAddr - (uintptr_t)&GlobalSettings - (uintptr_t)((SETTINGS_COUNT - GlobalSettings.ActiveSettingIdx) * PiccHeaderDataSize);
+    eeprom_update_block((uint8_t *) PiccHeaderDataAddr, (uint8_t *) EEWriteAddr, PiccHeaderDataSize);
+}
+
+/* TODO: Same note to examine code here on unexpected new errors ... */
+void MemoryRestoreDesfireHeaderBytes(void) {
+    void *PiccHeaderDataAddr = (void *) &Picc;
+    uint16_t PiccHeaderDataSize = sizeof(Picc);
+    uintptr_t EEReadAddr = (uintptr_t)PiccHeaderDataAddr - (uintptr_t)&GlobalSettings - (uintptr_t)((SETTINGS_COUNT - GlobalSettings.ActiveSettingIdx) * PiccHeaderDataSize);
+    eeprom_read_block((uint8_t *) PiccHeaderDataAddr, (uint8_t *) EEReadAddr, PiccHeaderDataSize);
 }
 
 void ReadDataEEPROMSource(uint8_t *Buffer, uint8_t Count) {

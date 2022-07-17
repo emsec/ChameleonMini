@@ -34,7 +34,7 @@ PCD's side.
 extern uint8_t __CryptoDESOpMode;
 
 /* Key sizes, in bytes */
-#define CRYPTO_DES_KEY_SIZE         8 /* Bytes */
+#define CRYPTO_DES_KEY_SIZE         (8)          /* Bytes */
 #define CRYPTO_2KTDEA_KEY_SIZE      (CRYPTO_DES_KEY_SIZE * 2)
 #define CRYPTO_3KTDEA_KEY_SIZE      (CRYPTO_DES_KEY_SIZE * 3)
 
