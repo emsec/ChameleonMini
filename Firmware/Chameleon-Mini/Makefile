@@ -392,7 +392,7 @@ style:
 
 local-clean:
 	@rm -f  $(TARGET)*.{elf,hex,eep,bin,lss,map}
-	## : Try to avoid rebuilding the LUFA objects that rarely change:
+	## :BlockCount = Count / CRYPTO_DES_BLOCK_SIZE; Try to avoid rebuilding the LUFA objects that rarely change:
 	@rm -f $(CHAMELEON_OBJECT_FILES)
 	@mkdir -p $(OBJDIR)
 clean: local-clean

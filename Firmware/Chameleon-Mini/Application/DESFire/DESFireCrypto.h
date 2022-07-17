@@ -92,8 +92,6 @@ bool IsAuthenticated(void);
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType);
 BYTE GetCryptoMethodCommSettings(uint8_t cryptoType);
-const char *GetCryptoMethodDesc(uint8_t cryptoType);
-const char *GetCommSettingsDesc(uint8_t cryptoType);
 
 bool generateSessionKey(uint8_t *sessionKey, uint8_t *rndA, uint8_t *rndB, uint16_t cryptoType);
 

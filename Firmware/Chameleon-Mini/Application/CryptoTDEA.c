@@ -39,10 +39,16 @@ static void CryptoEncryptCBCBuffer(CryptoTDEA_CBCSpec *CryptoSpec, uint16_t Coun
             }
             CryptoSpec->cryptFunc(inputBlock, &Ciphertext[blockIndex * CryptoSpec->blockSize], Keys);
         } else { /* ECB mode */
-            memcpy(inputBlock, &Plaintext[blockIndex * CryptoSpec->blockSize], CryptoSpec->blockSize);
-            CryptoMemoryXOR(IV, inputBlock, CryptoSpec->blockSize);
-            CryptoSpec->cryptFunc(inputBlock, &Ciphertext[blockIndex * CryptoSpec->blockSize], Keys);
-            memcpy(IV, &Ciphertext[blockIndex * CryptoSpec->blockSize], CryptoSpec->blockSize);
+            if (dataNeedsPadding && blockIndex + 1 == numBlocks) {
+                memset(inputBlock, 0x00, CryptoSpec->blockSize);
+                memcpy(inputBlock, &Ciphertext[(blockIndex - 1) * CryptoSpec->blockSize], Count % CryptoSpec->blockSize);
+                CryptoMemoryXOR(&Plaintext[blockIndex * CryptoSpec->blockSize], inputBlock, CryptoSpec->blockSize);
+            } else {
+                memcpy(inputBlock, &Plaintext[blockIndex * CryptoSpec->blockSize], CryptoSpec->blockSize);
+                CryptoMemoryXOR(IV, inputBlock, CryptoSpec->blockSize);
+                CryptoSpec->cryptFunc(inputBlock, &Ciphertext[blockIndex * CryptoSpec->blockSize], Keys);
+                memcpy(IV, &Ciphertext[blockIndex * CryptoSpec->blockSize], CryptoSpec->blockSize);
+            }
         }
         blockIndex++;
     }
@@ -82,10 +88,16 @@ static void CryptoDecryptCBCBuffer(CryptoTDEA_CBCSpec *CryptoSpec, uint16_t Coun
                                 Plaintext + blockIndex * CryptoSpec->blockSize, CryptoSpec->blockSize);
             }
         } else { /* ECB mode */
-            CryptoSpec->cryptFunc(&Plaintext[blockIndex * CryptoSpec->blockSize],
-                                  &Ciphertext[blockIndex * CryptoSpec->blockSize], Keys);
-            CryptoMemoryXOR(IV, &Plaintext[blockIndex * CryptoSpec->blockSize], CryptoSpec->blockSize);
-            memcpy(IV, &Ciphertext[blockIndex * CryptoSpec->blockSize], CryptoSpec->blockSize);
+            if (dataNeedsPadding && blockIndex + 1 == numBlocks) {
+                memcpy(Plaintext + blockIndex * CryptoSpec->blockSize, inputBlock, Count % CryptoSpec->blockSize);
+                CryptoMemoryXOR(&Ciphertext[(blockIndex - 1) * CryptoSpec->blockSize],
+                                Plaintext + blockIndex * CryptoSpec->blockSize, Count % CryptoSpec->blockSize);
+            } else {
+                CryptoSpec->cryptFunc(&Plaintext[blockIndex * CryptoSpec->blockSize],
+                                      &Ciphertext[blockIndex * CryptoSpec->blockSize], Keys);
+                CryptoMemoryXOR(IV, &Plaintext[blockIndex * CryptoSpec->blockSize], CryptoSpec->blockSize);
+                memcpy(IV, &Ciphertext[blockIndex * CryptoSpec->blockSize], CryptoSpec->blockSize);
+            }
         }
         blockIndex++;
     }

@@ -142,9 +142,9 @@ void CryptoAESGetConfigDefaults(CryptoAESConfig_t *ctx);
 void CryptoAESInitContext(CryptoAESConfig_t *ctx);
 
 uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
-                               const uint8_t *IV, const uint8_t *Key);
+                               uint8_t *IV, const uint8_t *Key);
 uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
-                               const uint8_t *IV, const uint8_t *Key);
+                               uint8_t *IV, const uint8_t *Key);
 
 typedef uint8_t (*CryptoAESFuncType)(uint8_t *, uint8_t *, uint8_t *);
 typedef struct {

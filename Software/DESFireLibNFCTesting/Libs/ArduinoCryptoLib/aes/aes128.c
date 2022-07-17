@@ -107,6 +107,7 @@ static void aes128DecryptBuildKey(AES128Context *ctx, uint8_t *tempOutputBuf) {
 }
 
 void aes128EncryptBlock(AES128Context *ctx, uint8_t *output, const uint8_t *input) {
+
     // Reset the key data:
     aes128SetKey(ctx, ctx->keyData, AES128_KEY_SIZE);
 

@@ -81,21 +81,9 @@ BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {
             return CRYPTO_3KTDEA_KEY_SIZE;
         case CRYPTO_TYPE_AES128:
             return CRYPTO_AES_BLOCK_SIZE;
+        case CRYPTO_TYPE_DES:
         default:
             return CRYPTO_DES_BLOCK_SIZE;
-    }
-}
-
-const char *GetCryptoMethodDesc(uint8_t cryptoType) {
-    switch (cryptoType) {
-        case CRYPTO_TYPE_2KTDEA:
-            return PSTR("2KTDEA");
-        case CRYPTO_TYPE_3K3DES:
-            return PSTR("3K3DES");
-        case CRYPTO_TYPE_AES128:
-            return PSTR("AES128");
-        default:
-            return PSTR("ANY");
     }
 }
 
@@ -109,19 +97,6 @@ BYTE GetCryptoMethodCommSettings(uint8_t cryptoType) {
             return DESFIRE_COMMS_CIPHERTEXT_AES128;
         default:
             return DESFIRE_COMMS_PLAINTEXT;
-    }
-}
-
-const char *GetCommSettingsDesc(uint8_t cryptoType) {
-    switch (cryptoType) {
-        case CRYPTO_TYPE_2KTDEA:
-            return PSTR("PTEXT-MAC");
-        case CRYPTO_TYPE_3K3DES:
-            return PSTR("CTEXT-DES");
-        case CRYPTO_TYPE_AES128:
-            return PSTR("CTEXT-AES128-CMAC");
-        default:
-            return PSTR("PTEXT-DEFAULT");
     }
 }
 

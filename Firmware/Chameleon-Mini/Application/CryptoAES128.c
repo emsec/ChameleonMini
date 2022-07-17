@@ -237,7 +237,7 @@ static void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const
 }
 
 uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
-                               const uint8_t *IV, const uint8_t *Key) {
+                               uint8_t *IV, const uint8_t *Key) {
     bool copyIVBuffer = true;
     if ((Count % CRYPTO_AES_BLOCK_SIZE) != 0) {
         return 0xBE;
@@ -272,7 +272,7 @@ uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciph
 }
 
 uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
-                               const uint8_t *IV, const uint8_t *Key) {
+                               uint8_t *IV, const uint8_t *Key) {
     bool copyIVBuffer = true;
     if ((Count % CRYPTO_AES_BLOCK_SIZE) != 0) {
         return 0xBE;
