@@ -4,7 +4,7 @@ Users that are preparing to reflash their older generation RevE devices should
 see [this software](https://github.com/iceman1001/ChameleonMini-rebooted) 
 for the latest sources to compile fresh binaries to flash onto their Chameleon Mini. 
 Because the AVR chips on the Chameleon Mini RevE devices have less memory, the configurations 
-such as thos for 
+such as those for 
 [DESFire tags](https://github.com/emsec/ChameleonMini/blob/master/Doc/DESFireSupportReadme.md) 
 will (most likely) not work if the firmware binaries are built 
 using the source code in this repository. 
