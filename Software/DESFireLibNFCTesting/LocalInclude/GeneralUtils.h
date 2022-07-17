@@ -12,12 +12,6 @@
 #define ASBITS(byteCount)            ((byteCount) * BITS_PER_BYTE)
 #define ASBYTES(bitCount)            ((bitCount + BITS_PER_BYTE - 1) / BITS_PER_BYTE)
 
-static inline void InvalidateAuthState(void) {
-    memset(CRYPTO_RNDB_STATE, 0x00, 8);
-    AUTHENTICATED = false;
-    AUTHENTICATED_PROTO = 0;
-}
-
 static inline void Int32ToByteBuffer(uint8_t *byteBuffer, int32_t int32Value) {
     if (byteBuffer == NULL) {
         return;

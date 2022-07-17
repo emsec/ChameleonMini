@@ -16,10 +16,21 @@
 #include "LibNFCUtils.h"
 #include "GeneralUtils.h"
 
+static uint8_t ActiveCryptoIVBuffer[CRYPTO_CHALLENGE_RESPONSE_SIZE] = { 0x00 };
+
+static inline void InvalidateAuthenticationStatus(void) {
+    AUTHENTICATED = false;
+    AUTHENTICATED_PROTO = 0;
+    memset(ActiveCryptoIVBuffer, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+}
+
 static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
 
     if (nfcConnDev == NULL || keyData == NULL) {
+        InvalidateAuthenticationStatus();
         return INVALID_PARAMS_ERROR;
+    } else if (!AUTHENTICATED) {
+        InvalidateAuthenticationStatus();
     }
 
     // Start AES authentication (default key, blank setting of all zeros):
@@ -43,6 +54,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, c
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
@@ -51,7 +63,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, c
     // encrypt this result, and send it forth to the PICC:
     uint8_t encryptedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], plainTextRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], rotatedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE];
     uint8_t rndA[CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponse[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponseCipherText[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    int8_t IVBuf[CRYPTO_CHALLENGE_RESPONSE_SIZE];
+    uint8_t *IVBuf = ActiveCryptoIVBuffer;
     memcpy(encryptedRndB, rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     CryptoData_t aesCryptoData = { 0 };
     aesCryptoData.keySize = 16;
@@ -92,6 +104,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, c
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
@@ -117,6 +130,7 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, c
             print_hex(decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 }
@@ -124,7 +138,10 @@ static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, c
 static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
 
     if (nfcConnDev == NULL || keyData == NULL) {
+        InvalidateAuthenticationStatus();
         return INVALID_PARAMS_ERROR;
+    } else if (!AUTHENTICATED) {
+        InvalidateAuthenticationStatus();
     }
 
     // Start 3K3DES authentication (default key, blank setting of all zeros):
@@ -148,6 +165,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
@@ -156,10 +174,10 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
     // encrypt this result, and send it forth to the PICC:
     uint8_t encryptedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], plainTextRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], rotatedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE];
     uint8_t rndA[CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponse[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponseCipherText[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    int8_t IVBuf[CRYPTO_CHALLENGE_RESPONSE_SIZE];
+    uint8_t *IVBuf = ActiveCryptoIVBuffer;
     memcpy(encryptedRndB, rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    //memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    memcpy(IVBuf, &encryptedRndB[CRYPTO_3KTDEA_BLOCK_SIZE], CRYPTO_3KTDEA_BLOCK_SIZE);
+    memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    //memcpy(IVBuf, &encryptedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE - CRYPTO_3KTDEA_BLOCK_SIZE], CRYPTO_3KTDEA_BLOCK_SIZE);
     CryptoData_t desCryptoData = { 0 };
     desCryptoData.keySize = 3 * 8;
     desCryptoData.keyData = keyData;
@@ -171,7 +189,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
     }
     RotateArrayRight(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     //memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    //memcpy(IVBuf, &encryptedRndB[CRYPTO_3KTDEA_BLOCK_SIZE], CRYPTO_3KTDEA_BLOCK_SIZE);
+    memcpy(IVBuf, &encryptedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE - CRYPTO_3KTDEA_BLOCK_SIZE], CRYPTO_3KTDEA_BLOCK_SIZE);
     desCryptoData.ivData = IVBuf;
     GenerateRandomBytes(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     ConcatByteArrays(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponse);
@@ -208,6 +226,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
@@ -222,7 +241,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
         fprintf(stdout, "    -- IV   = ");
         print_hex(IVBuf, CRYPTO_3KTDEA_BLOCK_SIZE);
     }
-    //RotateArrayLeft(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    RotateArrayLeft(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     memcpy(decryptedRndA, decryptedRndAFromPICCRotated, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     if (!memcmp(rndA, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE)) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
@@ -240,6 +259,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
             print_hex(decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 }
@@ -247,7 +267,10 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
 static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
 
     if (nfcConnDev == NULL || keyData == NULL) {
+        InvalidateAuthenticationStatus();
         return INVALID_PARAMS_ERROR;
+    } else if (!AUTHENTICATED) {
+        InvalidateAuthenticationStatus();
     }
 
     // Start 3K3DES authentication (default key, blank setting of all zeros):
@@ -271,6 +294,7 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
@@ -279,7 +303,7 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
     // encrypt this result, and send it forth to the PICC:
     uint8_t encryptedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], plainTextRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], rotatedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE];
     uint8_t rndA[CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponse[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponseCipherText[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    int8_t IVBuf[CRYPTO_CHALLENGE_RESPONSE_SIZE];
+    uint8_t *IVBuf = ActiveCryptoIVBuffer;
     memcpy(encryptedRndB, rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     CryptoData_t desCryptoData = { 0 };
     desCryptoData.keySize = 3 * 8;
@@ -319,6 +343,7 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
@@ -344,11 +369,11 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
             print_hex(decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 }
 static inline int Authenticate(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
-    InvalidateAuthState();
     if (nfcConnDev == NULL || keyData == NULL) {
         return INVALID_PARAMS_ERROR;
     }

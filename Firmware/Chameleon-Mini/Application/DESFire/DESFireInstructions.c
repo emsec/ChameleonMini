@@ -1756,7 +1756,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     DesfireLogEntry(LOG_APP_AUTH_KEY, (const void *) Key, keySize);
 
     /* Generate the nonce B (RndB / Challenge response) */
-    if (DesfireDebuggingOn) {
+    if (!DesfireDebuggingOn) {
         RandomGetBuffer(DesfireCommandState.RndB, CryptoChallengeResponseBytesSize);
     } else {
         /* Fixed nonce for testing */
@@ -1781,11 +1781,9 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Encrypt RndB with the selected key and transfer it back to the PCD */
     if (cryptoKeyType == CRYPTO_TYPE_DES || cryptoKeyType == CRYPTO_TYPE_3K3DES || cryptoKeyType == CRYPTO_TYPE_ANY) {
-        Encrypt3DESBuffer(CryptoChallengeResponseBytesSize, DesfireCommandState.RndB,
-                          &Buffer[1], IV, Key);
+        Encrypt3DESBuffer(CryptoChallengeResponseBytesSize, DesfireCommandState.RndB, &Buffer[1], IV, Key);
     } else {
-        Encrypt2K3DESBuffer(CryptoChallengeResponseBytesSize, DesfireCommandState.RndB,
-                            &Buffer[1], IV, Key);
+        Encrypt2K3DESBuffer(CryptoChallengeResponseBytesSize, DesfireCommandState.RndB, &Buffer[1], IV, Key);
     }
     DesfireLogEntry(LOG_INFO_DESFIRE_STATUS_INFO, (void *) IV, CryptoChallengeResponseBytesSize);
 
