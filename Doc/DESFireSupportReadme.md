@@ -305,27 +305,114 @@ DF_ENCMODE=AES:CBC
 The next PM3 commands are known to work with the Chameleon DESFire tag emulation (using both the RDV4 and Easy device types). 
 The sample outputs obtained running the ``pm3`` command line utility below may vary by usage and proximity to the PM3 hardware.
 
-#### Getting a summary of tag information
+#### PM3 logging and debugging setup script
 
 ```bash
-TODO
+hw dbg -4
+prefs set clientdebug --full
+data setdebugmode -2
+```
+
+#### Getting a summary of tag information
+
+The output of this command will change significantly if the header and 
+manufacturer bytes are changed using the Chameleon terminal commands above. 
+The tag type reeported will also vary depending on which EV0/EV1/EV2 generation of the
+DESFire configuration is used:
+```bash
+[usb] pm3 --> hf mfdes info
+[#] pcb_blocknum 0 == 2 
+[#] [WCMD <--: : 08/08] 02 90 60 00 00 00 14 98 
+[#] pcb_blocknum 1 == 3 
+[#] [WCMD <--: : 08/08] 03 90 af 00 00 00 1f 15 
+[#] pcb_blocknum 0 == 2 
+[#] [WCMD <--: : 08/08] 02 90 af 00 00 00 34 11 
+[#] halt warning. response len: 3
+[#] Halt error
+[#] switch_off
+
+[=] ---------------------------------- Tag Information ----------------------------------
+[+]               UID: F9 D8 1E 14 DF 86 F9 
+[+]      Batch number: DF 86 5B A9 D0 
+[+]   Production date: week 6b / 208e
+
+[=] --- Hardware Information
+[=]    raw: 04010100011805
+[=]      Vendor Id: NXP Semiconductors Germany
+[=]           Type: 0x01
+[=]        Subtype: 0x01
+[=]        Version: 0.1 ( DESFire MF3ICD40 )
+[=]   Storage size: 0x18 ( 4096 bytes )
+[=]       Protocol: 0x05 ( ISO 14443-2, 14443-3 )
+
+[=] --- Software Information
+[=]    raw: C8D70200008000
+[=]      Vendor Id: no tag-info available
+[=]           Type: 0xD7
+[=]        Subtype: 0x02
+[=]        Version: 0.0
+[=]   Storage size: 0x80 ( 1 bytes )
+[=]       Protocol: 0x00 ( Unknown )
+
+[=] --------------------------------- Card capabilities ---------------------------------
+[#] error DESFIRESendRaw Current configuration/status does not allow the requested command
+[#] error DESFIRESendApdu Current configuration/status does not allow the requested command
+[#] error DESFIRESendApdu Command code not supported
+[#] error DESFIRESendApdu Command code not supported
+[+] ------------------------------------ PICC level -------------------------------------
+[+] Applications count: 0 free memory n/a
+[+] PICC level auth commands: 
+[+]    Auth.............. YES
+[+]    Auth ISO.......... YES
+[+]    Auth AES.......... NO
+[+]    Auth Ev2.......... NO
+[+]    Auth ISO Native... NO
+[+]    Auth LRP.......... NO
+
+[=] --- Free memory
+[+]    Card doesn't support 'free mem' cmd
 ```
 
 #### ISODES authentication with the PICC and PICC master key
 
 ```bash
-TODO
+[usb] pm3 --> hf mfdes auth -n 0 -t 3tdea -k 000000000000000000000000000000000000000000000000 -v -c native -a
+[=] Key num: 0 Key algo: 3tdea Key[24]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: n/a Command set: native Communication mode: plain
+[+] Setting ISODEP -> inactive
+[+] Setting ISODEP -> NFC-A
+[=] AID 000000 is selected
+[=] Auth: cmd: 0x1a keynum: 0x00
+[+] raw>> 1A 00 
+[+] raw<< AF EE 91 30 1E E8 F5 84 D6 C7 85 1D 05 65 13 90 A6 C6 D5 
+[#] encRndB: EE 91 30 1E E8 F5 84 D6 
+[#] RndB: CA FE BA BE 00 11 22 33 
+[#] rotRndB: FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[#] Both   : 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[+] raw>> AF 30 EB 55 F3 29 39 04 96 77 88 CE EF 33 A3 C8 7B 18 66 1A F1 62 78 A0 28 53 84 67 98 7C BB DB 03 
+[+] raw<< 00 9B 71 57 8F FB DF 80 A8 F6 EF 33 4A C6 CD F9 7A 7D BE 
+[=] Session key : 01 02 03 04 CA FE BA BE 07 08 09 10 22 33 CA FE 13 14 15 16 00 11 22 33 
+[=] Desfire  authenticated
+[+] PICC selected and authenticated succesfully
+[+] Context: 
+[=] Key num: 0 Key algo: 3tdea Key[24]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: ev1 Command set: native Communication mode: plain
+[=] Session key [24]: 01 02 03 04 CA FE BA BE 07 08 09 10 22 33 CA FE 13 14 15 16 00 11 22 33  
+[=]     IV [8]: 00 00 00 00 00 00 00 00 
+[+] Setting ISODEP -> inactive
 ```
 
 ### Compatibility with external USB readers and LibNFC
 
-The DESFire configurations are known to work with the anticollision and RATS handshaking utility ``nfc-anticol`` from LibNFC. 
-The Mifare DESFire commands installed by LibFreeFare have not been tested nor confirmed to work with the Chameleon Mini. 
+The DESFire configurations are known to work with the anticollision and RATS handshaking utility ``nfc-anticol`` 
+from [LibNFC](https://github.com/nfc-tools/libnfc). 
+The Mifare DESFire commands installed by [LibFreefare](https://github.com/nfc-tools/libfreefare) 
+have not been tested nor confirmed to work with the Chameleon Mini. 
 The developers are actively working to ensure compatibility of the Chameleon DESFire emulation with external USB readers used 
 running ``pcscd`` and ``pcsc_spy``. This support is not yet functional with tests using ACR-122 and HID Omnikey 5022CL readers. 
 The DESFire support for the Chameleon Mini is tested with the LibNFC-based source code 
-[developed in this directory]() with 
-[sample dumps and output here]().
+[developed in this directory](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting) with 
+[sample dumps and output here](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting/SampleOutputDumps).
 
 ### Links to public datasheets and online specs 
 
