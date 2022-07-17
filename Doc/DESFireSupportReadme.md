@@ -339,3 +339,15 @@ repositories and code bases:
 * [Android HCE Framework Library (kevinvalk)](https://github.com/kevinvalk/android-hce-framework)
 * [AVRCryptoLib in C](https://github.com/cantora/avr-crypto-lib)
 * [LibFreefare DESFire Code (mostly as a reference and check point)](https://github.com/nfc-tools/libfreefare/tree/master/libfreefare)
+
+## New development sources of DESFire support for the Chameleon Mini
+
+David Oswald has added a [DESFire emulation project](https://github.com/orgs/emsec/projects?type=classic) to organize tasks in progress for DESFire emulation support on the Chameleon Mini. The [original development sources](https://github.com/maxieds/ChameleonMiniDESFireStack/releases) are now archived and not kept up to date. Development sources for pull request projects in progress by **@maxieds** are [located here](https://github.com/maxieds/ChameleonMini). For example, a newer branch can be built by running
+```bash
+$ git clone https://github.com/maxieds/ChameleonMini.git
+$ cd ChameleonMini
+$ git checkout DESFireNFCExternalUSBReaderPatches-LibNFCTestCode
+$ cd Firmware/ChameleonMini
+$ make desfire-dev
+```
+Other GitHub users are developing mods of the emsec firmware sources for projects such as Mifare DESFire Plus support elsewhere.
