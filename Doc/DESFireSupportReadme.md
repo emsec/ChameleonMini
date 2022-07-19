@@ -305,7 +305,7 @@ DF_ENCMODE=AES:CBC
 The next PM3 commands are known to work with the Chameleon DESFire tag emulation (using both the RDV4 and Easy device types). 
 The sample outputs obtained running the ``pm3`` command line utility below may vary by usage and proximity to the PM3 hardware.
 
-#### PM3 logging and debugging setup script
+#### PM3 logging and debugging setup script (run this first)
 
 ```bash
 hw dbg -4
@@ -313,11 +313,35 @@ prefs set clientdebug --full
 data setdebugmode -2
 ```
 
+#### Listing initial tag response
+
+```bash
+[usb] pm3 --> hf mfdes list
+[=] downloading tracelog data from device
+[+] Recorded activity (trace len = 146 bytes)
+[=] start = start of start frame end = end of frame. src = source of transfer
+[=] ISO14443A - all times are in carrier periods (1/13.56MHz)
+
+      Start |        End | Src | Data (! denotes parity error)                                           | CRC | Annotation
+------------+------------+-----+-------------------------------------------------------------------------+-----+--------------------
+          0 |        992 | Rdr |52                                                                       |     | WUPA
+       2116 |       4484 | Tag |44  03                                                                   |     | 
+       7040 |       9504 | Rdr |93  20                                                                   |     | ANTICOLL
+      10820 |      16708 | Tag |88  41  92  a0  fb                                                       |     | 
+      19328 |      29856 | Rdr |93  70  88  41  92  a0  fb  87  d9                                       |  ok | SELECT_UID
+      30916 |      34436 | Tag |24  d8  36                                                               |     | 
+      35840 |      38304 | Rdr |95  20                                                                   |     | ANTICOLL-2
+      39364 |      45188 | Tag |b2  59  78  41  d2                                                       |     | 
+      47872 |      58336 | Rdr |95  70  b2  59  78  41  d2  13  09                                       |  ok | SELECT_UID-2
+      59844 |      63428 | Tag |20  fc  70                                                               |     | 
+      65152 |      69920 | Rdr |e0  80  31  73                                                           |  ok | RATS
+```
+
 #### Getting a summary of tag information
 
 The output of this command will change significantly if the header and 
 manufacturer bytes are changed using the Chameleon terminal commands above. 
-The tag type reeported will also vary depending on which EV0/EV1/EV2 generation of the
+The tag type reported will also vary depending on which EV0/EV1/EV2 generation of the
 DESFire configuration is used:
 ```bash
 [usb] pm3 --> hf mfdes info
@@ -327,14 +351,14 @@ DESFire configuration is used:
 [#] [WCMD <--: : 08/08] 03 90 af 00 00 00 1f 15 
 [#] pcb_blocknum 0 == 2 
 [#] [WCMD <--: : 08/08] 02 90 af 00 00 00 34 11 
-[#] halt warning. response len: 3
+[#] halt warning. response len: 2
 [#] Halt error
 [#] switch_off
 
 [=] ---------------------------------- Tag Information ----------------------------------
-[+]               UID: F9 D8 1E 14 DF 86 F9 
-[+]      Batch number: DF 86 5B A9 D0 
-[+]   Production date: week 6b / 208e
+[+]               UID: 94 76 F1 48 2C 58 94 
+[+]      Batch number: 2C 58 0F EC 2C 
+[+]   Production date: week dc / 20f1
 
 [=] --- Hardware Information
 [=]    raw: 04010100011805
@@ -346,28 +370,34 @@ DESFire configuration is used:
 [=]       Protocol: 0x05 ( ISO 14443-2, 14443-3 )
 
 [=] --- Software Information
-[=]    raw: C8D70200008000
+[=]    raw: 90AF0401010001
 [=]      Vendor Id: no tag-info available
-[=]           Type: 0xD7
-[=]        Subtype: 0x02
-[=]        Version: 0.0
-[=]   Storage size: 0x80 ( 1 bytes )
-[=]       Protocol: 0x00 ( Unknown )
+[=]           Type: 0xAF
+[=]        Subtype: 0x04
+[=]        Version: 1.1
+[=]   Storage size: 0x00 ( 1 bytes )
+[=]       Protocol: 0x01 ( Unknown )
 
 [=] --------------------------------- Card capabilities ---------------------------------
-[#] error DESFIRESendRaw Current configuration/status does not allow the requested command
-[#] error DESFIRESendApdu Current configuration/status does not allow the requested command
-[#] error DESFIRESendApdu Command code not supported
 [#] error DESFIRESendApdu Command code not supported
 [+] ------------------------------------ PICC level -------------------------------------
 [+] Applications count: 0 free memory n/a
 [+] PICC level auth commands: 
-[+]    Auth.............. YES
+[+]    Auth.............. NO
 [+]    Auth ISO.......... YES
-[+]    Auth AES.......... NO
+[+]    Auth AES.......... YES
 [+]    Auth Ev2.......... NO
 [+]    Auth ISO Native... NO
 [+]    Auth LRP.......... NO
+[+] PICC level rights:
+[+] [1...] CMK Configuration changeable   : YES
+[+] [.1..] CMK required for create/delete : NO
+[+] [..1.] Directory list access with CMK : NO
+[+] [...1] CMK is changeable              : YES
+[+] 
+[+] Key: 2TDEA
+[+] key count: 1
+[+] PICC key 0 version: 0 (0x00)
 
 [=] --- Free memory
 [+]    Card doesn't support 'free mem' cmd
@@ -399,6 +429,35 @@ DESFire configuration is used:
 [=] Secure channel: ev1 Command set: native Communication mode: plain
 [=] Session key [24]: 01 02 03 04 CA FE BA BE 07 08 09 10 22 33 CA FE 13 14 15 16 00 11 22 33  
 [=]     IV [8]: 00 00 00 00 00 00 00 00 
+[+] Setting ISODEP -> inactive
+```
+
+#### AES (128-bit) authentication with the PICC and PICC master key
+
+```bash
+[usb] pm3 --> hf mfdes auth -n 0 -t aes -k 00000000000000000000000000000000 -v -c native -a
+[=] Key num: 0 Key algo: aes Key[16]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: n/a Command set: native Communication mode: plain
+[+] Setting ISODEP -> inactive
+[+] Setting ISODEP -> NFC-A
+[=] AID 000000 is selected
+[=] Auth: cmd: 0xaa keynum: 0x00
+[+] raw>> AA 00 
+[+] raw<< AF EA 8C 8F 55 42 BB 7B 81 7C 26 44 EC EC 73 85 AB 8B AF 
+[#] encRndB: EA 8C 8F 55 42 BB 7B 81 
+[#] RndB: CA FE BA BE 00 11 22 33 
+[#] rotRndB: FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[#] Both   : 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[+] raw>> AF 04 25 9E 8B C4 49 26 DD 5D 9F 1E 84 1F 2F 13 E4 F1 BD 8E 58 72 AD A6 29 D3 CC 93 91 52 99 BC 71 
+[+] raw<< 00 59 2D 75 D8 BE 6A 4B C1 25 E9 9D 95 D4 B1 B0 D2 D1 5D 
+[=] Session key : 01 02 03 04 CA FE BA BE 13 14 15 16 00 11 22 33 
+[=] Desfire  authenticated
+[+] PICC selected and authenticated succesfully
+[+] Context: 
+[=] Key num: 0 Key algo: aes Key[16]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: ev1 Command set: native Communication mode: plain
+[=] Session key [16]: 01 02 03 04 CA FE BA BE 13 14 15 16 00 11 22 33  
+[=]     IV [16]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
 [+] Setting ISODEP -> inactive
 ```
 
