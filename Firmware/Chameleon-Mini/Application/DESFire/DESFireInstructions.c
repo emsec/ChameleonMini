@@ -445,16 +445,26 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE CryptoChallengeResponseSize;
 
     /* Reset authentication state right away */
-    if (!Authenticated || !AuthenticatedWithPICCMasterKey) {
-        InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
+    InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
+    if (!Authenticated && !AuthenticatedWithPICCMasterKey && SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
+        Buffer[0] = STATUS_PERMISSION_DENIED;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
     }
+
     /* Validate command length */
     if (ByteCount != 2) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    /* Validate number of keys: less than max */
+
+    /* Check if we are authenticating with the PICC/Master key setup correctly */
     KeyId = Buffer[1];
+    if (!AuthenticatedWithPICCMasterKey && SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
+        Buffer[0] = STATUS_PERMISSION_DENIED;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+
+    /* Validate number of keys: less than max */
     if (!KeyIdValid(SelectedApp.Slot, KeyId)) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
@@ -467,9 +477,9 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     }
 
     /* Indicate that we are in DES key authentication land */
-    keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_DES);
     Key = SessionKey;
     IV = SessionIV;
+    keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_DES);
     DesfireCommandState.KeyId = KeyId;
     DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_DES;
     DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_DES);
@@ -482,6 +492,7 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     /* Generate the nonce B (RndB / Challenge response) */
     if (!DesfireDebuggingOn) {
         RandomGetBuffer(DesfireCommandState.RndB, CryptoChallengeResponseSize);
+        memset(&DesfireCommandState.RndB[CRYPTO_DES_BLOCK_SIZE], 0x00, CRYPTO_DES_BLOCK_SIZE);
     } else {
         /* Fixed nonce for testing */
         DesfireCommandState.RndB[0] = 0xCA;
@@ -492,7 +503,7 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
         DesfireCommandState.RndB[5] = 0x11;
         DesfireCommandState.RndB[6] = 0x22;
         DesfireCommandState.RndB[7] = 0x33;
-        memset(&DesfireCommandState.RndB[8], 0x00, CRYPTO_DES_BLOCK_SIZE);
+        memset(&DesfireCommandState.RndB[CRYPTO_DES_BLOCK_SIZE], 0x00, CRYPTO_DES_BLOCK_SIZE);
     }
     DesfireLogEntry(LOG_APP_NONCE_B, DesfireCommandState.RndB, CryptoChallengeResponseSize);
 
@@ -1696,22 +1707,22 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE CryptoChallengeResponseSize;
     BYTE *Key, *IV;
 
+    /* Reset authentication state right away */
+    InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
+    if (!Authenticated && !AuthenticatedWithPICCMasterKey && SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
+        Buffer[0] = STATUS_PERMISSION_DENIED;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+
     /* Validate command length */
     if (ByteCount != 2) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    /* Reset authentication state right away:
-     * Check that we have first authenticated with the legacy auth command, and that the
-     * key we are using matches (may require a call to ChangeKey after the legacy auth).
-     * Note that we keep the status flag that we have already auth'ed with the legacy command
-     * in the event of an error.
-     */
+    /* Check if we are authenticating with the PICC/Master key setup correctly */
     KeyId = Buffer[1];
-    if (!Authenticated || !AuthenticatedWithPICCMasterKey) {
-        InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
-    } else if (KeyId != DESFIRE_MASTER_KEY_ID) {
+    if (!AuthenticatedWithPICCMasterKey && SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -1891,17 +1902,23 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE *Key, *IVBuffer;
     BYTE Status;
 
+    /* Reset authentication state right away */
+    InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
+    if (!Authenticated && !AuthenticatedWithPICCMasterKey && SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
+        Buffer[0] = STATUS_PERMISSION_DENIED;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+
     /* Validate command length */
     if (ByteCount != 2) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
+    /* Check if we are authenticating with the PICC/Master key setup correctly */
     KeyId = Buffer[1];
-    if (!Authenticated || !AuthenticatedWithPICCMasterKey) {
-        InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
-    } else if (AuthenticatedWithKey != KeyId) {
-        Buffer[0] = STATUS_NO_SUCH_KEY;
+    if (!AuthenticatedWithPICCMasterKey && SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
+        Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
@@ -1910,13 +1927,13 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
+
     /* Make sure that this key is AES, and figure out its byte size */
     BYTE cryptoKeyType = ReadKeyCryptoType(SelectedApp.Slot, KeyId);
     if (!CryptoTypeAES(cryptoKeyType)) {
         Buffer[0] = STATUS_NO_SUCH_KEY;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-
     InitAESCryptoKeyData();
 
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_AES128);
@@ -2011,8 +2028,6 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Check that the returned RndB matches what we sent in the previous round */
     if (memcmp(DesfireCommandState.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
-        memcpy(challengeRndAB, DesfireCommandState.RndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-        memcpy(challengeRndAB + CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }

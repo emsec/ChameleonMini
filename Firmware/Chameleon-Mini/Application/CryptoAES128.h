@@ -63,6 +63,10 @@ extern uint8_t __CryptoAESOpMode;
 #define CRYPTO_AES_URAT_MRWRITE_SUBKEY     4     // Mode Register written during the sub-keys generation
 #define CRYPTO_AES_URAT_READ_WRITEONLY     5     // Write-only register read access
 
+/* Error and status codes */
+#define CRYPTO_AES_EXIT_SUCCESS            0
+#define CRYPTO_AES_EXIT_UNEVEN_BLOCKS      1
+
 /* Define types for the AES-128 specific implementation: */
 #define CRYPTO_AES_KEY_SIZE                16
 typedef uint8_t CryptoAESKey_t[CRYPTO_AES_KEY_SIZE];
@@ -70,8 +74,7 @@ typedef uint8_t CryptoAESKey_t[CRYPTO_AES_KEY_SIZE];
 #define CRYPTO_AES_BLOCK_SIZE	           16
 typedef uint8_t CryptoAESBlock_t[CRYPTO_AES_BLOCK_SIZE];
 
-#define CryptoAESBytesToBlocks(byteCount) \
-     ((byteCount + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE)
+#define CryptoAESBytesToBlocks(byteCount)  ((byteCount + CRYPTO_AES_BLOCK_SIZE - 1) / CRYPTO_AES_BLOCK_SIZE)
 
 typedef enum aes_dec {
     AES_ENCRYPT,
@@ -141,10 +144,10 @@ void aes_set_callback(const aes_callback_t callback);
 void CryptoAESGetConfigDefaults(CryptoAESConfig_t *ctx);
 void CryptoAESInitContext(CryptoAESConfig_t *ctx);
 
-uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
-                               uint8_t *IV, const uint8_t *Key);
-uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
-                               uint8_t *IV, const uint8_t *Key);
+int CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
+                           uint8_t *IV, const uint8_t *Key);
+int CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
+                           uint8_t *IV, const uint8_t *Key);
 
 typedef uint8_t (*CryptoAESFuncType)(uint8_t *, uint8_t *, uint8_t *);
 typedef struct {
@@ -165,8 +168,7 @@ void CryptoAESEncrypt_CBCSend(uint16_t Count, uint8_t *PlainText, uint8_t *Ciphe
                               uint8_t *Key, uint8_t *IV);
 
 /* Crypto utility functions: */
-#define CRYPTO_BYTES_TO_BLOCKS(numBytes, blockSize)    \
-     ( ((numBytes) + (blockSize) - 1) / (blockSize) )
+#define CRYPTO_BYTES_TO_BLOCKS(numBytes, blockSize)    ( ((numBytes) + (blockSize) - 1) / (blockSize) )
 
 #define CryptoMemoryXOR(inputBuf, destBuf, bufSize) ({ \
      uint8_t *in = (uint8_t *) inputBuf;               \

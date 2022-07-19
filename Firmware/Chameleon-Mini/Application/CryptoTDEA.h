@@ -28,22 +28,26 @@ PCD's side.
 */
 
 /* DES Operation cipher modes */
-#define CRYPTO_DES_ECB_MODE                0     // Electronic Code Book mode
-#define CRYPTO_DES_CBC_MODE                1     // Cipher Block Chaining mode
+#define CRYPTO_DES_ECB_MODE                  0     // Electronic Code Book mode (ECB mode)
+#define CRYPTO_DES_CBC_MODE                  1     // Cipher Block Chaining mode (CBC mode)
 
 extern uint8_t __CryptoDESOpMode;
 
 /* Key sizes, in bytes */
-#define CRYPTO_DES_KEY_SIZE         (8)          /* Bytes */
-#define CRYPTO_2KTDEA_KEY_SIZE      (CRYPTO_DES_KEY_SIZE * 2)
-#define CRYPTO_3KTDEA_KEY_SIZE      (CRYPTO_DES_KEY_SIZE * 3)
+#define CRYPTO_DES_KEY_SIZE                  (8)
+#define CRYPTO_2KTDEA_KEY_SIZE               (2 * CRYPTO_DES_KEY_SIZE)
+#define CRYPTO_3KTDEA_KEY_SIZE               (3 * CRYPTO_DES_KEY_SIZE)
 
 typedef uint8_t Crypto2KTDEAKeyType[CRYPTO_2KTDEA_KEY_SIZE];
 typedef uint8_t Crypto3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 
-#define CRYPTO_DES_BLOCK_SIZE                8 /* Bytes */
+#define CRYPTO_DES_BLOCK_SIZE                (8)
 #define CRYPTO_2KTDEA_BLOCK_SIZE             (CRYPTO_DES_BLOCK_SIZE)
 #define CRYPTO_3KTDEA_BLOCK_SIZE             (CRYPTO_DES_BLOCK_SIZE)
+
+/* Error and status codes */
+#define CRYPTO_TDEA_EXIT_SUCCESS             0
+#define CRYPTO_TDEA_EXIT_UNEVEN_BLOCKS       1
 
 /* Prototype the CBC function pointer in case anyone needs it */
 typedef void (*CryptoTDEACBCFuncType)(uint16_t Count, const void *Plaintext, void *Ciphertext, void *IV, const uint8_t *Keys);
@@ -51,8 +55,8 @@ typedef void (*CryptoTDEAFuncType)(const void *PlainText, void *Ciphertext, cons
 
 void CryptoEncryptDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecryptDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
-void EncryptDESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
-void DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
+int EncryptDESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
+int DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 
 /** Performs the Triple DEA enciphering in ECB mode (single block)
  *
@@ -62,15 +66,13 @@ void DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, c
  */
 void CryptoEncrypt2KTDEA(const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecrypt2KTDEA(const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
-
-void Encrypt2K3DESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
-void Decrypt2K3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
+int Encrypt2K3DESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
+int Decrypt2K3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 
 void CryptoEncrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecrypt3KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
-
-void Encrypt3DESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
-void Decrypt3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
+int Encrypt3DESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
+int Decrypt3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 
 /** Performs the 2-key Triple DES en/deciphering in the CBC "send" mode (xor-then-crypt)
  *

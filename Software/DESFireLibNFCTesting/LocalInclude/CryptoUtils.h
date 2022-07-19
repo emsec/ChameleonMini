@@ -174,8 +174,7 @@ static inline size_t Encrypt2K3DES(const uint8_t *plainSrcBuf, size_t bufSize,
         for (int blk = 0; blk < numBlocks; blk++) {
             memcpy(inputBlock, &plainSrcBuf[blk * CRYPTO_DES_BLOCK_SIZE], CRYPTO_DES_BLOCK_SIZE);
             CryptoMemoryXOR(IV, inputBlock, CRYPTO_DES_BLOCK_SIZE);
-            DES_ecb2_encrypt(&plainSrcBuf[blk * CRYPTO_DES_BLOCK_SIZE],
-                             &encDestBuf[blk * CRYPTO_DES_BLOCK_SIZE], &keySched1, &keySched2, DES_ENCRYPT);
+            DES_ecb2_encrypt(inputBlock, &encDestBuf[blk * CRYPTO_DES_BLOCK_SIZE], &keySched1, &keySched2, DES_ENCRYPT);
             memcpy(IV, &encDestBuf[blk * CRYPTO_DES_BLOCK_SIZE], CRYPTO_DES_BLOCK_SIZE);
         }
     }

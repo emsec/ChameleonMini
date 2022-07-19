@@ -211,7 +211,6 @@ static void CryptoAESEncryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const
     } while (aes_is_busy());
     aes_read_outputdata(Ciphertext);
     aes_clear_interrupt_flag();
-    aes_clear_error_flag();
 }
 
 static void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key) {
@@ -236,11 +235,10 @@ static void CryptoAESDecryptBlock(uint8_t *Plaintext, uint8_t *Ciphertext, const
     } while (aes_is_busy());
     aes_read_outputdata(Plaintext);
     aes_clear_interrupt_flag();
-    aes_clear_error_flag();
 }
 
-uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
-                               uint8_t *IVIn, const uint8_t *Key) {
+int CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
+                           uint8_t *IVIn, const uint8_t *Key) {
     uint8_t *IV = IVIn;
     if ((Count % CRYPTO_AES_BLOCK_SIZE) != 0) {
         return 0xBE;
@@ -289,15 +287,19 @@ uint8_t CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciph
             memcpy(IV, Ciphertext + blk * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
         }
     }
-    return 0;
+    if (aes_is_error()) {
+        aes_clear_error_flag();
+        return AES.STATUS & AES_ERROR_bm;
+    } else if (unevenBlockSize) {
+        return CRYPTO_AES_EXIT_UNEVEN_BLOCKS;
+    } else {
+        return CRYPTO_AES_EXIT_SUCCESS;
+    }
 }
 
-uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
-                               uint8_t *IVIn, const uint8_t *Key) {
+int CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
+                           uint8_t *IVIn, const uint8_t *Key) {
     uint8_t *IV = IVIn;
-    if ((Count % CRYPTO_AES_BLOCK_SIZE) != 0) {
-        return 0xBE;
-    }
     if (IVIn == NULL) {
         memset(__CryptoAES_IVData, 0x00, CRYPTO_AES_BLOCK_SIZE);
         IV = &__CryptoAES_IVData[0];
@@ -342,16 +344,22 @@ uint8_t CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciph
                 memcpy(IV, Ciphertext + blk * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
             } else {
                 uint8_t numInputUnevenBytes = Count % CRYPTO_AES_BLOCK_SIZE;
-                CryptoAESBlock_t inputBlockTemp;
-                memset(inputBlockTemp, 0x00, CRYPTO_AES_BLOCK_SIZE);
-                memcpy(inputBlockTemp, Ciphertext + blk * CRYPTO_AES_BLOCK_SIZE, numInputUnevenBytes);
-                CryptoAESDecryptBlock(Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, inputBlockTemp, Key);
+                memset(inputBlock, 0x00, CRYPTO_AES_BLOCK_SIZE);
+                memcpy(inputBlock, Ciphertext + blk * CRYPTO_AES_BLOCK_SIZE, numInputUnevenBytes);
+                CryptoAESDecryptBlock(Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, inputBlock, Key);
                 CryptoMemoryXOR(IV, Plaintext + blk * CRYPTO_AES_BLOCK_SIZE, CRYPTO_AES_BLOCK_SIZE);
-                memcpy(IV, inputBlockTemp, CRYPTO_AES_BLOCK_SIZE);
+                memcpy(IV, inputBlock, CRYPTO_AES_BLOCK_SIZE);
             }
         }
     }
-    return 0;
+    if (aes_is_error()) {
+        aes_clear_error_flag();
+        return AES.STATUS & AES_ERROR_bm;
+    } else if (unevenBlockSize) {
+        return CRYPTO_AES_EXIT_UNEVEN_BLOCKS;
+    } else {
+        return CRYPTO_AES_EXIT_SUCCESS;
+    }
 }
 
 // This routine performs the CBC "send" mode chaining: C = E(P ^ IV); IV = C

@@ -61,9 +61,9 @@ BINOUTS=$(addprefix $(BINDIR)/, $(addsuffix .$(BINEXT), $(basename $(FILE_BASENA
 .SECONDARY: $(OBJFILES)
 .PRECIOUS: $(OBJFILES)
 
-all: prelims clean default
+all: default
 
-default: $(OBJFILES) $(BINOUTS)
+default: prelims $(OBJFILES) $(BINOUTS)
 
 $(OBJDIR)/%.$(OBJEXT): Source/%.c
 	$(CC) $(CFLAGS) $< -c -o $@

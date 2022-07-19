@@ -7,9 +7,6 @@
 #include <stdint.h>
 #include <errno.h>
 
-#define STRING_BUFFER_SIZE          (256)
-static char __InternalLoggingStringBuffer[STRING_BUFFER_SIZE] = { '\0' };
-
 #define GetSourceFileLoggingData(outputDataBuf, maxBufSize)      ({    \
         char *strBuffer;                                               \
         do {                                                           \
@@ -62,6 +59,6 @@ static bool RUNTIME_QUIET_MODE = false;
 static bool RUNTIME_VERBOSE_MODE = true;
 static bool PRINT_STATUS_EXCHANGE_MESSAGES = true;
 
-#define STATUS_OK                       (0x00)
+#define STATUS_OK                       (0)
 
 #endif

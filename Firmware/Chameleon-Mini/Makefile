@@ -359,18 +359,18 @@ dfu-prog: $(TARGET).hex $(TARGET).eep check_size
 	dfu-programmer $(MCU) reset
 
 check_size: BASH:=$(if $(shell which bash), $(shell which bash), /bin/bash)
-check_size: BASH_SCRIPT_EXEC_LINES:='                                                                      \
-	set -e;                                                                                               \
-	if [[ ! -f $(TARGET).elf ]]; then                                                                     \
+check_size: BASH_SCRIPT_EXEC_LINES:='                                                                            \
+	set -e;                                                                                                  \
+	if [[ ! -f $(TARGET).elf ]]; then                                                                        \
 		exit 0;                                                                                          \
-	fi;                                                                                                   \
-	PROGMEM_SIZE=$$(avr-size $(TARGET).elf | grep $(CHECK_SIZE_GREP_ARGS) | sed -n 4p);                   \
-	MAX_PRGMEM_SIZE=$$(printf "%d\n" $(FLASH_DATA_ADDR));                                                 \
-	if [[ $$PROGMEM_SIZE -gt $$MAX_PRGMEM_SIZE ]]; then                                                   \
-	     $(ECHO) \"make: *** $(TARGET).elf Application Section size $$PROGMEM_SIZE \"                     \
+	fi;                                                                                                      \
+	PROGMEM_SIZE=$$(avr-size $(TARGET).elf | grep $(CHECK_SIZE_GREP_ARGS) | sed -n 4p);                      \
+	MAX_PRGMEM_SIZE=$$(printf "%d\n" $(FLASH_DATA_ADDR));                                                    \
+	if [[ $$PROGMEM_SIZE -gt $$MAX_PRGMEM_SIZE ]]; then                                                      \
+	     $(ECHO) \"make: *** $(TARGET).elf Application Section size $$PROGMEM_SIZE \"                        \
 		$(ECHO) \"excedes maximum allowed $$MAX_PRGMEM_SIZE. Please disable some features in Makefile\"; \
 		exit 1;                                                                                          \
-	fi;                                                                                                   \
+	fi;                                                                                                      \
 	'
 check_size:
 	@$(BASH) -c $(BASH_SCRIPT_EXEC_LINES) || $(SHELL) -c $(BASH_SCRIPT_EXEC_LINES)
@@ -404,8 +404,9 @@ git-add-dev:
 	@make style && git add $(LOCALFW_SOURCE_FILES)
 	@cd $(BUILD_SCR) && git add -f $(LOCALFW_BUILD_SCRIPT_FILES)
 	@cd $(FWROOT)/Software/DESFireLibNFCTesting && make style && git add $(TESTING_SOURCE_FILES)
-	@git add $(FWROOT)/Doc/DESFireSupportReadme.md
+	@git add $(FWROOT)/Doc/*.md
 	@cd $(FWROOT)/Software/ChamTool && git add ./*.py ./*/*.py
+	@cd $(FWROOT)/Dumps && git add ./*
 
 configure-chameleon-usb: UDEV_RULES_CONFIG_LINES:='\n                                                \
 	\# ChameleonMini (RevG)\n                                                                    \
@@ -420,7 +421,6 @@ configure-chameleon-usb: UDEV_RULES_CONFIG_LINES:='\n                           
 	'
 configure-chameleon-usb:
 	@mkdir -p $(TEMPDIR) && echo $(UDEV_RULES_CONFIG_LINES) > $(TEMPDIR)/98-ChameleonMini.rules
-	@$(ECHO) ""
 	@$(ECHO) "TO CONFIGURE THE CHAMELEON OVER USB, RUN THE FOLLOWING COMMANDS:"
 	@$(ECHO) "    $$ sudo cp $(TEMPDIR)/98-ChameleonMini.rules /etc/udev/rules.d/"
 	@$(ECHO) "    $$ sudo service udev restart"
