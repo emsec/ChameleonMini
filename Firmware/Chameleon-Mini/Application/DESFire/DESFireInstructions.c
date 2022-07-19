@@ -492,7 +492,6 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     /* Generate the nonce B (RndB / Challenge response) */
     if (!DesfireDebuggingOn) {
         RandomGetBuffer(DesfireCommandState.RndB, CryptoChallengeResponseSize);
-        memset(&DesfireCommandState.RndB[CRYPTO_DES_BLOCK_SIZE], 0x00, CRYPTO_DES_BLOCK_SIZE);
     } else {
         /* Fixed nonce for testing */
         DesfireCommandState.RndB[0] = 0xCA;
@@ -1854,13 +1853,13 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
                             &Buffer[1], IV, Key);
     }
     DesfireLogEntry(LOG_APP_SESSION_IV, (void *) IV, CryptoChallengeResponseSize);
-    RotateArrayLeft(challengeRndAB + CryptoChallengeResponseSize, challengeRndB,
-                    CryptoChallengeResponseSize);
+    RotateArrayLeft(challengeRndAB + CryptoChallengeResponseSize, challengeRndB, CryptoChallengeResponseSize);
     memcpy(challengeRndA, challengeRndAB, CryptoChallengeResponseSize);
 
     /* Check that the returned RndB matches what we sent in the previous round */
     if (memcmp(DesfireCommandState.RndB, challengeRndB, CryptoChallengeResponseSize)) {
-        DesfireLogEntry(LOG_ERR_DESFIRE_GENERIC_ERROR, (const void *) challengeRndB, CryptoChallengeResponseSize);
+        DesfireLogEntry(LOG_INFO_DESFIRE_STATUS_INFO, (const void *) challengeRndA, CryptoChallengeResponseSize);
+        DesfireLogEntry(LOG_INFO_DESFIRE_STATUS_INFO, (const void *) challengeRndB, CryptoChallengeResponseSize);
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -2028,6 +2027,8 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Check that the returned RndB matches what we sent in the previous round */
     if (memcmp(DesfireCommandState.RndB, challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES)) {
+        DesfireLogEntry(LOG_INFO_DESFIRE_STATUS_INFO, (const void *) challengeRndA, CRYPTO_CHALLENGE_RESPONSE_BYTES);
+        DesfireLogEntry(LOG_INFO_DESFIRE_STATUS_INFO, (const void *) challengeRndB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -2035,7 +2036,7 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
     /* Encrypt and send back the once rotated RndA buffer to the PCD */
     RotateArrayRight(challengeRndA, challengeRndAB, CRYPTO_CHALLENGE_RESPONSE_BYTES);
     DesfireLogEntry(LOG_APP_SESSION_IV, (void *) IVBuffer, CRYPTO_CHALLENGE_RESPONSE_BYTES);
-    CryptoAESEncryptBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndA, &Buffer[1], IVBuffer, Key);
+    CryptoAESEncryptBuffer(CRYPTO_CHALLENGE_RESPONSE_BYTES, challengeRndAB, &Buffer[1], IVBuffer, Key);
     DesfireLogEntry(LOG_APP_SESSION_IV, (void *) IVBuffer, CRYPTO_CHALLENGE_RESPONSE_BYTES);
 
     /* Create the session key based on the previous exchange */
