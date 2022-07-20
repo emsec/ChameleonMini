@@ -1,23 +1,15 @@
->>> Select Application By AID:
-    -> 90 5a 00 00 03 00 00 00 | 00 
-    <- 91 00 
-
->>> GetApplicationIds command:
-    -> 90 6a 00 00 00 00 
-    <- 91 00 
-
 >>> Start Legacy DES Authenticate:
     -> 90 0a 00 00 01 00 00 
     -- IV       = 00 00 00 00 00 00 00 00 
     <- ee 91 30 1e e8 f5 84 d6 | 91 af 
     -- IV       = ee 91 30 1e e8 f5 84 d6 
-    -- RNDA     = fa df a6 a3 18 78 ec f5 
+    -- RNDA     = 04 6b f3 90 4f 35 5c ed 
     -- RNDB     = ca fe ba be 00 11 22 33 
-    -- CHAL     = fa df a6 a3 18 78 ec f5 | fe ba be 00 11 22 33 ca 
-    -- ENC-CHAL = db 12 5c 5a a6 56 a4 20 | af b0 0a 05 ac c2 ed 51 
-    -> 90 af 00 00 10 db 12 5c | 5a a6 56 a4 20 af b0 0a | 05 ac c2 ed 51 00 
-    -- IV       = af b0 0a 05 ac c2 ed 51 
-    <- c1 ce 0a 26 d3 d1 4e d3 | 91 00 b0 0a 
-    -- IV       = c1 ce 0a 26 d3 d1 4e d3 
+    -- CHAL     = 04 6b f3 90 4f 35 5c ed | fe ba be 00 11 22 33 ca 
+    -- ENC-CHAL = 7a ce 34 fa 1f e1 b0 37 | 61 63 cd fe a7 b1 d0 1b 
+    -> 90 af 00 00 10 7a ce 34 | fa 1f e1 b0 37 61 63 cd | fe a7 b1 d0 1b 00 
+    -- IV       = 61 63 cd fe a7 b1 d0 1b 
+    <- 8f 69 dd 07 8a 60 e0 42 | 91 00 63 cd 
+    -- IV       = 8f 69 dd 07 8a 60 e0 42 
        ... AUTH OK! :)
 

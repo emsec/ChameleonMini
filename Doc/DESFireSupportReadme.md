@@ -23,10 +23,14 @@ We can modify the remaining tag header information emulated by the tag as follow
 DF_SETHDR=ATS xxxxxxxxxx
 DF_SETHDR=ATQA xxxx
 DF_SETHDR=ManuID xx
-DF_SETHDR=HardwareVersion mmMM
-DF_SETHDR=SoftwareVersion mmMM
-DF_SETHDR=BatchNumber xxxxxxxxxx
-DF_SETHDR=ProductionDate WWYY
+DF_SETHDR=Type xx
+DF_SETHDR=Subtype xx
+DF_SETHDR=HwProtoType xx 
+DF_SETHDR=HwVers mmMM
+DF_SETHDR=SwProtoType xx
+DF_SETHDR=SwVers mmMM
+DF_SETHDR=BatchNo xxxxxxxxxx
+DF_SETHDR=ProdDate WWYY
 ```
 
 ##### Examples:
@@ -246,8 +250,8 @@ DF_ENCMODE=AES:CBC
 
 | Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
 | :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :ballot_box_with_check: | Works with the ``-DDESFIRE_QUICK_DES_CRYPTO`` Makefile ``SETTINGS`` compiler flag set to enable "quicker" DES crypto. |
-| CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :question: | This implementation is too slow! Need hardware support for 3DES crypto? |
+| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :ballot_box_with_check: | |
+| CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :ballot_box_with_check: | |
 | CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :ballot_box_with_check: | |
 | CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :x: | |
 | CMD_AUTHENTICATE_EV2_NONFIRST | 0x77 | Newer spec auth variant | :x: | See page 32 of AN12343.pdf |

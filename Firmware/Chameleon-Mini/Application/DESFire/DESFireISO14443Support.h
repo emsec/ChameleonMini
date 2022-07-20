@@ -31,7 +31,6 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireUtils.h"
 
 #include "../ISO14443-3A.h"
-#include "../../Codec/ISO14443-2A.h"
 
 /* General structure of a ISO 14443-4 block:
  * PCB (protocol control byte)
@@ -42,7 +41,7 @@ This notice must be retained at the top of all source files where indicated.
  */
 
 #define ISO14443A_CMD_RATS                  0xE0
-#define ISO14443A_RATS_FRAME_SIZE           ASBITS(6)         /* Bit */
+#define ISO14443A_RATS_FRAME_SIZE           ASBITS(6)
 #define ISO14443A_CMD_RNAK                  0xB2
 #define ISO14443A_CRC_FRAME_SIZE            ASBITS(ISO14443A_CRCA_SIZE)
 #define ISO14443A_CMD_DESELECT              0xC2
@@ -68,7 +67,7 @@ This notice must be retained at the top of all source files where indicated.
 #define ISO14443_PCB_R_BLOCK_ACK            0x00
 #define ISO14443_PCB_R_BLOCK_NAK            0x10
 
-#define ISO14443_R_BLOCK_SIZE               1 /* Bytes */
+#define ISO14443_R_BLOCK_SIZE               1
 
 #define ISO14443_PCB_S_DESELECT             (ISO14443_PCB_S_BLOCK_STATIC)
 #define ISO14443_PCB_S_DESELECT_V2          0xCA
@@ -104,7 +103,7 @@ extern uint8_t  ISO14443ALastIncomingDataFrame[MAX_DATA_FRAME_XFER_SIZE];
 extern uint16_t ISO14443ALastIncomingDataFrameBits;
 uint16_t ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t BufferBitCount);
 
-#define MAX_STATE_RETRY_COUNT               (0xFF)
+#define MAX_STATE_RETRY_COUNT               (0x14)
 extern uint8_t StateRetryCount;
 bool CheckStateRetryCount(bool resetByDefault);
 bool CheckStateRetryCountWithLogging(bool resetByDefault, bool performLogging);
@@ -128,6 +127,7 @@ uint16_t ISO14443AUpdateCRCA(const uint8_t *Buffer, uint16_t ByteCount, uint16_t
      fullReturnBits = ASBITS(ByteCount) + ISO14443A_CRC_FRAME_SIZE;                  \
      fullReturnBits;                                                                 \
      })
+
 #define GetAndSetNoResponseCRCA(Buffer)            ({                                \
      uint16_t fullReturnBits = 0;                                                    \
      ISO14443AUpdateCRCA(Buffer, 0, ISO14443A_CRCA_INIT);                            \

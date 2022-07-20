@@ -49,7 +49,7 @@ mifare-classic: TARGET_CUSTOM_BUILD_NAME:=MifareClassicSupport
 mifare-classic: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
 mifare-classic: custom-build
 
-desfire: FLASH_DATA_SIZE_CONST:=08000 # Four settings (save some space): 4 * 0x2000
+desfire: FLASH_DATA_SIZE_CONST:=0F000 # Eight settings (save some space): 4 * 0x2000
 desfire: FLASH_DATA_SIZE:=0x$(FLASH_DATA_SIZE_CONST)
 desfire: FLASH_DATA_SIZE_UPPER_CONST:=20000
 desfire: FLASH_DATA_ADDR:=0x$(shell echo $$(( 0x$(FLASH_DATA_SIZE_UPPER_CONST) - 0x$(FLASH_DATA_SIZE_CONST) )) | xargs -0 printf %X)

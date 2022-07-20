@@ -13,6 +13,11 @@
 #include "Log.h"
 #include "LED.h"
 #include "Memory.h"
+
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+#include "Application/DESFire/DESFirePICCHeaderLayout.h"
+#endif
+
 #include <avr/eeprom.h>
 
 #define SETTINGS_COUNT		(MEMORY_SIZE / MEMORY_SIZE_PER_SETTING)
@@ -31,6 +36,9 @@ typedef struct {
     LEDHookEnum LEDGreenFunction;                      /// Green LED function for this setting.
     uint16_t PendingTaskTimeout;                       /// Timeout for timeout commands for this setting, in multiples of 100 ms.
     uint16_t ReaderThreshold;                          /// Reader threshold
+#ifdef CONFIG_MF_DESFIRE_SUPPORT
+    DESFirePICCInfoType PiccHeaderData;                /// Header data for the DESFire tag
+#endif
 } SettingsEntryType;
 
 typedef struct {

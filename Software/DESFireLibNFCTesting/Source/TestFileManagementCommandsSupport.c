@@ -18,23 +18,19 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    if (SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
-        fprintf(stdout, "    -- !! Error selecting new AID by default !!\n");
-        return EXIT_FAILURE;
-    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,
-                            MASTER_KEY_INDEX, ZERO_KEY)) {
+    if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_LEGACY, MASTER_KEY_INDEX, ZERO_KEY)) {
         fprintf(stdout, "    -- !! Error authenticating !!\n");
         return EXIT_FAILURE;
     }
 
     uint8_t aidToCreate[] = { 0x01, 0x00, 0x34 };
-    if (CreateApplication(nfcPnd, aidToCreate, 0x0f, 0x03)) {
+    if (CreateApplication(nfcPnd, aidToCreate, 0x0f, 1)) {
         fprintf(stdout, "    -- !! Error creating new AID !!\n");
         return EXIT_FAILURE;
     } else if (SelectApplication(nfcPnd, aidToCreate, APPLICATION_AID_LENGTH)) {
         fprintf(stdout, "    -- !! Error selecting new AID by default !!\n");
         return EXIT_FAILURE;
-    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,
+    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_LEGACY,
                             MASTER_KEY_INDEX, ZERO_KEY)) {
         fprintf(stdout, "    -- !! Error authenticating !!\n");
         return EXIT_FAILURE;

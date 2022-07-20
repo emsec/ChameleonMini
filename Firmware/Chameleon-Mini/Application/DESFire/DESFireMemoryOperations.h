@@ -50,7 +50,7 @@ uint16_t AllocateBlocksMain(uint16_t BlockCount);
 BYTE GetCardCapacityBlocks(void);
 
 void MemoryStoreDesfireHeaderBytes(void);
-void MemoryRestoreDesfireHeaderBytes(void);
+void MemoryRestoreDesfireHeaderBytes(bool LoadSettings);
 
 /* File data transfer related routines: */
 void ReadDataEEPROMSource(uint8_t *Buffer, uint8_t Count);

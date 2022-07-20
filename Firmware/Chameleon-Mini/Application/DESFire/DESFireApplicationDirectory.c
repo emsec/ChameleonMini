@@ -481,7 +481,6 @@ void WriteFileSettings(uint8_t AppSlot, uint8_t FileIndex, DESFireFileTypeSettin
     }
     SIZET fileTypeSettingsBlockId = GetAppProperty(DESFIRE_APP_FILES_PTR_BLOCK_ID, AppSlot);
     SIZET fileTypeSettingsAddresses[DESFIRE_MAX_FILES];
-    // TODO: ???
     ReadBlockBytes(fileTypeSettingsAddresses, fileTypeSettingsBlockId, 2 * DESFIRE_MAX_FILES);
     WriteBlockBytes(FileSettings, fileTypeSettingsAddresses[FileIndex], sizeof(DESFireFileTypeSettings));
     memcpy(&(SelectedFile.File), FileSettings, sizeof(DESFireFileTypeSettings));
@@ -494,10 +493,11 @@ void WriteFileSettings(uint8_t AppSlot, uint8_t FileIndex, DESFireFileTypeSettin
 uint8_t LookupAppSlot(const DESFireAidType Aid) {
     uint8_t Slot;
     for (Slot = 0; Slot < DESFIRE_MAX_SLOTS; ++Slot) {
-        if (!memcmp(AppDir.AppIds[Slot], Aid, DESFIRE_AID_SIZE))
-            break;
+        if (!memcmp(AppDir.AppIds[Slot], Aid, DESFIRE_AID_SIZE)) {
+            return Slot;
+        }
     }
-    return Slot;
+    return DESFIRE_MAX_SLOTS;
 }
 
 void SelectAppBySlot(uint8_t AppSlot) {
@@ -578,7 +578,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     }
     /* Update the next free slot */
     for (FreeSlot = 1; FreeSlot < DESFIRE_MAX_SLOTS; ++FreeSlot) {
-        if ((AppDir.AppIds[FreeSlot][0] | AppDir.AppIds[FreeSlot][1] | AppDir.AppIds[FreeSlot][2]) == 0)
+        if (FreeSlot != Slot && (AppDir.AppIds[FreeSlot][0] | AppDir.AppIds[FreeSlot][1] | AppDir.AppIds[FreeSlot][2]) == 0)
             break;
     }
 
@@ -603,7 +603,7 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     } else {
         BYTE keySettings[DESFIRE_MAX_KEYS];
         memset(keySettings, KeySettings, DESFIRE_MAX_KEYS);
-        keySettings[0] = KeySettings; // NEEDED ???
+        keySettings[0] = KeySettings;
         WriteBlockBytes(keySettings, appCacheData.KeySettings, DESFIRE_MAX_KEYS);
     }
     appCacheData.FileNumbersArrayMap = AllocateBlocks(APP_CACHE_FILE_NUMBERS_HASHMAP_BLOCK_SIZE);
@@ -710,8 +710,7 @@ uint16_t DeleteApp(const DESFireAidType Aid) {
 }
 
 void GetApplicationIdsSetup(void) {
-    /* Skip the PICC application */
-    TransferState.GetApplicationIds.NextIndex = 1;
+    TransferState.GetApplicationIds.NextIndex = 0;
 }
 
 TransferStatus GetApplicationIdsTransfer(uint8_t *Buffer) {
@@ -724,7 +723,7 @@ TransferStatus GetApplicationIdsTransfer(uint8_t *Buffer) {
             continue;
         }
         /* If it won't fit -- remember and return */
-        if (Status.BytesProcessed >= TERMINAL_BUFFER_SIZE) {
+        if (Status.BytesProcessed >= TERMINAL_BUFFER_SIZE - 20) {
             TransferState.GetApplicationIds.NextIndex = EntryIndex;
             Status.IsComplete = false;
             return Status;

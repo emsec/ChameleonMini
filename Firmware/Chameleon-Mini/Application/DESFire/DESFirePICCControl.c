@@ -173,7 +173,7 @@ void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV0();
     } else {
-        MemoryRestoreDesfireHeaderBytes();
+        MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
@@ -193,7 +193,7 @@ void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV1(StorageSize);
     } else {
-        MemoryRestoreDesfireHeaderBytes();
+        MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
@@ -213,7 +213,7 @@ void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC) {
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV2(StorageSize);
     } else {
-        MemoryRestoreDesfireHeaderBytes();
+        MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
@@ -238,14 +238,13 @@ void GetPiccHardwareVersionInfo(uint8_t *Buffer) {
 void GetPiccSoftwareVersionInfo(uint8_t *Buffer) {
     Buffer[0] = Picc.SwVersionMajor;
     Buffer[1] = Picc.SwVersionMinor;
-    uint16_t cardCapacityBlocks = GetCardCapacityBlocks();
-    uint8_t freeMemoryBytes = (uint8_t)(cardCapacityBlocks * DESFIRE_BLOCK_SIZE);
+    uint8_t freeMemoryBytes = (uint8_t)(GetCardCapacityBlocks() * DESFIRE_BLOCK_SIZE);
     Buffer[2] = freeMemoryBytes;
 }
 
 void GetPiccManufactureInfo(uint8_t *Buffer) {
     /* UID / serial number does not depend on card mode: */
-    memcpy(&Buffer[0], &Picc.Uid[0], DESFIRE_UID_SIZE);
+    memcpy(&Buffer[1], &Picc.Uid[0], DESFIRE_UID_SIZE);
     Buffer[7] = Picc.BatchNumber[0];
     Buffer[8] = Picc.BatchNumber[1];
     Buffer[9] = Picc.BatchNumber[2];
@@ -276,10 +275,14 @@ void FormatPicc(void) {
     RandomGetBuffer(batchNumberData, 5);
     memcpy(&Picc.BatchNumber[0], batchNumberData, 5);
     /* Default production date -- until the user changes them: */
-    Picc.ProductionWeek = 0x01;
-    Picc.ProductionYear = 0x01;
+    Picc.ProductionWeek = 0x32;
+    Picc.ProductionYear = 0x16;
     /* Assign the default manufacturer ID: */
     Picc.ManufacturerID = DESFIRE_MANUFACTURER_ID;
+    Picc.TagType = DESFIRE_TYPE;
+    Picc.TagSubtype = DESFIRE_SUBTYPE;
+    Picc.HwProtocolType = DESFIRE_HW_PROTOCOL_TYPE;
+    Picc.SwProtocolType = DESFIRE_SW_PROTOCOL_TYPE;
     /* Set the ATS bytes to defaults: */
     Picc.ATSBytes[0] = DESFIRE_EV0_ATS_TL_BYTE;
     Picc.ATSBytes[1] = DESFIRE_EV0_ATS_T0_BYTE;

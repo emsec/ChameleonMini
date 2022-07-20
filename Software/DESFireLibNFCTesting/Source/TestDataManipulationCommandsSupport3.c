@@ -18,11 +18,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    if (SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
-        fprintf(stdout, "    -- !! Error selecting new AID by default !!\n");
-        return EXIT_FAILURE;
-    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES,
-                            MASTER_KEY_INDEX, ZERO_KEY)) {
+    if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES, MASTER_KEY_INDEX, ZERO_KEY)) {
         fprintf(stdout, "    -- !! Error authenticating !!\n");
         return EXIT_FAILURE;
     }
@@ -70,7 +66,7 @@ int main(int argc, char **argv) {
         fprintf(stdout, "    -- !! Error reading large records !!\n");
         return EXIT_FAILURE;
     }
-    // TODO: Still need to test the ClearRecordFile command ...
+    /* TODO: Still need to test the ClearRecordFile command */
 
     FreeNFCDeviceDriver(&nfcCtxt, &nfcPnd);
     return EXIT_SUCCESS;

@@ -354,10 +354,10 @@ uint16_t CmdNotImplemented(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount) {
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
     Buffer[1] = Picc.ManufacturerID;
-    Buffer[2] = DESFIRE_TYPE;
-    Buffer[3] = DESFIRE_SUBTYPE;
+    Buffer[2] = Picc.TagType;
+    Buffer[3] = Picc.TagSubtype;
     GetPiccHardwareVersionInfo(&Buffer[4]);
-    Buffer[7] = DESFIRE_HW_PROTOCOL_TYPE;
+    Buffer[7] = Picc.HwProtocolType;
     DesfireState = DESFIRE_GET_VERSION2;
     return DESFIRE_VERSION1_BYTES_PROCESSED;
 }
@@ -365,10 +365,10 @@ uint16_t EV0CmdGetVersion1(uint8_t *Buffer, uint16_t ByteCount) {
 uint16_t EV0CmdGetVersion2(uint8_t *Buffer, uint16_t ByteCount) {
     Buffer[0] = STATUS_ADDITIONAL_FRAME;
     Buffer[1] = Picc.ManufacturerID;
-    Buffer[2] = DESFIRE_TYPE;
-    Buffer[3] = DESFIRE_SUBTYPE;
+    Buffer[2] = Picc.TagType;
+    Buffer[3] = Picc.TagSubtype;
     GetPiccSoftwareVersionInfo(&Buffer[4]);
-    Buffer[7] = DESFIRE_SW_PROTOCOL_TYPE;
+    Buffer[7] = Picc.SwProtocolType;
     DesfireState = DESFIRE_GET_VERSION3;
     return DESFIRE_VERSION2_BYTES_PROCESSED;
 }
@@ -382,7 +382,7 @@ uint16_t EV0CmdGetVersion3(uint8_t *Buffer, uint16_t ByteCount) {
 
 uint16_t EV0CmdFormatPicc(uint8_t *Buffer, uint16_t ByteCount) {
     /* Require the PICC app to be selected */
-    if (!IsPiccAppSelected()) {
+    if (!AuthenticatedWithPICCMasterKey) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -445,8 +445,8 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE CryptoChallengeResponseSize;
 
     /* Reset authentication state right away */
-    InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
-    if (!Authenticated && !AuthenticatedWithPICCMasterKey && SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
+    InvalidateAuthState(true);
+    if (!AuthenticatedWithPICCMasterKey && SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -459,7 +459,7 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Check if we are authenticating with the PICC/Master key setup correctly */
     KeyId = Buffer[1];
-    if (!AuthenticatedWithPICCMasterKey && SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
+    if (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -469,7 +469,7 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
-    /* Make sure that this key is AES, and figure out its byte size */
+    /* Make sure that this key is DES, and figure out its byte size */
     BYTE cryptoKeyType = ReadKeyCryptoType(SelectedApp.Slot, KeyId);
     if (!CryptoTypeDES(cryptoKeyType) && cryptoKeyType != CRYPTO_TYPE_ANY) {
         Buffer[0] = STATUS_NO_SUCH_KEY;
@@ -603,10 +603,7 @@ uint16_t EV0CmdChangeKey(uint8_t *Buffer, uint16_t ByteCount) {
     if (!KeyIdValid(SelectedApp.Slot, KeyId)) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
-    } else if (IsPiccAppSelected() && KeyId != 0x00) {
-        Buffer[0] = STATUS_PERMISSION_DENIED;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
-    } else if (!IsPiccAppSelected() && KeyId == 0x00) {
+    } else if (!AuthenticatedWithPICCMasterKey || (IsPiccAppSelected() && KeyId != 0x00)) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -655,9 +652,6 @@ uint16_t EV0CmdChangeKey(uint8_t *Buffer, uint16_t ByteCount) {
     /* TODO: [NEED DOCS] NewKey^OldKey | CRC(NewKey^OldKey) | CRC(NewKey) | Padding */
     /* TODO: [NEED DOCS] NewKey | CRC(NewKey) | Padding */
     /* TODO: NOTE: Padding checks are skipped, because meh. */
-    if (KeyId == AuthenticatedWithKey) {
-        InvalidateAuthState(0x00);
-    }
 
     /* Write the key, next version, and scrub */
     WriteAppKey(SelectedApp.Slot, KeyId, &Buffer[2], keySize);
@@ -675,13 +669,10 @@ uint16_t EV0CmdGetKeySettings(uint8_t *Buffer, uint16_t ByteCount) {
     if (ByteCount != 1) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
-    } else if (!IsAuthenticated() && IsPiccAppSelected()) {
+    } else if (!IsAuthenticated() || !AuthenticatedWithPICCMasterKey) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     } else if (IsPiccAppSelected() && AuthenticatedWithKey != 0x00) {
-        Buffer[0] = STATUS_PERMISSION_DENIED;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
-    } else if (!IsPiccAppSelected() && AuthenticatedWithKey == 0x00) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -736,10 +727,7 @@ uint16_t DesfireCmdGetKeyVersion(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Verify the master key has been authenticated with */
-    if (IsPiccAppSelected() && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
-        Buffer[0] = STATUS_PERMISSION_DENIED;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
-    } else if (!IsPiccAppSelected() && AuthenticatedWithKey == DESFIRE_MASTER_KEY_ID) {
+    if (!AuthenticatedWithPICCMasterKey || (IsPiccAppSelected() && AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID)) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -768,7 +756,7 @@ uint16_t EV0CmdGetApplicationIds1(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Require the PICC app to be selected */
-    if (!IsPiccAppSelected()) {
+    if (!AuthenticatedWithPICCMasterKey) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -795,7 +783,7 @@ uint16_t EV0CmdCreateApplication(uint8_t *Buffer, uint16_t ByteCount) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     /* Require the PICC app to be selected */
-    if (!IsPiccAppSelected()) {
+    if (!AuthenticatedWithPICCMasterKey) {
         Status = STATUS_PERMISSION_DENIED;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
@@ -838,7 +826,7 @@ uint16_t EV0CmdDeleteApplication(uint8_t *Buffer, uint16_t ByteCount) {
     }
     /* Validate authentication: deletion with PICC master key is always OK,
        but if another app is selected, have more permissions checking to do */
-    if (!IsPiccAppSelected()) {
+    if (!AuthenticatedWithPICCMasterKey || !IsPiccAppSelected() || AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID) {
         /* Verify the selected application is the one being deleted */
         DESFireAidType selectedAID;
         memcpy(selectedAID, AppDir.AppIds[SelectedApp.Slot], 3);
@@ -853,7 +841,6 @@ uint16_t EV0CmdDeleteApplication(uint8_t *Buffer, uint16_t ByteCount) {
             return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
         }
         SelectPiccApp();
-        InvalidateAuthState(0x00);
     }
     /* Done */
     Status = DeleteApp(Aid);
@@ -861,7 +848,7 @@ uint16_t EV0CmdDeleteApplication(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t EV0CmdSelectApplication(uint8_t *Buffer, uint16_t ByteCount) {
-    InvalidateAuthState(0x00);
+    InvalidateAuthState(true);
     /* Handle a special case with EV1:
      * See https://stackoverflow.com/questions/38232695/m4m-mifare-desfire-ev1-which-mifare-aid-needs-to-be-added-to-nfc-routing-table
      */
@@ -1706,8 +1693,8 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE *Key, *IV;
 
     /* Reset authentication state right away */
-    InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
-    if (!Authenticated && !AuthenticatedWithPICCMasterKey && SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
+    InvalidateAuthState(true);
+    if (!AuthenticatedWithPICCMasterKey && SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -1720,7 +1707,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Check if we are authenticating with the PICC/Master key setup correctly */
     KeyId = Buffer[1];
-    if (!AuthenticatedWithPICCMasterKey && SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
+    if (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -1889,8 +1876,8 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE Status;
 
     /* Reset authentication state right away */
-    InvalidateAuthState(SelectedApp.Slot == DESFIRE_PICC_APP_SLOT);
-    if (!Authenticated && !AuthenticatedWithPICCMasterKey && SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
+    InvalidateAuthState(true);
+    if (!AuthenticatedWithPICCMasterKey && SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -1903,7 +1890,7 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Check if we are authenticating with the PICC/Master key setup correctly */
     KeyId = Buffer[1];
-    if (!AuthenticatedWithPICCMasterKey && SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
+    if (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
@@ -2089,7 +2076,7 @@ uint16_t ISO7816CmdSelectEF(uint8_t *Buffer, uint16_t ByteCount) {
 }
 
 uint16_t ISO7816CmdSelectDF(uint8_t *Buffer, uint16_t ByteCount) {
-    InvalidateAuthState(0x00);
+    InvalidateAuthState(true);
     if (ByteCount != 1 + DESFIRE_AID_SIZE) {
         Buffer[0] = ISO7816_ERROR_SW1;
         Buffer[1] = ISO7816_SELECT_ERROR_SW2_NOFILE;

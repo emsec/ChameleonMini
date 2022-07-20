@@ -55,15 +55,13 @@ uint8_t ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 void InvalidateAuthState(BYTE keepPICCAuthData) {
     if (!keepPICCAuthData) {
         AuthenticatedWithPICCMasterKey = false;
+        memset(&SessionKey[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
+        memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
     }
     Authenticated = false;
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     Iso7816FileSelected = false;
     CryptoAuthMethod = CRYPTO_TYPE_ANY;
-    ActiveCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
-    DesfireCommMode = ActiveCommMode;
-    memset(&SessionKey[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
-    memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
 }
 
 bool IsAuthenticated(void) {

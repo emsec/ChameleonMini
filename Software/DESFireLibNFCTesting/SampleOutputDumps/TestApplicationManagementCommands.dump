@@ -1,89 +1,33 @@
->>> Select Application By AID:
-    -> 90 5a 00 00 03 00 00 00 | 00 
-    <- 91 00 
-
->>> Start AES Authenticate:
-    -> 90 aa 00 00 01 00 00 
-    <- 54 b8 9e fe 19 9b c6 a5 | fd 8f 00 be c1 23 99 c0 | 91 af 
-    -- RNDA = 63 d3 68 6b 21 5a 50 d8 
-    -- RNDB = ac ef 0c 8a a7 7f 69 61 
-    -- CHAL = 63 d3 68 6b 21 5a 50 d8 | 61 ac ef 0c 8a a7 7f 69 
-    -> 90 af 00 00 10 df a0 79 | 13 59 ac 4c 75 5f 81 69 | bc 9c 3e c6 7e 00 
-    <- a9 e2 79 42 11 63 9c 14 | 07 b3 02 2f 2e 4b 2e c5 | 91 00 
+>>> Start ISO Authenticate:
+    -> 90 1a 00 00 01 00 00 
+    -- IV       = 00 00 00 00 00 00 00 00 
+    <- ee 91 30 1e e8 f5 84 d6 | c7 85 1d 05 65 13 90 a6 | 91 af 
+    -- IV       = c7 85 1d 05 65 13 90 a6 
+    -- RNDA     = c7 a1 e9 2b fb 59 d9 c1 | 2b 2e 56 45 53 95 d6 1b 
+    -- RNDB     = ca fe ba be 00 11 22 33 | ca fe ba be 00 11 22 33 
+    -- CHAL     = c7 a1 e9 2b fb 59 d9 c1 | 2b 2e 56 45 53 95 d6 1b | fe ba be 00 11 22 33 ca | fe ba be 00 11 22 33 ca 
+    -- ENC-CHAL = 75 ef 28 72 5d 90 b3 7d | 22 17 c7 bb 33 a5 d8 a3 | 40 9d 38 95 a0 d1 95 31 | ad 47 d2 8a 05 57 5c 14 
+    -> 90 af 00 00 20 75 ef 28 | 72 5d 90 b3 7d 22 17 c7 | bb 33 a5 d8 a3 40 9d 38 | 95 a0 d1 95 31 ad 47 d2 | 8a 05 57 5c 14 00 
+    -- IV       = ad 47 d2 8a 05 57 5c 14 
+    <- 33 d7 90 a7 59 21 c0 74 | 23 c4 ed 08 9b fb e2 b6 | 91 00 9d 38 
+    -- IV       = 23 c4 ed 08 9b fb e2 b6 
        ... AUTH OK! :)
 
->>> Get AID List From Device:
+>>> CreateApplication command:
+    -> 90 ca 00 00 05 77 88 99 | 0f 01 00 
+    <- 91 00 
+>>> GetApplicationIds command:
     -> 90 6a 00 00 00 00 
-    <- 77 88 99 01 00 34 91 00 
+    <- 77 88 99 91 00 
 
 >>> CreateApplication command:
-    -> 90 ca 00 00 05 77 88 99 | 0f 03 00 
-    <- 91 de 
->>> Get AID List From Device:
+    -> 90 ca 00 00 05 01 00 34 | 0f 02 00 
+    <- 91 00 
+>>> GetApplicationIds command:
     -> 90 6a 00 00 00 00 
     <- 77 88 99 01 00 34 91 00 
 
->>> CreateApplication command:
-    -> 90 ca 00 00 05 01 00 34 | 0f 03 00 
-    <- 91 de 
->>> Get AID List From Device:
+>>> GetApplicationIds command:
     -> 90 6a 00 00 00 00 
     <- 77 88 99 01 00 34 91 00 
 
->>> CreateApplication command:
-    -> 90 ca 00 00 05 77 88 99 | 0f 03 00 
-    <- 91 de 
->>> Get AID List From Device:
-    -> 90 6a 00 00 00 00 
-    <- 77 88 99 01 00 34 91 00 
-
->>> Select Application By AID:
-    -> 90 5a 00 00 03 77 88 99 | 00 
-    <- 91 00 
-
->>> Start AES Authenticate:
-    -> 90 aa 00 00 01 00 00 
-    <- f4 1a ea 8f ab cd a2 89 | c9 78 e4 da 99 7c 0a 98 | 91 af 
-    -- RNDA = 1c 2c 18 cc 6d c2 49 1c 
-    -- RNDB = 7a 61 cb c0 37 c0 49 f4 
-    -- CHAL = 1c 2c 18 cc 6d c2 49 1c | f4 7a 61 cb c0 37 c0 49 
-    -> 90 af 00 00 10 49 04 ee | b6 bc 9b 22 63 7e 0e 19 | ea cb 7f 1c e5 00 
-    <- 26 71 50 b0 a8 01 da 95 | 15 90 23 e3 0c de 6e b9 | 91 00 
-       ... AUTH OK! :)
-
->>> DeleteApplication command:
-    -> 90 da 00 00 03 77 88 99 | 00 
-    <- 91 00 
->>> Get AID List From Device:
-    -> 90 6a 00 00 00 00 
-    <- 01 00 34 91 00 
-
->>> Select Application By AID:
-    -> 90 5a 00 00 03 00 00 00 | 00 
-    <- 91 00 
-
->>> Start AES Authenticate:
-    -> 90 aa 00 00 01 00 00 
-    <- d2 92 d5 f7 81 de 5f e2 | 8d 32 38 1a b2 44 74 88 | 91 af 
-    -- RNDA = 62 5f 32 2f b4 db cf 54 
-    -- RNDB = 34 2c a8 d0 72 f9 43 03 
-    -- CHAL = 62 5f 32 2f b4 db cf 54 | 03 34 2c a8 d0 72 f9 43 
-    -> 90 af 00 00 10 2b d2 cf | 9f 86 e5 76 ac 30 50 45 | ac ec 0c 4e ea 00 
-    <- ff 8d 5a c6 3c cc 9f 01 | 9e b4 06 8d 09 5d cb ca | 91 00 
-       ... AUTH OK! :)
-
->>> DeleteApplication command:
-    -> 90 da 00 00 03 01 00 34 | 00 
-    <- 91 00 
->>> Get AID List From Device:
-    -> 90 6a 00 00 00 00 
-    <- 91 00 
-
->>> DeleteApplication command:
-    -> 90 da 00 00 03 00 00 00 | 00 
-    <- 91 9d 
->>> Get AID List From Device:
-    -> 90 6a 00 00 00 00 
-    <- 91 00 
-
-    -- !! GetDFNames command NOT IMPLEMENTED !!

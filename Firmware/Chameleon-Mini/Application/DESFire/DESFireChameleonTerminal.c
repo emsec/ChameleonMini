@@ -77,27 +77,51 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
         } else {
             Picc.ManufacturerID = propSpecBytes[0];
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HardwareVersion"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("Type"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.TagType = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("Subtype"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.TagSubtype = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HWProtoType"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.HwProtocolType = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HWVers"))) {
         if (dataByteCount != 2) {
             StatusError = 1;
         } else {
             Picc.HwVersionMajor = propSpecBytes[0];
             Picc.HwVersionMinor = propSpecBytes[1];
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SoftwareVersion"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SwProtoType"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.SwProtocolType = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SwVers"))) {
         if (dataByteCount != 2) {
             StatusError = 1;
         } else {
             Picc.SwVersionMajor = propSpecBytes[0];
             Picc.SwVersionMinor = propSpecBytes[1];
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("BatchNumber"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("BatchNo"))) {
         if (dataByteCount != 5) {
             StatusError = 1;
         } else {
             memcpy(Picc.BatchNumber, propSpecBytes, 5);
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ProductionDate"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ProdDate"))) {
         if (dataByteCount != 2) {
             StatusError = 1;
         } else {

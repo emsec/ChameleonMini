@@ -125,10 +125,14 @@ typedef struct DESFIRE_FIRMWARE_PACKING DESFIRE_FIRMWARE_ALIGNAT {
     uint8_t Uid[DESFIRE_UID_SIZE] DESFIRE_FIRMWARE_ALIGNAT;
     uint8_t StorageSize;
     uint8_t ManufacturerID;
+    uint8_t TagType;
+    uint8_t TagSubtype;
     uint8_t HwVersionMajor;
     uint8_t HwVersionMinor;
+    uint8_t HwProtocolType;
     uint8_t SwVersionMajor;
     uint8_t SwVersionMinor;
+    uint8_t SwProtocolType;
     uint8_t BatchNumber[5] DESFIRE_FIRMWARE_ALIGNAT;
     uint8_t ProductionWeek;
     uint8_t ProductionYear;

@@ -334,6 +334,7 @@ static inline int GetVersionCommand(nfc_device *nfcConnDev) {
         if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         } else if (!rxDataStatus) {
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
                 fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -365,6 +366,7 @@ static inline int FormatPiccCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -395,6 +397,7 @@ static inline int GetCardUIDCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -425,7 +428,7 @@ static inline int SetConfigurationCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
-        fprintf(stdout, "    -- !! TODO: NOT IMPLEMENTED !!\n");
+        fprintf(stdout, "    -- !! TODO: TEST CODE NOT IMPLEMENTED !!\n\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -456,6 +459,7 @@ static inline int FreeMemoryCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -494,6 +498,7 @@ static inline int ChangeKeyCommand(nfc_device *nfcConnDev, uint8_t keyNo, const 
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -524,6 +529,7 @@ static inline int GetKeySettingsCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -557,6 +563,7 @@ static inline int ChangeKeySettingsCommand(nfc_device *nfcConnDev, const uint8_t
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -587,6 +594,7 @@ static inline int GetKeyVersionCommand(nfc_device *nfcConnDev, uint8_t keyNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -642,7 +650,7 @@ static inline int CreateApplication(nfc_device *nfcConnDev, uint8_t *aidBytes,
     CMD[1] = 0xca;
     memset(CMD + 2, 0x00, 9);
     CMD[4] = 5;
-    memcpy(CMD + 5, aidBytes, 3);
+    memcpy(&CMD[5], aidBytes, 3);
     CMD[8] = keySettings;
     CMD[9] = numKeys;
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
@@ -656,6 +664,7 @@ static inline int CreateApplication(nfc_device *nfcConnDev, uint8_t *aidBytes,
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -688,6 +697,7 @@ static inline int DeleteApplication(nfc_device *nfcConnDev, uint8_t *aidBytes) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -736,7 +746,7 @@ static inline int SelectApplication(nfc_device *nfcConnDev, uint8_t *aidBytes, s
 
 static inline int GetDFNamesCommand(nfc_device *nfcConnDev) {
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, "    -- !! GetDFNames command NOT IMPLEMENTED !!\n");
+        fprintf(stdout, "    -- !! GetDFNames command TEST CODE NOT IMPLEMENTED !!\n\n");
     }
     return EXIT_SUCCESS;
 }
@@ -970,6 +980,7 @@ static inline int DeleteFile(nfc_device *nfcConnDev, uint8_t fileNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1000,6 +1011,7 @@ static inline int GetFileIds(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1030,6 +1042,7 @@ static inline int GetFileSettings(nfc_device *nfcConnDev, uint8_t fileNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1043,7 +1056,7 @@ static inline int GetFileSettings(nfc_device *nfcConnDev, uint8_t fileNo) {
 
 static inline int ChangeFileSettings(nfc_device *nfcConnDev) {
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, "    -- !! ChangeFileSettings command NOT IMPLEMENTED !!\n");
+        fprintf(stdout, "    -- !! ChangeFileSettings command TEST CODE NOT IMPLEMENTED !!\n");
     }
     return EXIT_FAILURE;
 }
@@ -1076,6 +1089,7 @@ static inline int ReadDataCommand(nfc_device *nfcConnDev, uint8_t fileNo,
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1116,6 +1130,7 @@ static inline int WriteDataCommand(nfc_device *nfcConnDev, uint8_t fileNo,
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1145,6 +1160,7 @@ static inline int GetValueCommand(nfc_device *nfcConnDev, uint8_t fileNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1180,6 +1196,7 @@ static inline int CreditValueFileCommand(nfc_device *nfcConnDev, uint8_t fileNo,
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1214,6 +1231,7 @@ static inline int DebitValueFileCommand(nfc_device *nfcConnDev, uint8_t fileNo, 
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1248,6 +1266,7 @@ static inline int LimitedCreditValueFileCommand(nfc_device *nfcConnDev, uint8_t 
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1277,6 +1296,7 @@ static inline int CommitTransaction(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1307,6 +1327,7 @@ static inline int AbortTransaction(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1354,6 +1375,7 @@ static inline int ReadRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo,
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
                 fprintf(stdout, "    <- ");
                 print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+                fprintf(stdout, "\n");
             }
         } else {
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
@@ -1413,6 +1435,7 @@ static inline int WriteRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo,
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
                 fprintf(stdout, "    <- ");
                 print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+                fprintf(stdout, "\n");
             }
         } else {
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
@@ -1444,6 +1467,7 @@ static inline int ClearRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");

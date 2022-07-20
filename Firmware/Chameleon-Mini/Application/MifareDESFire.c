@@ -77,7 +77,9 @@ static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool
             InitialisePiccBackendEV0(StorageSize, FormatPICC);
             break;
     }
-    MemoryStore(); /* Make sure the randomized UID and PICC header data are preserved */
+    if (FormatPICC) {
+        MemoryStoreDesfireHeaderBytes();
+    }
     DesfireCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 }
 
@@ -362,11 +364,15 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         uint16_t UnwrappedBitCount = ASBITS(ByteCount);
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = ASBYTES(ProcessedBitCount);
-        /* Undo the leading 0x91 and shift for the PM3 raw wrapped commands: */
-        if (Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_STANDARD && ProcessedByteCount > 0) {
-            memmove(&Buffer[1], &Buffer[0], ProcessedByteCount);
-            Buffer[0] = Buffer[ProcessedByteCount];
-            --ProcessedByteCount;
+        /* Undo the leading 0x91(RCODE-XX) and shift for the PM3 raw wrapped commands: */
+        if (Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_STANDARD && ProcessedByteCount >= 1) {
+            if (Buffer[ProcessedByteCount] != 0x00) {
+                memmove(&Buffer[1], &Buffer[0], ProcessedByteCount);
+                Buffer[0] = Buffer[ProcessedByteCount];
+                --ProcessedByteCount;
+            } else if (ProcessedByteCount >= 2) {
+                ProcessedByteCount -= 2;
+            }
         }
         /* Append the same ISO7816 prologue bytes to the response: */
         if (ProcessedByteCount > 0) {
@@ -407,24 +413,22 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
 }
 
 void MifareDesfireReset(void) {
+    InvalidateAuthState(false);
     DesfireState = DESFIRE_IDLE;
 }
 
 void ResetLocalStructureData(void) {
     DesfireState = DesfirePreviousState = DESFIRE_IDLE;
-    InvalidateAuthState(0);
+    InvalidateAuthState(false);
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
     memset(&AppDir, 0x00, sizeof(AppDir));
     memset(&SelectedApp, 0x00, sizeof(SelectedApp));
     memset(&SelectedFile, 0x00, sizeof(SelectedFile));
     memset(&TransferState, 0x00, sizeof(TransferState));
-    memset(&SessionKey, 0x00, sizeof(CryptoKeyBufferType));
-    memset(&SessionIV, 0x00, sizeof(CryptoIVBufferType));
     SessionIVByteSize = 0;
     SelectedApp.Slot = 0;
     SelectedFile.Num = -1;
     ResetISOState();
-    MifareDesfireReset();
 }
 
 void ResetISOState(void) {

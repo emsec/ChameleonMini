@@ -10,7 +10,7 @@ CFLAGS_BASE= -ILocalInclude -ISource \
 #LD=gcc-10   # for MacOS
 LD=gcc
 LDFLAGS_BASE= $(CFLAGS) -lc `pkg-config libnfc --libs` \
-		 -L/usr/local/opt/openssl/lib -L/usr/lib64 -lssl -lssl3 -lcrypto
+		 -L/usr/local/opt/openssl/lib -L/usr/lib64 -lssl -lcrypto
 
 ifeq ("$(shell uname -s)", "Darwin")
     CC=/usr/local/opt/llvm/bin/clang-13
@@ -54,6 +54,7 @@ FILE_BASENAMES=NFCAntiCollisionMod                              \
 			   TestAuthenticateLegacy               \
 			   TestAuthenticateISO                  \
 			   TestGeneralCommands                  \
+			   TestGeneralCommands2                 \
 			   TestKeyManagementCommands            \
 			   TestApplicationManagementCommands    \
 			   TestApplicationManagementCommands2   \

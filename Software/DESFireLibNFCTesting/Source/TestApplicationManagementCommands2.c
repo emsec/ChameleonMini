@@ -22,17 +22,14 @@ int main(int argc, char **argv) {
         0x77, 0x88, 0x99
     };
 
-    if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES, MASTER_KEY_INDEX, ZERO_KEY)) {
+    if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_LEGACY, MASTER_KEY_INDEX, ZERO_KEY)) {
         fprintf(stdout, "    -- !! Error authenticating !!\n");
         return EXIT_FAILURE;
-    } else if (CreateApplication(nfcPnd, aidToCreateList1, 0x0f, 3) || GetApplicationIds(nfcPnd)) {
+    } else if (CreateApplication(nfcPnd, aidToCreateList1, 0x0f, 2)) {
         fprintf(stdout, "    -- !! Error creating new AID !!\n");
         return EXIT_FAILURE;
-    } else if (SelectApplication(nfcPnd, aidToCreateList1, APPLICATION_AID_LENGTH)) {
-        fprintf(stdout, "    -- !! Error selecting newly created AID !!\n");
-        return EXIT_FAILURE;
-    } else if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_ISODES, MASTER_KEY_INDEX, ZERO_KEY)) {
-        fprintf(stdout, "    -- !! Error authenticating to new application !!\n");
+    } else if (GetApplicationIds(nfcPnd)) {
+        fprintf(stdout, "    -- !! Error listing existing AIDs !!\n");
         return EXIT_FAILURE;
     } else if (DeleteApplication(nfcPnd, aidToCreateList1)) {
         fprintf(stdout, "    -- !! Error deleting newly created AID !!\n");
