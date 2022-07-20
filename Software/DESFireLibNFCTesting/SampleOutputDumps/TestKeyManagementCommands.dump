@@ -3,14 +3,14 @@
     -- IV       = 00 00 00 00 00 00 00 00 
     <- ee 91 30 1e e8 f5 84 d6 | c7 85 1d 05 65 13 90 a6 | 91 af 
     -- IV       = c7 85 1d 05 65 13 90 a6 
-    -- RNDA     = 03 15 8d 6c 5e 87 a0 3e | 6a 41 5e 62 5e 8b ec 9a 
+    -- RNDA     = b1 4e 0f 22 b8 5b 9f 9e | 86 15 3e 71 f4 74 cc ee 
     -- RNDB     = ca fe ba be 00 11 22 33 | ca fe ba be 00 11 22 33 
-    -- CHAL     = 03 15 8d 6c 5e 87 a0 3e | 6a 41 5e 62 5e 8b ec 9a | fe ba be 00 11 22 33 ca | fe ba be 00 11 22 33 ca 
-    -- ENC-CHAL = 11 20 bd 92 69 26 0b b5 | 24 2a b6 eb 06 f4 f0 f7 | 9f 84 db f2 e9 bf 9d 01 | 71 a4 e2 7a b8 31 e2 b0 
-    -> 90 af 00 00 20 11 20 bd | 92 69 26 0b b5 24 2a b6 | eb 06 f4 f0 f7 9f 84 db | f2 e9 bf 9d 01 71 a4 e2 | 7a b8 31 e2 b0 00 
-    -- IV       = 71 a4 e2 7a b8 31 e2 b0 
-    <- a8 3a 60 a7 de bd 27 48 | 66 9d c0 95 5e f1 f7 94 | 91 00 84 db 
-    -- IV       = 66 9d c0 95 5e f1 f7 94 
+    -- CHAL     = b1 4e 0f 22 b8 5b 9f 9e | 86 15 3e 71 f4 74 cc ee | fe ba be 00 11 22 33 ca | fe ba be 00 11 22 33 ca 
+    -- ENC-CHAL = 25 5a 15 50 4c bc be 2f | f9 1c 23 fb 69 63 e1 cd | da 36 d5 19 1b a2 3c 38 | 90 bf 3d 8c e9 84 0e 13 
+    -> 90 af 00 00 20 25 5a 15 | 50 4c bc be 2f f9 1c 23 | fb 69 63 e1 cd da 36 d5 | 19 1b a2 3c 38 90 bf 3d | 8c e9 84 0e 13 00 
+    -- IV       = 90 bf 3d 8c e9 84 0e 13 
+    <- bf 93 ac db 96 b9 9c a2 | 93 ed 14 06 b8 32 90 4c | 91 00 36 d5 
+    -- IV       = 93 ed 14 06 b8 32 90 4c 
        ... AUTH OK! :)
 
 >>> ChangeKey command:

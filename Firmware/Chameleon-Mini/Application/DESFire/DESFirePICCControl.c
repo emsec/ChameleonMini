@@ -169,7 +169,6 @@ void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
     MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
-        DEBUG_PRINT_P(PSTR("Factory reset -- EV0"));
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV0();
     } else {
@@ -189,7 +188,6 @@ void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
     MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
-        DEBUG_PRINT_P(PSTR("Factory reset -- EV1"));
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV1(StorageSize);
     } else {
@@ -209,7 +207,6 @@ void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC) {
     MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
-        DEBUG_PRINT_P(PSTR("Factory reset -- EV1"));
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV2(StorageSize);
     } else {
@@ -232,26 +229,21 @@ bool IsEmulatingEV1(void) {
 void GetPiccHardwareVersionInfo(uint8_t *Buffer) {
     Buffer[0] = Picc.HwVersionMajor;
     Buffer[1] = Picc.HwVersionMinor;
-    Buffer[2] = Picc.StorageSize;
+    Buffer[2] = DESFIRE_STORAGE_SIZE_8K;
 }
 
 void GetPiccSoftwareVersionInfo(uint8_t *Buffer) {
     Buffer[0] = Picc.SwVersionMajor;
     Buffer[1] = Picc.SwVersionMinor;
-    uint8_t freeMemoryBytes = (uint8_t)(GetCardCapacityBlocks() * DESFIRE_BLOCK_SIZE);
-    Buffer[2] = freeMemoryBytes;
+    Buffer[2] = Picc.StorageSize;
 }
 
 void GetPiccManufactureInfo(uint8_t *Buffer) {
     /* UID / serial number does not depend on card mode: */
-    memcpy(&Buffer[1], &Picc.Uid[0], DESFIRE_UID_SIZE);
-    Buffer[7] = Picc.BatchNumber[0];
-    Buffer[8] = Picc.BatchNumber[1];
-    Buffer[9] = Picc.BatchNumber[2];
-    Buffer[10] = Picc.BatchNumber[3];
-    Buffer[11] = Picc.BatchNumber[4];
-    Buffer[12] = Picc.ProductionWeek;
-    Buffer[13] = Picc.ProductionYear;
+    memcpy(Buffer, &Picc.Uid[0], DESFIRE_UID_SIZE);
+    memcpy(&Buffer[DESFIRE_UID_SIZE], Picc.BatchNumber, 5);
+    Buffer[DESFIRE_UID_SIZE + 5] = Picc.ProductionWeek;
+    Buffer[DESFIRE_UID_SIZE + 6] = Picc.ProductionYear;
 }
 
 uint8_t GetPiccKeySettings(void) {
@@ -275,13 +267,15 @@ void FormatPicc(void) {
     RandomGetBuffer(batchNumberData, 5);
     memcpy(&Picc.BatchNumber[0], batchNumberData, 5);
     /* Default production date -- until the user changes them: */
-    Picc.ProductionWeek = 0x32;
-    Picc.ProductionYear = 0x16;
+    Picc.ProductionWeek = 0x01;
+    Picc.ProductionYear = 0x05;
     /* Assign the default manufacturer ID: */
     Picc.ManufacturerID = DESFIRE_MANUFACTURER_ID;
-    Picc.TagType = DESFIRE_TYPE;
-    Picc.TagSubtype = DESFIRE_SUBTYPE;
+    Picc.HwType = DESFIRE_TYPE;
+    Picc.HwSubtype = DESFIRE_SUBTYPE;
     Picc.HwProtocolType = DESFIRE_HW_PROTOCOL_TYPE;
+    Picc.SwType = DESFIRE_TYPE;
+    Picc.SwSubtype = DESFIRE_SUBTYPE;
     Picc.SwProtocolType = DESFIRE_SW_PROTOCOL_TYPE;
     /* Set the ATS bytes to defaults: */
     Picc.ATSBytes[0] = DESFIRE_EV0_ATS_TL_BYTE;
@@ -295,8 +289,6 @@ void FormatPicc(void) {
     SynchronizeAppDir();
     /* Initialize the root app data */
     CreatePiccApp();
-    //MemoryStore();
-    MemoryStoreDesfireHeaderBytes();
 }
 
 void CreatePiccApp(void) {
@@ -357,16 +349,16 @@ void FactoryFormatPiccEV2(uint8_t StorageSize) {
     /* Reset the free block pointer */
     Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
     /* Continue with user data initialization */
-    SynchronizePICCInfo();
     FormatPicc();
+    SynchronizePICCInfo();
 }
 
 void GetPiccUid(ConfigurationUidType Uid) {
-    memcpy(Uid, Picc.Uid, DESFIRE_UID_SIZE);
+    memcpy(Uid, Picc.Uid, DESFIRE_UID_SIZE + 1);
 }
 
 void SetPiccUid(ConfigurationUidType Uid) {
-    memcpy(Picc.Uid, Uid, DESFIRE_UID_SIZE);
+    memcpy(&Picc.Uid[0], Uid, DESFIRE_UID_SIZE);
     SynchronizePICCInfo();
 }
 

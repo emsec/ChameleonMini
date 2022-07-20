@@ -3,22 +3,22 @@
     -- IV       = 00 00 00 00 00 00 00 00 
     <- ee 91 30 1e e8 f5 84 d6 | 91 af 
     -- IV       = ee 91 30 1e e8 f5 84 d6 
-    -- RNDA     = 2f 0f b7 ec 6a 8b ea a0 
+    -- RNDA     = 99 25 9c 95 df d9 62 0d 
     -- RNDB     = ca fe ba be 00 11 22 33 
-    -- CHAL     = 2f 0f b7 ec 6a 8b ea a0 | fe ba be 00 11 22 33 ca 
-    -- ENC-CHAL = 46 d4 69 da 2d 1b 9a 6f | b5 e3 c5 1c d5 95 6c 41 
-    -> 90 af 00 00 10 46 d4 69 | da 2d 1b 9a 6f b5 e3 c5 | 1c d5 95 6c 41 00 
-    -- IV       = b5 e3 c5 1c d5 95 6c 41 
-    <- c6 8b 99 b4 b6 84 a2 1e | 91 00 e3 c5 
-    -- IV       = c6 8b 99 b4 b6 84 a2 1e 
+    -- CHAL     = 99 25 9c 95 df d9 62 0d | fe ba be 00 11 22 33 ca 
+    -- ENC-CHAL = 15 6f 6f 70 0b 46 ee fe | d6 50 31 d8 a8 32 63 da 
+    -> 90 af 00 00 10 15 6f 6f | 70 0b 46 ee fe d6 50 31 | d8 a8 32 63 da 00 
+    -- IV       = d6 50 31 d8 a8 32 63 da 
+    <- 5a 30 9c 56 0e 4f 91 6a | 91 00 50 31 
+    -- IV       = 5a 30 9c 56 0e 4f 91 6a 
        ... AUTH OK! :)
 
 >>> GetVersion command:
     -> 90 60 00 00 00 00 
-    <- 04 01 01 00 01 18 05 91 | af 
+    <- 04 01 01 00 01 1a 05 91 | af 
     -> 90 af 00 00 00 00 
-    <- 04 01 01 00 01 88 05 91 | af fb f6 
+    <- 04 01 01 00 01 18 05 91 | af 8d cf 
 
     -> 90 af 00 00 00 00 
-    <- af 08 c1 04 0d 94 19 0f | 39 59 40 a6 32 16 91 00 | 41 d5 
+    <- 08 b9 38 a2 a0 b5 1a b9 | 09 58 8b ea 01 05 91 00 | da a8 
 

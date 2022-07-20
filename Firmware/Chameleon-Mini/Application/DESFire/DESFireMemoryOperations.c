@@ -61,7 +61,7 @@ uint16_t AllocateBlocksMain(uint16_t BlockCount) {
     uint16_t Block;
     /* Check if we have space */
     Block = Picc.FirstFreeBlock;
-    if (Block + BlockCount < Block || Block + BlockCount >= MEMORY_SIZE_PER_SETTING / BLOCKWISE_IO_MULTIPLIER) {
+    if (Block + BlockCount < Block || Block + BlockCount >= StorageSizeToBytes(Picc.StorageSize) || Block + BlockCount >= MEMORY_SIZE_PER_SETTING / BLOCKWISE_IO_MULTIPLIER) {
         return 0;
     }
     Picc.FirstFreeBlock = Block + BlockCount;
@@ -72,21 +72,38 @@ uint16_t AllocateBlocksMain(uint16_t BlockCount) {
 
 uint8_t GetCardCapacityBlocks(void) {
     uint8_t MaxFreeBlocks;
-
     switch (Picc.StorageSize) {
         case DESFIRE_STORAGE_SIZE_2K:
-            MaxFreeBlocks = 0x40 - DESFIRE_FIRST_FREE_BLOCK_ID;
+            MaxFreeBlocks = 0x100 - DESFIRE_FIRST_FREE_BLOCK_ID;
             break;
         case DESFIRE_STORAGE_SIZE_4K:
-            MaxFreeBlocks = 0x80 - DESFIRE_FIRST_FREE_BLOCK_ID;
+            MaxFreeBlocks = 0x200 - DESFIRE_FIRST_FREE_BLOCK_ID;
             break;
         case DESFIRE_STORAGE_SIZE_8K:
-            MaxFreeBlocks = (BYTE)(0x100 - DESFIRE_FIRST_FREE_BLOCK_ID);
+            MaxFreeBlocks = (BYTE)(0x400 - DESFIRE_FIRST_FREE_BLOCK_ID);
             break;
         default:
             return 0;
     }
     return MaxFreeBlocks - Picc.FirstFreeBlock;
+}
+
+uint16_t StorageSizeToBytes(uint8_t StorageSize) {
+    uint16_t ByteSize = 0x0000;
+    switch (StorageSize) {
+        case DESFIRE_STORAGE_SIZE_2K:
+            ByteSize = 0x0400;
+            break;
+        case DESFIRE_STORAGE_SIZE_4K:
+            ByteSize = 0x0800;
+            break;
+        case DESFIRE_STORAGE_SIZE_8K:
+            ByteSize = 0x1000;
+            break;
+        default:
+            break;
+    }
+    return ByteSize;
 }
 
 void MemoryStoreDesfireHeaderBytes(void) {

@@ -57,6 +57,7 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
         AuthenticatedWithPICCMasterKey = false;
         memset(&SessionKey[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
         memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
+        SessionIVByteSize = 0;
     }
     Authenticated = false;
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
@@ -65,7 +66,7 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
 }
 
 bool IsAuthenticated(void) {
-    return Authenticated != 0x00;
+    return Authenticated != 0;
 }
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType) {

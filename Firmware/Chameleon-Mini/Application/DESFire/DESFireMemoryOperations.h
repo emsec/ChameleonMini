@@ -48,6 +48,7 @@ uint16_t AllocateBlocksMain(uint16_t BlockCount);
 #define AllocateBlocks(BlockCount)    AllocateBlocksMain(BlockCount);
 
 BYTE GetCardCapacityBlocks(void);
+uint16_t StorageSizeToBytes(uint8_t StorageSize);
 
 void MemoryStoreDesfireHeaderBytes(void);
 void MemoryRestoreDesfireHeaderBytes(bool LoadSettings);

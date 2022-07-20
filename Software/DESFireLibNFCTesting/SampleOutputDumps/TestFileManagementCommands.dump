@@ -1,5 +1,0 @@
->>> Start Legacy DES Authenticate:
-    -> 90 0a 00 00 01 00 00 
-    -- IV       = 00 00 00 00 00 00 00 00 
-    -- !! Unable to transfer bytes !!
-    -- !! Error authenticating !!

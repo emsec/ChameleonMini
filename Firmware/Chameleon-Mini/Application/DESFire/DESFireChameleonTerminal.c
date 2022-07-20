@@ -77,17 +77,17 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
         } else {
             Picc.ManufacturerID = propSpecBytes[0];
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("Type"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HwType"))) {
         if (dataByteCount != 1) {
             StatusError = 1;
         } else {
-            Picc.TagType = propSpecBytes[0];
+            Picc.HwType = propSpecBytes[0];
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("Subtype"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HwSubtype"))) {
         if (dataByteCount != 1) {
             StatusError = 1;
         } else {
-            Picc.TagSubtype = propSpecBytes[0];
+            Picc.HwSubtype = propSpecBytes[0];
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HWProtoType"))) {
         if (dataByteCount != 1) {
@@ -101,6 +101,18 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
         } else {
             Picc.HwVersionMajor = propSpecBytes[0];
             Picc.HwVersionMinor = propSpecBytes[1];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SwType"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.SwType = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SwSubtype"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.SwSubtype = propSpecBytes[0];
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SwProtoType"))) {
         if (dataByteCount != 1) {
