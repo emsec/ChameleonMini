@@ -1,4 +1,4 @@
-name: DESFire-only Firmware Build (master Branch Push, Pre-release with Artifacts)
+name: ISO15693 Firmware Build (master Branch Push, Pre-release with Artifacts)
 
 on:
   push:
