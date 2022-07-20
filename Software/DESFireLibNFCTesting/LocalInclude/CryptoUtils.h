@@ -6,11 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <openssl/conf.h>
 #include <openssl/rand.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/aes.h>
 #include <openssl/des.h>
 
 #include "LibNFCUtils.h"
@@ -78,78 +74,6 @@ typedef struct {
      }                                                 \
      })
 
-/* Set the last operation mode (ECB or CBC) init for the context */
-static uint8_t __CryptoAESOpMode = CRYPTO_AES_ECB_MODE;
-
-static inline size_t EncryptAES128(const uint8_t *plainSrcBuf, size_t bufSize,
-                                   uint8_t *encDestBuf, CryptoData_t cdata) {
-    size_t bufBlocks = bufSize / AES128_BLOCK_SIZE;
-    bool padLastBlock = (bufSize % AES128_BLOCK_SIZE) != 0;
-    uint8_t IV[AES128_BLOCK_SIZE], inputBlock[AES128_BLOCK_SIZE];
-    if (cdata.ivData != NULL) {
-        memcpy(&IV[0], &cdata.ivData[0], AES128_BLOCK_SIZE);
-    } else {
-        memset(&IV[0], 0x00, AES128_BLOCK_SIZE);
-    }
-    if ((bufSize % AES128_BLOCK_SIZE) != 0) {
-        return 0xBE;
-    }
-    EVP_CIPHER_CTX *aesCtx = EVP_CIPHER_CTX_new();
-    int aesOpInitStatus = 1;
-    if (__CryptoAESOpMode == CRYPTO_AES_CBC_MODE) {
-        aesOpInitStatus = EVP_EncryptInit_ex(aesCtx, EVP_aes_128_cbc(), NULL, cdata.keyData, cdata.ivData);
-    } else { /* ECB mode */
-        aesOpInitStatus = EVP_EncryptInit_ex(aesCtx, EVP_aes_128_ecb(), NULL, cdata.keyData, cdata.ivData);
-    }
-    int ctextLength = 0, ctextInitLength = 0;
-    if (aesOpInitStatus != 1) {
-        ctextLength = 0xBE00 | aesOpInitStatus;
-    } else if (EVP_EncryptUpdate(aesCtx, encDestBuf, &ctextInitLength, plainSrcBuf, bufSize) != 1) {
-        ctextLength = 0;
-    } else {
-        ctextLength = ctextInitLength;
-        if (EVP_EncryptFinal_ex(aesCtx, &encDestBuf[ctextInitLength], &ctextInitLength) != 1) {
-            ctextLength += ctextInitLength;
-        }
-    }
-    EVP_CIPHER_CTX_free(aesCtx);
-    return ctextLength;
-}
-
-static inline size_t DecryptAES128(const uint8_t *encSrcBuf, size_t bufSize,
-                                   uint8_t *plainDestBuf, CryptoData_t cdata) {
-    size_t bufBlocks = bufSize / AES128_BLOCK_SIZE;
-    bool padLastBlock = (bufSize % AES128_BLOCK_SIZE) != 0;
-    uint8_t IV[AES128_BLOCK_SIZE], inputBlock[AES128_BLOCK_SIZE];
-    if (cdata.ivData != NULL) {
-        memcpy(&IV[0], &cdata.ivData[0], AES128_BLOCK_SIZE);
-    } else {
-        memset(&IV[0], 0x00, AES128_BLOCK_SIZE);
-    }
-    if ((bufSize % AES128_BLOCK_SIZE) != 0) {
-        return 0xBE;
-    }
-    EVP_CIPHER_CTX *aesCtx = EVP_CIPHER_CTX_new();
-    int aesOpInitStatus = 1;
-    if (__CryptoAESOpMode == CRYPTO_AES_CBC_MODE) {
-        aesOpInitStatus = EVP_DecryptInit_ex(aesCtx, EVP_aes_128_cbc(), NULL, cdata.keyData, cdata.ivData);
-    } else { /* ECB mode */
-        aesOpInitStatus = EVP_DecryptInit_ex(aesCtx, EVP_aes_128_ecb(), NULL, cdata.keyData, cdata.ivData);
-    }
-    int ctextLength = 0, ctextInitLength = 0;
-    if (aesOpInitStatus != 1) {
-        ctextLength = 0xBE00 | aesOpInitStatus;
-    } else if (EVP_DecryptUpdate(aesCtx, plainDestBuf, &ctextInitLength, encSrcBuf, bufSize) != 1) {
-        ctextLength = 0;
-    } else {
-        ctextLength = ctextInitLength;
-        if (EVP_DecryptFinal_ex(aesCtx, &plainDestBuf[ctextInitLength], &ctextInitLength) != 1) {
-            ctextLength += ctextInitLength;
-        }
-    }
-    EVP_CIPHER_CTX_free(aesCtx);
-    return ctextLength;
-}
 
 /* Set the last operation mode (ECB or CBC) init for the context */
 static uint8_t __CryptoDESOpMode = CRYPTO_DES_ECB_MODE;
@@ -211,7 +135,7 @@ static inline size_t Decrypt2K3DES(const uint8_t *encSrcBuf, size_t bufSize,
 static inline size_t Encrypt3DES(const uint8_t *plainSrcBuf, size_t bufSize,
                                  uint8_t *encDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
     DES_key_schedule keySched1, keySched2, keySched3;
-    uint8_t IV[CRYPTO_DES_BLOCK_SIZE];
+    uint8_t IV[CRYPTO_DES_BLOCK_SIZE], inputBlock[CRYPTO_DES_BLOCK_SIZE];
     uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[CRYPTO_DES_BLOCK_SIZE]), *kd3 = &(cdata.keyData[2 * CRYPTO_DES_BLOCK_SIZE]);
     DES_set_key(kd1, &keySched1);
     DES_set_key(kd2, &keySched2);
@@ -224,7 +148,6 @@ static inline size_t Encrypt3DES(const uint8_t *plainSrcBuf, size_t bufSize,
     if (__CryptoDESOpMode == CRYPTO_DES_CBC_MODE) {
         DES_ede3_cbc_encrypt(plainSrcBuf, encDestBuf, bufSize, &keySched1, &keySched2, &keySched3, &IV, DES_ENCRYPT);
     } else {
-        uint8_t inputBlock[CRYPTO_DES_BLOCK_SIZE];
         uint16_t numBlocks = bufSize / CRYPTO_DES_BLOCK_SIZE;
         for (int blk = 0; blk < numBlocks; blk++) {
             memcpy(inputBlock, &plainSrcBuf[blk * CRYPTO_DES_BLOCK_SIZE], CRYPTO_DES_BLOCK_SIZE);
@@ -242,7 +165,7 @@ static inline size_t Encrypt3DES(const uint8_t *plainSrcBuf, size_t bufSize,
 static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize,
                                  uint8_t *plainDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
     DES_key_schedule keySched1, keySched2, keySched3;
-    uint8_t IV[CRYPTO_DES_BLOCK_SIZE];
+    uint8_t IV[CRYPTO_DES_BLOCK_SIZE], inputBlock[CRYPTO_DES_BLOCK_SIZE];
     uint8_t *kd1 = cdata.keyData, *kd2 = &(cdata.keyData[CRYPTO_DES_BLOCK_SIZE]), *kd3 = &(cdata.keyData[2 * CRYPTO_DES_BLOCK_SIZE]);
     DES_set_key(kd1, &keySched1);
     DES_set_key(kd2, &keySched2);
@@ -255,7 +178,6 @@ static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize,
     if (__CryptoDESOpMode == CRYPTO_DES_CBC_MODE) {
         DES_ede3_cbc_encrypt(encSrcBuf, plainDestBuf, bufSize, &keySched1, &keySched2, &keySched3, &IV, DES_DECRYPT);
     } else {
-        uint8_t inputBlock[CRYPTO_DES_BLOCK_SIZE];
         uint16_t numBlocks = bufSize / CRYPTO_DES_BLOCK_SIZE;
         for (int blk = 0; blk < numBlocks; blk++) {
             DES_ecb3_encrypt(&encSrcBuf[blk * CRYPTO_DES_BLOCK_SIZE],

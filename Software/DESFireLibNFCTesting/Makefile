@@ -52,7 +52,6 @@ UTILS_SOURCE=LocalInclude/Config.h           \
 
 FILE_BASENAMES=NFCAntiCollisionMod                              \
 			   TestAuthenticateLegacy               \
-			   TestAuthenticateAES128               \
 			   TestAuthenticateISO                  \
 			   TestGeneralCommands                  \
 			   TestKeyManagementCommands            \
