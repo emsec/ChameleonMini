@@ -1,0 +1,24 @@
+NFC reader: ACS / ACR122U PICC Interface opened
+
+Sent bits:     26 (7 bits)
+Received bits: 44  03  
+Sent bits:     93 20 
+Received bits: 88 95 41 3d 61 
+88 95 41 3d 
+Sent bits:     93 70 88 95 41 3d 61 8e | a1 
+Received bits: 24 d8 36 
+Sent bits:     95 20 
+Received bits: 1b d5 9d 95 c6 
+Sent bits:     95 70 1b d5 9d 95 c6 0b | 56 
+Received bits: 44 03 
+Sent bits:     97 20 
+Received bits: 97 20 
+WARNING: BCC check failed!
+Sent bits:     97 70 97 20 9d 95 c6 a9 | 85 
+Received bits: 97 70 97 20 9d 95 c6 a9 | 85 
+Sent bits:     50 00 57 cd 
+
+Found tag with
+ UID: 95413dd59d9597209d95
+ATQA: 0344
+ SAK: 97

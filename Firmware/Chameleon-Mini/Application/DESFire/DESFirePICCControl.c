@@ -82,7 +82,6 @@ void SynchronizePICCInfo(void) {
     WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
 }
 
-/* TODO: Currently, everything is transfered in plaintext, without checksums */
 TransferStatus PiccToPcdTransfer(uint8_t *Buffer) {
     TransferStatus Status;
     uint8_t XferBytes;
@@ -95,22 +94,10 @@ TransferStatus PiccToPcdTransfer(uint8_t *Buffer) {
         /* Read input bytes */
         TransferState.ReadData.Source.Func(Buffer, XferBytes);
         TransferState.ReadData.BytesLeft -= XferBytes;
-        /* Update checksum/MAC */
-        //if (TransferState.Checksums.UpdateFunc)
-        //    TransferState.Checksums.UpdateFunc(Buffer, XferBytes);
-        //if (TransferState.ReadData.BytesLeft == 0) {
-        //    /* Finalise TransferChecksum and append the checksum */
-        //    if (TransferState.Checksums.FinalFunc)
-        //        XferBytes += TransferState.Checksums.FinalFunc(&Buffer[XferBytes]);
-        //}
-        /* Encrypt */
-        //Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, XferBytes);
-        Status.IsComplete = TransferState.ReadData.Encryption.AvailablePlaintext == 0;
         Status.BytesProcessed = XferBytes;
         Status.IsComplete = TransferState.ReadData.BytesLeft == 0;
     } else {
         /* Final encryption block */
-        //Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, 0);
         Status.IsComplete = true;
         Status.BytesProcessed = 0;
         Status.IsComplete = true;
@@ -118,39 +105,24 @@ TransferStatus PiccToPcdTransfer(uint8_t *Buffer) {
     return Status;
 }
 
-/* TODO: Currently, everything is transfered in plaintext, without checksums */
 uint8_t PcdToPiccTransfer(uint8_t *Buffer, uint8_t Count) {
     TransferState.WriteData.Sink.Func(Buffer, Count);
     return STATUS_OPERATION_OK;
 }
-
-/* Setup routines */
 
 uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
     switch (CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT:
             break;
         case DESFIRE_COMMS_PLAINTEXT_MAC:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
-            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCSend;
             memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_DES:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCRCA;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
-            TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT;
-            TransferState.ReadData.Encryption.Func = &TransferEncryptTDEASend;
             memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_AES128:
-            /* A.k.a., CommMode=FULL from NXP application note AN12343: */
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCMAC;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCMAC;
-            TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT; // TODO ???
-            TransferState.WriteData.Encryption.Func = &CryptoAESEncrypt_CBCSend;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
         default:
@@ -162,33 +134,18 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
 uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
     switch (CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT:
-            TransferState.Checksums.UpdateFunc = NULL;
-            TransferState.Checksums.FinalFunc = NULL;
-            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = NULL;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = 0;
             break;
         case DESFIRE_COMMS_PLAINTEXT_MAC:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
-            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCReceive;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_DES:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCRCA;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
-            TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT;
-            TransferState.WriteData.Encryption.Func = &TransferEncryptTDEAReceive;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_AES128:
-            // A.k.a., CommMode=FULL from NXP application note AN12343:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCMAC;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCMAC;
-            TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT; // TODO ???
-            TransferState.WriteData.Encryption.Func = &CryptoAESEncrypt_CBCReceive;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
             break;
@@ -212,10 +169,10 @@ void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
     MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
-        DEBUG_PRINT_P(PSTR("Factory reset -- EV0"));
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV0();
     } else {
+        MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
@@ -231,10 +188,10 @@ void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
     MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
-        DEBUG_PRINT_P(PSTR("Factory reset -- EV1"));
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV1(StorageSize);
     } else {
+        MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
@@ -250,10 +207,10 @@ void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC) {
     MemoryRecall();
     ReadBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
     if (formatPICC) {
-        DEBUG_PRINT_P(PSTR("Factory reset -- EV1"));
         DesfireLogEntry(LOG_INFO_DESFIRE_PICC_RESET, (void *) NULL, 0);
         FactoryFormatPiccEV2(StorageSize);
     } else {
+        MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         SelectPiccApp();
     }
@@ -272,27 +229,21 @@ bool IsEmulatingEV1(void) {
 void GetPiccHardwareVersionInfo(uint8_t *Buffer) {
     Buffer[0] = Picc.HwVersionMajor;
     Buffer[1] = Picc.HwVersionMinor;
-    Buffer[2] = Picc.StorageSize;
+    Buffer[2] = DESFIRE_STORAGE_SIZE_8K;
 }
 
 void GetPiccSoftwareVersionInfo(uint8_t *Buffer) {
     Buffer[0] = Picc.SwVersionMajor;
     Buffer[1] = Picc.SwVersionMinor;
-    uint16_t cardCapacityBlocks = GetCardCapacityBlocks();
-    uint8_t freeMemoryBytes = (uint8_t)(cardCapacityBlocks * DESFIRE_BLOCK_SIZE);
-    Buffer[2] = freeMemoryBytes;
+    Buffer[2] = Picc.StorageSize;
 }
 
 void GetPiccManufactureInfo(uint8_t *Buffer) {
     /* UID / serial number does not depend on card mode: */
-    memcpy(&Buffer[0], &Picc.Uid[0], DESFIRE_UID_SIZE);
-    Buffer[7] = Picc.BatchNumber[0];
-    Buffer[8] = Picc.BatchNumber[1];
-    Buffer[9] = Picc.BatchNumber[2];
-    Buffer[10] = Picc.BatchNumber[3];
-    Buffer[11] = Picc.BatchNumber[4];
-    Buffer[12] = Picc.ProductionWeek;
-    Buffer[13] = Picc.ProductionYear;
+    memcpy(Buffer, &Picc.Uid[0], DESFIRE_UID_SIZE);
+    memcpy(&Buffer[DESFIRE_UID_SIZE], Picc.BatchNumber, 5);
+    Buffer[DESFIRE_UID_SIZE + 5] = Picc.ProductionWeek;
+    Buffer[DESFIRE_UID_SIZE + 6] = Picc.ProductionYear;
 }
 
 uint8_t GetPiccKeySettings(void) {
@@ -317,9 +268,15 @@ void FormatPicc(void) {
     memcpy(&Picc.BatchNumber[0], batchNumberData, 5);
     /* Default production date -- until the user changes them: */
     Picc.ProductionWeek = 0x01;
-    Picc.ProductionYear = 0x01;
+    Picc.ProductionYear = 0x05;
     /* Assign the default manufacturer ID: */
     Picc.ManufacturerID = DESFIRE_MANUFACTURER_ID;
+    Picc.HwType = DESFIRE_TYPE;
+    Picc.HwSubtype = DESFIRE_SUBTYPE;
+    Picc.HwProtocolType = DESFIRE_HW_PROTOCOL_TYPE;
+    Picc.SwType = DESFIRE_TYPE;
+    Picc.SwSubtype = DESFIRE_SUBTYPE;
+    Picc.SwProtocolType = DESFIRE_SW_PROTOCOL_TYPE;
     /* Set the ATS bytes to defaults: */
     Picc.ATSBytes[0] = DESFIRE_EV0_ATS_TL_BYTE;
     Picc.ATSBytes[1] = DESFIRE_EV0_ATS_T0_BYTE;
@@ -332,7 +289,6 @@ void FormatPicc(void) {
     SynchronizeAppDir();
     /* Initialize the root app data */
     CreatePiccApp();
-    MemoryStore();
 }
 
 void CreatePiccApp(void) {
@@ -393,16 +349,16 @@ void FactoryFormatPiccEV2(uint8_t StorageSize) {
     /* Reset the free block pointer */
     Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
     /* Continue with user data initialization */
-    SynchronizePICCInfo();
     FormatPicc();
+    SynchronizePICCInfo();
 }
 
 void GetPiccUid(ConfigurationUidType Uid) {
-    memcpy(Uid, Picc.Uid, DESFIRE_UID_SIZE);
+    memcpy(Uid, Picc.Uid, DESFIRE_UID_SIZE + 1);
 }
 
 void SetPiccUid(ConfigurationUidType Uid) {
-    memcpy(Picc.Uid, Uid, DESFIRE_UID_SIZE);
+    memcpy(&Picc.Uid[0], Uid, DESFIRE_UID_SIZE);
     SynchronizePICCInfo();
 }
 

@@ -121,7 +121,7 @@ bool ISO14443ASelect(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t S
 }
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
-bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t SAKValue);
+bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t UidByteCount, uint8_t SAKValue);
 #endif
 
 INLINE

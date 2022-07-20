@@ -41,7 +41,8 @@ void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize
 void DesfireLogEntry(LogEntryEnum LogCode, void *LogDataBuffer, uint16_t BufSize) {}
 #endif
 
-#ifdef DESFIRE_DEBUGGING
+#if 0
+//#ifdef DESFIRE_DEBUGGING
 void DesfireLogISOStateChange(int state, int logCode) {
     const char *statePrintName;
     int logLength = 0;

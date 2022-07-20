@@ -23,10 +23,16 @@ We can modify the remaining tag header information emulated by the tag as follow
 DF_SETHDR=ATS xxxxxxxxxx
 DF_SETHDR=ATQA xxxx
 DF_SETHDR=ManuID xx
-DF_SETHDR=HardwareVersion mmMM
-DF_SETHDR=SoftwareVersion mmMM
-DF_SETHDR=BatchNumber xxxxxxxxxx
-DF_SETHDR=ProductionDate WWYY
+DF_SETHDR=HwType xx
+DF_SETHDR=HwSubtype xx
+DF_SETHDR=HwProtoType xx 
+DF_SETHDR=HwVers mmMM
+DF_SETHDR=SwType xx
+DF_SETHDR=SwSubtype xx
+DF_SETHDR=SwProtoType xx
+DF_SETHDR=SwVers mmMM
+DF_SETHDR=BatchNo xxxxxxxxxx
+DF_SETHDR=ProdDate WWYY
 ```
 
 ##### Examples:
@@ -181,22 +187,27 @@ static const manufactureName_t manufactureMapping[] = {
 ```
 Similarly, the PM3 source maintains the authoritative way to 
 fingerprint the DESFire tag subtype in the 
-[client source files](https://github.com/RfidResearchGroup/proxmark3/blob/65b9a9fb769541f5d3e255ccf2c17d1cb77ac126/client/src/cmdhfmfp.c#L92):
+[client source files](https://github.com/RfidResearchGroup/proxmark3/blob/65b9a9fb769541f5d3e255ccf2c17d1cb77ac126/client/src/cmdhfmfdes.c#L278):
 ```cpp
     if (major == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire MF3ICD40") ")", major, minor);
-    else if (major == 0x01 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire EV1") ")", major, minor);
-    else if (major == 0x12 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire EV2") ")", major, minor);
-    else if (major == 0x33 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire EV3") ")", major, minor);
-    else if (major == 0x30 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire Light") ")", major, minor);
-    else if (major == 0x11 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("Plus EV1") ")", major, minor);
-    else
-        snprintf(retStr, sizeof(buf), "%x.%x (" _YELLOW_("Unknown") ")", major, minor);
+        return DESFIRE_MF3ICD40;
+    if (major == 0x01 && minor == 0x00)
+        return DESFIRE_EV1;
+    if (major == 0x12 && minor == 0x00)
+        return DESFIRE_EV2;
+    if (major == 0x22 && minor == 0x00)
+        return DESFIRE_EV2_XL;
+    if (major == 0x42 && minor == 0x00)
+        return DESFIRE_EV2;
+    if (major == 0x33 && minor == 0x00)
+        return DESFIRE_EV3;
+    if (major == 0x30 && minor == 0x00)
+        return DESFIRE_LIGHT;
+    if (major == 0x11 && minor == 0x00)
+        return PLUS_EV1;
+    if (major == 0x10 && minor == 0x00)
+        return NTAG413DNA;
+    return DESFIRE_UNKNOWN;
 ```
 
 #### DF_COMM_MODE -- Manually sets the communication mode of the current session
@@ -221,6 +232,23 @@ DESFire emulation if things suddenly fail after a call to this terminal command.
 Putting the Chameleon through a full power recycle (battery off) should reset the setting 
 to the defaults. 
 
+#### DF_COMM_MODE -- Manually sets the communication mode of the current session
+
+This commanf sets the encryption mode for cryptographic operations. 
+The two supported modes are ECB and CBC. 
+The default mode for AES and DES (all types) of encryption is ECB mode. 
+This is the supported mode for DESFire tags using the latest Proxmark3 software. 
+
+The syntax is demonstrated by the following examples:
+```bash
+DF_ENCMODE=ECB
+DF_ENCMODE=DES:ECB
+DF_ENCMODE=AES:ECB
+DF_ENCMODE=CBC
+DF_ENCMODE=DES:CBC
+DF_ENCMODE=AES:CBC
+```
+
 ## Supported functionality
 
 ### Tables of tested support for active commands
@@ -229,8 +257,8 @@ to the defaults.
 
 | Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
 | :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :ballot_box_with_check: | Works with the ``-DDESFIRE_QUICK_DES_CRYPTO`` Makefile ``SETTINGS`` compiler flag set to enable "quicker" DES crypto. |
-| CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :question: | This implementation is too slow! Need hardware support for 3DES crypto? |
+| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :ballot_box_with_check: | |
+| CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :ballot_box_with_check: | |
 | CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :ballot_box_with_check: | |
 | CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :x: | |
 | CMD_AUTHENTICATE_EV2_NONFIRST | 0x77 | Newer spec auth variant | :x: | See page 32 of AN12343.pdf |
@@ -282,6 +310,174 @@ to the defaults.
 | CMD_ISO7816_UPDATE_BINARY | 0xd6 | | :wavy_dash: :question: | Needs testing. |
 | CMD_ISO7816_READ_RECORDS | 0xb2 | | :wavy_dash: :question: | Needs testing. |
 | CMD_ISO7816_APPEND_RECORD | 0xe2 | | :wavy_dash: :question: | Especially needs testing for corner case checks. |
+
+### Proxmark3 (PM3) compatibility and support 
+
+The next PM3 commands are known to work with the Chameleon DESFire tag emulation (using both the RDV4 and Easy device types). 
+The sample outputs obtained running the ``pm3`` command line utility below may vary by usage and proximity to the PM3 hardware.
+
+#### PM3 logging and debugging setup script (run this first)
+
+```bash
+hw dbg -4
+prefs set clientdebug --full
+data setdebugmode -2
+```
+
+#### Listing initial tag response
+
+```bash
+[usb] pm3 --> hf mfdes list
+[=] downloading tracelog data from device
+[+] Recorded activity (trace len = 146 bytes)
+[=] start = start of start frame end = end of frame. src = source of transfer
+[=] ISO14443A - all times are in carrier periods (1/13.56MHz)
+
+      Start |        End | Src | Data (! denotes parity error)                                           | CRC | Annotation
+------------+------------+-----+-------------------------------------------------------------------------+-----+--------------------
+          0 |        992 | Rdr |52                                                                       |     | WUPA
+       2116 |       4484 | Tag |44  03                                                                   |     | 
+       7040 |       9504 | Rdr |93  20                                                                   |     | ANTICOLL
+      10820 |      16708 | Tag |88  41  92  a0  fb                                                       |     | 
+      19328 |      29856 | Rdr |93  70  88  41  92  a0  fb  87  d9                                       |  ok | SELECT_UID
+      30916 |      34436 | Tag |24  d8  36                                                               |     | 
+      35840 |      38304 | Rdr |95  20                                                                   |     | ANTICOLL-2
+      39364 |      45188 | Tag |b2  59  78  41  d2                                                       |     | 
+      47872 |      58336 | Rdr |95  70  b2  59  78  41  d2  13  09                                       |  ok | SELECT_UID-2
+      59844 |      63428 | Tag |20  fc  70                                                               |     | 
+      65152 |      69920 | Rdr |e0  80  31  73                                                           |  ok | RATS
+```
+
+#### Getting a summary of tag information
+
+The output of this command will change significantly if the header and 
+manufacturer bytes are changed using the Chameleon terminal commands above. 
+The tag type reported will also vary depending on which EV0/EV1/EV2 generation of the
+DESFire configuration is used:
+```bash
+[usb] pm3 --> hf mfdes info
+[#] pcb_blocknum 0 == 2 
+[#] [WCMD <--: : 08/08] 02 90 60 00 00 00 14 98 
+[#] pcb_blocknum 1 == 3 
+[#] [WCMD <--: : 08/08] 03 90 af 00 00 00 1f 15 
+[#] pcb_blocknum 0 == 2 
+[#] [WCMD <--: : 08/08] 02 90 af 00 00 00 34 11 
+[#] halt warning. response len: 4
+[#] Halt error
+[#] switch_off
+
+[=] ---------------------------------- Tag Information ----------------------------------
+[+]               UID: B9 38 A2 A0 B5 1A B9 
+[+]      Batch number: B9 09 58 8B EA 
+[+]   Production date: week 01 / 2005
+
+[=] --- Hardware Information
+[=]    raw: 04010100011A05
+[=]      Vendor Id: NXP Semiconductors Germany
+[=]           Type: 0x01
+[=]        Subtype: 0x01
+[=]        Version: 0.1 ( DESFire MF3ICD40 )
+[=]   Storage size: 0x1A ( 8192 bytes )
+[=]       Protocol: 0x05 ( ISO 14443-2, 14443-3 )
+
+[=] --- Software Information
+[=]    raw: 04010100011805
+[=]      Vendor Id: NXP Semiconductors Germany
+[=]           Type: 0x01
+[=]        Subtype: 0x01
+[=]        Version: 0.1
+[=]   Storage size: 0x18 ( 4096 bytes )
+[=]       Protocol: 0x05 ( ISO 14443-3, 14443-4 )
+
+[=] --------------------------------- Card capabilities ---------------------------------
+[#] error DESFIRESendRaw Current configuration/status does not allow the requested command
+[#] error DESFIRESendRaw Unknown error
+[#] error DESFIRESendRaw Current configuration/status does not allow the requested command
+[#] error DESFIRESendApdu Command code not supported
+[#] error DESFIRESendApdu Command code not supported
+[+] ------------------------------------ PICC level -------------------------------------
+[+] Applications count: 0 free memory n/a
+[+] PICC level auth commands: 
+[+]    Auth.............. YES
+[+]    Auth ISO.......... YES
+[+]    Auth AES.......... YES
+[+]    Auth Ev2.......... NO
+[+]    Auth ISO Native... NO
+[+]    Auth LRP.......... NO
+
+[=] --- Free memory
+[+]    Card doesn't support 'free mem' cmd
+```
+
+#### ISODES authentication with the PICC and PICC master key
+
+```bash
+[usb] pm3 --> hf mfdes auth -n 0 -t 3tdea -k 000000000000000000000000000000000000000000000000 -v -c native -a
+[=] Key num: 0 Key algo: 3tdea Key[24]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: n/a Command set: native Communication mode: plain
+[+] Setting ISODEP -> inactive
+[+] Setting ISODEP -> NFC-A
+[=] AID 000000 is selected
+[=] Auth: cmd: 0x1a keynum: 0x00
+[+] raw>> 1A 00 
+[+] raw<< AF EE 91 30 1E E8 F5 84 D6 C7 85 1D 05 65 13 90 A6 C6 D5 
+[#] encRndB: EE 91 30 1E E8 F5 84 D6 
+[#] RndB: CA FE BA BE 00 11 22 33 
+[#] rotRndB: FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[#] Both   : 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[+] raw>> AF 30 EB 55 F3 29 39 04 96 77 88 CE EF 33 A3 C8 7B 18 66 1A F1 62 78 A0 28 53 84 67 98 7C BB DB 03 
+[+] raw<< 00 9B 71 57 8F FB DF 80 A8 F6 EF 33 4A C6 CD F9 7A 7D BE 
+[=] Session key : 01 02 03 04 CA FE BA BE 07 08 09 10 22 33 CA FE 13 14 15 16 00 11 22 33 
+[=] Desfire  authenticated
+[+] PICC selected and authenticated succesfully
+[+] Context: 
+[=] Key num: 0 Key algo: 3tdea Key[24]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: ev1 Command set: native Communication mode: plain
+[=] Session key [24]: 01 02 03 04 CA FE BA BE 07 08 09 10 22 33 CA FE 13 14 15 16 00 11 22 33  
+[=]     IV [8]: 00 00 00 00 00 00 00 00 
+[+] Setting ISODEP -> inactive
+```
+
+#### AES (128-bit) authentication with the PICC and PICC master key
+
+```bash
+[usb] pm3 --> hf mfdes auth -n 0 -t aes -k 00000000000000000000000000000000 -v -c native -a
+[=] Key num: 0 Key algo: aes Key[16]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: n/a Command set: native Communication mode: plain
+[+] Setting ISODEP -> inactive
+[+] Setting ISODEP -> NFC-A
+[=] AID 000000 is selected
+[=] Auth: cmd: 0xaa keynum: 0x00
+[+] raw>> AA 00 
+[+] raw<< AF EA 8C 8F 55 42 BB 7B 81 7C 26 44 EC EC 73 85 AB 8B AF 
+[#] encRndB: EA 8C 8F 55 42 BB 7B 81 
+[#] RndB: CA FE BA BE 00 11 22 33 
+[#] rotRndB: FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[#] Both   : 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 FE BA BE 00 11 22 33 CA FE BA BE 00 11 22 33 CA 
+[+] raw>> AF 04 25 9E 8B C4 49 26 DD 5D 9F 1E 84 1F 2F 13 E4 F1 BD 8E 58 72 AD A6 29 D3 CC 93 91 52 99 BC 71 
+[+] raw<< 00 59 2D 75 D8 BE 6A 4B C1 25 E9 9D 95 D4 B1 B0 D2 D1 5D 
+[=] Session key : 01 02 03 04 CA FE BA BE 13 14 15 16 00 11 22 33 
+[=] Desfire  authenticated
+[+] PICC selected and authenticated succesfully
+[+] Context: 
+[=] Key num: 0 Key algo: aes Key[16]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[=] Secure channel: ev1 Command set: native Communication mode: plain
+[=] Session key [16]: 01 02 03 04 CA FE BA BE 13 14 15 16 00 11 22 33  
+[=]     IV [16]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+[+] Setting ISODEP -> inactive
+```
+
+### Compatibility with external USB readers and LibNFC
+
+The DESFire configurations are known to work with the anticollision and RATS handshaking utility ``nfc-anticol`` 
+from [LibNFC](https://github.com/nfc-tools/libnfc). 
+The Mifare DESFire commands installed by [LibFreefare](https://github.com/nfc-tools/libfreefare) 
+have not been tested nor confirmed to work with the Chameleon Mini. 
+The developers are actively working to ensure compatibility of the Chameleon DESFire emulation with external USB readers used 
+running ``pcscd`` and ``pcsc_spy``. This support is not yet functional with tests using ACR-122 and HID Omnikey 5022CL readers. 
+The DESFire support for the Chameleon Mini is tested with the LibNFC-based source code 
+[developed in this directory](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting) with 
+[sample dumps and output here](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting/SampleOutputDumps).
 
 ### Links to public datasheets and online specs 
 
@@ -339,3 +535,20 @@ repositories and code bases:
 * [Android HCE Framework Library (kevinvalk)](https://github.com/kevinvalk/android-hce-framework)
 * [AVRCryptoLib in C](https://github.com/cantora/avr-crypto-lib)
 * [LibFreefare DESFire Code (mostly as a reference and check point)](https://github.com/nfc-tools/libfreefare/tree/master/libfreefare)
+
+## New development sources of DESFire support for the Chameleon Mini
+
+David Oswald has added a [DESFire emulation project](https://github.com/orgs/emsec/projects?type=classic) to organize tasks in 
+progress for DESFire emulation support on the Chameleon Mini. The 
+[original development sources](https://github.com/maxieds/ChameleonMiniDESFireStack/releases) are now archived and 
+not kept up to date with the latest firmware pull requests and development sources. There are development sources for pull request projects in 
+progress written by **@maxieds** are [located here](https://github.com/maxieds/ChameleonMini). 
+For example, a newer branch can be built by running
+```bash
+$ git clone https://github.com/maxieds/ChameleonMini.git
+$ cd ChameleonMini
+$ git checkout DESFireNFCExternalUSBReaderPatches-LibNFCTestCode
+$ cd Firmware/ChameleonMini
+$ make desfire-dev
+```
+Other GitHub users are developing modifications of the main firmware sources for projects that include Mifare DESFire Plus support elsewhere.

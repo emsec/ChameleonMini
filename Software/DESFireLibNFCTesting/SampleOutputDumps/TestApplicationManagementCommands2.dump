@@ -1,0 +1,31 @@
+>>> Start Legacy DES Authenticate:
+    -> 90 0a 00 00 01 00 00 
+    -- IV       = 00 00 00 00 00 00 00 00 
+    <- ee 91 30 1e e8 f5 84 d6 | 91 af 
+    -- IV       = ee 91 30 1e e8 f5 84 d6 
+    -- RNDA     = 10 18 bf e2 7e c0 de 07 
+    -- RNDB     = ca fe ba be 00 11 22 33 
+    -- CHAL     = 10 18 bf e2 7e c0 de 07 | fe ba be 00 11 22 33 ca 
+    -- ENC-CHAL = 76 17 7e cf 0d dc 10 8c | f9 53 6d a6 7c 2d 25 2f 
+    -> 90 af 00 00 10 76 17 7e | cf 0d dc 10 8c f9 53 6d | a6 7c 2d 25 2f 00 
+    -- IV       = f9 53 6d a6 7c 2d 25 2f 
+    <- 80 82 15 53 13 4e 4e 3c | 91 00 53 6d 
+    -- IV       = 80 82 15 53 13 4e 4e 3c 
+       ... AUTH OK! :)
+
+>>> CreateApplication command:
+    -> 90 ca 00 00 05 77 88 99 | 0f 02 00 
+    <- 91 00 
+
+>>> GetApplicationIds command:
+    -> 90 6a 00 00 00 00 
+    <- 77 88 99 91 00 
+
+>>> DeleteApplication command:
+    -> 90 da 00 00 03 77 88 99 | 00 
+    <- 91 00 
+
+>>> GetApplicationIds command:
+    -> 90 6a 00 00 00 00 
+    <- 91 00 
+

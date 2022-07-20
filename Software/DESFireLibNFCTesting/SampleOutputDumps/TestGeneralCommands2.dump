@@ -1,0 +1,23 @@
+>>> Start Legacy DES Authenticate:
+    -> 90 0a 00 00 01 00 00 
+    -- IV       = 00 00 00 00 00 00 00 00 
+    <- ee 91 30 1e e8 f5 84 d6 | 91 af 
+    -- IV       = ee 91 30 1e e8 f5 84 d6 
+    -- RNDA     = da 09 af f2 c2 fd 31 5b 
+    -- RNDB     = ca fe ba be 00 11 22 33 
+    -- CHAL     = da 09 af f2 c2 fd 31 5b | fe ba be 00 11 22 33 ca 
+    -- ENC-CHAL = eb fe a8 19 32 6f 04 01 | f1 8c ad 7d a0 53 51 4c 
+    -> 90 af 00 00 10 eb fe a8 | 19 32 6f 04 01 f1 8c ad | 7d a0 53 51 4c 00 
+    -- IV       = f1 8c ad 7d a0 53 51 4c 
+    <- 1e c0 ed 6b d5 6a aa 11 | 91 00 8c ad 
+    -- IV       = 1e c0 ed 6b d5 6a aa 11 
+       ... AUTH OK! :)
+
+>>> GetCardUID command:
+    -> 90 51 00 00 00 00 
+    <- 08 c1 04 0d 94 19 63 91 | 00 
+
+>>> FreeMemory command:
+    -> 90 6e 00 00 00 00 
+    <- 0c 00 91 00 
+

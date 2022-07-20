@@ -43,10 +43,7 @@ uint8_t Iso144434BlockNumber = 0;
 uint8_t Iso144434CardID = 1;
 uint8_t Iso144434LastBlockLength = 0;
 uint8_t StateRetryCount = 0;
-uint8_t LastReaderSentCmd = 0x00;
 
-uint8_t  ISO14443ALastDataFrame[MAX_DATA_FRAME_XFER_SIZE] = { 0x00 };
-uint16_t ISO14443ALastDataFrameBits = 0;
 uint8_t  ISO14443ALastIncomingDataFrame[MAX_DATA_FRAME_XFER_SIZE] = { 0x00 };
 uint16_t ISO14443ALastIncomingDataFrameBits = 0;
 
@@ -78,9 +75,8 @@ void ISO144434Reset(void) {
     /* No logging here -- spams the log and slows things way down! */
     Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
     Iso144434BlockNumber = 1;
-    ISO14443ALastDataFrameBits = 0;
-    ISO14443ALastDataFrame[0] = 0x00;
-    LastReaderSentCmd = 0x00;
+    ISO14443ALastIncomingDataFrameBits = 0;
+    ISO14443ALastIncomingDataFrame[0] = 0x00;
 }
 
 uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t BitCount) {
@@ -212,9 +208,9 @@ uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t Bit
                 /* NOTE: Chaining is not supported yet. */
                 DEBUG_PRINT_P(PSTR("ISO144434ProcessBlock: ISO14443_PCB_R_BLOCK"));
                 // Resend the data from the last frame:
-                if (ISO14443ALastDataFrameBits > 0) {
-                    memcpy(&Buffer[0], &ISO14443ALastDataFrame[0], ASBYTES(ISO14443ALastDataFrameBits));
-                    return ISO14443ALastDataFrameBits;
+                if (ISO14443ALastIncomingDataFrameBits > 0) {
+                    memcpy(&Buffer[0], &ISO14443ALastIncomingDataFrame[0], ASBYTES(ISO14443ALastIncomingDataFrameBits));
+                    return ISO14443ALastIncomingDataFrameBits;
                 } else {
                     return ISO14443A_APP_NO_RESPONSE;
                 }
@@ -279,8 +275,8 @@ void ISO144433AReset(void) {
     Iso144433AState = ISO14443_3A_STATE_IDLE;
     Iso144433AIdleState = ISO14443_3A_STATE_IDLE;
     StateRetryCount = 0;
-    ISO14443ALastDataFrame[0] = 0x00;
-    ISO14443ALastDataFrameBits = 0;
+    ISO14443ALastIncomingDataFrame[0] = 0x00;
+    ISO14443ALastIncomingDataFrameBits = 0;
 }
 
 void ISO144433AHalt(void) {
@@ -299,8 +295,6 @@ bool ISO144433AIsHalt(const uint8_t *Buffer, uint16_t BitCount) {
 uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
 
     if (BitCount == 0) {
-        //ISO144434Reset();
-        //ISO144433AHalt();
         return ISO14443A_APP_NO_RESPONSE;
     }
 
@@ -320,6 +314,15 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
         DEBUG_PRINT_P(PSTR("ISO14443-3: HALTING"));
         ISO144433AHalt();
         return ISO14443A_APP_NO_RESPONSE;
+    } else if (CheckStateRetryCount(false)) {
+        /* ??? TODO: Is this the correct action ??? */
+        DEBUG_PRINT_P(PSTR("ISO14443-3: RESETTING"));
+        ISO144433AHalt();
+        Buffer[0] == ISO14443A_CMD_HLTA;
+        Buffer[1] == 0x00;
+        ISO14443AAppendCRCA(Buffer, ASBYTES(ISO14443A_HLTA_FRAME_SIZE));
+        return ISO14443A_HLTA_FRAME_SIZE + ASBITS(ISO14443A_CRCA_SIZE);
+        //return ISO14443A_APP_NO_RESPONSE;
     }
 
     /* This implements ISO 14443-3A state machine */
@@ -352,11 +355,11 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 }
                 uint8_t cl1SAKValue = IS_ISO14443A_4_COMPLIANT(Buffer[1]) ? ISO14443A_SAK_INCOMPLETE : ISO14443A_SAK_INCOMPLETE_NOT_COMPLIANT;
                 Buffer[1] = MAKE_ISO14443A_4_COMPLIANT(Buffer[1]);
-                if (Buffer[1] == ISO14443A_NVB_AC_START && !ISO14443ASelectDesfire(Buffer, &BitCount, Uid, cl1SAKValue) && BitCount > 0) {
+                if (Buffer[1] == ISO14443A_NVB_AC_START && !ISO14443ASelectDesfire(Buffer, &BitCount, &Uid[0], 4, cl1SAKValue) && BitCount > 0) {
                     //DEBUG_PRINT_P(PSTR("ISO14443-4: Select CL1 NVB START -- OK"));
                     ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL1_NVB_END);
                     return BitCount;
-                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(Buffer, &BitCount, Uid, cl1SAKValue)) {
+                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(Buffer, &BitCount, &Uid[0], 4, cl1SAKValue)) {
                     //DEBUG_PRINT_P(PSTR("ISO14443-4: Select CL1 NVB END -- OK"));
                     ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL2);
                     return BitCount;
@@ -378,11 +381,11 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 ApplicationGetUid(Uid);
                 uint8_t cl2SAKValue = IS_ISO14443A_4_COMPLIANT(Buffer[1]) ? ISO14443A_SAK_COMPLETE_COMPLIANT : ISO14443A_SAK_COMPLETE_NOT_COMPLIANT;
                 Buffer[1] = MAKE_ISO14443A_4_COMPLIANT(Buffer[1]);
-                if (Buffer[1] == ISO14443A_NVB_AC_START && !ISO14443ASelectDesfire(Buffer, &BitCount, &Uid[4], cl2SAKValue) && BitCount > 0) {
+                if (Buffer[1] == ISO14443A_NVB_AC_START && !ISO14443ASelectDesfire(Buffer, &BitCount, &Uid[4], 3, cl2SAKValue) && BitCount > 0) {
                     //DEBUG_PRINT_P(PSTR("ISO14443-4: Select CL2 NVB START -- OK"));
                     ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL2_NVB_END);
                     return BitCount;
-                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(Buffer, &BitCount, &Uid[4], cl2SAKValue)) {
+                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(Buffer, &BitCount, &Uid[4], 3, cl2SAKValue)) {
                     //DEBUG_PRINT_P(PSTR("ISO14443-4: Select CL2 NVB END -- OK"));
                     ISO144433ASwitchState(ISO14443_3A_STATE_ACTIVE);
                     return BitCount;
@@ -414,8 +417,11 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             } else if (Cmd == ISO14443A_CMD_DESELECT) {
                 /* This has been observed to happen at this stage when swiping the
                  * Chameleon running CONFIG=MF_DESFIRE on an ACR122 USB external reader.
+                 * ??? TODO: What are we supposed to return in this case ???
                  */
                 DesfireLogEntry(LOG_INFO_APP_CMD_DESELECT, NULL, 0);
+                //return ISO14443A_APP_NO_RESPONSE;
+                return BitCount;
             }
             /* Forward to ISO/IEC 14443-4 processing code */
             //DEBUG_PRINT_P(PSTR("ISO14443-4: ACTIVE RET"));

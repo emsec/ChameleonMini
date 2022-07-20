@@ -1,0 +1,15 @@
+>>> Start Legacy DES Authenticate:
+    -> 90 0a 00 00 01 00 00 
+    -- IV       = 00 00 00 00 00 00 00 00 
+    <- ee 91 30 1e e8 f5 84 d6 | 91 af 
+    -- IV       = ee 91 30 1e e8 f5 84 d6 
+    -- RNDA     = 04 6b f3 90 4f 35 5c ed 
+    -- RNDB     = ca fe ba be 00 11 22 33 
+    -- CHAL     = 04 6b f3 90 4f 35 5c ed | fe ba be 00 11 22 33 ca 
+    -- ENC-CHAL = 7a ce 34 fa 1f e1 b0 37 | 61 63 cd fe a7 b1 d0 1b 
+    -> 90 af 00 00 10 7a ce 34 | fa 1f e1 b0 37 61 63 cd | fe a7 b1 d0 1b 00 
+    -- IV       = 61 63 cd fe a7 b1 d0 1b 
+    <- 8f 69 dd 07 8a 60 e0 42 | 91 00 63 cd 
+    -- IV       = 8f 69 dd 07 8a 60 e0 42 
+       ... AUTH OK! :)
+

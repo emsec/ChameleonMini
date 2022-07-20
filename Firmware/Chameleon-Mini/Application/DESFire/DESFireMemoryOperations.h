@@ -42,14 +42,16 @@ extern volatile char __InternalStringBuffer[STRING_BUFFER_SIZE];
 void ReadBlockBytes(void *Buffer, SIZET StartBlock, SIZET Count);
 
 void WriteBlockBytesMain(const void *Buffer, SIZET StartBlock, SIZET Count);
-#define WriteBlockBytes(Buffer, StartBlock, Count)                 \
-    WriteBlockBytesMain(Buffer, StartBlock, Count);
+#define WriteBlockBytes(Buffer, StartBlock, Count)    WriteBlockBytesMain(Buffer, StartBlock, Count);
 
 uint16_t AllocateBlocksMain(uint16_t BlockCount);
-#define AllocateBlocks(BlockCount)                                 \
-    AllocateBlocksMain(BlockCount);
+#define AllocateBlocks(BlockCount)    AllocateBlocksMain(BlockCount);
 
 BYTE GetCardCapacityBlocks(void);
+uint16_t StorageSizeToBytes(uint8_t StorageSize);
+
+void MemoryStoreDesfireHeaderBytes(void);
+void MemoryRestoreDesfireHeaderBytes(bool LoadSettings);
 
 /* File data transfer related routines: */
 void ReadDataEEPROMSource(uint8_t *Buffer, uint8_t Count);

@@ -1,0 +1,15 @@
+>>> Start ISO Authenticate:
+    -> 90 1a 00 00 01 00 00 
+    -- IV       = 00 00 00 00 00 00 00 00 
+    <- ee 91 30 1e e8 f5 84 d6 | c7 85 1d 05 65 13 90 a6 | 91 af 
+    -- IV       = c7 85 1d 05 65 13 90 a6 
+    -- RNDA     = 1f a7 c1 34 6a 79 0f d2 | 49 dd e3 de 54 75 ed 5f 
+    -- RNDB     = ca fe ba be 00 11 22 33 | ca fe ba be 00 11 22 33 
+    -- CHAL     = 1f a7 c1 34 6a 79 0f d2 | 49 dd e3 de 54 75 ed 5f | fe ba be 00 11 22 33 ca | fe ba be 00 11 22 33 ca 
+    -- ENC-CHAL = c9 4c 32 09 f6 c4 12 65 | b4 81 cf d1 39 2f 76 a5 | ef 35 aa 21 2e cf 4b 18 | 1c d4 e7 83 c1 77 33 d5 
+    -> 90 af 00 00 20 c9 4c 32 | 09 f6 c4 12 65 b4 81 cf | d1 39 2f 76 a5 ef 35 aa | 21 2e cf 4b 18 1c d4 e7 | 83 c1 77 33 d5 00 
+    -- IV       = 1c d4 e7 83 c1 77 33 d5 
+    <- 20 72 23 9b 51 db 4f cc | 27 c0 ab 5c 3f 3d f0 ee | 91 00 35 aa 
+    -- IV       = 27 c0 ab 5c 3f 3d f0 ee 
+       ... AUTH OK! :)
+

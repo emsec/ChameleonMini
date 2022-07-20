@@ -16,117 +16,32 @@
 #include "LibNFCUtils.h"
 #include "GeneralUtils.h"
 
-static inline int AuthenticateAES128(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
+static uint8_t ActiveCryptoIVBuffer[CRYPTO_CHALLENGE_RESPONSE_SIZE] = { 0x00 };
 
-    if (nfcConnDev == NULL || keyData == NULL) {
-        return INVALID_PARAMS_ERROR;
-    }
-
-    // Start AES authentication (default key, blank setting of all zeros):
-    uint8_t AUTHENTICATE_AES_CMD[] = {
-        0x90, 0xaa, 0x00, 0x00, 0x01, 0x00, 0x00
-    };
-    AUTHENTICATE_AES_CMD[5] = keyIndex;
-    if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, ">>> Start AES Authenticate:\n");
-        fprintf(stdout, "    -> ");
-        print_hex(AUTHENTICATE_AES_CMD, sizeof(AUTHENTICATE_AES_CMD));
-    }
-    RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
-    bool rxDataStatus = false;
-    rxDataStatus = libnfcTransmitBytes(nfcConnDev, AUTHENTICATE_AES_CMD, sizeof(AUTHENTICATE_AES_CMD), rxDataStorage);
-    if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, "    <- ");
-        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
-    } else {
-        if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
-        }
-        FreeRxDataStruct(rxDataStorage, true);
-        return EXIT_FAILURE;
-    }
-
-    // Now need to decrypt the challenge response sent back as rndB,
-    // rotate it left, generate a random rndA, concat rndA+rotatedRndB,
-    // encrypt this result, and send it forth to the PICC:
-    uint8_t encryptedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], plainTextRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], rotatedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    uint8_t rndA[CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponse[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponseCipherText[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    int8_t IVBuf[CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    memcpy(encryptedRndB, rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    CryptoData_t aesCryptoData = { 0 };
-    aesCryptoData.keySize = 16;
-    aesCryptoData.keyData = keyData;
-    aesCryptoData.ivSize = CRYPTO_CHALLENGE_RESPONSE_SIZE;
-    DecryptAES128(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, plainTextRndB, aesCryptoData);
-    RotateArrayRight(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    aesCryptoData.ivData = IVBuf;
-    GenerateRandomBytes(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    ConcatByteArrays(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponse);
-    EncryptAES128(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponseCipherText, aesCryptoData);
-
-    uint8_t sendBytesBuf[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6];
-    memset(sendBytesBuf, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6);
-    sendBytesBuf[0] = 0x90;
-    sendBytesBuf[1] = 0xaf;
-    sendBytesBuf[4] = 0x20;
-    memcpy(sendBytesBuf + 5, challengeResponseCipherText, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE);
-
-    if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, "    -- RNDA = ");
-        print_hex(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-        fprintf(stdout, "    -- RNDB = ");
-        print_hex(plainTextRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-        fprintf(stdout, "    -- CHAL = ");
-        print_hex(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE);
-        fprintf(stdout, "    -> ");
-        print_hex(sendBytesBuf, sizeof(sendBytesBuf));
-    }
-    rxDataStatus = libnfcTransmitBytes(nfcConnDev, sendBytesBuf, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6, rxDataStorage);
-    if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, "    <- ");
-        print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
-    } else {
-        if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-            fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
-        }
-        FreeRxDataStruct(rxDataStorage, true);
-        return EXIT_FAILURE;
-    }
-
-    // Finally, to finish up the auth process:
-    // decrypt rndA sent by PICC, compare it to our original randomized rndA computed above,
-    // and report back whether they match:
-    uint8_t decryptedRndAFromPICCRotated[CRYPTO_CHALLENGE_RESPONSE_SIZE], decryptedRndA[CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    DecryptAES128(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE, decryptedRndAFromPICCRotated, aesCryptoData);
-    RotateArrayLeft(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    if (!memcmp(rndA, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE)) {
-        if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-            fprintf(stdout, "       ... AUTH OK! :)\n\n");
-        }
-        AUTHENTICATED = true;
-        AUTHENTICATED_PROTO = DESFIRE_CRYPTO_AUTHTYPE_AES128;
-        memcpy(CRYPTO_RNDB_STATE, plainTextRndB, 8);
-        FreeRxDataStruct(rxDataStorage, true);
-        return EXIT_SUCCESS;
-    } else {
-        if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-            fprintf(stdout, "       ... AUTH FAILED -- X; :(\n");
-            fprintf(stdout, "       ... ");
-            print_hex(decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-        }
-        FreeRxDataStruct(rxDataStorage, true);
-        return EXIT_FAILURE;
-    }
+static inline void InvalidateAuthenticationStatus(void) {
+    AUTHENTICATED = false;
+    AUTHENTICATED_PROTO = 0;
+    memset(CRYPTO_RNDB_STATE, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    memset(ActiveCryptoIVBuffer, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
 }
 
 static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
 
     if (nfcConnDev == NULL || keyData == NULL) {
+        InvalidateAuthenticationStatus();
         return INVALID_PARAMS_ERROR;
+    } else if (!AUTHENTICATED) {
+        InvalidateAuthenticationStatus();
     }
 
     // Start 3K3DES authentication (default key, blank setting of all zeros):
+    uint8_t *IVBuf = ActiveCryptoIVBuffer;
+    CryptoData_t desCryptoData;
+    memset(&desCryptoData, 0x00, sizeof(CryptoData_t));
+    desCryptoData.keySize = CRYPTO_3KTDEA_KEY_SIZE;
+    desCryptoData.keyData = keyData;
+    desCryptoData.ivSize = CRYPTO_CHALLENGE_RESPONSE_SIZE;
+
     uint8_t AUTHENTICATE_ISO_CMD[] = {
         0x90, 0x1a, 0x00, 0x00, 0x01, 0x00, 0x00
     };
@@ -135,6 +50,8 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
         fprintf(stdout, ">>> Start ISO Authenticate:\n");
         fprintf(stdout, "    -> ");
         print_hex(AUTHENTICATE_ISO_CMD, sizeof(AUTHENTICATE_ISO_CMD));
+        fprintf(stdout, "    -- IV       = ");
+        print_hex(IVBuf, CRYPTO_3KTDEA_BLOCK_SIZE);
     }
     RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
     bool rxDataStatus = false;
@@ -147,6 +64,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
@@ -155,38 +73,41 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
     // encrypt this result, and send it forth to the PICC:
     uint8_t encryptedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], plainTextRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], rotatedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE];
     uint8_t rndA[CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponse[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponseCipherText[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    int8_t IVBuf[CRYPTO_CHALLENGE_RESPONSE_SIZE];
     memcpy(encryptedRndB, rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    CryptoData_t desCryptoData = { 0 };
-    desCryptoData.keySize = 3 * 8;
-    desCryptoData.keyData = keyData;
-    desCryptoData.ivSize = CRYPTO_CHALLENGE_RESPONSE_SIZE;
-    Decrypt3DES(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, plainTextRndB, NULL, desCryptoData);
+    Decrypt3DES(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, plainTextRndB, IVBuf, desCryptoData);
+    if (PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    -- IV       = ");
+        print_hex(IVBuf, CRYPTO_3KTDEA_BLOCK_SIZE);
+    }
     RotateArrayRight(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     desCryptoData.ivData = IVBuf;
     GenerateRandomBytes(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     ConcatByteArrays(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponse);
-    Encrypt3DES(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponseCipherText, NULL, desCryptoData);
+    Encrypt3DES(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponseCipherText, IVBuf, desCryptoData);
 
-    uint8_t sendBytesBuf[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6];
-    memset(sendBytesBuf, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6);
+    uint16_t nonDataPaddingSize = 6;
+    uint8_t sendBytesBuf[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + nonDataPaddingSize];
+    memset(sendBytesBuf, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + nonDataPaddingSize);
     sendBytesBuf[0] = 0x90;
     sendBytesBuf[1] = 0xaf;
     sendBytesBuf[4] = 0x20;
-    memcpy(sendBytesBuf + 5, challengeResponseCipherText, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    memcpy(&sendBytesBuf[5], challengeResponseCipherText, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE);
 
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, "    -- RNDA = ");
+        fprintf(stdout, "    -- RNDA     = ");
         print_hex(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-        fprintf(stdout, "    -- RNDB = ");
+        fprintf(stdout, "    -- RNDB     = ");
         print_hex(plainTextRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-        fprintf(stdout, "    -- CHAL = ");
+        fprintf(stdout, "    -- CHAL     = ");
         print_hex(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE);
+        fprintf(stdout, "    -- ENC-CHAL = ");
+        print_hex(challengeResponseCipherText, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE);
         fprintf(stdout, "    -> ");
         print_hex(sendBytesBuf, sizeof(sendBytesBuf));
+        fprintf(stdout, "    -- IV       = ");
+        print_hex(desCryptoData.ivData, CRYPTO_3KTDEA_BLOCK_SIZE);
     }
-    rxDataStatus = libnfcTransmitBytes(nfcConnDev, sendBytesBuf, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6, rxDataStorage);
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, sendBytesBuf, sizeof(sendBytesBuf), rxDataStorage);
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
@@ -195,6 +116,7 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
@@ -202,7 +124,11 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
     // decrypt rndA sent by PICC, compare it to our original randomized rndA computed above,
     // and report back whether they match:
     uint8_t decryptedRndAFromPICCRotated[CRYPTO_CHALLENGE_RESPONSE_SIZE], decryptedRndA[CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    Decrypt3DES(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE, decryptedRndAFromPICCRotated, NULL, desCryptoData);
+    Decrypt3DES(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE, decryptedRndAFromPICCRotated, IVBuf, desCryptoData);
+    if (PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    -- IV       = ");
+        print_hex(IVBuf, CRYPTO_3KTDEA_BLOCK_SIZE);
+    }
     RotateArrayLeft(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
     if (!memcmp(rndA, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE)) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
@@ -210,16 +136,19 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
         }
         AUTHENTICATED = true;
         AUTHENTICATED_PROTO = DESFIRE_CRYPTO_AUTHTYPE_AES128;
-        memcpy(CRYPTO_RNDB_STATE, plainTextRndB, 8);
+        memcpy(CRYPTO_RNDB_STATE, plainTextRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
         FreeRxDataStruct(rxDataStorage, true);
         return EXIT_SUCCESS;
     } else {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH FAILED -- X; :(\n");
-            fprintf(stdout, "       ... ");
+            fprintf(stdout, "       ... INIT (ROTATED) PICC RNDA CONF:\n           ");
+            print_hex(decryptedRndAFromPICCRotated, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+            fprintf(stdout, "       ... SHIFTED DECRYPTED PICC RNDA:\n           ");
             print_hex(decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 }
@@ -227,18 +156,30 @@ static inline int AuthenticateISO(nfc_device *nfcConnDev, uint8_t keyIndex, cons
 static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, const uint8_t *keyData) {
 
     if (nfcConnDev == NULL || keyData == NULL) {
+        InvalidateAuthenticationStatus();
         return INVALID_PARAMS_ERROR;
+    } else if (!AUTHENTICATED) {
+        InvalidateAuthenticationStatus();
     }
 
     // Start 3K3DES authentication (default key, blank setting of all zeros):
+    uint8_t *IVBuf = ActiveCryptoIVBuffer;
+    CryptoData_t desCryptoData;
+    memset(&desCryptoData, 0x00, sizeof(CryptoData_t));
+    desCryptoData.keySize = CRYPTO_DES_KEY_SIZE;
+    desCryptoData.keyData = keyData;
+    desCryptoData.ivSize = CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY;
+
     uint8_t AUTHENTICATE_LEGACY_CMD[] = {
         0x90, 0x0a, 0x00, 0x00, 0x01, 0x00, 0x00
     };
     AUTHENTICATE_LEGACY_CMD[5] = keyIndex;
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, ">>> Start Legacy 2K3DES Authenticate:\n");
+        fprintf(stdout, ">>> Start Legacy DES Authenticate:\n");
         fprintf(stdout, "    -> ");
         print_hex(AUTHENTICATE_LEGACY_CMD, sizeof(AUTHENTICATE_LEGACY_CMD));
+        fprintf(stdout, "    -- IV       = ");
+        print_hex(IVBuf, CRYPTO_DES_BLOCK_SIZE);
     }
     RxData_t *rxDataStorage = InitRxDataStruct(MAX_FRAME_LENGTH);
     bool rxDataStatus = false;
@@ -251,46 +192,50 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
     // Now need to decrypt the challenge response sent back as rndB,
     // rotate it left, generate a random rndA, concat rndA+rotatedRndB,
     // encrypt this result, and send it forth to the PICC:
-    uint8_t encryptedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], plainTextRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE], rotatedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    uint8_t rndA[CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponse[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE], challengeResponseCipherText[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    int8_t IVBuf[CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    memcpy(encryptedRndB, rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    CryptoData_t desCryptoData = { 0 };
-    desCryptoData.keySize = 3 * 8;
-    desCryptoData.keyData = keyData;
-    desCryptoData.ivSize = CRYPTO_CHALLENGE_RESPONSE_SIZE;
-    Decrypt2K3DES(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, plainTextRndB, NULL, desCryptoData);
-    RotateArrayRight(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    memset(IVBuf, 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    uint8_t encryptedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY], plainTextRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY], rotatedRndB[CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY];
+    uint8_t rndA[CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY], challengeResponse[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY], challengeResponseCipherText[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY];
+    memcpy(encryptedRndB, rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
+    DecryptDES(encryptedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY, plainTextRndB, IVBuf, desCryptoData);
+    if (PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    -- IV       = ");
+        print_hex(IVBuf, CRYPTO_DES_BLOCK_SIZE);
+    }
+    RotateArrayRight(plainTextRndB, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
     desCryptoData.ivData = IVBuf;
-    GenerateRandomBytes(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    ConcatByteArrays(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponse);
-    Encrypt2K3DES(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE, challengeResponseCipherText, NULL, desCryptoData);
+    GenerateRandomBytes(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
+    ConcatByteArrays(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY, rotatedRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY, challengeResponse);
+    EncryptDES(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY, challengeResponseCipherText, IVBuf, desCryptoData);
 
-    uint8_t sendBytesBuf[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6];
-    memset(sendBytesBuf, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6);
+    uint16_t nonDataPaddingSize = 6;
+    uint8_t sendBytesBuf[2 * CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY + nonDataPaddingSize];
+    memset(sendBytesBuf, 0x00, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY + nonDataPaddingSize);
     sendBytesBuf[0] = 0x90;
     sendBytesBuf[1] = 0xaf;
-    sendBytesBuf[4] = 0x20;
-    memcpy(sendBytesBuf + 5, challengeResponseCipherText, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE);
+    sendBytesBuf[4] = 0x10;
+    memcpy(&sendBytesBuf[5], challengeResponseCipherText, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
 
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, "    -- RNDA = ");
-        print_hex(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-        fprintf(stdout, "    -- RNDB = ");
-        print_hex(plainTextRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-        fprintf(stdout, "    -- CHAL = ");
-        print_hex(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE);
+        fprintf(stdout, "    -- RNDA     = ");
+        print_hex(rndA, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
+        fprintf(stdout, "    -- RNDB     = ");
+        print_hex(plainTextRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
+        fprintf(stdout, "    -- CHAL     = ");
+        print_hex(challengeResponse, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
+        fprintf(stdout, "    -- ENC-CHAL = ");
+        print_hex(challengeResponseCipherText, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
         fprintf(stdout, "    -> ");
         print_hex(sendBytesBuf, sizeof(sendBytesBuf));
+        fprintf(stdout, "    -- IV       = ");
+        print_hex(desCryptoData.ivData, CRYPTO_DES_BLOCK_SIZE);
     }
-    rxDataStatus = libnfcTransmitBytes(nfcConnDev, sendBytesBuf, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE + 6, rxDataStorage);
+    rxDataStatus = libnfcTransmitBytes(nfcConnDev, sendBytesBuf, 2 * CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY + nonDataPaddingSize, rxDataStorage);
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
@@ -299,46 +244,51 @@ static inline int AuthenticateLegacy(nfc_device *nfcConnDev, uint8_t keyIndex, c
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 
     // Finally, to finish up the auth process:
     // decrypt rndA sent by PICC, compare it to our original randomized rndA computed above,
     // and report back whether they match:
-    uint8_t decryptedRndAFromPICCRotated[CRYPTO_CHALLENGE_RESPONSE_SIZE], decryptedRndA[CRYPTO_CHALLENGE_RESPONSE_SIZE];
-    Decrypt2K3DES(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE, decryptedRndAFromPICCRotated, NULL, desCryptoData);
-    RotateArrayLeft(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
-    if (!memcmp(rndA, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE)) {
+    uint8_t decryptedRndAFromPICCRotated[CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY], decryptedRndA[CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY];
+    DecryptDES(rxDataStorage->rxDataBuf, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY, decryptedRndAFromPICCRotated, IVBuf, desCryptoData);
+    if (PRINT_STATUS_EXCHANGE_MESSAGES) {
+        fprintf(stdout, "    -- IV       = ");
+        print_hex(IVBuf, CRYPTO_DES_BLOCK_SIZE);
+    }
+    RotateArrayLeft(decryptedRndAFromPICCRotated, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
+    if (!memcmp(rndA, decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY)) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH OK! :)\n\n");
         }
         AUTHENTICATED = true;
         AUTHENTICATED_PROTO = DESFIRE_CRYPTO_AUTHTYPE_AES128;
-        memcpy(CRYPTO_RNDB_STATE, plainTextRndB, 8);
+        memcpy(CRYPTO_RNDB_STATE, plainTextRndB, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
+        memset(&CRYPTO_RNDB_STATE[CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY], 0x00, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
         FreeRxDataStruct(rxDataStorage, true);
         return EXIT_SUCCESS;
     } else {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "       ... AUTH FAILED -- X; :(\n");
             fprintf(stdout, "       ... ");
-            print_hex(decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE);
+            print_hex(decryptedRndA, CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY);
         }
         FreeRxDataStruct(rxDataStorage, true);
+        InvalidateAuthenticationStatus();
         return EXIT_FAILURE;
     }
 }
 static inline int Authenticate(nfc_device *nfcConnDev, int authType, uint8_t keyIndex, const uint8_t *keyData) {
-    InvalidateAuthState();
     if (nfcConnDev == NULL || keyData == NULL) {
         return INVALID_PARAMS_ERROR;
     }
     switch (authType) {
-        case DESFIRE_CRYPTO_AUTHTYPE_AES128:
-            return AuthenticateAES128(nfcConnDev, keyIndex, keyData);
         case DESFIRE_CRYPTO_AUTHTYPE_ISODES:
             return AuthenticateISO(nfcConnDev, keyIndex, keyData);
         case DESFIRE_CRYPTO_AUTHTYPE_LEGACY:
             return AuthenticateLegacy(nfcConnDev, keyIndex, keyData);
+        case DESFIRE_CRYPTO_AUTHTYPE_AES128:
         default:
             break;
     }
@@ -384,6 +334,7 @@ static inline int GetVersionCommand(nfc_device *nfcConnDev) {
         if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         } else if (!rxDataStatus) {
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
                 fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -415,6 +366,7 @@ static inline int FormatPiccCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -445,6 +397,7 @@ static inline int GetCardUIDCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -475,7 +428,7 @@ static inline int SetConfigurationCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
-        fprintf(stdout, "    -- !! TODO: NOT IMPLEMENTED !!\n");
+        fprintf(stdout, "    -- !! TODO: TEST CODE NOT IMPLEMENTED !!\n\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -506,6 +459,7 @@ static inline int FreeMemoryCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -544,6 +498,7 @@ static inline int ChangeKeyCommand(nfc_device *nfcConnDev, uint8_t keyNo, const 
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -574,6 +529,7 @@ static inline int GetKeySettingsCommand(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -607,6 +563,7 @@ static inline int ChangeKeySettingsCommand(nfc_device *nfcConnDev, const uint8_t
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -637,6 +594,7 @@ static inline int GetKeyVersionCommand(nfc_device *nfcConnDev, uint8_t keyNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -692,7 +650,7 @@ static inline int CreateApplication(nfc_device *nfcConnDev, uint8_t *aidBytes,
     CMD[1] = 0xca;
     memset(CMD + 2, 0x00, 9);
     CMD[4] = 5;
-    memcpy(CMD + 5, aidBytes, 3);
+    memcpy(&CMD[5], aidBytes, 3);
     CMD[8] = keySettings;
     CMD[9] = numKeys;
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
@@ -706,6 +664,7 @@ static inline int CreateApplication(nfc_device *nfcConnDev, uint8_t *aidBytes,
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -738,6 +697,7 @@ static inline int DeleteApplication(nfc_device *nfcConnDev, uint8_t *aidBytes) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -786,7 +746,7 @@ static inline int SelectApplication(nfc_device *nfcConnDev, uint8_t *aidBytes, s
 
 static inline int GetDFNamesCommand(nfc_device *nfcConnDev) {
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, "    -- !! GetDFNames command NOT IMPLEMENTED !!\n");
+        fprintf(stdout, "    -- !! GetDFNames command TEST CODE NOT IMPLEMENTED !!\n\n");
     }
     return EXIT_SUCCESS;
 }
@@ -1020,6 +980,7 @@ static inline int DeleteFile(nfc_device *nfcConnDev, uint8_t fileNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1050,6 +1011,7 @@ static inline int GetFileIds(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1080,6 +1042,7 @@ static inline int GetFileSettings(nfc_device *nfcConnDev, uint8_t fileNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1093,7 +1056,7 @@ static inline int GetFileSettings(nfc_device *nfcConnDev, uint8_t fileNo) {
 
 static inline int ChangeFileSettings(nfc_device *nfcConnDev) {
     if (PRINT_STATUS_EXCHANGE_MESSAGES) {
-        fprintf(stdout, "    -- !! ChangeFileSettings command NOT IMPLEMENTED !!\n");
+        fprintf(stdout, "    -- !! ChangeFileSettings command TEST CODE NOT IMPLEMENTED !!\n");
     }
     return EXIT_FAILURE;
 }
@@ -1126,6 +1089,7 @@ static inline int ReadDataCommand(nfc_device *nfcConnDev, uint8_t fileNo,
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1166,6 +1130,7 @@ static inline int WriteDataCommand(nfc_device *nfcConnDev, uint8_t fileNo,
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1195,6 +1160,7 @@ static inline int GetValueCommand(nfc_device *nfcConnDev, uint8_t fileNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1230,6 +1196,7 @@ static inline int CreditValueFileCommand(nfc_device *nfcConnDev, uint8_t fileNo,
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1264,6 +1231,7 @@ static inline int DebitValueFileCommand(nfc_device *nfcConnDev, uint8_t fileNo, 
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1298,6 +1266,7 @@ static inline int LimitedCreditValueFileCommand(nfc_device *nfcConnDev, uint8_t 
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    <- ");
             print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+            fprintf(stdout, "\n");
         }
         return EXIT_SUCCESS;
     } else {
@@ -1327,6 +1296,7 @@ static inline int CommitTransaction(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1357,6 +1327,7 @@ static inline int AbortTransaction(nfc_device *nfcConnDev) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");
@@ -1404,6 +1375,7 @@ static inline int ReadRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo,
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
                 fprintf(stdout, "    <- ");
                 print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+                fprintf(stdout, "\n");
             }
         } else {
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
@@ -1463,6 +1435,7 @@ static inline int WriteRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo,
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
                 fprintf(stdout, "    <- ");
                 print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+                fprintf(stdout, "\n");
             }
         } else {
             if (PRINT_STATUS_EXCHANGE_MESSAGES) {
@@ -1494,6 +1467,7 @@ static inline int ClearRecordsCommand(nfc_device *nfcConnDev, uint8_t fileNo) {
     if (rxDataStatus && PRINT_STATUS_EXCHANGE_MESSAGES) {
         fprintf(stdout, "    <- ");
         print_hex(rxDataStorage->rxDataBuf, rxDataStorage->recvSzRx);
+        fprintf(stdout, "\n");
     } else if (!rxDataStatus) {
         if (PRINT_STATUS_EXCHANGE_MESSAGES) {
             fprintf(stdout, "    -- !! Unable to transfer bytes !!\n");

@@ -32,6 +32,7 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireChameleonTerminal.h"
 #include "DESFireFirmwareSettings.h"
 #include "DESFirePICCControl.h"
+#include "DESFireMemoryOperations.h"
 #include "DESFireLogging.h"
 
 bool IsDESFireConfiguration(void) {
@@ -76,27 +77,63 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
         } else {
             Picc.ManufacturerID = propSpecBytes[0];
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HardwareVersion"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HwType"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.HwType = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HwSubtype"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.HwSubtype = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HWProtoType"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.HwProtocolType = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("HWVers"))) {
         if (dataByteCount != 2) {
             StatusError = 1;
         } else {
             Picc.HwVersionMajor = propSpecBytes[0];
             Picc.HwVersionMinor = propSpecBytes[1];
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SoftwareVersion"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SwType"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.SwType = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SwSubtype"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.SwSubtype = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SwProtoType"))) {
+        if (dataByteCount != 1) {
+            StatusError = 1;
+        } else {
+            Picc.SwProtocolType = propSpecBytes[0];
+        }
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("SwVers"))) {
         if (dataByteCount != 2) {
             StatusError = 1;
         } else {
             Picc.SwVersionMajor = propSpecBytes[0];
             Picc.SwVersionMinor = propSpecBytes[1];
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("BatchNumber"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("BatchNo"))) {
         if (dataByteCount != 5) {
             StatusError = 1;
         } else {
             memcpy(Picc.BatchNumber, propSpecBytes, 5);
         }
-    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ProductionDate"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ProdDate"))) {
         if (dataByteCount != 2) {
             StatusError = 1;
         } else {
@@ -110,6 +147,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
     SynchronizePICCInfo();
+    MemoryStoreDesfireHeaderBytes();
     return COMMAND_INFO_OK_ID;
 }
 #endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */
@@ -141,6 +179,48 @@ CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InPara
         return COMMAND_INFO_OK;
     }
     return COMMAND_ERR_INVALID_USAGE_ID;
+}
+
+CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+    char valueStr[16];
+    if (!sscanf_P(InParams, PSTR("%15s"), valueStr)) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+    valueStr[15] = '\0';
+    char *modeStartPos = strchr(valueStr, ':');
+    bool setAESCryptoMode = true, setDESCryptoMode = true;
+    bool ecbModeEnabled = true;
+    if (modeStartPos == NULL) {
+        modeStartPos = &valueStr;
+    } else {
+        uint8_t prefixLength = (uint8_t)(modeStartPos - valueStr);
+        if (prefixLength == 0) {
+            return COMMAND_ERR_INVALID_USAGE_ID;
+        } else if (!strncasecmp_P(valueStr, PSTR("DES"), prefixLength)) {
+            setAESCryptoMode = false;
+        } else if (!strncasecmp_P(valueStr, PSTR("AES"), prefixLength)) {
+            setDESCryptoMode = false;
+        } else {
+            return COMMAND_ERR_INVALID_USAGE_ID;
+        }
+    }
+    if (!strcasecmp_P(modeStartPos, PSTR("ECB"))) {
+        ecbModeEnabled = true;
+    } else if (!strcasecmp_P(modeStartPos, PSTR("CBC"))) {
+        ecbModeEnabled = false;
+    } else {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+    if (setDESCryptoMode) {
+        __CryptoDESOpMode = ecbModeEnabled ? CRYPTO_DES_ECB_MODE : CRYPTO_DES_CBC_MODE;
+    }
+    if (setAESCryptoMode) {
+        __CryptoAESOpMode = ecbModeEnabled ? CRYPTO_AES_ECB_MODE : CRYPTO_AES_CBC_MODE;
+    }
+    return COMMAND_INFO_OK;
 }
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

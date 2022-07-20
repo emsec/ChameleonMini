@@ -30,6 +30,7 @@ This notice must be retained at the top of all source files where indicated.
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
 
 #include "../Common.h"
+#include "../Memory.h"
 #include "Reader14443A.h"
 
 #include "MifareDESFire.h"
@@ -53,11 +54,11 @@ BYTE DesfireCmdCLA = DESFIRE_NATIVE_CLA;
 
 uint16_t ISO14443AStoreLastDataFrameAndReturn(const uint8_t *Buffer, uint16_t BufferBitCount) {
     if (BufferBitCount > 0) {
-        uint16_t ISO14443ALastDataFrameBytes = MIN(ASBYTES(BufferBitCount), MAX_DATA_FRAME_XFER_SIZE);
-        memcpy(&ISO14443ALastDataFrame[0], &Buffer[0], ISO14443ALastDataFrameBytes);
-        ISO14443ALastDataFrameBits = BufferBitCount;
+        uint16_t ISO14443ALastIncomingDataFrameBytes = MIN(ASBYTES(BufferBitCount), MAX_DATA_FRAME_XFER_SIZE);
+        memcpy(&ISO14443ALastIncomingDataFrame[0], &Buffer[0], ISO14443ALastIncomingDataFrameBytes);
+        ISO14443ALastIncomingDataFrameBits = MIN(BufferBitCount, ASBITS(MAX_DATA_FRAME_XFER_SIZE));
     }
-    return BufferBitCount;
+    return ISO14443ALastIncomingDataFrameBits;
 }
 
 static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool FormatPICC) {
@@ -75,6 +76,9 @@ static void MifareDesfireAppInitLocal(uint8_t StorageSize, uint8_t Version, bool
         default: /* Fall through: */
             InitialisePiccBackendEV0(StorageSize, FormatPICC);
             break;
+    }
+    if (FormatPICC) {
+        MemoryStoreDesfireHeaderBytes();
     }
     DesfireCommMode = DESFIRE_DEFAULT_COMMS_STANDARD;
 }
@@ -133,7 +137,7 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
     } else if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         DesfireState = DESFIRE_IDLE;
     }
-    LastReaderSentCmd = Buffer[0];
+    DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, (void *) Buffer, ByteCount);
 
     uint16_t ReturnBytes = 0;
     switch (DesfireState) {
@@ -178,16 +182,21 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
             ReturnBytes = DESFIRE_STATUS_RESPONSE_SIZE;
             break;
     }
+    /* Reset the state retry count */
+    StateRetryCount = 0;
     return ReturnBytes;
 
 }
 
 uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
-    DesfireCmdCLA = Buffer[0];
     size_t ByteCount = ASBYTES(BitCount);
     if (ByteCount == 0) {
-        return ISO14443A_APP_NO_RESPONSE;
-    } else if (ByteCount >= 2 && Buffer[1] == STATUS_ADDITIONAL_FRAME && DesfireCLA(Buffer[0])) {
+        DEBUG_PRINT_P(PSTR("RESEND LAST"));
+        memcpy(&Buffer[0], &ISO14443ALastIncomingDataFrame[0], ASBYTES(ISO14443ALastIncomingDataFrameBits));
+        return ISO14443ALastIncomingDataFrameBits;
+    }
+    DesfireCmdCLA = Buffer[0];
+    if (ByteCount >= 2 && Buffer[1] == STATUS_ADDITIONAL_FRAME && DesfireCLA(Buffer[0])) {
         ByteCount -= 1;
         memmove(&Buffer[0], &Buffer[1], ByteCount);
         uint16_t ProcessedByteCount = MifareDesfireProcessCommand(Buffer, ByteCount);
@@ -237,21 +246,40 @@ uint16_t MifareDesfireProcess(uint8_t *Buffer, uint16_t BitCount) {
 
 uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     uint16_t ReturnBytes = 0;
-    uint16_t ByteCount = ASBYTES(BitCount);
-    if (ByteCount >= 1 && BitCount == ISO14443ALastIncomingDataFrameBits && ISO14443ALastDataFrameBits > 0 &&
+    uint16_t ByteCount = MIN(ASBYTES(BitCount), MAX_DATA_FRAME_XFER_SIZE);
+    if (ISO14443ALastIncomingDataFrameBits > 0 && BitCount == ISO14443ALastIncomingDataFrameBits &&
             !memcmp(&Buffer[0], &ISO14443ALastIncomingDataFrame[0], ByteCount)) {
         /* The PCD resent the same data frame (probably a synchronization issue):
-         * Send out the same data as last time:
+         * Send out the same data as last time -- already the same as the Buffer contents:
          */
-        memcpy(&Buffer[0], &ISO14443ALastDataFrame[0], ASBYTES(ISO14443ALastDataFrameBits));
-        return ISO14443ALastDataFrameBits;
+        return ISO14443ALastIncomingDataFrameBits;
     } else {
-        memcpy(&ISO14443ALastIncomingDataFrame[0], &Buffer[0], ByteCount);
-        ISO14443ALastIncomingDataFrameBits = BitCount;
-        LastReaderSentCmd = Buffer[0];
+        ISO14443ALastIncomingDataFrameBits = ISO14443AStoreLastDataFrameAndReturn(Buffer, BitCount);
     }
-    if (ByteCount >= 3 && Buffer[2] == STATUS_ADDITIONAL_FRAME && DesfireStateExpectingAdditionalFrame(DesfireState)) {
-        /* [PM3-V1] : Handle the ISO-prologue-only-wrapped version of the additional frame data: */
+    if (ByteCount >= 8 && DesfireCLA(Buffer[1]) && Buffer[2] == STATUS_ADDITIONAL_FRAME &&
+            Buffer[3] == 0x00 && Buffer[4] == 0x00 && Buffer[5] == ByteCount - 8 &&
+            DesfireStateExpectingAdditionalFrame(DesfireState)) {
+        /* [PM3-V1] : Handle the native-wrapped version of the additional frame data: */
+        uint16_t checkSumPostVerifyBytes = DesfirePreprocessAPDUAndTruncate(ActiveCommMode, Buffer, ByteCount);
+        if (checkSumPostVerifyBytes == 0) {
+            return ISO14443A_APP_NO_RESPONSE;
+        }
+        uint8_t PrologueCounterByte = Buffer[0];
+        Buffer[0] = Buffer[2];
+        ByteCount = Buffer[5];
+        if (ByteCount > 0) {
+            memmove(&Buffer[1], &Buffer[6], ByteCount);
+        }
+        uint16_t ProcessedByteCount = MifareDesfireProcessCommand(Buffer, ByteCount + 1);
+        if (ProcessedByteCount == 0) {
+            return ISO14443A_APP_NO_RESPONSE;
+        }
+        /* Re-wrap into padded APDU form */
+        Buffer[0] = PrologueCounterByte;
+        uint16_t ProcessedByteCountWithCRCA = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount + 1);
+        return ISO14443AStoreLastDataFrameAndReturn(Buffer, ASBITS(ProcessedByteCountWithCRCA));
+    } else if (ByteCount >= 3 && Buffer[2] == STATUS_ADDITIONAL_FRAME && DesfireStateExpectingAdditionalFrame(DesfireState)) {
+        /* [PM3-V2] : Handle the ISO-prologue-only-wrapped version of the additional frame data: */
         uint8_t ISO7816PrologueBytes[2];
         memcpy(&ISO7816PrologueBytes[0], &Buffer[0], 2);
         uint16_t IncomingByteCount = DesfirePreprocessAPDUAndTruncate(ActiveCommMode, Buffer, ByteCount);
@@ -267,10 +295,10 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         memcpy(&Buffer[0], &ISO7816PrologueBytes[0], 2);
         ProcessedByteCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount + 2);
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ASBITS(ProcessedByteCount));
-    } else if (ByteCount >= 5 && DesfireCLA(Buffer[0]) && Buffer[1] == STATUS_ADDITIONAL_FRAME &&
-               Buffer[2] == 0x00 && Buffer[3] == 0x00 && Buffer[4] == ByteCount - 9 &&
+    } else if (ByteCount >= 6 && DesfireCLA(Buffer[0]) && Buffer[1] == STATUS_ADDITIONAL_FRAME &&
+               Buffer[2] == 0x00 && Buffer[3] == 0x00 && Buffer[4] == ByteCount - 8 &&
                DesfireStateExpectingAdditionalFrame(DesfireState)) {
-        /* [PM3-V2] : Handle the native-wrapped version of the additional frame data: */
+        /* [PM3-V3] : Handle the native-wrapped version of the additional frame data: */
         uint16_t checkSumPostVerifyBytes = DesfirePreprocessAPDUAndTruncate(ActiveCommMode, Buffer, ByteCount);
         if (checkSumPostVerifyBytes == 0) {
             return ISO14443A_APP_NO_RESPONSE;
@@ -360,11 +388,15 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         uint16_t UnwrappedBitCount = ASBITS(ByteCount);
         uint16_t ProcessedBitCount = MifareDesfireProcess(Buffer, UnwrappedBitCount);
         uint16_t ProcessedByteCount = ASBYTES(ProcessedBitCount);
-        /* Undo the leading 0x91 and shift for the PM3 raw wrapped commands: */
-        if (Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_STANDARD && ProcessedByteCount > 0) {
-            memmove(&Buffer[1], &Buffer[0], ProcessedByteCount);
-            Buffer[0] = Buffer[ProcessedByteCount];
-            --ProcessedByteCount;
+        /* Undo the leading 0x91(RCODE-XX) and shift for the PM3 raw wrapped commands: */
+        if (Iso7816CmdType != ISO7816_WRAPPED_CMD_TYPE_STANDARD && ProcessedByteCount >= 1) {
+            if (Buffer[ProcessedByteCount] != 0x00) {
+                memmove(&Buffer[1], &Buffer[0], ProcessedByteCount);
+                Buffer[0] = Buffer[ProcessedByteCount];
+                --ProcessedByteCount;
+            } else if (ProcessedByteCount >= 2) {
+                ProcessedByteCount -= 2;
+            }
         }
         /* Append the same ISO7816 prologue bytes to the response: */
         if (ProcessedByteCount > 0) {
@@ -405,24 +437,20 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
 }
 
 void MifareDesfireReset(void) {
+    InvalidateAuthState(false);
     DesfireState = DESFIRE_IDLE;
 }
 
 void ResetLocalStructureData(void) {
-    DesfireState = DesfirePreviousState = DESFIRE_IDLE;
-    InvalidateAuthState(0);
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
     memset(&AppDir, 0x00, sizeof(AppDir));
     memset(&SelectedApp, 0x00, sizeof(SelectedApp));
     memset(&SelectedFile, 0x00, sizeof(SelectedFile));
     memset(&TransferState, 0x00, sizeof(TransferState));
-    memset(&SessionKey, 0x00, sizeof(CryptoKeyBufferType));
-    memset(&SessionIV, 0x00, sizeof(CryptoIVBufferType));
-    SessionIVByteSize = 0;
     SelectedApp.Slot = 0;
     SelectedFile.Num = -1;
-    ResetISOState();
     MifareDesfireReset();
+    ResetISOState();
 }
 
 void ResetISOState(void) {

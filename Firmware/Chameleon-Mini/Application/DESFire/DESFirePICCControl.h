@@ -50,8 +50,6 @@ extern SelectedFileCacheType SelectedFile;
 
 typedef void (*TransferSourceFuncType)(BYTE *Buffer, BYTE Count);
 typedef void (*TransferSinkFuncType)(BYTE *Buffer, BYTE Count);
-typedef void (*TransferChecksumUpdateFuncType)(const BYTE *Buffer, BYTE Count);
-typedef BYTE(*TransferChecksumFinalFuncType)(BYTE *Buffer);
 typedef BYTE(*TransferEncryptFuncType)(BYTE *Buffer, BYTE Count);
 typedef TransferStatus(*PiccToPcdTransferFilterFuncType)(BYTE *Buffer);
 typedef BYTE(*PcdToPiccTransferFilterFuncType)(BYTE *Buffer, BYTE Count);
@@ -63,32 +61,11 @@ typedef union DESFIRE_FIRMWARE_PACKING {
     } GetApplicationIds;
     BYTE BlockBuffer[CRYPTO_MAX_BLOCK_SIZE];
     struct DESFIRE_FIRMWARE_ALIGNAT {
-        TransferChecksumUpdateFuncType UpdateFunc;
-        TransferChecksumFinalFuncType FinalFunc;
-        BYTE AvailablePlaintext;
-        struct DESFIRE_FIRMWARE_ALIGNAT {
-            union DESFIRE_FIRMWARE_ALIGNAT {
-                CryptoAESCBCFuncType   AESFunc;
-                CryptoTDEACBCFuncType  TDEAFunc;
-            } CryptoChecksumFunc;
-            union {
-                SIZET CRCA;
-                UINT  CRC32;
-                BYTE  CMAC[DESFIRE_CMAC_LENGTH];
-            };
-        } MACData;
-    } Checksums;
-    struct DESFIRE_FIRMWARE_ALIGNAT {
         SIZET BytesLeft;
         struct DESFIRE_FIRMWARE_ALIGNAT {
             TransferSourceFuncType Func;
             SIZET Pointer; /* in FRAM */
         } Source;
-        struct DESFIRE_FIRMWARE_ALIGNAT {
-            BOOL FirstPaddingBitSet;
-            TransferEncryptFuncType Func;
-            BYTE AvailablePlaintext;
-        } Encryption;
     } ReadData;
     struct DESFIRE_FIRMWARE_ALIGNAT {
         SIZET BytesLeft;
@@ -96,10 +73,6 @@ typedef union DESFIRE_FIRMWARE_PACKING {
             TransferSinkFuncType Func;
             SIZET Pointer; /* in FRAM */
         } Sink;
-        struct DESFIRE_FIRMWARE_ALIGNAT {
-            TransferEncryptFuncType Func;
-            BYTE AvailablePlaintext;
-        } Encryption;
     } WriteData;
 } TransferStateType;
 extern TransferStateType TransferState;

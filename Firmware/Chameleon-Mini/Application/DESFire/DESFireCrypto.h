@@ -92,8 +92,6 @@ bool IsAuthenticated(void);
 
 BYTE GetDefaultCryptoMethodKeySize(uint8_t cryptoType);
 BYTE GetCryptoMethodCommSettings(uint8_t cryptoType);
-const char *GetCryptoMethodDesc(uint8_t cryptoType);
-const char *GetCommSettingsDesc(uint8_t cryptoType);
 
 bool generateSessionKey(uint8_t *sessionKey, uint8_t *rndA, uint8_t *rndB, uint16_t cryptoType);
 
@@ -130,11 +128,6 @@ typedef void (*CryptoAESCBCFuncType)(uint16_t, void *, void *, uint8_t *, uint8_
 typedef uint8_t (*CryptoTransferSendFunc)(uint8_t *, uint8_t);
 typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t *, uint8_t);
 
-#ifdef ENABLE_CRYPTO_TESTS
-uint8_t CryptoAESTransferEncryptSend(uint8_t *Buffer, uint8_t Count, const uint8_t *Key);
-uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const uint8_t *Key);
-#endif
-
 #define DESFIRE_MAX_PAYLOAD_AES_BLOCKS        (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_AES_BLOCK_SIZE)
 
 /*********************************************************
@@ -142,20 +135,10 @@ uint8_t CryptoAESTransferEncryptReceive(uint8_t *Buffer, uint8_t Count, const ui
  *********************************************************/
 
 #include "../CryptoTDEA.h"
+#include "../CryptoCMAC.h"
 
 #define DESFIRE_2KTDEA_NONCE_SIZE            (CRYPTO_DES_BLOCK_SIZE)
 #define DESFIRE_DES_IV_SIZE                  (CRYPTO_DES_BLOCK_SIZE)
 #define DESFIRE_MAX_PAYLOAD_TDEA_BLOCKS      (DESFIRE_MAX_PAYLOAD_SIZE / CRYPTO_DES_BLOCK_SIZE)
-
-/* Checksum routines: */
-void TransferChecksumUpdateCRCA(const uint8_t *Buffer, uint8_t Count);
-uint8_t TransferChecksumFinalCRCA(uint8_t *Buffer);
-void TransferChecksumUpdateMACTDEA(const uint8_t *Buffer, uint8_t Count);
-uint8_t TransferChecksumFinalMACTDEA(uint8_t *Buffer);
-
-#include "../CryptoCMAC.h"
-
-void TransferChecksumUpdateCMAC(const uint8_t *Buffer, uint8_t Count);
-uint8_t TransferChecksumFinalCMAC(uint8_t *Buffer);
 
 #endif

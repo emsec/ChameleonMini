@@ -13,18 +13,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // Select AID application 0x000000:
-    if (SelectApplication(nfcPnd, MASTER_APPLICATION_AID, APPLICATION_AID_LENGTH)) {
-        return EXIT_FAILURE;
-    }
-
-    // Get list of application IDs:
-    if (GetApplicationIds(nfcPnd)) {
-        return EXIT_FAILURE;
-    }
     // Start ISO authentication (default key, blank setting of all zeros):
-    if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_LEGACY,
-                     MASTER_KEY_INDEX, ZERO_KEY)) {
+    if (Authenticate(nfcPnd, DESFIRE_CRYPTO_AUTHTYPE_LEGACY, MASTER_KEY_INDEX, ZERO_KEY)) {
         return EXIT_FAILURE;
     }
 

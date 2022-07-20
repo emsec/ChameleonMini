@@ -36,7 +36,7 @@ extern LogBlockListNode *LogBlockListBegin;
 extern LogBlockListNode *LogBlockListEnd;
 extern uint8_t LogBlockListElementCount;
 
-#define LIVE_LOGGER_POST_TICKS              (7)
+#define LIVE_LOGGER_POST_TICKS              (4)
 extern uint8_t LiveLogModePostTickCount;
 
 INLINE bool AtomicAppendLogBlock(LogEntryEnum logCode, uint16_t sysTickTime, const uint8_t *logData, uint8_t logDataSize);
