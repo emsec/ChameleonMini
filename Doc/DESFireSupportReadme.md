@@ -355,14 +355,14 @@ DESFire configuration is used:
 [#] [WCMD <--: : 08/08] 03 90 af 00 00 00 1f 15 
 [#] pcb_blocknum 0 == 2 
 [#] [WCMD <--: : 08/08] 02 90 af 00 00 00 34 11 
-[#] halt warning. response len: 2
+[#] halt warning. response len: 4
 [#] Halt error
 [#] switch_off
 
 [=] ---------------------------------- Tag Information ----------------------------------
-[+]               UID: 94 76 F1 48 2C 58 94 
-[+]      Batch number: 2C 58 0F EC 2C 
-[+]   Production date: week dc / 20f1
+[+]               UID: E4 E3 6A 66 B9 38 E4 
+[+]      Batch number: 66 B9 A2 A0 B5 
+[+]   Production date: week 1a / 20b9
 
 [=] --- Hardware Information
 [=]    raw: 04010100011805
@@ -383,25 +383,19 @@ DESFire configuration is used:
 [=]       Protocol: 0x01 ( Unknown )
 
 [=] --------------------------------- Card capabilities ---------------------------------
+[#] error DESFIRESendRaw Current configuration/status does not allow the requested command
+[#] error DESFIRESendRaw Current configuration/status does not allow the requested command
+[#] error DESFIRESendApdu Command code not supported
 [#] error DESFIRESendApdu Command code not supported
 [+] ------------------------------------ PICC level -------------------------------------
 [+] Applications count: 0 free memory n/a
 [+] PICC level auth commands: 
-[+]    Auth.............. NO
+[+]    Auth.............. YES
 [+]    Auth ISO.......... YES
 [+]    Auth AES.......... YES
 [+]    Auth Ev2.......... NO
 [+]    Auth ISO Native... NO
 [+]    Auth LRP.......... NO
-[+] PICC level rights:
-[+] [1...] CMK Configuration changeable   : YES
-[+] [.1..] CMK required for create/delete : NO
-[+] [..1.] Directory list access with CMK : NO
-[+] [...1] CMK is changeable              : YES
-[+] 
-[+] Key: 2TDEA
-[+] key count: 1
-[+] PICC key 0 version: 0 (0x00)
 
 [=] --- Free memory
 [+]    Card doesn't support 'free mem' cmd
