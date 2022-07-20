@@ -53,8 +53,8 @@ typedef uint8_t Crypto3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 typedef void (*CryptoTDEACBCFuncType)(uint16_t Count, const void *Plaintext, void *Ciphertext, void *IV, const uint8_t *Keys);
 typedef void (*CryptoTDEAFuncType)(const void *PlainText, void *Ciphertext, const uint8_t *Keys);
 
-void CryptoEncryptDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
-void CryptoDecryptDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
+void CryptoEncryptDES(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
+void CryptoDecryptDES(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 int EncryptDESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 int DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 

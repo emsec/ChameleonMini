@@ -482,7 +482,6 @@ uint16_t EV0CmdAuthenticateLegacy1(uint8_t *Buffer, uint16_t ByteCount) {
     keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_DES);
     DesfireCommandState.KeyId = KeyId;
     DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_DES;
-    DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_DES);
     CryptoChallengeResponseSize = CRYPTO_DES_BLOCK_SIZE;
 
     /* Fetch the key */
@@ -1740,21 +1739,15 @@ uint16_t DesfireCmdAuthenticate3KTDEA1(uint8_t *Buffer, uint16_t ByteCount) {
     if (cryptoKeyType == CRYPTO_TYPE_ANY || cryptoKeyType == CRYPTO_TYPE_3K3DES) {
         keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_3K3DES);
         DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_3K3DES;
-        DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_3K3DES);
-        CryptoChallengeResponseSize = CRYPTO_CHALLENGE_RESPONSE_BYTES;
     } else if (cryptoKeyType == CRYPTO_TYPE_AES128) {
         return DesfireCmdAuthenticateAES1(Buffer, ByteCount);
     } else if (cryptoKeyType == CRYPTO_TYPE_DES) {
-        keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_DES);
-        DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_DES;
-        DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_DES);
-        CryptoChallengeResponseSize = CRYPTO_DES_BLOCK_SIZE;
+        return EV0CmdAuthenticateLegacy1(Buffer, ByteCount);
     } else {
         keySize = GetDefaultCryptoMethodKeySize(CRYPTO_TYPE_2KTDEA);
         DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_2KTDEA;
-        DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_2KTDEA);
-        CryptoChallengeResponseSize = CRYPTO_DES_BLOCK_SIZE;
     }
+    CryptoChallengeResponseSize = CRYPTO_CHALLENGE_RESPONSE_BYTES;
 
     /* Fetch the key */
     ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);
@@ -1813,13 +1806,7 @@ uint16_t DesfireCmdAuthenticate3KTDEA2(uint8_t *Buffer, uint16_t ByteCount) {
     BYTE *Key, *IV;
 
     cryptoKeyType = DesfireCommandState.CryptoMethodType;
-    if (cryptoKeyType == CRYPTO_TYPE_ANY || cryptoKeyType == CRYPTO_TYPE_3K3DES) {
-        CryptoChallengeResponseSize = CRYPTO_CHALLENGE_RESPONSE_BYTES;
-    } else if (cryptoKeyType == CRYPTO_TYPE_DES) {
-        CryptoChallengeResponseSize = CRYPTO_DES_BLOCK_SIZE;
-    } else {
-        CryptoChallengeResponseSize = CRYPTO_DES_BLOCK_SIZE;
-    }
+    CryptoChallengeResponseSize = CRYPTO_CHALLENGE_RESPONSE_BYTES;
 
     /* Set status for the next incoming command on error */
     DesfireState = DESFIRE_IDLE;
@@ -1942,7 +1929,6 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
     /* Indicate that we are in AES key authentication land */
     DesfireCommandState.KeyId = KeyId;
     DesfireCommandState.CryptoMethodType = CRYPTO_TYPE_AES128;
-    DesfireCommandState.ActiveCommMode = GetCryptoMethodCommSettings(CRYPTO_TYPE_AES128);
 
     /* Fetch the key */
     ReadAppKey(SelectedApp.Slot, KeyId, Key, keySize);

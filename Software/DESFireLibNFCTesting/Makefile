@@ -42,6 +42,14 @@ LIBNFC_CUSTOM_CONFIG= -DLIBNFC_LOGLEVEL=NFC_LOG_PRIORITY_DEBUG                  
 				  -ULOG_GROUP -DLOG_GROUP=NFC_LOG_GROUP_GENERAL
 CFLAGS+= $(LIBNFC_SUPPORTED_DRIVERS) $(LIBNFC_CUSTOM_CONFIG)
 
+UTILS_SOURCE=LocalInclude/Config.h           \
+	     LocalInclude/CryptoUtils.h      \
+	     LocalInclude/DesfireUtils.h     \
+	     LocalInclude/ErrorHandling.h    \
+	     LocalInclude/GeneralUtils.h     \
+	     LocalInclude/LibNFCUtils.h      \
+	     LocalInclude/LibNFCWrapper.h
+
 FILE_BASENAMES=NFCAntiCollisionMod                              \
 			   TestAuthenticateLegacy               \
 			   TestAuthenticateAES128               \
@@ -65,7 +73,7 @@ all: default
 
 default: prelims $(OBJFILES) $(BINOUTS)
 
-$(OBJDIR)/%.$(OBJEXT): Source/%.c
+$(OBJDIR)/%.$(OBJEXT): Source/%.c $(UTILS_SOURCE)
 	$(CC) $(CFLAGS) $< -c -o $@
 	@/bin/bash ./Scripts/LibNFCObjectDefsRename.sh $@
 

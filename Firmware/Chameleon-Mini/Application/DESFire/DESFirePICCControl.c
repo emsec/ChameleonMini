@@ -82,7 +82,6 @@ void SynchronizePICCInfo(void) {
     WriteBlockBytes(&Picc, DESFIRE_PICC_INFO_BLOCK_ID, sizeof(DESFirePICCInfoType));
 }
 
-/* TODO: Currently, everything is transfered in plaintext, without checksums */
 TransferStatus PiccToPcdTransfer(uint8_t *Buffer) {
     TransferStatus Status;
     uint8_t XferBytes;
@@ -95,22 +94,10 @@ TransferStatus PiccToPcdTransfer(uint8_t *Buffer) {
         /* Read input bytes */
         TransferState.ReadData.Source.Func(Buffer, XferBytes);
         TransferState.ReadData.BytesLeft -= XferBytes;
-        /* Update checksum/MAC */
-        //if (TransferState.Checksums.UpdateFunc)
-        //    TransferState.Checksums.UpdateFunc(Buffer, XferBytes);
-        //if (TransferState.ReadData.BytesLeft == 0) {
-        //    /* Finalise TransferChecksum and append the checksum */
-        //    if (TransferState.Checksums.FinalFunc)
-        //        XferBytes += TransferState.Checksums.FinalFunc(&Buffer[XferBytes]);
-        //}
-        /* Encrypt */
-        //Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, XferBytes);
-        Status.IsComplete = TransferState.ReadData.Encryption.AvailablePlaintext == 0;
         Status.BytesProcessed = XferBytes;
         Status.IsComplete = TransferState.ReadData.BytesLeft == 0;
     } else {
         /* Final encryption block */
-        //Status.BytesProcessed = TransferState.ReadData.Encryption.Func(Buffer, 0);
         Status.IsComplete = true;
         Status.BytesProcessed = 0;
         Status.IsComplete = true;
@@ -118,39 +105,24 @@ TransferStatus PiccToPcdTransfer(uint8_t *Buffer) {
     return Status;
 }
 
-/* TODO: Currently, everything is transfered in plaintext, without checksums */
 uint8_t PcdToPiccTransfer(uint8_t *Buffer, uint8_t Count) {
     TransferState.WriteData.Sink.Func(Buffer, Count);
     return STATUS_OPERATION_OK;
 }
-
-/* Setup routines */
 
 uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
     switch (CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT:
             break;
         case DESFIRE_COMMS_PLAINTEXT_MAC:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
-            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCSend;
             memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_DES:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCRCA;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
-            TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT;
-            TransferState.ReadData.Encryption.Func = &TransferEncryptTDEASend;
             memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_AES128:
-            /* A.k.a., CommMode=FULL from NXP application note AN12343: */
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCMAC;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCMAC;
-            TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT; // TODO ???
-            TransferState.WriteData.Encryption.Func = &CryptoAESEncrypt_CBCSend;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
         default:
@@ -162,33 +134,18 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
 uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
     switch (CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT:
-            TransferState.Checksums.UpdateFunc = NULL;
-            TransferState.Checksums.FinalFunc = NULL;
-            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = NULL;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = 0;
             break;
         case DESFIRE_COMMS_PLAINTEXT_MAC:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateMACTDEA;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalMACTDEA;
-            TransferState.Checksums.MACData.CryptoChecksumFunc.TDEAFunc = &CryptoEncrypt2KTDEA_CBCReceive;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_DES:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCRCA;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCRCA;
-            TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT;
-            TransferState.WriteData.Encryption.Func = &TransferEncryptTDEAReceive;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_AES128:
-            // A.k.a., CommMode=FULL from NXP application note AN12343:
-            TransferState.Checksums.UpdateFunc = &TransferChecksumUpdateCMAC;
-            TransferState.Checksums.FinalFunc = &TransferChecksumFinalCMAC;
-            TransferState.Checksums.MACData.CRCA = ISO14443A_CRCA_INIT; // TODO ???
-            TransferState.WriteData.Encryption.Func = &CryptoAESEncrypt_CBCReceive;
             memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
             break;

@@ -267,10 +267,8 @@ uint8_t ReadDataFileSetup(uint8_t FileIndex, uint8_t CommSettings, uint16_t Offs
     /* Setup data source */
     TransferState.ReadData.Source.Func = &ReadDataEEPROMSource;
     if (Length == 0) {
-        TransferState.ReadData.Encryption.FirstPaddingBitSet = true;
         TransferState.ReadData.BytesLeft = fileSize - Offset;
     } else {
-        TransferState.ReadData.Encryption.FirstPaddingBitSet = false;
         TransferState.ReadData.BytesLeft = Length;
     }
     /* Clean data is always located in the beginning of data area */

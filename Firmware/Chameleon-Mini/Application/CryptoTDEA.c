@@ -118,7 +118,7 @@ static int CryptoDecryptCBCBuffer(CryptoTDEA_CBCSpec *CryptoSpec, uint16_t Count
 
 int EncryptDESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IVIn, const uint8_t *Keys) {
     CryptoTDEA_CBCSpec CryptoSpec = {
-        .cryptFunc   = &CryptoEncryptDEA,
+        .cryptFunc   = &CryptoEncryptDES,
         .blockSize   = CRYPTO_DES_BLOCK_SIZE
     };
     return CryptoEncryptCBCBuffer(&CryptoSpec, Count, Plaintext, Ciphertext, IVIn, Keys);
@@ -126,7 +126,7 @@ int EncryptDESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, co
 
 int DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IVIn, const uint8_t *Keys) {
     CryptoTDEA_CBCSpec CryptoSpec = {
-        .cryptFunc   = &CryptoDecryptDEA,
+        .cryptFunc   = &CryptoDecryptDES,
         .blockSize   = CRYPTO_DES_BLOCK_SIZE
     };
     return CryptoDecryptCBCBuffer(&CryptoSpec, Count, Plaintext, Ciphertext, IVIn, Keys);
