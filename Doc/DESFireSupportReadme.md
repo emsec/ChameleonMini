@@ -23,10 +23,12 @@ We can modify the remaining tag header information emulated by the tag as follow
 DF_SETHDR=ATS xxxxxxxxxx
 DF_SETHDR=ATQA xxxx
 DF_SETHDR=ManuID xx
-DF_SETHDR=Type xx
-DF_SETHDR=Subtype xx
+DF_SETHDR=HwType xx
+DF_SETHDR=HwSubtype xx
 DF_SETHDR=HwProtoType xx 
 DF_SETHDR=HwVers mmMM
+DF_SETHDR=SwType xx
+DF_SETHDR=SwSubtype xx
 DF_SETHDR=SwProtoType xx
 DF_SETHDR=SwVers mmMM
 DF_SETHDR=BatchNo xxxxxxxxxx
@@ -185,22 +187,27 @@ static const manufactureName_t manufactureMapping[] = {
 ```
 Similarly, the PM3 source maintains the authoritative way to 
 fingerprint the DESFire tag subtype in the 
-[client source files](https://github.com/RfidResearchGroup/proxmark3/blob/65b9a9fb769541f5d3e255ccf2c17d1cb77ac126/client/src/cmdhfmfp.c#L92):
+[client source files](https://github.com/RfidResearchGroup/proxmark3/blob/65b9a9fb769541f5d3e255ccf2c17d1cb77ac126/client/src/cmdhfmfdes.c#L278):
 ```cpp
     if (major == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire MF3ICD40") ")", major, minor);
-    else if (major == 0x01 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire EV1") ")", major, minor);
-    else if (major == 0x12 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire EV2") ")", major, minor);
-    else if (major == 0x33 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire EV3") ")", major, minor);
-    else if (major == 0x30 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("DESFire Light") ")", major, minor);
-    else if (major == 0x11 && minor == 0x00)
-        snprintf(retStr, sizeof(buf), "%x.%x (" _GREEN_("Plus EV1") ")", major, minor);
-    else
-        snprintf(retStr, sizeof(buf), "%x.%x (" _YELLOW_("Unknown") ")", major, minor);
+        return DESFIRE_MF3ICD40;
+    if (major == 0x01 && minor == 0x00)
+        return DESFIRE_EV1;
+    if (major == 0x12 && minor == 0x00)
+        return DESFIRE_EV2;
+    if (major == 0x22 && minor == 0x00)
+        return DESFIRE_EV2_XL;
+    if (major == 0x42 && minor == 0x00)
+        return DESFIRE_EV2;
+    if (major == 0x33 && minor == 0x00)
+        return DESFIRE_EV3;
+    if (major == 0x30 && minor == 0x00)
+        return DESFIRE_LIGHT;
+    if (major == 0x11 && minor == 0x00)
+        return PLUS_EV1;
+    if (major == 0x10 && minor == 0x00)
+        return NTAG413DNA;
+    return DESFIRE_UNKNOWN;
 ```
 
 #### DF_COMM_MODE -- Manually sets the communication mode of the current session
@@ -360,30 +367,31 @@ DESFire configuration is used:
 [#] switch_off
 
 [=] ---------------------------------- Tag Information ----------------------------------
-[+]               UID: E4 E3 6A 66 B9 38 E4 
-[+]      Batch number: 66 B9 A2 A0 B5 
-[+]   Production date: week 1a / 20b9
+[+]               UID: B9 38 A2 A0 B5 1A B9 
+[+]      Batch number: B9 09 58 8B EA 
+[+]   Production date: week 01 / 2005
 
 [=] --- Hardware Information
-[=]    raw: 04010100011805
+[=]    raw: 04010100011A05
 [=]      Vendor Id: NXP Semiconductors Germany
 [=]           Type: 0x01
 [=]        Subtype: 0x01
 [=]        Version: 0.1 ( DESFire MF3ICD40 )
-[=]   Storage size: 0x18 ( 4096 bytes )
+[=]   Storage size: 0x1A ( 8192 bytes )
 [=]       Protocol: 0x05 ( ISO 14443-2, 14443-3 )
 
 [=] --- Software Information
-[=]    raw: 90AF0401010001
-[=]      Vendor Id: no tag-info available
-[=]           Type: 0xAF
-[=]        Subtype: 0x04
-[=]        Version: 1.1
-[=]   Storage size: 0x00 ( 1 bytes )
-[=]       Protocol: 0x01 ( Unknown )
+[=]    raw: 04010100011805
+[=]      Vendor Id: NXP Semiconductors Germany
+[=]           Type: 0x01
+[=]        Subtype: 0x01
+[=]        Version: 0.1
+[=]   Storage size: 0x18 ( 4096 bytes )
+[=]       Protocol: 0x05 ( ISO 14443-3, 14443-4 )
 
 [=] --------------------------------- Card capabilities ---------------------------------
 [#] error DESFIRESendRaw Current configuration/status does not allow the requested command
+[#] error DESFIRESendRaw Unknown error
 [#] error DESFIRESendRaw Current configuration/status does not allow the requested command
 [#] error DESFIRESendApdu Command code not supported
 [#] error DESFIRESendApdu Command code not supported
