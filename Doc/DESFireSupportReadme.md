@@ -209,6 +209,24 @@ fingerprint the DESFire tag subtype in the
         return NTAG413DNA;
     return DESFIRE_UNKNOWN;
 ```
+Table 2 in section 2.1 of [NXP AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf) (page 5) lists
+standard Mifare tag identifications for several tags. This byte is represented by setting 
+``Picc.HwType`` using the Chameleon terminal command ``DF_SETHDR=HwType xx``. The default setting for the 
+Chameleon DESFire tags is ``0x01`` (*MIFARE DESFire*). The table in the application note is reproduced 
+below for reference. The NXP documentation says: "*The upper nibble [X] defines if the
+device is a native MIFARE IC (``0x0``), an implementation (``0x8``), an applet on a Java Card
+(``0x9``) or MIFARE 2GO (``0xA``).*"
+
+| Second Byte of GetVersion Response (``Picc.HwType``) | NXP Type Tag |
+| :---: | :-- |
+| ``0xX1`` | *MIFARE DESFire* |
+| ``0xX2`` | *MIFARE Plus* |
+| ``0xX3`` | *MIFARE Ultralight* |
+| ``0xX4`` | *NTAG* |
+| ``0xX5`` | *RFU* |
+| ``0xX6`` | *RFU* |
+| ``0xX7`` | *NTAG I2C* |
+| ``0xX8`` | *MIFARE DESFire Light* |
 
 #### DF_COMM_MODE -- Manually sets the communication mode of the current session
 
