@@ -59,7 +59,7 @@ SIZET DESFIRE_INITIAL_FIRST_FREE_BLOCK_ID = 0;
 SIZET DESFIRE_FIRST_FREE_BLOCK_ID = 0;
 SIZET CardCapacityBlocks = 0;
 
-uint16_t DesfireATQAValue = DESFIRE_DEFAULT_ATQA_VALUE;
+bool DesfireATQAReset = false;
 
 void InitBlockSizes(void) {
     DESFIRE_PICC_INFO_BLOCK_ID = 0;
@@ -174,6 +174,7 @@ void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
     } else {
         MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
+        DesfireATQAReset = true;
         SelectPiccApp();
     }
 }
@@ -193,6 +194,7 @@ void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
     } else {
         MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
+        DesfireATQAReset = true;
         SelectPiccApp();
     }
 }
@@ -212,6 +214,7 @@ void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC) {
     } else {
         MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
+        DesfireATQAReset = true;
         SelectPiccApp();
     }
 
@@ -255,13 +258,26 @@ void FormatPicc(void) {
     memset(&AppDir, 0x00, sizeof(DESFireAppDirType));
     memset(&SelectedApp, 0x00, sizeof(SelectedAppCacheType));
     /* Set a random new UID */
-    BYTE uidData[DESFIRE_UID_SIZE - 1];
-    RandomGetBuffer(uidData, DESFIRE_UID_SIZE - 1);
-    memcpy(&Picc.Uid[1], uidData, DESFIRE_UID_SIZE - 1);
-    /* Conform to NXP Application Note AN10927 about the first
-     * byte of a randomly generated UID (refer to section 2.1.1).
+    BYTE uidData[DESFIRE_UID_SIZE];
+    RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
+    memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
+    if (Picc.Uid[0] == ISO14443A_UID0_RANDOM) {
+        Picc.Uid[0] != 0x30;
+    }
+    /* OLD: Conform to NXP Application Note AN10927 about the first
+     *      byte of a randomly generated UID (refer to section 2.1.1).
      */
-    Picc.Uid[0] = ISO14443A_UID0_RANDOM;
+    //Picc.Uid[0] = ISO14443A_UID0_RANDOM;
+    //uint16_t ATQAValue = DESFIRE_ATQA_RANDOM_UID;
+    /* NEW: NXP AN10927 (section 2.1.1, page 5) states that a random
+     *      UID (RID) is always limited to 4 bytes. This limitation
+     *      is avoided by just setting the whole buffer to a random
+     *      value whose first byte is not 0x08.
+     */
+    uint16_t ATQAValue = DESFIRE_ATQA_DEFAULT;
+    Picc.ATQA[0] = (uint8_t)((ATQAValue >> 8) & 0x00FF);
+    Picc.ATQA[1] = (uint8_t)(ATQAValue & 0x00FF);
+    DesfireATQAReset = false;
     /* Randomize the initial batch number data: */
     BYTE batchNumberData[5];
     RandomGetBuffer(batchNumberData, 5);
@@ -354,11 +370,18 @@ void FactoryFormatPiccEV2(uint8_t StorageSize) {
 }
 
 void GetPiccUid(ConfigurationUidType Uid) {
-    memcpy(Uid, Picc.Uid, DESFIRE_UID_SIZE + 1);
+    memcpy(Uid, &Picc.Uid[0], DESFIRE_UID_SIZE);
 }
 
 void SetPiccUid(ConfigurationUidType Uid) {
     memcpy(&Picc.Uid[0], Uid, DESFIRE_UID_SIZE);
+    DesfireATQAReset = true;
+    //if (!DesfireATQAReset) {
+    //    uint16_t ATQAValue = DESFIRE_ATQA_DEFAULT;
+    //    Picc.ATQA[0] = (uint8_t)((ATQAValue >> 8) & 0x00FF);
+    //    Picc.ATQA[1] = (uint8_t)(ATQAValue & 0x00FF);
+    //    DesfireATQAReset = true;
+    //}
     SynchronizePICCInfo();
 }
 

@@ -29,6 +29,7 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "DESFireFirmwareSettings.h"
 #include "DESFireUtils.h"
+#include "DESFireISO7816Support.h"
 
 #include "../ISO14443-3A.h"
 
@@ -40,15 +41,40 @@ This notice must be retained at the top of all source files where indicated.
  * CRC-16
  */
 
+/* Refer to Table 10 in section 9.3 (page 15) of the NXP Mifare Classic EV1 1K data sheet:
+ * https://www/nxp.com/docs/en/data-sheet/MF1S50YYX_V1.pdf
+ */
+#define ISO14443A_ACK                       0xA0
+#define ISO14443A_NAK                       0x00 // 0x04
+
+/* See Table 13 in section 7.1 (page 67) of the NXP PN532 User Manual (error Handling / status codes):
+ * https://www.nxp.com/docs/en/user-guide/141520.pdf
+ */
+#define ISO14443A_CRCA_ERROR                0x02
+#define ISO14443A_CRC_FRAME_SIZE            ASBITS(ISO14443A_CRCA_SIZE)
+
 #define ISO14443A_CMD_RATS                  0xE0
 #define ISO14443A_RATS_FRAME_SIZE           ASBITS(6)
-#define ISO14443A_CMD_RNAK                  0xB2
-#define ISO14443A_CRC_FRAME_SIZE            ASBITS(ISO14443A_CRCA_SIZE)
-#define ISO14443A_CMD_DESELECT              0xC2
+
+#define NXP_PN532_CMD_INDESELECT            0x44
+#define IsDeselectCmd(cmdCode)              (cmdCode == NXP_PN532_CMD_INDESELECT)
 #define ISO14443A_DESELECT_FRAME_SIZE       (ISO14443A_HLTA_FRAME_SIZE + ASBITS(ISO14443A_CRCA_SIZE))
 
-#define ISO14443ACmdIsPM3WUPA(cmd)          ((cmd & 0x54) == 0x54)
-#define ISO14443ACmdIsWUPA(cmd)             ((cmd == ISO14443A_CMD_WUPA) || ISO14443ACmdIsPM3WUPA(cmd))
+#define NXP_PN532_INSELECT_CMD              0x54
+#define ISO14443ACmdIsPM3WUPA(cmdCode)      (cmdCode == NXP_PN532_INSELECT_CMD)
+#define ISO14443ACmdIsWUPA(cmdCode)         ((cmdCode == ISO14443A_CMD_WUPA) || ISO14443ACmdIsPM3WUPA(cmdCode))
+
+#define IsRIDCmd(cmdCode)                   (cmdCode == ISO7816_RID_CMD)
+
+/* A quick way to catch and handle the bytes the Hid Omnikey 5022CL and ACR-122 USB readers
+ * will throw out to identify NFC tags in a promiscuous blanket enumeration of possibilities
+ * while running 'pcsc_spy -v'. The strategy is to respond with a NAK and continue to ignore
+ * these incoming commands.
+ */
+#define MIFARE_RESTORE_CMD                  0xC2
+#define NFCTAG_TYPE12_TERMINATOR_TLV        0xFE
+#define NXP_PN532_CMD_TGGETINITIATOR        0x88
+#define IsUnsupportedCmd(cmdCode)           ((cmdCode == MIFARE_RESTORE_CMD) || (cmdCode == NFCTAG_TYPE12_TERMINATOR_TLV) || (cmdCode == NXP_PN532_CMD_TGGETINITIATOR))
 
 #define ISO14443_PCB_BLOCK_TYPE_MASK        0xC0
 #define ISO14443_PCB_I_BLOCK                0x00
