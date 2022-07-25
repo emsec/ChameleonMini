@@ -347,23 +347,24 @@ data setdebugmode -2
 ```bash
 [usb] pm3 --> hf mfdes list
 [=] downloading tracelog data from device
-[+] Recorded activity (trace len = 146 bytes)
+[+] Recorded activity (trace len = 158 bytes)
 [=] start = start of start frame end = end of frame. src = source of transfer
 [=] ISO14443A - all times are in carrier periods (1/13.56MHz)
 
       Start |        End | Src | Data (! denotes parity error)                                           | CRC | Annotation
 ------------+------------+-----+-------------------------------------------------------------------------+-----+--------------------
           0 |        992 | Rdr |52                                                                       |     | WUPA
-       2116 |       4484 | Tag |44  03                                                                   |     | 
+       2244 |       4612 | Tag |04  03                                                                   |     | 
        7040 |       9504 | Rdr |93  20                                                                   |     | ANTICOLL
-      10820 |      16708 | Tag |88  41  92  a0  fb                                                       |     | 
-      19328 |      29856 | Rdr |93  70  88  41  92  a0  fb  87  d9                                       |  ok | SELECT_UID
-      30916 |      34436 | Tag |24  d8  36                                                               |     | 
-      35840 |      38304 | Rdr |95  20                                                                   |     | ANTICOLL-2
-      39364 |      45188 | Tag |b2  59  78  41  d2                                                       |     | 
-      47872 |      58336 | Rdr |95  70  b2  59  78  41  d2  13  09                                       |  ok | SELECT_UID-2
-      59844 |      63428 | Tag |20  fc  70                                                               |     | 
-      65152 |      69920 | Rdr |e0  80  31  73                                                           |  ok | RATS
+      10564 |      16388 | Tag |88  08  49  4d  84                                                       |     | 
+      19072 |      29536 | Rdr |93  70  88  08  49  4d  84  6b  42                                       |  ok | SELECT_UID
+      30788 |      34308 | Tag |24  d8  36                                                               |     | 
+      35712 |      38176 | Rdr |95  20                                                                   |     | ANTICOLL-2
+      39236 |      45124 | Tag |73  49  ee  75  a1                                                       |     | 
+      47744 |      58272 | Rdr |95  70  73  49  ee  75  a1  ff  45                                       |  ok | SELECT_UID-2
+      59332 |      62916 | Tag |20  fc  70                                                               |     | 
+      64640 |      69408 | Rdr |e0  80  31  73                                                           |  ok | RATS
+      70468 |      74052 | Tag |06  c8  34                                                               |     | 
 ```
 
 #### Getting a summary of tag information
@@ -380,18 +381,17 @@ DESFire configuration is used:
 [#] [WCMD <--: : 08/08] 03 90 af 00 00 00 1f 15 
 [#] pcb_blocknum 0 == 2 
 [#] [WCMD <--: : 08/08] 02 90 af 00 00 00 34 11 
-[#] halt warning. response len: 4
-[#] Halt error
-[#] switch_off
 
 [=] ---------------------------------- Tag Information ----------------------------------
-[+]               UID: B9 38 A2 A0 B5 1A B9 
-[+]      Batch number: B9 09 58 8B EA 
+[+]               UID: 08 49 4D 73 49 EE 75 
+[+]      Batch number: D5 D7 EB 88 47 
 [+]   Production date: week 01 / 2005
 
 [=] --- Hardware Information
 [=]    raw: 04010100011A05
 [=]      Vendor Id: NXP Semiconductors Germany
+[#] halt warning. response len: 4
+[#] Halt error
 [=]           Type: 0x01
 [=]        Subtype: 0x01
 [=]        Version: 0.1 ( DESFire MF3ICD40 )
@@ -408,6 +408,7 @@ DESFire configuration is used:
 [=]       Protocol: 0x05 ( ISO 14443-3, 14443-4 )
 
 [=] --------------------------------- Card capabilities ---------------------------------
+[#] switch_off
 [#] error DESFIRESendRaw Current configuration/status does not allow the requested command
 [#] error DESFIRESendRaw Unknown error
 [#] error DESFIRESendRaw Current configuration/status does not allow the requested command
