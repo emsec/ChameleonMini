@@ -269,66 +269,6 @@ DF_ENCMODE=AES:CBC
 
 ## Supported functionality
 
-### Tables of tested support for active commands
-
-#### Native DESFire command support (mixed EV0/EV1/EV2 instruction sets)
-
-| Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
-| :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :ballot_box_with_check: | |
-| CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :ballot_box_with_check: | |
-| CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :ballot_box_with_check: | |
-| CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :x: | |
-| CMD_AUTHENTICATE_EV2_NONFIRST | 0x77 | Newer spec auth variant | :x: | See page 32 of AN12343.pdf |
-| CMD_CHANGE_KEY_SETTINGS | 0x54 | | :ballot_box_with_check: | |
-| CMD_SET_CONFIGURATION |  0x5C | | :x: | |
-| CMD_CHANGE_KEY |  0xC4 | | :ballot_box_with_check: | |
-| CMD_GET_KEY_VERSION | 0x64 | | :ballot_box_with_check: | |
-| CMD_CREATE_APPLICATION |  0xCA | | :ballot_box_with_check: | |
-| CMD_DELETE_APPLICATION |  0xDA | | :ballot_box_with_check: | |
-| CMD_GET_APPLICATION_IDS | 0x6A | | :ballot_box_with_check: | |
-| CMD_FREE_MEMORY | 0x6E | | :ballot_box_with_check: | |
-| CMD_GET_DF_NAMES | 0x6D | | :x: | =Need docs for what this command does! |
-| CMD_GET_KEY_SETTINGS | 0x45 | | :ballot_box_with_check: | |
-| CMD_SELECT_APPLICATION |  0x5A | | :ballot_box_with_check: | |
-| CMD_FORMAT_PICC |  0xFC | | :ballot_box_with_check: | |
-| CMD_GET_VERSION | 0x60 | | :ballot_box_with_check: | |
-| CMD_GET_CARD_UID | 0x51 | | :ballot_box_with_check: | |
-| CMD_GET_FILE_IDS |  0x6F | | :ballot_box_with_check: | |
-| CMD_GET_FILE_SETTINGS | 0xF5 | | :ballot_box_with_check: | |
-| CMD_CHANGE_FILE_SETTINGS | 0x5F | | :x: | |
-| CMD_CREATE_STDDATA_FILE |  0xCD | | :ballot_box_with_check: | |
-| CMD_CREATE_BACKUPDATA_FILE |  0xCB | | :ballot_box_with_check: | |
-| CMD_CREATE_VALUE_FILE |  0xCC | | :ballot_box_with_check: | |
-| CMD_CREATE_LINEAR_RECORD_FILE | 0xC1 | | :wavy_dash: | GetFileSettings still not returning correct data |
-| CMD_CREATE_CYCLIC_RECORD_FILE | 0xC0 | | :wavy_dash: | GetFileSettings still not returning correct data |
-| CMD_DELETE_FILE | 0xDF | | :ballot_box_with_check: | |
-| CMD_GET_ISO_FILE_IDS | 0x61 | | :x: | |
-| CMD_READ_DATA |  0xBD | | :ballot_box_with_check: | The data for std/backup files is uninitialized (any bits) until the user sets the data with WriteData |
-| CMD_WRITE_DATA |  0x3D | | :ballot_box_with_check: | Only supports write command operations with <= 52 bytes of data at a time. Offset parameters can be used to write lengthier files. |
-| CMD_GET_VALUE | 0x6C | | :ballot_box_with_check: | |
-| CMD_CREDIT | 0x0C | | :ballot_box_with_check: | |
-| CMD_DEBIT | 0xDC | | :ballot_box_with_check: | |
-| CMD_LIMITED_CREDIT | 0x1C | | :ballot_box_with_check: | |
-| CMD_WRITE_RECORD | 0x3B | | :question: | |
-| CMD_READ_RECORDS | 0xBB | | :ballot_box_with_check: :wavy_dash: | |
-| CMD_CLEAR_RECORD_FILE | 0xEB | | :question: | |
-| CMD_COMMIT_TRANSACTION | 0xC7 | | :ballot_box_with_check: | |
-| CMD_ABORT_TRANSACTION | 0xA7 | | :ballot_box_with_check: | |               |
-
-#### ISO7816 command support
-
-| Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
-| :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_ISO7816_SELECT | 0xa4 | A more nuanced ISO7816 version of EF/DF selection. | :wavy_dash: :question: | See the implementation notes [in this spec](https://cardwerk.com/smart-card-standard-iso7816-4-section-6-basic-interindustry-commands/#chap6_11). We only support EF selection with ``P1=00000000|000000010`` and DF(AID) with ``P1=00000100``. |
-| CMD_ISO7816_GET_CHALLENGE | 0x84 | | :wavy_dash: :question: | |
-| CMD_ISO7816_EXTERNAL_AUTHENTICATE | 0x82 | | :x: | |
-| CMD_ISO7816_INTERNAL_AUTHENTICATE | 0x88 | | :x: | |
-| CMD_ISO7816_READ_BINARY | 0xb0 | | :wavy_dash: :question: | Needs testing. |
-| CMD_ISO7816_UPDATE_BINARY | 0xd6 | | :wavy_dash: :question: | Needs testing. |
-| CMD_ISO7816_READ_RECORDS | 0xb2 | | :wavy_dash: :question: | Needs testing. |
-| CMD_ISO7816_APPEND_RECORD | 0xe2 | | :wavy_dash: :question: | Especially needs testing for corner case checks. |
-
 ### Proxmark3 (PM3) compatibility and support 
 
 The next PM3 commands are known to work with the Chameleon DESFire tag emulation (using both the RDV4 and Easy device types). 
@@ -498,21 +438,6 @@ The DESFire support for the Chameleon Mini is tested with the LibNFC-based sourc
 [developed in this directory](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting) with 
 [sample dumps and output here](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting/SampleOutputDumps).
 
-### Links to public datasheets and online specs 
-
-The following links are the original online resource links are
-archived here for documentation on how this firmware operates:
-* [ISO/IEC 7816-4 Standard](http://www.unsads.com/specs/ISO/7816/ISO7816-4.pdf)
-* [PublicDESFireEV0DatasheetSpecs -- April2004 (M075031_desfire.pdf)](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
-* [NXP Application Note AN12343](https://www.nxp.com/docs/en/application-note/AN12343.pdf) 
-* [TI DESFire EV1 Tag AES Auth Specs (sloa213.pdf)](https://www.ti.com/lit/an/sloa213/sloa213.pdf)
-* [NXP Application Note AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf)
-* My favorite conference submission in grad school is (by far) about this project -- even though I did not present my talk that year.
-  In rare form, the [presentation slides (tentative; see uploads)](https://archive.org/details/@maxiedschmidt) and the 
-  [accepted manuscript](https://archive.org/download/ftc2021-presentation-slides-with-notes/schmidt-ftc2021-submission.pdf) (published in print form by Springer) 
-  effectively document the scarce details of the DESFire spec and command sets gleaned while working on this project as a conference proceedings article.
-  Grace Hopper would have approved :)
-
 ## Credits 
 
 ### Direct funding sources for this project
@@ -554,6 +479,22 @@ repositories and code bases:
 * [Android HCE Framework Library (kevinvalk)](https://github.com/kevinvalk/android-hce-framework)
 * [AVRCryptoLib in C](https://github.com/cantora/avr-crypto-lib)
 * [LibFreefare DESFire Code (mostly as a reference and check point)](https://github.com/nfc-tools/libfreefare/tree/master/libfreefare)
+
+### Links to public datasheets and online specs 
+
+The following links are the original online resource links are
+archived here for documentation on how this firmware operates:
+* [ISO/IEC 7816-4 Standard](http://www.unsads.com/specs/ISO/7816/ISO7816-4.pdf)
+* [PublicDESFireEV0DatasheetSpecs -- April2004 (M075031_desfire.pdf)](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
+* [NXP Application Note AN12343](https://www.nxp.com/docs/en/application-note/AN12343.pdf) 
+* [TI DESFire EV1 Tag AES Auth Specs (sloa213.pdf)](https://www.ti.com/lit/an/sloa213/sloa213.pdf)
+* [NXP Application Note AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf)
+* My favorite conference submission in grad school is (by far) about this project -- even though I did not present my talk that year.
+  In rare form, the [presentation slides (tentative; see uploads)](https://archive.org/details/@maxiedschmidt) and the 
+  [accepted manuscript](https://archive.org/download/ftc2021-presentation-slides-with-notes/schmidt-ftc2021-submission.pdf) 
+  (published in print form by Springer) document the scarce details of the DESFire spec and command sets gleaned while working 
+  on this project as a conference proceedings article.
+  Grace Hopper would have approved :)
 
 ## New development sources of DESFire support for the Chameleon Mini
 
