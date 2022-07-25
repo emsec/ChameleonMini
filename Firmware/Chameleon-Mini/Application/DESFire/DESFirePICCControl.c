@@ -261,20 +261,11 @@ void FormatPicc(void) {
     BYTE uidData[DESFIRE_UID_SIZE];
     RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
     memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
-    if (Picc.Uid[0] == ISO14443A_UID0_RANDOM) {
-        Picc.Uid[0] != 0x30;
-    }
-    /* OLD: Conform to NXP Application Note AN10927 about the first
-     *      byte of a randomly generated UID (refer to section 2.1.1).
+    /* Conform to NXP Application Note AN10927 about the first
+     * byte of a randomly generated UID (refer to section 2.1.1).
      */
-    //Picc.Uid[0] = ISO14443A_UID0_RANDOM;
-    //uint16_t ATQAValue = DESFIRE_ATQA_RANDOM_UID;
-    /* NEW: NXP AN10927 (section 2.1.1, page 5) states that a random
-     *      UID (RID) is always limited to 4 bytes. This limitation
-     *      is avoided by just setting the whole buffer to a random
-     *      value whose first byte is not 0x08.
-     */
-    uint16_t ATQAValue = DESFIRE_ATQA_DEFAULT;
+    Picc.Uid[0] = ISO14443A_UID0_RANDOM;
+    uint16_t ATQAValue = DESFIRE_ATQA_RANDOM_UID;
     Picc.ATQA[0] = (uint8_t)((ATQAValue >> 8) & 0x00FF);
     Picc.ATQA[1] = (uint8_t)(ATQAValue & 0x00FF);
     DesfireATQAReset = false;
@@ -376,12 +367,12 @@ void GetPiccUid(ConfigurationUidType Uid) {
 void SetPiccUid(ConfigurationUidType Uid) {
     memcpy(&Picc.Uid[0], Uid, DESFIRE_UID_SIZE);
     DesfireATQAReset = true;
-    //if (!DesfireATQAReset) {
-    //    uint16_t ATQAValue = DESFIRE_ATQA_DEFAULT;
-    //    Picc.ATQA[0] = (uint8_t)((ATQAValue >> 8) & 0x00FF);
-    //    Picc.ATQA[1] = (uint8_t)(ATQAValue & 0x00FF);
-    //    DesfireATQAReset = true;
-    //}
+    if (!DesfireATQAReset) {
+        uint16_t ATQAValue = DESFIRE_ATQA_DEFAULT;
+        Picc.ATQA[0] = (uint8_t)((ATQAValue >> 8) & 0x00FF);
+        Picc.ATQA[1] = (uint8_t)(ATQAValue & 0x00FF);
+        DesfireATQAReset = true;
+    }
     SynchronizePICCInfo();
 }
 

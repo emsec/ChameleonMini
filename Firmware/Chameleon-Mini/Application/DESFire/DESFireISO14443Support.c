@@ -79,6 +79,12 @@ void ISO144434Reset(void) {
     ISO14443ALastIncomingDataFrame[0] = 0x00;
 }
 
+static uint16_t GetACKCommandData(uint8_t *Buffer);
+static uint16_t GetACKCommandData(uint8_t *Buffer) {
+    Buffer[0] = ISO14443A_ACK;
+    return ASBITS(1);
+}
+
 static uint16_t GetNAKCommandData(uint8_t *Buffer, bool ResetToHaltState);
 static uint16_t GetNAKCommandData(uint8_t *Buffer, bool ResetToHaltState) {
     if (ResetToHaltState) {
@@ -124,17 +130,17 @@ uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t Bit
                 return GetNAKCommandData(Buffer, false);
                 //return ISO14443A_APP_NO_RESPONSE;
             }
-            /* Process RATS.
+            /* Process RATS:
              * NOTE: ATS bytes are tailored to Chameleon implementation and differ from DESFire spec.
              * NOTE: Some PCD implementations do a memcmp() over ATS bytes, which is completely wrong.
              */
             Iso144434CardID = Buffer[1] & 0x0F;
             Buffer[0] = 0x06;
             memcpy(&Buffer[1], &Picc.ATSBytes[1], 4);
-            Buffer[5] = 0x80; /* T1: dummy value for historical bytes */
-            ByteCount = 6;    /* NOT including CRC */
+            Buffer[5] = 0x80;                              /* T1: dummy value for historical bytes */
+            ByteCount = 6;
             ISO144434SwitchState(ISO14443_4_STATE_ACTIVE);
-            return ASBITS(ByteCount); /* PM3 expects no CRCA bytes */
+            return GetAndSetBufferCRCA(Buffer, ByteCount); /* PM3 'hf mfdes list' expects CRCA bytes on the RATS data */
         }
         case ISO14443_4_STATE_ACTIVE: {
             /* See: ISO/IEC 14443-4; 7.1 Block format */
@@ -341,8 +347,16 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
     } else if (ISO144433AIsHalt(Buffer, BitCount)) {
         DesfireLogEntry(LOG_INFO_APP_CMD_HALT, NULL, 0);
         return GetHLTACommandData(Buffer, true);
+    } else if (Cmd == ISO14443A_CMD_RATS) {
+        ISO144434SwitchState(ISO14443_4_STATE_EXPECT_RATS);
+        uint16_t ReturnBits = ISO144434ProcessBlock(Buffer, ASBYTES(BitCount), BitCount);
+        Iso144433AState = ISO14443_3A_STATE_ACTIVE;
+        StateRetryCount = 0;
+        return ReturnBits;
     } else if (IsDeselectCmd(Cmd)) {
-        return GetHLTACommandData(Buffer, true);
+        ISO144433AHalt();
+        return GetACKCommandData(Buffer);
+        //return GetHLTACommandData(Buffer, true);
     } else if (IsRIDCmd(Cmd)) {
         Iso144433AState = ISO14443_3A_STATE_ACTIVE;
         StateRetryCount = 0;
@@ -352,14 +366,11 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
          */
         uint16_t respDataSize = (uint16_t) sizeof(MIFARE_DESFIRE_TAG_AID);
         memcpy(&Buffer[0], MIFARE_DESFIRE_TAG_AID, respDataSize);
-        /* ??? TODO: Do we append CRCA bytes ???
-             * ISO14443AAppendCRCA(Buffer, respDataSize);
-             * respDataSize += 2;
-         */
+        /* ??? TODO: Do we append CRCA bytes ??? */
         return ASBITS(respDataSize);
     } else if (IsUnsupportedCmd(Cmd)) {
         return GetNAKCommandData(Buffer, true);
-    } else if (CheckStateRetryCount(false)) { /* Increment the state retry count to keep track of when to timeout */
+    } else if (CheckStateRetryCount(false)) {
         DEBUG_PRINT_P(PSTR("ISO14443-3: SW-RESET"));
         return GetHLTACommandData(Buffer, true);
     } else if (BitCount <= BITS_PER_BYTE) {
@@ -382,23 +393,23 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             Iso144433AIdleState = Iso144433AState;
             ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL1);
             /* The LSByte ordering of the ATQA value for ISO14443 tags is
-            * discussed in section 2.3 of NXP AN10833.
-            */
+             * discussed in section 2.3 of NXP AN10833.
+             */
             Buffer[0] = Picc.ATQA[1];
             Buffer[1] = Picc.ATQA[0];
             return ASBITS(ISO14443A_ATQA_FRAME_SIZE_BYTES);
 
         case ISO14443_3A_STATE_READY_CL1:
-        case ISO14443_3A_STATE_READY_CL1_NVB_END:
+        case ISO14443_3A_STATE_READY_CL1_NVB_END: {
             if (Cmd == ISO14443A_CMD_SELECT_CL1) {
-                /* Load UID CL1 and perform anticollision: */
+                /* NXP AN10927 (section 2, figure 1, page 3) shows the expected
+                 * data flow to exchange the 7-byte UID for DESFire tags:
+                 * http://www.nxp.com/docs/en/application-note/AN10927.pdf
+                 */
                 ConfigurationUidType Uid;
                 ApplicationGetUid(&Uid[1]);
                 Uid[0] = ISO14443A_UID0_CT;
-                /* NXP AN10927 (section 2, figure 1, page 3) shows the expected
-                * data flow to exchange the 7-byte UID for DESFire tags:
-                              * http://www.nxp.com/docs/en/application-note/AN10927.pdf
-                              */
+                /* Load UID CL1 and perform anticollision: */
                 uint8_t cl1SAKValue = SAK_CL1_VALUE;
                 if (Buffer[1] == ISO14443A_NVB_AC_START && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[0], 4, cl1SAKValue)) {
                     ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL1_NVB_END);
@@ -406,7 +417,6 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[0], 4, cl1SAKValue)) {
                     ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL2);
                     return BitCount;
-
                 } else {
                     DEBUG_PRINT_P(PSTR("ISO14443-4: Select CL1-NOT-OK"));
                 }
@@ -415,19 +425,19 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             }
             CheckStateRetryCount(false);
             return GetNAKCommandData(Buffer, false);
-        //return ISO14443A_APP_NO_RESPONSE;
-
+            //return ISO14443A_APP_NO_RESPONSE;
+        }
         case ISO14443_3A_STATE_READY_CL2:
-        case ISO14443_3A_STATE_READY_CL2_NVB_END:
+        case ISO14443_3A_STATE_READY_CL2_NVB_END: {
             if (Cmd == ISO14443A_CMD_SELECT_CL2 && ActiveConfiguration.UidSize >= ISO14443A_UID_SIZE_DOUBLE) {
                 /* Load UID CL2 and perform anticollision: */
                 ConfigurationUidType Uid;
                 ApplicationGetUid(&Uid[0]);
                 uint8_t cl2SAKValue = SAK_CL2_VALUE;
-                if (Buffer[1] == ISO14443A_NVB_AC_START && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[4], 4, cl2SAKValue)) {
+                if (Buffer[1] == ISO14443A_NVB_AC_START && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[3], 4, cl2SAKValue)) {
                     ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL2_NVB_END);
                     return BitCount;
-                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[4], 4, cl2SAKValue)) {
+                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[3], 4, cl2SAKValue)) {
                     ISO144433ASwitchState(ISO14443_3A_STATE_ACTIVE);
                     return BitCount;
 
@@ -439,22 +449,19 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
             }
             CheckStateRetryCount(false);
             return GetNAKCommandData(Buffer, false);
-        //return ISO14443A_APP_NO_RESPONSE;
-
-        case ISO14443_3A_STATE_ACTIVE:
+            //return ISO14443A_APP_NO_RESPONSE;
+        }
+        case ISO14443_3A_STATE_ACTIVE: {
             StateRetryCount = MAX_STATE_RETRY_COUNT;
             if (Cmd == ISO14443A_CMD_RATS) {
                 ISO144434SwitchState(ISO14443_4_STATE_EXPECT_RATS);
             } else if (Cmd == ISO14443A_CMD_SELECT_CL3) {
                 /* DESFire UID size is of insufficient size to support this request: */
-                Buffer[0] = ISO14443A_SAK_COMPLETE_NOT_COMPLIANT;
-                ISO14443AAppendCRCA(&Buffer[0], 1);
-                return ISO14443A_SAK_FRAME_SIZE;
+                return GetNAKCommandData(Buffer, false);
             }
             /* Forward to ISO/IEC 14443-4 block processing code */
-            uint16_t ReturnBits = ISO144434ProcessBlock(Buffer, ASBYTES(BitCount), BitCount);
-            return ReturnBits;
-
+            return ISO144434ProcessBlock(Buffer, ASBYTES(BitCount), BitCount);
+        }
         default:
             break;
 

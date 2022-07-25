@@ -434,14 +434,97 @@ DESFire configuration is used:
 ### Compatibility with external USB readers and LibNFC
 
 The DESFire configurations are known to work with the anticollision and RATS handshaking utility ``nfc-anticol`` 
-from [LibNFC](https://github.com/nfc-tools/libnfc). 
-The Mifare DESFire commands installed by [LibFreefare](https://github.com/nfc-tools/libfreefare) 
-have not been tested nor confirmed to work with the Chameleon Mini. 
-The developers are actively working to ensure compatibility of the Chameleon DESFire emulation with external USB readers used 
-running ``pcscd`` and ``pcsc_spy``. This support is not yet functional with tests using ACR-122 and HID Omnikey 5022CL readers. 
+from [LibNFC](https://github.com/nfc-tools/libnfc). The following is the output of this utility using the 
+ACS ACR-122U reader over USB (with the ``pcscd`` dameon not running):
+```bash
+$ sudo nfc-anticol -f
+NFC reader: ACS / ACR122U PICC Interface opened
+
+Sent bits:     26 (7 bits)
+Received bits: 04  03  
+Sent bits:     93  20  
+Received bits: 88  08  c7  df  98  
+Sent bits:     93  70  88  08  c7  df  98  9c  ae  
+Received bits: 24  d8  36  
+Sent bits:     95  20  
+Received bits: f1  02  fc  6c  63  
+Sent bits:     95  70  f1  02  fc  6c  63  3a  98  
+Received bits: 20  fc  70  
+Sent bits:     e0  50  bc  a5  
+Received bits: 06  75  00  81  02  80  66  fd  
+Sent bits:     50  00  57  cd  
+Received bits: 50  00  57  cd  
+
+Found tag with
+ UID: 08c7dff102fc6c
+ATQA: 0304
+ SAK: 20
+ ATS: 06  75  00  81  02  80  66  fd
+```
 The DESFire support for the Chameleon Mini is tested with the LibNFC-based source code 
 [developed in this directory](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting) with 
 [sample dumps and output here](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting/SampleOutputDumps).
+The Mifare DESFire commands installed by [LibFreefare](https://github.com/nfc-tools/libfreefare) 
+do not work with the Chameleon Mini. 
+
+The developers are actively working to ensure compatibility of the Chameleon DESFire emulation with external USB readers used 
+running ``pcscd`` and ``pcsc_spy``. This support does not work with the HID Omnikey 5022CL reader. 
+The ACS ACR-122U reader recognizes the Chameleon running the vanilla ``CONFIG=MF_DESFIRE`` over PCSC (driver ``pcscd``) 
+as shown in the output of the ``pcsc_spy -v`` command:
+```bash
+ sudo pcsc_scan -v
+Using reader plug'n play mechanism
+Scanning present readers...
+Waiting for the first reader...found one
+Scanning present readers...
+0: ACS ACR122U PICC Interface 00 00
+ 
+Mon Jul 25 19:26:28 2022
+ Reader 0: ACS ACR122U PICC Interface 00 00
+  Event number: 3
+  Card state: Card removed, 
+   
+Mon Jul 25 19:26:37 2022
+ Reader 0: ACS ACR122U PICC Interface 00 00
+  Event number: 4
+  Card state: Card inserted, 
+  ATR: 3B 81 80 01 80 80
+
+ATR: 3B 81 80 01 80 80
++ TS = 3B --> Direct Convention
++ T0 = 81, Y(1): 1000, K: 1 (historical bytes)
+  TD(1) = 80 --> Y(i+1) = 1000, Protocol T = 0 
+-----
+  TD(2) = 01 --> Y(i+1) = 0000, Protocol T = 1 
+-----
++ Historical bytes: 80
+  Category indicator byte: 80 (compact TLV data object)
++ TCK = 80 (correct checksum)
+
+Possibly identified card (using /usr/share/pcsc/smartcard_list.txt):
+3B 81 80 01 80 80
+	RFID - ISO 14443 Type A - NXP DESFire or DESFire EV1 or EV2
+	"Reiner LoginCard" (or "OWOK", how they name it) - they have been distributed by a german computer magazine ("Computer BILD")
+	https://cardlogin.reiner-sct.com/
+	Belgium A-kaart (Antwerp citycard)
+	Oyster card - Transport for London (second-gen "D")
+	https://en.wikipedia.org/wiki/Oyster_card
+	Kaba Legic Advant 4k
+	Sydney Opal card public transport ticket (Transport)
+	https://www.opal.com.au
+	TH Köln (University of Applied Sciences Cologne) - Student Identity Card
+	https://www.th-koeln.de/en/academics/multica_5893.php
+	German red cross blood donation service
+	http://www.blutspende-nordost.de/
+	Greater Toronto/Hamilton/Ottawa PRESTO contactless fare card
+	http://en.wikipedia.org/wiki/Presto_card
+	Electic vehicle charging card of the EMSP EnBW Energie Baden-Württemberg AG, Tarif ADAC e-Charge, Germany
+   
+Mon Jul 25 19:26:37 2022
+ Reader 0: ACS ACR122U PICC Interface 00 00
+  Event number: 5
+  Card state: Card removed, 
+```
 
 ## Credits 
 
