@@ -472,7 +472,7 @@ running ``pcscd`` and ``pcsc_spy``. This support does not work with the HID Omni
 The ACS ACR-122U reader recognizes the Chameleon running the vanilla ``CONFIG=MF_DESFIRE`` over PCSC (driver ``pcscd``) 
 as shown in the output of the ``pcsc_spy -v`` command:
 ```bash
- sudo pcsc_scan -v
+$ sudo pcsc_scan -v
 Using reader plug'n play mechanism
 Scanning present readers...
 Waiting for the first reader...found one
