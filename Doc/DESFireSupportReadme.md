@@ -287,24 +287,23 @@ data setdebugmode -2
 ```bash
 [usb] pm3 --> hf mfdes list
 [=] downloading tracelog data from device
-[+] Recorded activity (trace len = 158 bytes)
+[+] Recorded activity (trace len = 146 bytes)
 [=] start = start of start frame end = end of frame. src = source of transfer
 [=] ISO14443A - all times are in carrier periods (1/13.56MHz)
 
       Start |        End | Src | Data (! denotes parity error)                                           | CRC | Annotation
 ------------+------------+-----+-------------------------------------------------------------------------+-----+--------------------
           0 |        992 | Rdr |52                                                                       |     | WUPA
-       2244 |       4612 | Tag |04  03                                                                   |     | 
+       2116 |       4484 | Tag |04  03                                                                   |     | 
        7040 |       9504 | Rdr |93  20                                                                   |     | ANTICOLL
-      10564 |      16388 | Tag |88  08  49  4d  84                                                       |     | 
-      19072 |      29536 | Rdr |93  70  88  08  49  4d  84  6b  42                                       |  ok | SELECT_UID
-      30788 |      34308 | Tag |24  d8  36                                                               |     | 
-      35712 |      38176 | Rdr |95  20                                                                   |     | ANTICOLL-2
-      39236 |      45124 | Tag |73  49  ee  75  a1                                                       |     | 
-      47744 |      58272 | Rdr |95  70  73  49  ee  75  a1  ff  45                                       |  ok | SELECT_UID-2
-      59332 |      62916 | Tag |20  fc  70                                                               |     | 
-      64640 |      69408 | Rdr |e0  80  31  73                                                           |  ok | RATS
-      70468 |      74052 | Tag |06  c8  34                                                               |     | 
+      10580 |      16404 | Tag |88  08  e2  38  5a                                                       |     | 
+      19072 |      29600 | Rdr |93  70  88  08  e2  38  5a  95  d5                                       |  ok | SELECT_UID
+      30660 |      34180 | Tag |24  d8  36                                                               |     | 
+      35584 |      38048 | Rdr |95  20                                                                   |     | ANTICOLL-2
+      39124 |      44948 | Tag |f6  12  53  42  f5                                                       |     | 
+      47616 |      58080 | Rdr |95  70  f6  12  53  42  f5  cb  66                                       |  ok | SELECT_UID-2
+      59220 |      62804 | Tag |20  fc  70                                                               |     | 
+      64512 |      69280 | Rdr |e0  80  31  73                                                           |  ok | RATS
 ```
 
 #### Getting a summary of tag information
@@ -315,23 +314,30 @@ The tag type reported will also vary depending on which EV0/EV1/EV2 generation o
 DESFire configuration is used:
 ```bash
 [usb] pm3 --> hf mfdes info
+[#] BCC2 incorrect, got 0xf5, expected 0x12
+[#] Aborting
+[#] Can't select card
+[#] switch_off
+[!] ⚠️  Can't select card
+[usb] pm3 --> hf mfdes info
 [#] pcb_blocknum 0 == 2 
 [#] [WCMD <--: : 08/08] 02 90 60 00 00 00 14 98 
 [#] pcb_blocknum 1 == 3 
 [#] [WCMD <--: : 08/08] 03 90 af 00 00 00 1f 15 
 [#] pcb_blocknum 0 == 2 
 [#] [WCMD <--: : 08/08] 02 90 af 00 00 00 34 11 
+[#] halt warning. response len: 4
+[#] Halt error
+[#] switch_off
 
 [=] ---------------------------------- Tag Information ----------------------------------
-[+]               UID: 08 49 4D 73 49 EE 75 
-[+]      Batch number: D5 D7 EB 88 47 
+[+]               UID: 08 E2 38 F6 12 53 42 
+[+]      Batch number: BB 27 CB 35 08 
 [+]   Production date: week 01 / 2005
 
 [=] --- Hardware Information
 [=]    raw: 04010100011A05
 [=]      Vendor Id: NXP Semiconductors Germany
-[#] halt warning. response len: 4
-[#] Halt error
 [=]           Type: 0x01
 [=]        Subtype: 0x01
 [=]        Version: 0.1 ( DESFire MF3ICD40 )
@@ -348,7 +354,6 @@ DESFire configuration is used:
 [=]       Protocol: 0x05 ( ISO 14443-3, 14443-4 )
 
 [=] --------------------------------- Card capabilities ---------------------------------
-[#] switch_off
 [#] error DESFIRESendRaw Current configuration/status does not allow the requested command
 [#] error DESFIRESendRaw Unknown error
 [#] error DESFIRESendRaw Current configuration/status does not allow the requested command
