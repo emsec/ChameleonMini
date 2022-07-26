@@ -366,12 +366,16 @@ void GetPiccUid(ConfigurationUidType Uid) {
 
 void SetPiccUid(ConfigurationUidType Uid) {
     memcpy(&Picc.Uid[0], Uid, DESFIRE_UID_SIZE);
-    DesfireATQAReset = true;
-    if (!DesfireATQAReset) {
+    if (!DesfireATQAReset && Uid[0] != ISO14443A_UID0_RANDOM) {
         uint16_t ATQAValue = DESFIRE_ATQA_DEFAULT;
         Picc.ATQA[0] = (uint8_t)((ATQAValue >> 8) & 0x00FF);
         Picc.ATQA[1] = (uint8_t)(ATQAValue & 0x00FF);
         DesfireATQAReset = true;
+    } else if (!DesfireATQAReset && Uid[0] == ISO14443A_UID0_RANDOM) {
+        uint16_t ATQAValue = DESFIRE_ATQA_RANDOM_UID;
+        Picc.ATQA[0] = (uint8_t)((ATQAValue >> 8) & 0x00FF);
+        Picc.ATQA[1] = (uint8_t)(ATQAValue & 0x00FF);
+        DesfireATQAReset = false;
     }
     SynchronizePICCInfo();
 }
