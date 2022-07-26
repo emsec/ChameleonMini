@@ -44,8 +44,9 @@ This notice must be retained at the top of all source files where indicated.
 /* Refer to Table 10 in section 9.3 (page 15) of the NXP Mifare Classic EV1 1K data sheet:
  * https://www/nxp.com/docs/en/data-sheet/MF1S50YYX_V1.pdf
  */
-#define ISO14443A_ACK                       0xA0
-#define ISO14443A_NAK                       0x00 // 0x04
+#define ISO14443A_ACK                       0xA
+#define ISO14443A_NAK                       0x0
+#define ISO14443A_NAK_PARITY_ERROR          0x1
 
 /* See Table 13 in section 7.1 (page 67) of the NXP PN532 User Manual (error Handling / status codes):
  * https://www.nxp.com/docs/en/user-guide/141520.pdf

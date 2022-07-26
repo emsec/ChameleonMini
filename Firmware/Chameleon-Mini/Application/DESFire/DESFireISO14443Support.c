@@ -73,8 +73,10 @@ void ISO144434SwitchState(Iso144434StateType NewState) {
 
 void ISO144434Reset(void) {
     /* No logging here -- spams the log and slows things way down! */
+    ISO144433AReset();
     Iso144434State = ISO14443_4_STATE_EXPECT_RATS;
     Iso144434BlockNumber = 1;
+    Iso144434CardID = 1;
     ISO14443ALastIncomingDataFrameBits = 0;
     ISO14443ALastIncomingDataFrame[0] = 0x00;
 }
@@ -82,7 +84,7 @@ void ISO144434Reset(void) {
 static uint16_t GetACKCommandData(uint8_t *Buffer);
 static uint16_t GetACKCommandData(uint8_t *Buffer) {
     Buffer[0] = ISO14443A_ACK;
-    return ASBITS(1);
+    return 4;
 }
 
 static uint16_t GetNAKCommandData(uint8_t *Buffer, bool ResetToHaltState);
@@ -92,7 +94,17 @@ static uint16_t GetNAKCommandData(uint8_t *Buffer, bool ResetToHaltState) {
         StateRetryCount = 0;
     }
     Buffer[0] = ISO14443A_NAK;
-    return ASBITS(1);
+    return 4;
+}
+
+static uint16_t GetNAKParityErrorCommandData(uint8_t *Buffer, bool ResetToHaltState);
+static uint16_t GetNAKParityErrorCommandData(uint8_t *Buffer, bool ResetToHaltState) {
+    if (ResetToHaltState) {
+        ISO144433AHalt();
+        StateRetryCount = 0;
+    }
+    Buffer[0] = ISO14443A_NAK_PARITY_ERROR;
+    return 4;
 }
 
 uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t BitCount) {
@@ -116,7 +128,7 @@ uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t Bit
         /* ISO/IEC 14443-4, clause 7.5.5. The PICC does not attempt any error recovery. */
         DEBUG_PRINT_P(PSTR("ISO14443-4: CRC fail"));
         /* Invalid data received -- Respond with NAK */
-        return GetNAKCommandData(Buffer, false);
+        return GetNAKParityErrorCommandData(Buffer, false);
         //return ISO14443A_APP_NO_RESPONSE;
     }
 
@@ -157,9 +169,9 @@ uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t Bit
             if (HaveCID) {
                 PrologueLength++;
                 /* Verify the card ID */
-                if ((Buffer[1] & 0xF) != Iso144434CardID) {
+                if (ByteCount > 1 && (Buffer[1] & 0xF) != Iso144434CardID) {
                     /* Different card ID -- the frame is ignored */
-                    DEBUG_PRINT_P(PSTR("ISO14443-4: NEW CARD ID %02d"), Iso144434CardID);
+                    DEBUG_PRINT_P(PSTR("ISO14443-4: NEW-CARD-ID %02x != %02x"), (Buffer[1] & 0xF), Iso144434CardID);
                     return GetNAKCommandData(Buffer, false);
                     //return ISO14443A_APP_NO_RESPONSE;
                 }
@@ -181,13 +193,13 @@ uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t Bit
             if (HaveNAD) {
                 PrologueLength++;
                 /* Not currently supported -- the frame is ignored */
-                DEBUG_PRINT_P(PSTR("ISO144434ProcessBlock: ISO14443_PCB_I_BLOCK"));
+                DEBUG_PRINT_P(PSTR("ISO144434-4: ISO14443_PCB_I_BLOCK"));
             }
             /* 7.5.3.2, rule D: toggle on each I-block */
             Iso144434BlockNumber = MyBlockNumber = !MyBlockNumber;
             if (PCB & ISO14443_PCB_I_BLOCK_CHAINING_MASK) {
                 /* Currently not supported -- the frame is ignored */
-                DEBUG_PRINT_P(PSTR("ISO144434ProcessBlock: ISO14443_PCB_I_BLOCK"));
+                DEBUG_PRINT_P(PSTR("ISO14443-4: ISO14443_PCB_I_BLOCK"));
                 return GetNAKCommandData(Buffer, false);
                 //return ISO14443A_APP_NO_RESPONSE;
             }
@@ -215,7 +227,7 @@ uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t Bit
         case ISO14443_PCB_R_BLOCK: {
             /* 7.5.4.3, rule 11 */
             if ((PCB & ISO14443_PCB_BLOCK_NUMBER_MASK) == MyBlockNumber) {
-                DEBUG_PRINT_P(PSTR("ISO144434ProcessBlock: ISO14443_PCB_R_BLOCK"));
+                DEBUG_PRINT_P(PSTR("ISO144434-4: ISO14443_PCB_R_BLOCK"));
                 return GetNAKCommandData(Buffer, false);
                 //return ISO14443A_APP_NO_RESPONSE;
             }
@@ -228,7 +240,7 @@ uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t Bit
             } else {
                 /* This is an ACK: */
                 /* NOTE: Chaining is not supported yet. */
-                DEBUG_PRINT_P(PSTR("ISO144434ProcessBlock: ISO14443_PCB_R_BLOCK"));
+                DEBUG_PRINT_P(PSTR("ISO144434-4: ISO14443_PCB_R_BLOCK"));
                 // Resend the data from the last frame:
                 if (ISO14443ALastIncomingDataFrameBits > 0) {
                     memcpy(&Buffer[0], &ISO14443ALastIncomingDataFrame[0], ASBYTES(ISO14443ALastIncomingDataFrameBits));

@@ -375,9 +375,9 @@ void SetPiccUid(ConfigurationUidType Uid) {
         uint16_t ATQAValue = DESFIRE_ATQA_RANDOM_UID;
         Picc.ATQA[0] = (uint8_t)((ATQAValue >> 8) & 0x00FF);
         Picc.ATQA[1] = (uint8_t)(ATQAValue & 0x00FF);
-        DesfireATQAReset = false;
     }
     SynchronizePICCInfo();
+    MemoryStoreDesfireHeaderBytes();
 }
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */
