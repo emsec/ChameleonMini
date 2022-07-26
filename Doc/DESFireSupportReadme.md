@@ -573,7 +573,8 @@ repositories and code bases:
 The following links are the original online resource links are
 archived here for documentation on how this firmware operates:
 * [ISO/IEC 7816-4 Standard](http://www.unsads.com/specs/ISO/7816/ISO7816-4.pdf)
-* [PublicDESFireEV0DatasheetSpecs -- April2004 (M075031_desfire.pdf)](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
+* [DESFire Functional specification (MF3ICD81, November 2008)](https://web.archive.org/web/20201115030854/https://marvin.blogreen.org/~romain/nfc/MF3ICD81%20-%20MIFARE%20DESFire%20-%20Functional%20specification%20-%20Rev.%203.5%20-%2028%20November%202008.pdf)
+* [DESFire EV0 Datasheet (M075031, April 2004)](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
 * [NXP Application Note AN12343](https://www.nxp.com/docs/en/application-note/AN12343.pdf) 
 * [TI DESFire EV1 Tag AES Auth Specs (sloa213.pdf)](https://www.ti.com/lit/an/sloa213/sloa213.pdf)
 * [NXP Application Note AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf)
