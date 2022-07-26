@@ -366,8 +366,7 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
          */
         uint16_t respDataSize = (uint16_t) sizeof(MIFARE_DESFIRE_TAG_AID);
         memcpy(&Buffer[0], MIFARE_DESFIRE_TAG_AID, respDataSize);
-        /* ??? TODO: Do we append CRCA bytes ??? */
-        return ASBITS(respDataSize);
+        return GetAndSetBufferCRCA(Buffer, respDataSize);
     } else if (IsUnsupportedCmd(Cmd)) {
         return GetNAKCommandData(Buffer, true);
     } else if (CheckStateRetryCount(false)) {
@@ -411,10 +410,10 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 Uid[0] = ISO14443A_UID0_CT;
                 /* Load UID CL1 and perform anticollision: */
                 uint8_t cl1SAKValue = SAK_CL1_VALUE;
-                if (Buffer[1] == ISO14443A_NVB_AC_START && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[0], 4, cl1SAKValue)) {
+                if (Buffer[1] == ISO14443A_NVB_AC_START && ISO14443ASelectDesfire(&Buffer[0], &BitCount, &Uid[0], 4, cl1SAKValue)) {
                     ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL1_NVB_END);
                     return BitCount;
-                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[0], 4, cl1SAKValue)) {
+                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(&Buffer[0], &BitCount, &Uid[0], 4, cl1SAKValue)) {
                     ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL2);
                     return BitCount;
                 } else {
@@ -434,10 +433,10 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
                 ConfigurationUidType Uid;
                 ApplicationGetUid(&Uid[0]);
                 uint8_t cl2SAKValue = SAK_CL2_VALUE;
-                if (Buffer[1] == ISO14443A_NVB_AC_START && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[3], 4, cl2SAKValue)) {
+                if (Buffer[1] == ISO14443A_NVB_AC_START && ISO14443ASelectDesfire(&Buffer[0], &BitCount, &Uid[3], 4, cl2SAKValue)) {
                     ISO144433ASwitchState(ISO14443_3A_STATE_READY_CL2_NVB_END);
                     return BitCount;
-                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(&Buffer[0], 0, &BitCount, &Uid[3], 4, cl2SAKValue)) {
+                } else if (Buffer[1] == ISO14443A_NVB_AC_END && ISO14443ASelectDesfire(&Buffer[0], &BitCount, &Uid[3], 4, cl2SAKValue)) {
                     ISO144433ASwitchState(ISO14443_3A_STATE_ACTIVE);
                     return BitCount;
 
