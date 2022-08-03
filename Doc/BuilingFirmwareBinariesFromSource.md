@@ -61,7 +61,7 @@ The per-build configuration lists are currently as follows:
 
 Latest builds supporting ISO14443, ISO1593 and DESFire (non development) are generated automatically on the 
 main Chameleon Mini firmware repository 
-(see [this listing](https://github.com/emsec/ChameleonMini/actions)). 
+(see [this listing](https://github.com/emsec/ChameleonMini/actions) and the [active latest firmware builds here](https://github.com/emsec/ChameleonMini/releases)). 
 
 ### More customized builds
 
