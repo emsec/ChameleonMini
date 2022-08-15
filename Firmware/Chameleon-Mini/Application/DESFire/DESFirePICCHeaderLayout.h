@@ -48,16 +48,12 @@ This notice must be retained at the top of all source files where indicated.
  */
 
 /* Anticollision parameters */
-#define DESFIRE_DEFAULT_ATQA_VALUE      0x0344
-extern uint16_t DesfireATQAValue;
+#define DESFIRE_ATQA_DEFAULT            0x0344
+#define DESFIRE_ATQA_RANDOM_UID         0x0304
+extern bool DesfireATQAReset;
 
-#ifndef FORCE_SAK_NOT_COMPLIANT
-#define SAK_CL1_VALUE                   (ISO14443A_SAK_INCOMPLETE)
-#define SAK_CL2_VALUE                   (ISO14443A_SAK_COMPLETE_COMPLIANT)
-#else
 #define SAK_CL1_VALUE                   (ISO14443A_SAK_INCOMPLETE_NOT_COMPLIANT)
 #define SAK_CL2_VALUE                   (ISO14443A_SAK_COMPLETE_NOT_COMPLIANT)
-#endif
 
 #define STATUS_FRAME_SIZE               (1 * 8) /* Bits */
 
@@ -138,6 +134,7 @@ typedef struct DESFIRE_FIRMWARE_PACKING DESFIRE_FIRMWARE_ALIGNAT {
     uint8_t BatchNumber[5] DESFIRE_FIRMWARE_ALIGNAT;
     uint8_t ProductionWeek;
     uint8_t ProductionYear;
+    uint8_t ATQA[2];
     uint8_t ATSBytes[5];
     /* Dynamic data: changes during the PICC's lifetime */
     uint16_t FirstFreeBlock;

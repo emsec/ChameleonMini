@@ -27,8 +27,12 @@ This notice must be retained at the top of all source files where indicated.
 #include <inttypes.h>
 #include <stdbool.h>
 
-#define Iso7816CLA(cmdCode) \
-    (cmdCode == DESFIRE_ISO7816_CLA)
+#define Iso7816CLA(cmdCode)                         (cmdCode == DESFIRE_ISO7816_CLA)
+
+#define ISO7816_RID_CMD                              0x78
+#define IsRIDCmd(cmdCode)                           (cmdCode == ISO7816_RID_CMD)
+
+extern const uint8_t MIFARE_DESFIRE_TAG_AID[9];
 
 #define ISO7816_PROLOGUE_SIZE                        (2)
 #define ISO7816_STATUS_RESPONSE_SIZE                 (0x02)
@@ -56,8 +60,7 @@ This notice must be retained at the top of all source files where indicated.
 #define ISO7816_ERROR_SW2_WRONG_FSPARAMS             (0x00)
 #define ISO7816_ERROR_SW2_EOF                        (0x82)
 
-#define AppendSW12Bytes(sw1, sw2)   \
-    ((uint16_t)  ((sw1 << 8) | (sw2 & 0xff)))
+#define AppendSW12Bytes(sw1, sw2)                    ((uint16_t)  ((sw1 << 8) | (sw2 & 0xff)))
 
 /* Some of the wrapped ISO7816 commands have extra meaning
  * packed into the P1-P2 bytes of the APDU byte array.

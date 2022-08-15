@@ -11,8 +11,19 @@
 #include "DESFire/DESFireISO14443Support.h"
 
 bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, uint8_t UidByteCount, uint8_t SAKValue) {
+    if (BitCount == NULL || ASBYTES(*BitCount) < 2) {
+        *BitCount = 0;
+        return false;
+    }
     uint8_t *DataPtr = (uint8_t *) Buffer;
     uint8_t NVB = DataPtr[1];
+    /* According to the NXP Application Note AN10833, bit 6 of the SAK
+     * (mask of 0x20) indicates whether the PICC is compliant with the
+     * ISO/IEC14443-4 standard. The Mifare DESFire tags set this bit to one.
+     * Reference (section 2.2, page 7):
+     * https://www.nxp.com/docs/en/application-note/AN10833.pdf
+     */
+    SAKValue = MAKE_ISO14443A_4_COMPLIANT(SAKValue);
     switch (NVB) {
         case ISO14443A_NVB_AC_START:
             /* Start of anticollision procedure.
@@ -21,7 +32,7 @@ bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, ui
             memcpy(&DataPtr[0], &UidCL[0], UidByteCount);
             DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
             *BitCount = ISO14443A_CL_FRAME_SIZE;
-            return false;
+            return true;
         case ISO14443A_NVB_AC_END:
             /* End of anticollision procedure.
              * Send SAK CLn if we are selected.
@@ -36,24 +47,8 @@ bool ISO14443ASelectDesfire(void *Buffer, uint16_t *BitCount, uint8_t *UidCL, ui
                 *BitCount = 0;
                 return false;
             }
-        default: {
-            uint8_t CollisionByteCount = ((NVB >> 4) & 0x0f) - 2;
-            uint8_t CollisionBitCount  = (NVB >> 0) & 0x0f;
-            uint8_t mask = 0xFF >> (8 - CollisionBitCount);
-            // Since the UidCL does not contain the BCC, we have to distinguish here
-            if (
-                ((CollisionByteCount == 5 || (CollisionByteCount == 4 && CollisionBitCount > 0)) && memcmp(UidCL, &DataPtr[2], 4) == 0 && (ISO14443A_CALC_BCC(UidCL) & mask) == (DataPtr[6] & mask))
-                ||
-                (CollisionByteCount == 4 && CollisionBitCount == 0 && memcmp(UidCL, &DataPtr[2], 4) == 0)
-                ||
-                (CollisionByteCount < 4 && memcmp(UidCL, &DataPtr[2], CollisionByteCount) == 0 && (UidCL[CollisionByteCount] & mask) == (DataPtr[CollisionByteCount + 2] & mask))
-            ) {
-                memcpy(&DataPtr[0], &UidCL[0], UidByteCount);
-                DataPtr[ISO14443A_CL_BCC_OFFSET] = ISO14443A_CALC_BCC(DataPtr);
-                *BitCount = ISO14443A_CL_FRAME_SIZE;
-                return false;
-            }
-        }
+        default:
+            break;
     }
     /* No anticollision supported */
     *BitCount = 0;

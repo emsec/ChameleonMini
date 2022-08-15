@@ -29,6 +29,13 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireStatusCodes.h"
 #include "../ISO14443-3A.h"
 
+/* Data for the NDEF Tag Application / Mifare DESFire Tag Application in the table:
+ * https://www.eftlab.com/knowledge-base/211-emv-aid-rid-pix/
+ */
+const uint8_t MIFARE_DESFIRE_TAG_AID[9] = {
+    0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x00
+};
+
 Iso7816WrappedParams_t Iso7816P1Data = ISO7816_NO_DATA;
 Iso7816WrappedParams_t Iso7816P2Data = ISO7816_NO_DATA;
 bool Iso7816FileSelected = false;

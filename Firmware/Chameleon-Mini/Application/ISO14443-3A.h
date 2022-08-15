@@ -45,8 +45,7 @@
 #define CRC_INIT                0x6363
 #define CRC_INIT_R              0xC6C6 /* Bit reversed */
 
-#define ISO14443A_CALC_BCC(ByteBuffer) \
-    ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
+#define ISO14443A_CALC_BCC(ByteBuffer) (ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3])
 
 uint16_t ISO14443AAppendCRCA(void *Buffer, uint16_t ByteCount);
 bool ISO14443ACheckCRCA(const void *Buffer, uint16_t ByteCount);

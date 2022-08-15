@@ -68,8 +68,9 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
         if (dataByteCount != 2) {
             StatusError = 1;
         } else {
-            DesfireATQAValue = ((propSpecBytes[0] << 8) & 0xFF00) | (propSpecBytes[1] & 0x00FF);
-            memcpy(&Picc.ATSBytes[0], propSpecBytes, dataByteCount);
+            Picc.ATQA[0] = propSpecBytes[0];
+            Picc.ATQA[1] = propSpecBytes[1];
+            DesfireATQAReset = true;
         }
     } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ManuID"))) {
         if (dataByteCount != 1) {

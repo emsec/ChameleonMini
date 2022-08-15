@@ -209,6 +209,24 @@ fingerprint the DESFire tag subtype in the
         return NTAG413DNA;
     return DESFIRE_UNKNOWN;
 ```
+Table 2 in section 2.1 of [NXP AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf) (page 5) lists
+standard Mifare tag identifications for several tags. This byte is represented by setting 
+``Picc.HwType`` using the Chameleon terminal command ``DF_SETHDR=HwType xx``. The default setting for the 
+Chameleon DESFire tags is ``0x01`` (*MIFARE DESFire*). The table in the application note is reproduced 
+below for reference. The NXP documentation says: "*The upper nibble [X] defines if the
+device is a native MIFARE IC (``0x0``), an implementation (``0x8``), an applet on a Java Card
+(``0x9``) or MIFARE 2GO (``0xA``).*"
+
+| Second Byte of GetVersion Response (``Picc.HwType``) | NXP Type Tag |
+| :---: | :-- |
+| ``0xX1`` | *MIFARE DESFire* |
+| ``0xX2`` | *MIFARE Plus* |
+| ``0xX3`` | *MIFARE Ultralight* |
+| ``0xX4`` | *NTAG* |
+| ``0xX5`` | *RFU* |
+| ``0xX6`` | *RFU* |
+| ``0xX7`` | *NTAG I2C* |
+| ``0xX8`` | *MIFARE DESFire Light* |
 
 #### DF_COMM_MODE -- Manually sets the communication mode of the current session
 
@@ -251,66 +269,6 @@ DF_ENCMODE=AES:CBC
 
 ## Supported functionality
 
-### Tables of tested support for active commands
-
-#### Native DESFire command support (mixed EV0/EV1/EV2 instruction sets)
-
-| Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
-| :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_AUTHENTICATE | 0x0A | Authenticate legacy | :ballot_box_with_check: | |
-| CMD_AUTHENTICATE_ISO | 0x1A | ISO / 3DES auth | :ballot_box_with_check: | |
-| CMD_AUTHENTICATE_AES | 0xAA | Standard AES auth | :ballot_box_with_check: | |
-| CMD_AUTHENTICATE_EV2_FIRST | 0x71 | Newer spec auth variant | :x: | |
-| CMD_AUTHENTICATE_EV2_NONFIRST | 0x77 | Newer spec auth variant | :x: | See page 32 of AN12343.pdf |
-| CMD_CHANGE_KEY_SETTINGS | 0x54 | | :ballot_box_with_check: | |
-| CMD_SET_CONFIGURATION |  0x5C | | :x: | |
-| CMD_CHANGE_KEY |  0xC4 | | :ballot_box_with_check: | |
-| CMD_GET_KEY_VERSION | 0x64 | | :ballot_box_with_check: | |
-| CMD_CREATE_APPLICATION |  0xCA | | :ballot_box_with_check: | |
-| CMD_DELETE_APPLICATION |  0xDA | | :ballot_box_with_check: | |
-| CMD_GET_APPLICATION_IDS | 0x6A | | :ballot_box_with_check: | |
-| CMD_FREE_MEMORY | 0x6E | | :ballot_box_with_check: | |
-| CMD_GET_DF_NAMES | 0x6D | | :x: | =Need docs for what this command does! |
-| CMD_GET_KEY_SETTINGS | 0x45 | | :ballot_box_with_check: | |
-| CMD_SELECT_APPLICATION |  0x5A | | :ballot_box_with_check: | |
-| CMD_FORMAT_PICC |  0xFC | | :ballot_box_with_check: | |
-| CMD_GET_VERSION | 0x60 | | :ballot_box_with_check: | |
-| CMD_GET_CARD_UID | 0x51 | | :ballot_box_with_check: | |
-| CMD_GET_FILE_IDS |  0x6F | | :ballot_box_with_check: | |
-| CMD_GET_FILE_SETTINGS | 0xF5 | | :ballot_box_with_check: | |
-| CMD_CHANGE_FILE_SETTINGS | 0x5F | | :x: | |
-| CMD_CREATE_STDDATA_FILE |  0xCD | | :ballot_box_with_check: | |
-| CMD_CREATE_BACKUPDATA_FILE |  0xCB | | :ballot_box_with_check: | |
-| CMD_CREATE_VALUE_FILE |  0xCC | | :ballot_box_with_check: | |
-| CMD_CREATE_LINEAR_RECORD_FILE | 0xC1 | | :wavy_dash: | GetFileSettings still not returning correct data |
-| CMD_CREATE_CYCLIC_RECORD_FILE | 0xC0 | | :wavy_dash: | GetFileSettings still not returning correct data |
-| CMD_DELETE_FILE | 0xDF | | :ballot_box_with_check: | |
-| CMD_GET_ISO_FILE_IDS | 0x61 | | :x: | |
-| CMD_READ_DATA |  0xBD | | :ballot_box_with_check: | The data for std/backup files is uninitialized (any bits) until the user sets the data with WriteData |
-| CMD_WRITE_DATA |  0x3D | | :ballot_box_with_check: | Only supports write command operations with <= 52 bytes of data at a time. Offset parameters can be used to write lengthier files. |
-| CMD_GET_VALUE | 0x6C | | :ballot_box_with_check: | |
-| CMD_CREDIT | 0x0C | | :ballot_box_with_check: | |
-| CMD_DEBIT | 0xDC | | :ballot_box_with_check: | |
-| CMD_LIMITED_CREDIT | 0x1C | | :ballot_box_with_check: | |
-| CMD_WRITE_RECORD | 0x3B | | :question: | |
-| CMD_READ_RECORDS | 0xBB | | :ballot_box_with_check: :wavy_dash: | |
-| CMD_CLEAR_RECORD_FILE | 0xEB | | :question: | |
-| CMD_COMMIT_TRANSACTION | 0xC7 | | :ballot_box_with_check: | |
-| CMD_ABORT_TRANSACTION | 0xA7 | | :ballot_box_with_check: | |               |
-
-#### ISO7816 command support
-
-| Instruction | Cmd Byte | Description | Testing Status | Implementation Notes |
-| :---        |   :----: |     :----:  |    :----:      | :--                  |
-| CMD_ISO7816_SELECT | 0xa4 | A more nuanced ISO7816 version of EF/DF selection. | :wavy_dash: :question: | See the implementation notes [in this spec](https://cardwerk.com/smart-card-standard-iso7816-4-section-6-basic-interindustry-commands/#chap6_11). We only support EF selection with ``P1=00000000|000000010`` and DF(AID) with ``P1=00000100``. |
-| CMD_ISO7816_GET_CHALLENGE | 0x84 | | :wavy_dash: :question: | |
-| CMD_ISO7816_EXTERNAL_AUTHENTICATE | 0x82 | | :x: | |
-| CMD_ISO7816_INTERNAL_AUTHENTICATE | 0x88 | | :x: | |
-| CMD_ISO7816_READ_BINARY | 0xb0 | | :wavy_dash: :question: | Needs testing. |
-| CMD_ISO7816_UPDATE_BINARY | 0xd6 | | :wavy_dash: :question: | Needs testing. |
-| CMD_ISO7816_READ_RECORDS | 0xb2 | | :wavy_dash: :question: | Needs testing. |
-| CMD_ISO7816_APPEND_RECORD | 0xe2 | | :wavy_dash: :question: | Especially needs testing for corner case checks. |
-
 ### Proxmark3 (PM3) compatibility and support 
 
 The next PM3 commands are known to work with the Chameleon DESFire tag emulation (using both the RDV4 and Easy device types). 
@@ -336,16 +294,16 @@ data setdebugmode -2
       Start |        End | Src | Data (! denotes parity error)                                           | CRC | Annotation
 ------------+------------+-----+-------------------------------------------------------------------------+-----+--------------------
           0 |        992 | Rdr |52                                                                       |     | WUPA
-       2116 |       4484 | Tag |44  03                                                                   |     | 
+       2116 |       4484 | Tag |04  03                                                                   |     | 
        7040 |       9504 | Rdr |93  20                                                                   |     | ANTICOLL
-      10820 |      16708 | Tag |88  41  92  a0  fb                                                       |     | 
-      19328 |      29856 | Rdr |93  70  88  41  92  a0  fb  87  d9                                       |  ok | SELECT_UID
-      30916 |      34436 | Tag |24  d8  36                                                               |     | 
-      35840 |      38304 | Rdr |95  20                                                                   |     | ANTICOLL-2
-      39364 |      45188 | Tag |b2  59  78  41  d2                                                       |     | 
-      47872 |      58336 | Rdr |95  70  b2  59  78  41  d2  13  09                                       |  ok | SELECT_UID-2
-      59844 |      63428 | Tag |20  fc  70                                                               |     | 
-      65152 |      69920 | Rdr |e0  80  31  73                                                           |  ok | RATS
+      10580 |      16404 | Tag |88  08  e2  38  5a                                                       |     | 
+      19072 |      29600 | Rdr |93  70  88  08  e2  38  5a  95  d5                                       |  ok | SELECT_UID
+      30660 |      34180 | Tag |24  d8  36                                                               |     | 
+      35584 |      38048 | Rdr |95  20                                                                   |     | ANTICOLL-2
+      39124 |      44948 | Tag |f6  12  53  42  f5                                                       |     | 
+      47616 |      58080 | Rdr |95  70  f6  12  53  42  f5  cb  66                                       |  ok | SELECT_UID-2
+      59220 |      62804 | Tag |20  fc  70                                                               |     | 
+      64512 |      69280 | Rdr |e0  80  31  73                                                           |  ok | RATS
 ```
 
 #### Getting a summary of tag information
@@ -355,6 +313,12 @@ manufacturer bytes are changed using the Chameleon terminal commands above.
 The tag type reported will also vary depending on which EV0/EV1/EV2 generation of the
 DESFire configuration is used:
 ```bash
+[usb] pm3 --> hf mfdes info
+[#] BCC2 incorrect, got 0xf5, expected 0x12
+[#] Aborting
+[#] Can't select card
+[#] switch_off
+[!] ⚠️  Can't select card
 [usb] pm3 --> hf mfdes info
 [#] pcb_blocknum 0 == 2 
 [#] [WCMD <--: : 08/08] 02 90 60 00 00 00 14 98 
@@ -367,8 +331,8 @@ DESFire configuration is used:
 [#] switch_off
 
 [=] ---------------------------------- Tag Information ----------------------------------
-[+]               UID: B9 38 A2 A0 B5 1A B9 
-[+]      Batch number: B9 09 58 8B EA 
+[+]               UID: 08 E2 38 F6 12 53 42 
+[+]      Batch number: BB 27 CB 35 08 
 [+]   Production date: week 01 / 2005
 
 [=] --- Hardware Information
@@ -470,29 +434,97 @@ DESFire configuration is used:
 ### Compatibility with external USB readers and LibNFC
 
 The DESFire configurations are known to work with the anticollision and RATS handshaking utility ``nfc-anticol`` 
-from [LibNFC](https://github.com/nfc-tools/libnfc). 
-The Mifare DESFire commands installed by [LibFreefare](https://github.com/nfc-tools/libfreefare) 
-have not been tested nor confirmed to work with the Chameleon Mini. 
-The developers are actively working to ensure compatibility of the Chameleon DESFire emulation with external USB readers used 
-running ``pcscd`` and ``pcsc_spy``. This support is not yet functional with tests using ACR-122 and HID Omnikey 5022CL readers. 
+from [LibNFC](https://github.com/nfc-tools/libnfc). The following is the output of this utility using the 
+ACS ACR-122U reader over USB (with the ``pcscd`` dameon not running):
+```bash
+$ sudo nfc-anticol -f
+NFC reader: ACS / ACR122U PICC Interface opened
+
+Sent bits:     26 (7 bits)
+Received bits: 04  03  
+Sent bits:     93  20  
+Received bits: 88  08  c7  df  98  
+Sent bits:     93  70  88  08  c7  df  98  9c  ae  
+Received bits: 24  d8  36  
+Sent bits:     95  20  
+Received bits: f1  02  fc  6c  63  
+Sent bits:     95  70  f1  02  fc  6c  63  3a  98  
+Received bits: 20  fc  70  
+Sent bits:     e0  50  bc  a5  
+Received bits: 06  75  00  81  02  80  66  fd  
+Sent bits:     50  00  57  cd  
+Received bits: 50  00  57  cd  
+
+Found tag with
+ UID: 08c7dff102fc6c
+ATQA: 0304
+ SAK: 20
+ ATS: 06  75  00  81  02  80  66  fd
+```
 The DESFire support for the Chameleon Mini is tested with the LibNFC-based source code 
 [developed in this directory](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting) with 
 [sample dumps and output here](https://github.com/emsec/ChameleonMini/tree/master/Software/DESFireLibNFCTesting/SampleOutputDumps).
+The Mifare DESFire commands installed by [LibFreefare](https://github.com/nfc-tools/libfreefare) 
+do not work with the Chameleon Mini. 
 
-### Links to public datasheets and online specs 
+The developers are actively working to ensure compatibility of the Chameleon DESFire emulation with external USB readers used 
+running ``pcscd`` and ``pcsc_spy``. This support does not work with the HID Omnikey 5022CL reader. 
+The ACS ACR-122U reader recognizes the Chameleon running the vanilla ``CONFIG=MF_DESFIRE`` over PCSC (driver ``pcscd``) 
+as shown in the output of the ``pcsc_spy -v`` command:
+```bash
+$ sudo pcsc_scan -v
+Using reader plug'n play mechanism
+Scanning present readers...
+Waiting for the first reader...found one
+Scanning present readers...
+0: ACS ACR122U PICC Interface 00 00
+ 
+Mon Jul 25 19:26:28 2022
+ Reader 0: ACS ACR122U PICC Interface 00 00
+  Event number: 3
+  Card state: Card removed, 
+   
+Mon Jul 25 19:26:37 2022
+ Reader 0: ACS ACR122U PICC Interface 00 00
+  Event number: 4
+  Card state: Card inserted, 
+  ATR: 3B 81 80 01 80 80
 
-The following links are the original online resource links are
-archived here for documentation on how this firmware operates:
-* [ISO/IEC 7816-4 Standard](http://www.unsads.com/specs/ISO/7816/ISO7816-4.pdf)
-* [PublicDESFireEV0DatasheetSpecs -- April2004 (M075031_desfire.pdf)](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
-* [NXP Application Note AN12343](https://www.nxp.com/docs/en/application-note/AN12343.pdf) 
-* [TI DESFire EV1 Tag AES Auth Specs (sloa213.pdf)](https://www.ti.com/lit/an/sloa213/sloa213.pdf)
-* [NXP Application Note AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf)
-* My favorite conference submission in grad school is (by far) about this project -- even though I did not present my talk that year.
-  In rare form, the [presentation slides (tentative; see uploads)](https://archive.org/details/@maxiedschmidt) and the 
-  [accepted manuscript](https://archive.org/download/ftc2021-presentation-slides-with-notes/schmidt-ftc2021-submission.pdf) (published in print form by Springer) 
-  effectively document the scarce details of the DESFire spec and command sets gleaned while working on this project as a conference proceedings article.
-  Grace Hopper would have approved :)
+ATR: 3B 81 80 01 80 80
++ TS = 3B --> Direct Convention
++ T0 = 81, Y(1): 1000, K: 1 (historical bytes)
+  TD(1) = 80 --> Y(i+1) = 1000, Protocol T = 0 
+-----
+  TD(2) = 01 --> Y(i+1) = 0000, Protocol T = 1 
+-----
++ Historical bytes: 80
+  Category indicator byte: 80 (compact TLV data object)
++ TCK = 80 (correct checksum)
+
+Possibly identified card (using /usr/share/pcsc/smartcard_list.txt):
+3B 81 80 01 80 80
+	RFID - ISO 14443 Type A - NXP DESFire or DESFire EV1 or EV2
+	"Reiner LoginCard" (or "OWOK", how they name it) - they have been distributed by a german computer magazine ("Computer BILD")
+	https://cardlogin.reiner-sct.com/
+	Belgium A-kaart (Antwerp citycard)
+	Oyster card - Transport for London (second-gen "D")
+	https://en.wikipedia.org/wiki/Oyster_card
+	Kaba Legic Advant 4k
+	Sydney Opal card public transport ticket (Transport)
+	https://www.opal.com.au
+	TH Köln (University of Applied Sciences Cologne) - Student Identity Card
+	https://www.th-koeln.de/en/academics/multica_5893.php
+	German red cross blood donation service
+	http://www.blutspende-nordost.de/
+	Greater Toronto/Hamilton/Ottawa PRESTO contactless fare card
+	http://en.wikipedia.org/wiki/Presto_card
+	Electic vehicle charging card of the EMSP EnBW Energie Baden-Württemberg AG, Tarif ADAC e-Charge, Germany
+   
+Mon Jul 25 19:26:37 2022
+ Reader 0: ACS ACR122U PICC Interface 00 00
+  Event number: 5
+  Card state: Card removed, 
+```
 
 ## Credits 
 
@@ -535,6 +567,23 @@ repositories and code bases:
 * [Android HCE Framework Library (kevinvalk)](https://github.com/kevinvalk/android-hce-framework)
 * [AVRCryptoLib in C](https://github.com/cantora/avr-crypto-lib)
 * [LibFreefare DESFire Code (mostly as a reference and check point)](https://github.com/nfc-tools/libfreefare/tree/master/libfreefare)
+
+### Links to public datasheets and online specs 
+
+The following links are the original online resource links are
+archived here for documentation on how this firmware operates:
+* [ISO/IEC 7816-4 Standard](http://www.unsads.com/specs/ISO/7816/ISO7816-4.pdf)
+* [DESFire Functional specification (MF3ICD81, November 2008)](https://web.archive.org/web/20201115030854/https://marvin.blogreen.org/~romain/nfc/MF3ICD81%20-%20MIFARE%20DESFire%20-%20Functional%20specification%20-%20Rev.%203.5%20-%2028%20November%202008.pdf)
+* [DESFire EV0 Datasheet (M075031, April 2004)](https://web.archive.org/web/20170201031920/http://neteril.org/files/M075031_desfire.pdf)
+* [NXP Application Note AN12343](https://www.nxp.com/docs/en/application-note/AN12343.pdf) 
+* [TI DESFire EV1 Tag AES Auth Specs (sloa213.pdf)](https://www.ti.com/lit/an/sloa213/sloa213.pdf)
+* [NXP Application Note AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf)
+* My favorite conference submission in grad school is (by far) about this project -- even though I did not present my talk that year.
+  In rare form, the [presentation slides (tentative; see uploads)](https://archive.org/details/@maxiedschmidt) and the 
+  [accepted manuscript](https://archive.org/download/ftc2021-presentation-slides-with-notes/schmidt-ftc2021-submission.pdf) 
+  (published in print form by Springer) document the scarce details of the DESFire spec and command sets gleaned while working 
+  on this project as a conference proceedings article.
+  Grace Hopper would have approved :)
 
 ## New development sources of DESFire support for the Chameleon Mini
 
