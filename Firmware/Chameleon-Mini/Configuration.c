@@ -528,9 +528,6 @@ void ConfigurationSetById(ConfigurationEnum Configuration, bool appInitRunOnce) 
 
     GlobalSettings.ActiveSettingPtr->Configuration = Configuration;
 
-    /* Blank memory scape slate for the newly set configuration */
-    MemoryClear();
-
     /* Copy struct from PROGMEM to RAM */
     memcpy_P(&ActiveConfiguration,
              &ConfigurationTable[Configuration], sizeof(ConfigurationType));
