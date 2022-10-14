@@ -628,30 +628,32 @@ uint16_t EV0CmdChangeKey(uint8_t *Buffer, uint16_t ByteCount) {
             break;
         default:
             /* Authentication with a specific key is required */
-            if (!IsAuthenticated() || (KeyId != ChangeKeyId)) {
+            if (!IsAuthenticated() || (AuthenticatedWithKey != ChangeKeyId)) {
                 Buffer[0] = STATUS_PERMISSION_DENIED;
                 return DESFIRE_STATUS_RESPONSE_SIZE;
             }
             break;
     }
 
-    /* Figure out the key size, and the crypto type from it: */
-    uint8_t keySize = ByteCount - 2;
-    uint8_t cryptoType;
-    if ((keySize != CRYPTO_3KTDEA_KEY_SIZE) && (keySize != CRYPTO_AES_KEY_SIZE)) {
-        Buffer[0] = STATUS_NO_SUCH_KEY;
-        return DESFIRE_STATUS_RESPONSE_SIZE;
-    } else if (keySize == CRYPTO_3KTDEA_KEY_SIZE) {
-        cryptoType = CRYPTO_TYPE_3K3DES;
-    } else {
-        cryptoType = CRYPTO_TYPE_AES128;
+    /* Figure out the key size, and the crypto type from it:*/
+    if (cryptoType == 0xFF) {
+        uint8_t keySize = ByteCount - 2;
+        if ((keySize != CRYPTO_3KTDEA_KEY_SIZE) && (keySize != CRYPTO_AES_KEY_SIZE)) {
+            Buffer[0] = STATUS_NO_SUCH_KEY;
+            return DESFIRE_STATUS_RESPONSE_SIZE;
+        } else if (keySize == CRYPTO_3KTDEA_KEY_SIZE) {
+            cryptoType = CRYPTO_TYPE_3K3DES;
+        } else {
+            cryptoType = CRYPTO_TYPE_AES128;
+        }
     }
     uint8_t nextKeyVersion = ReadKeyVersion(SelectedApp.Slot, KeyId) + 1;
 
-    /* TODO: The PCD generates data differently based on whether AuthKeyId == ChangeKeyId */
-    /* TODO: [NEED DOCS] NewKey^OldKey | CRC(NewKey^OldKey) | CRC(NewKey) | Padding */
-    /* TODO: [NEED DOCS] NewKey | CRC(NewKey) | Padding */
     /* TODO: NOTE: Padding checks are skipped, because meh. */
+
+    const char *debugMsg = PSTR("KeyWrt,id(%02x),v(%02x),CT(%02x),size(%02x),ASlot(%02x)");
+    DEBUG_PRINT_P(debugMsg, KeyId, nextKeyVersion, cryptoType,keySize, SelectedApp.Slot);
+    DesfireLogEntry(LOG_APP_AUTH_KEY, (void *) &Buffer[2], keySize);
 
     /* Write the key, next version, and scrub */
     WriteAppKey(SelectedApp.Slot, KeyId, &Buffer[2], keySize);
@@ -899,7 +901,9 @@ uint16_t EV0CmdCreateStandardDataFile(uint8_t *Buffer, uint16_t ByteCount) {
     if (Status != STATUS_OPERATION_OK) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
-    FileSize = GET_LE24(&Buffer[5]);
+    //Warning, stripping the MSB of the size!
+    FileSize = Buffer[5] + (Buffer[6] * 256);
+    DesfireLogEntry(LOG_INFO_DESFIRE_PROTECTED_DATA_SET, (void *) &FileSize, 2);
     Status = CreateStandardFile(FileNum, CommSettings, AccessRights, (uint16_t)FileSize);
     return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
@@ -1170,6 +1174,7 @@ uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, FileNum);
     if (fileIndex >= DESFIRE_MAX_FILES) {
         Status = STATUS_PARAMETER_ERROR;
+        DEBUG_PRINT_P(PSTR("FileIndexError"));
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
     AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
@@ -1186,13 +1191,16 @@ uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount) {
             /* Carry on */
             break;
     }
+
     /* Validate the file type */
     uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
     if (fileType != DESFIRE_FILE_STANDARD_DATA &&
             fileType != DESFIRE_FILE_BACKUP_DATA) {
         Status = STATUS_PARAMETER_ERROR;
+        DEBUG_PRINT_P(PSTR("FileTypeError"));
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
     /* Validate offset and length (preliminary) */
     Offset = GET_LE24(&Buffer[2]);
     Length = GET_LE24(&Buffer[5]);
@@ -1230,6 +1238,7 @@ uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount) {
     }
     AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
     CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
+
     /* Verify authentication: read or read&write required */
     switch (ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_WRITE)) {
         case VALIDATED_ACCESS_DENIED:
@@ -1240,6 +1249,7 @@ uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount) {
         case VALIDATED_ACCESS_GRANTED:
             break;
     }
+
     /* Validate the file type */
     uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
     if (fileType != DESFIRE_FILE_STANDARD_DATA &&
@@ -1267,6 +1277,7 @@ uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount) {
      * blocks to FRAM memory:
      */
     uint16_t dataWriteSize = ByteCount - 8;
+
     uint8_t *dataWriteBuffer = &Buffer[8];
     if (Offset > 0) {
         uint8_t precursorFileData[Offset];
@@ -1901,6 +1912,10 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
+    const char *debugMsg = PSTR("KeyId(%02x)-RdMax(%02x),App(%02x)");
+    DEBUG_PRINT_P(debugMsg, KeyId, ReadMaxKeyCount(SelectedApp.Slot), SelectedApp.Slot);
+
+
     /* Make sure that this key is AES, and figure out its byte size */
     BYTE cryptoKeyType = ReadKeyCryptoType(SelectedApp.Slot, KeyId);
     if (!CryptoTypeAES(cryptoKeyType)) {
@@ -2020,8 +2035,11 @@ uint16_t DesfireCmdAuthenticateAES2(uint8_t *Buffer, uint16_t ByteCount) {
      */
     Authenticated = true;
     AuthenticatedWithKey = KeyId;
-    AuthenticatedWithPICCMasterKey = (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT) &&
-                                     (KeyId == DESFIRE_MASTER_KEY_ID);
+    if ((SelectedApp.Slot == DESFIRE_PICC_APP_SLOT) && (KeyId == DESFIRE_MASTER_KEY_ID)){
+        AuthenticatedWithPICCMasterKey = true;
+    }
+
+    memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
 
     /* Return the status on success */
     Buffer[0] = STATUS_OPERATION_OK;

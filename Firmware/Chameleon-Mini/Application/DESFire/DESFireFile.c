@@ -308,6 +308,8 @@ uint16_t ReadDataFileIterator(uint8_t *Buffer) {
 
 uint8_t WriteDataFileInternal(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t Status;
+
+    //decipher?
     Status = WriteDataFileTransfer(Buffer, ByteCount);
     switch (Status) {
         case STATUS_OPERATION_OK:
