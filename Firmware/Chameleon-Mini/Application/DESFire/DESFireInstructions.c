@@ -344,7 +344,7 @@ uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount) {
     uint16_t curInsIndex;
     DESFireCommand dfCmd;
     while (curInsUpper >= curInsLower) {
-        curInsIndex = curInsLower + (curInsUpper + 1 - curInsLower) / 2;
+        curInsIndex = (curInsLower + curInsUpper) / 2;
         dfCmd = DESFireCommandSet[curInsIndex];
         if (dfCmd.insCode == insCode) {
             if (dfCmd.insFunc == NULL) {
