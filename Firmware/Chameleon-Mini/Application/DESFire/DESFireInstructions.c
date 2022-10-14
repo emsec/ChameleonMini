@@ -1268,11 +1268,42 @@ uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount) {
         Status = STATUS_BOUNDARY_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
     /* Setup and start the transfer */
     Status = ReadDataFileSetup(fileIndex, CommSettings, (uint16_t) Offset, (uint16_t) Length);
     if (Status != STATUS_OPERATION_OK) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
+    //TODO: This WILL break for files that use full encryption and are more than 16 bytes long!
+    //TODO: See commands for file writing for instructions on how to fix this
+    //Non-encrypted files are fine
+    if (CommSettings == 0x03) {
+        Length = (Length > 32) ? 32 : Length;
+        uint16_t size = ReadDataFileIterator(Buffer);
+
+        Buffer[size] = Buffer[0];
+        appendBufferCRC32C(Buffer+1, size);
+        memmove(Buffer+size, Buffer+size+1, 4);
+
+        size += 4;
+
+        uint8_t rem = (size-1) % CRYPTO_AES_BLOCK_SIZE;
+        if (rem) {
+            for (uint8_t i = 0; i < CRYPTO_AES_BLOCK_SIZE - rem; ++i) {
+                Buffer[size] = 0;
+                size++;
+            }
+        }
+
+        uint8_t ciphertext[64];
+        CryptoAESEncryptBuffer(size-1, Buffer+1, ciphertext, SessionIV, SessionKey);
+        memmove(Buffer+1, ciphertext, size-1);
+
+        return size;
+    }
+
+
     return ReadDataFileIterator(Buffer);
 }
 
@@ -1347,11 +1378,42 @@ uint16_t EV0CmdWriteData(uint8_t *Buffer, uint16_t ByteCount) {
         dataWriteSize += Offset;
         dataWriteBuffer = &Buffer[1];
     }
+
     /* Setup and start the transfer */
     Status = WriteDataFileSetup(fileIndex, fileType, CommSettings, (uint16_t) Offset, (uint16_t) Length);
     if (Status != STATUS_OPERATION_OK) {
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
+    //TODO: This will(!) break if we would need to split the **encrypted** write into multiple segments!
+    //TODO: But at least there is *some* support for ecrypted write
+    //TODO: It'll be best to decipher in the actual writing function as we can then use
+    //TODO: the existing code for encrypted comms
+    //TODO: This also breaks if there's any write offset
+    //Non-encrypted write is ok
+    //Decrypt the incoming buffer if needed:
+    if (CommSettings == 0x03) {
+        //TODO: Check if the cipher is actually AES
+        DesfireLogEntry(LOG_APP_SESSION_IV, (void *) SessionIV, 16);
+        CryptoAESDecryptBuffer(dataWriteSize, dataWriteBuffer + dataWriteSize, dataWriteBuffer, SessionIV, SessionKey);
+        memmove(dataWriteBuffer, dataWriteBuffer + dataWriteSize, dataWriteSize);
+
+        dataWriteSize = (Length > 32) ? 32 : Length; //To make sure we only process data in one command
+
+        //Check checksum
+        uint8_t recvCRC[4];
+        recvCRC[0] = dataWriteBuffer[dataWriteSize];
+        recvCRC[1] = dataWriteBuffer[dataWriteSize+1];
+        recvCRC[2] = dataWriteBuffer[dataWriteSize+2];
+        recvCRC[3] = dataWriteBuffer[dataWriteSize+3];
+        appendBufferCRC32C(Buffer, dataWriteSize+8);
+        if (recvCRC[0] != dataWriteBuffer[dataWriteSize] || recvCRC[1] != dataWriteBuffer[dataWriteSize+1] ||
+            recvCRC[2] != dataWriteBuffer[dataWriteSize+2] || recvCRC[3] != dataWriteBuffer[dataWriteSize+3]) {
+            Status = STATUS_PARAMETER_ERROR;
+            return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+        }
+    }
+
     Status = WriteDataFileIterator(dataWriteBuffer, dataWriteSize);
     return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
 }
