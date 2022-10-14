@@ -130,6 +130,85 @@ void MifareDesfireAppTask(void) {
     /* EMPTY -- Do nothing. */
 }
 
+//Checks if this is an EV1 frame which's content needs decryption.
+//TODO: Other modes than AES
+uint16_t CheckNeedForDecryptionAndDecrypt(uint8_t *Buffer, uint16_t ByteCount) {
+    if (ByteCount == 0) {
+        return 0;
+    }
+
+    if (Buffer[0] == CMD_CHANGE_KEY_SETTINGS) {
+        //TODO
+        return ByteCount;
+    }
+
+    if (Buffer[0] == CMD_CHANGE_KEY) {
+        if (((ByteCount - 2) % 16) != 0 ) {
+            return ByteCount;
+        }
+
+        //TODO: 0x0A and 0x1A autrhenticate commands
+
+        uint8_t tmpIV[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        CryptoAESDecryptBuffer(ByteCount - 2, Buffer + ByteCount, Buffer + 2, tmpIV, SessionKey);
+        memmove(Buffer + 2, Buffer + ByteCount, ByteCount - 2);
+
+        //TODO:
+        //check decryption success
+
+        //UnXOR
+        //TODO: Check that the application id matches too? EV1 datasheet, page 43, unclear
+        if ((AuthenticatedWithKey != Buffer[1]) && (ReadKeySettings(SelectedApp.Slot, Buffer[1]) == 0x0E)) {
+            //Strip padding
+            // cmd + keyNo + data + vers + crc + crc
+            ByteCount = 1 + 1 + 16 + 1 + 4 + 4;
+
+            uint8_t tmpKeyBuff[16];
+            ReadAppKey(SelectedApp.Slot, Buffer[1], tmpKeyBuff, 16);
+            for (int i = 2; i < 18; ++i) {
+                Buffer[i] = Buffer[i] ^ tmpKeyBuff[i];
+            }
+            //TODO:
+            //Check first checksum
+            //Check second checksum
+            //Strip checksums
+            return 18;
+        } else {
+            //Strip padding
+            //cmd + keyNo + data + vers + crc
+            ByteCount = 1 + 1 + 16 + 1 + 4;
+
+            //Check checksum
+            uint8_t recvCRC[4];
+            recvCRC[0] = Buffer[19];
+            recvCRC[1] = Buffer[20];
+            recvCRC[2] = Buffer[21];
+            recvCRC[3] = Buffer[22];
+            appendBufferCRC32C(Buffer, 19);
+            if (recvCRC[0] != Buffer[19] || recvCRC[1] != Buffer[20] || recvCRC[2] != Buffer[21] || recvCRC[3] != Buffer[22]) {
+                DEBUG_PRINT_P(PSTR("CRC does not match"));
+                return 0;
+            } else {
+                return 18; //Caution! Stripping KeyVers!
+            }
+        }
+    }
+
+    if (Buffer[0] == CMD_SET_CONFIGURATION) {
+        //TODO
+        return ByteCount;
+    }
+
+    if (Buffer[0] == CMD_CHANGE_FILE_SETTINGS) {
+        //TODO
+        return ByteCount;
+    }
+
+    return ByteCount;
+}
+
+
+
 uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
 
     if (ByteCount == 0) {
@@ -137,6 +216,9 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
     } else if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         DesfireState = DESFIRE_IDLE;
     }
+
+    ByteCount = CheckNeedForDecryptionAndDecrypt(Buffer, ByteCount);
+
     DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, (void *) Buffer, ByteCount);
 
     uint16_t ReturnBytes = 0;
