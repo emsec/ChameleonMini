@@ -338,9 +338,16 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     } else {
         ISO14443ALastIncomingDataFrameBits = ISO14443AStoreLastDataFrameAndReturn(Buffer, BitCount);
     }
+
     if (ByteCount >= 8 && DesfireCLA(Buffer[1]) && Buffer[2] == STATUS_ADDITIONAL_FRAME &&
-            Buffer[3] == 0x00 && Buffer[4] == 0x00 && Buffer[5] == ByteCount - 8 &&
+            Buffer[3] == 0x00 && Buffer[4] == 0x00 && (Buffer[5] == ByteCount - 8 || Buffer[5] == ByteCount - 9) &&
             DesfireStateExpectingAdditionalFrame(DesfireState)) {
+
+        bool nine = false;
+        if (Buffer[5] == ByteCount - 9) {
+            nine = true;
+        }
+
         /* [PM3-V1] : Handle the native-wrapped version of the additional frame data: */
         uint16_t checkSumPostVerifyBytes = DesfirePreprocessAPDUAndTruncate(ActiveCommMode, Buffer, ByteCount);
         if (checkSumPostVerifyBytes == 0) {
@@ -356,8 +363,16 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         if (ProcessedByteCount == 0) {
             return ISO14443A_APP_NO_RESPONSE;
         }
-        /* Re-wrap into padded APDU form */
+
+        uint8_t StatusByte = Buffer[0];
         Buffer[0] = PrologueCounterByte;
+        if (nine) {
+            Buffer[ProcessedByteCount] = 0x91;
+            Buffer[ProcessedByteCount + 1] = StatusByte;
+            ++ProcessedByteCount;
+        }
+
+        /* Re-wrap into padded APDU form */
         uint16_t ProcessedByteCountWithCRCA = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount + 1);
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ASBITS(ProcessedByteCountWithCRCA));
     } else if (ByteCount >= 3 && Buffer[2] == STATUS_ADDITIONAL_FRAME && DesfireStateExpectingAdditionalFrame(DesfireState)) {
