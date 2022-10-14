@@ -311,6 +311,18 @@ static const DESFireCommand DESFireCommandSet[] = {
     },
 };
 
+//Sets the key number to a real key number after deriving the crypto type from it
+uint8_t ProcessKeyNumber(uint8_t * KeyNumber) {
+    if (*KeyNumber & APPLICATION_CRYPTO_AES) {
+        *KeyNumber = (*KeyNumber) & APPLICATION_CRYPTO_AES;
+        return CRYPTO_TYPE_AES128;
+    } else if (*KeyNumber & APPLICATION_CRYPTO_3K3DES) {
+        *KeyNumber = (*KeyNumber) & APPLICATION_CRYPTO_3K3DES;
+        return CRYPTO_TYPE_3K3DES;
+    }
+    return 0xFF;
+}
+
 uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount) {
     if (ByteCount == 0) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
@@ -1901,6 +1913,8 @@ uint16_t DesfireCmdAuthenticateAES1(uint8_t *Buffer, uint16_t ByteCount) {
 
     /* Check if we are authenticating with the PICC/Master key setup correctly */
     KeyId = Buffer[1];
+    uint8_t cryptoType = ProcessKeyNumber(&KeyId);
+
     if (SelectedApp.Slot == DESFIRE_PICC_APP_SLOT && KeyId != DESFIRE_MASTER_KEY_ID) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
