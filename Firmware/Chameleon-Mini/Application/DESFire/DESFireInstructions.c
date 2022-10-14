@@ -323,6 +323,17 @@ uint8_t ProcessKeyNumber(uint8_t * KeyNumber) {
     return 0xFF;
 }
 
+//This should be only called when the command itself does not require encryption!
+//But it should be called every time we're authenticated, using EV1 mode and are not ecrypting! TODO!!
+//Currently used only in commands needed for Gallagher
+//Conforms with EV1 datsheet, chap 7.3.4 (CMAC)
+void UpdateIVIfNeeded(uint8_t *Buffer, uint16_t ByteCount) {
+    if (ActiveCommMode == DESFIRE_COMMS_PLAINTEXT && Authenticated && ReadKeyCryptoType(SelectedApp.Slot, AuthenticatedWithKey)== CRYPTO_TYPE_AES128) {
+        uint8_t cmac[32];
+        DesfireCryptoCMAC(CRYPTO_TYPE_AES128, SessionKey, Buffer, ByteCount, SessionIV, cmac);
+    }
+}
+
 uint16_t CallInstructionHandler(uint8_t *Buffer, uint16_t ByteCount) {
     if (ByteCount == 0) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
@@ -905,6 +916,9 @@ uint16_t EV0CmdCreateStandardDataFile(uint8_t *Buffer, uint16_t ByteCount) {
         Status = STATUS_LENGTH_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
+    UpdateIVIfNeeded(Buffer, ByteCount);
+
     /* Common args validation */
     FileNum = Buffer[1];
     CommSettings = Buffer[2];
@@ -1181,6 +1195,9 @@ uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount) {
         Status = STATUS_LENGTH_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
+    UpdateIVIfNeeded(Buffer, ByteCount);
+
     /* Validate file number */
     FileNum = Buffer[1];
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, FileNum);
