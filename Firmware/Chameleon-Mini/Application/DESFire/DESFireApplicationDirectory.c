@@ -208,8 +208,8 @@ void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value) {
 
 bool KeyIdValid(uint8_t AppSlot, uint8_t KeyId) {
     if (KeyId >= DESFIRE_MAX_KEYS || KeyId >= ReadMaxKeyCount(AppSlot)) {
-        const char *debugMsg = PSTR("INVKEY-KeyId(%02x)-RdMax(%02x)");
-        DEBUG_PRINT_P(debugMsg, KeyId, ReadMaxKeyCount(AppSlot));
+        const char *debugMsg = PSTR("INVKEY-KeyId(%02x)-RdMax(%02x),App(%02x)");
+        DEBUG_PRINT_P(debugMsg, KeyId, ReadMaxKeyCount(AppSlot), AppSlot);
         return false;
     }
     return true;
