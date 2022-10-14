@@ -121,8 +121,8 @@ void MifareDesfireAppReset(void) {
 
 void MifareDesfireAppTick(void) {
     if (!CheckStateRetryCount(false)) {
-        ResetISOState();
-        MifareDesfireReset();
+        //ResetISOState();
+        //MifareDesfireReset();
     }
 }
 
