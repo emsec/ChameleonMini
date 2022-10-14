@@ -88,7 +88,8 @@ static bool appendBufferCMACSubroutine(uint8_t cryptoType, const uint8_t *keyDat
             Encrypt3DESBuffer(newBlockSize, bufferOut, &bufferOut[bufferSize], keyData, bufferIV);
             break;
         case CRYPTO_TYPE_AES128:
-            CryptoAESEncryptBuffer(newBlockSize, bufferOut, &bufferOut[bufferSize], keyData, bufferIV);
+            //CryptoAESEncryptBuffer(newBlockSize, bufferOut, &bufferOut[bufferSize], keyData, bufferIV);
+            CryptoAESEncryptBuffer(newBlockSize, bufferOut, &bufferOut[bufferSize], bufferIV, keyData);
             break;
         default:
             return false;
@@ -99,6 +100,7 @@ static bool appendBufferCMACSubroutine(uint8_t cryptoType, const uint8_t *keyDat
     return true;
 }
 
+//TODO: This did not pass my tests -tomaspre
 bool appendBufferCMAC(uint8_t cryptoType, const uint8_t *keyData, uint8_t *bufferData, uint16_t bufferSize, uint8_t *IV) {
     uint8_t blockSize, rb;
     uint8_t *nistL = _cmac_K2;
@@ -128,6 +130,132 @@ bool appendBufferCMAC(uint8_t cryptoType, const uint8_t *keyData, uint8_t *buffe
         return appendBufferCMACSubroutine(cryptoType, keyData, _cmac_K1, _cmac_K2, IV, blockSize, bufferData, bufferSize);
     }
 }
+
+void bin_xor(uint8_t *d1, const uint8_t *d2, size_t len) {
+    for (size_t i = 0; i < len; i++)
+        d1[i] = d1[i] ^ d2[i];
+}
+
+void lsl(uint8_t *data, size_t len) {
+    for (size_t n = 0; n < len - 1; n++) {
+        data[n] = (data[n] << 1) | (data[n + 1] >> 7);
+    }
+    data[len - 1] <<= 1;
+}
+
+//Taken from https://github.com/RfidResearchGroup/proxmark3/blob/master/client/src/mifare/desfirecrypto.c
+bool DesfireCMACGenerateSubkeys(uint8_t cryptoType, const uint8_t *keyData, uint8_t *sk1, uint8_t *sk2) {
+    int kbs;
+    uint8_t l[2*CRYPTO_MAX_BLOCK_SIZE];
+    uint8_t ivect[CRYPTO_MAX_BLOCK_SIZE];
+
+    switch (cryptoType) {
+        case CRYPTO_TYPE_3K3DES:
+            kbs = CRYPTO_3KTDEA_BLOCK_SIZE;
+            break;
+        case CRYPTO_TYPE_AES128:
+            kbs = CRYPTO_AES_BLOCK_SIZE;
+            break;
+        default:
+            return false;
+    }
+
+    const uint8_t R = (kbs == 8) ? 0x1B : 0x87;
+
+    memset(l, 0, kbs);
+    memset(ivect, 0, kbs);
+
+    switch (cryptoType) {
+        case CRYPTO_TYPE_3K3DES:
+            Encrypt3DESBuffer(kbs, l, l+kbs, ivect, keyData);
+            break;
+        case CRYPTO_TYPE_AES128:
+            CryptoAESEncryptBuffer(kbs, l, l+kbs, ivect, keyData);
+            break;
+        default:
+            return false;
+    }
+
+    memcpy(l, l+kbs, kbs);
+
+    bool txor = false;
+
+    // Used to compute CMAC on complete blocks
+    memcpy(sk1, l, kbs);
+    txor = l[0] & 0x80;
+    lsl(sk1, kbs);
+    if (txor) {
+        sk1[kbs - 1] ^= R;
+    }
+
+    // Used to compute CMAC on the last block if non-complete
+    memcpy(sk2, sk1, kbs);
+    txor = sk1[0] & 0x80;
+    lsl(sk2, kbs);
+    if (txor) {
+        sk2[kbs - 1] ^= R;
+    }
+
+    return true;
+}
+
+//Taken from https://github.com/RfidResearchGroup/proxmark3/blob/master/client/src/mifare/desfirecrypto.c
+bool DesfireCryptoCMAC(uint8_t cryptoType, const uint8_t *keyData, uint8_t *bufferDataIn, uint16_t bufferSize, uint8_t *IV, uint8_t *cmac) {
+    uint8_t kbs;
+    uint8_t len = bufferSize;
+    uint8_t * bufferData = bufferDataIn + bufferSize;
+    memcpy(bufferData, bufferDataIn, bufferSize);
+
+    switch (cryptoType) {
+        case CRYPTO_TYPE_3K3DES:
+            kbs = CRYPTO_3KTDEA_BLOCK_SIZE;
+            break;
+        case CRYPTO_TYPE_AES128:
+            kbs = CRYPTO_AES_BLOCK_SIZE;
+            break;
+        default:
+            return false;
+    }
+
+
+    uint8_t sk1[24] = {0};
+    uint8_t sk2[24] = {0};
+
+    DesfireCMACGenerateSubkeys(cryptoType, keyData, sk1, sk2);
+
+    if ((!len) || (len % kbs)) {
+        bufferData[len++] = 0x80;
+        while (len % kbs) {
+            bufferData[len++] = 0x00;
+        }
+        bin_xor(bufferData + len - kbs, sk2, kbs);
+    } else {
+        bin_xor(bufferData + len - kbs, sk1, kbs);
+    }
+
+    bool retval = false;
+
+    switch (cryptoType) {
+        case CRYPTO_TYPE_3K3DES:
+            retval = Encrypt3DESBuffer(len, bufferData, bufferData+len, IV, keyData);
+            break;
+        case CRYPTO_TYPE_AES128:
+            retval = CryptoAESEncryptBuffer(len, bufferData, bufferData+len, IV, keyData);
+            break;
+        default:
+            return false;
+    }
+
+    if (cmac != NULL) {
+        memcpy(cmac, IV, kbs);
+        return retval;
+    }
+
+    return false;
+
+}
+
+
 
 bool checkBufferCMAC(uint8_t *bufferData, uint16_t bufferSize, uint16_t checksumSize) {
     if (checksumSize > bufferSize) {
