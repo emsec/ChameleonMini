@@ -621,8 +621,23 @@ uint16_t EV0CmdChangeKey(uint8_t *Buffer, uint16_t ByteCount) {
         Buffer[0] = STATUS_LENGTH_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
+
+        KeyId = Buffer[1];
+
+    /* Are we changing the card master key?
+     * Which crypto type are we using?
+     * TODO: Is this really ok for non master keys that are AES/3k3DES? */
+    uint8_t keySize = ByteCount - 2;
+    uint8_t cryptoType = 0xFF;
+
+    if (keySize == CRYPTO_AES_KEY_SIZE || keySize == CRYPTO_2KTDEA_KEY_SIZE || keySize == CRYPTO_3KTDEA_KEY_SIZE) {
+        cryptoType = ProcessKeyNumber(&KeyId);
+    } else {
+        Buffer[0] = STATUS_NO_SUCH_KEY;
+        return DESFIRE_STATUS_RESPONSE_SIZE;
+    }
+
     /* Validate number of keys, and make sure the KeyId is valid given the AID selected */
-    KeyId = Buffer[1];
     if (!KeyIdValid(SelectedApp.Slot, KeyId)) {
         Buffer[0] = STATUS_PARAMETER_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
