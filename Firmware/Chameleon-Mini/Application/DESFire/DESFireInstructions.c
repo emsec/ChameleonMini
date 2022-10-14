@@ -817,29 +817,40 @@ uint16_t EV0CmdCreateApplication(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t Status;
     uint8_t KeyCount;
     uint8_t KeySettings;
+    uint8_t KeySettings2;
+
     /* Validate command length */
+    //TODO: Can contain optional fields
     if (ByteCount != 1 + 3 + 1 + 1) {
         Status = STATUS_LENGTH_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
+    UpdateIVIfNeeded(Buffer, ByteCount);
+
     /* Require the PICC app to be selected */
     if (!AuthenticatedWithPICCMasterKey) {
         Status = STATUS_PERMISSION_DENIED;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
     const DESFireAidType Aid = { Buffer[1], Buffer[2], Buffer[3] };
     KeySettings = Buffer[4];
-    KeyCount = Buffer[5];
+    KeyCount = Buffer[5] & 0x0f; //Only the lower four bits contain key count
+    KeySettings2 = Buffer[5] & 0xf0;
+
     /* Validate number of keys: less than max (one for the Master Key) */
     if (KeyCount > DESFIRE_MAX_KEYS || KeyCount == 0) {
         Status = STATUS_PARAMETER_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
     if (PMKRequiredForAppCreateDelete() != 0x00 && (Authenticated == 0x00 || AuthenticatedWithKey != 0x00)) {
         /* PICC master key authentication is required */
         Status = STATUS_AUTHENTICATION_ERROR;
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
+
     /* Done */
     Status = CreateApp(Aid, KeyCount, KeySettings);
     return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
@@ -1223,17 +1234,21 @@ uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount) {
     }
     AccessRights = ReadFileAccessRights(SelectedApp.Slot, fileIndex);
     CommSettings = ReadFileCommSettings(SelectedApp.Slot, fileIndex);
-    /* Verify authentication: read or read&write required */
-    switch (ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ)) {
-        case VALIDATED_ACCESS_DENIED:
-            Status = STATUS_AUTHENTICATION_ERROR;
-            return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
-        case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
-            CommSettings = DESFIRE_COMMS_PLAINTEXT;
-        /* Fall through */
-        case VALIDATED_ACCESS_GRANTED:
-            /* Carry on */
-            break;
+
+    /* Verify authentication: read or read&write required
+     * Except for cases when AppDirectory can be read freely*/
+    if (!AMKFreeDirectoryListing()) {
+        switch (ValidateAuthentication(AccessRights, VALIDATE_ACCESS_READWRITE | VALIDATE_ACCESS_READ)) {
+            case VALIDATED_ACCESS_DENIED:
+                Status = STATUS_AUTHENTICATION_ERROR;
+                return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
+            case VALIDATED_ACCESS_GRANTED_PLAINTEXT:
+                CommSettings = DESFIRE_COMMS_PLAINTEXT;
+            /* Fall through */
+            case VALIDATED_ACCESS_GRANTED:
+                /* Carry on */
+                break;
+        }
     }
 
     /* Validate the file type */
