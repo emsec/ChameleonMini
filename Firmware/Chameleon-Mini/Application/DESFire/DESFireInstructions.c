@@ -796,13 +796,14 @@ uint16_t EV0CmdGetApplicationIds1(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
     /* Require the PICC app to be selected */
-    if (!AuthenticatedWithPICCMasterKey) {
+    if (SelectedApp.Slot != DESFIRE_PICC_APP_SLOT) {
         Buffer[0] = STATUS_PERMISSION_DENIED;
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
+
+    //(ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_FREE_DIRECTORY_LIST)
     /* Verify authentication settings */
-    if ((ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_FREE_DIRECTORY_LIST) &&
-            (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID)) {
+    if (!AMKFreeDirectoryListing()  && (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID)) {
         /* PICC master key authentication is required */
         Buffer[0] = STATUS_AUTHENTICATION_ERROR;
         return DESFIRE_STATUS_RESPONSE_SIZE;
