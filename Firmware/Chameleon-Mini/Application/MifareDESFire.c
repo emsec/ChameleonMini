@@ -428,7 +428,7 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         }
         ProcessedByteCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount);
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ASBITS(ProcessedByteCount));
-    } else if ((ByteCount >= 8 && DesfireCLA(Buffer[1]) &&
+    } else if ((ByteCount >= 8 && Buffer[1] == DESFIRE_NATIVE_CLA &&
                 Buffer[3] == 0x00 && Buffer[4] == 0x00 && Buffer[5] == ByteCount - 8) ||
                (ByteCount >= 9 && DesfireCLA(Buffer[1]) &&
                 Buffer[3] == 0x00 && Buffer[4] == 0x00 && Buffer[5] == ByteCount - 9)) {
