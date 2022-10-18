@@ -801,7 +801,6 @@ uint16_t EV0CmdGetApplicationIds1(uint8_t *Buffer, uint16_t ByteCount) {
         return DESFIRE_STATUS_RESPONSE_SIZE;
     }
 
-    //(ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey) & DESFIRE_FREE_DIRECTORY_LIST)
     /* Verify authentication settings */
     if (!AMKFreeDirectoryListing()  && (AuthenticatedWithKey != DESFIRE_MASTER_KEY_ID)) {
         /* PICC master key authentication is required */
@@ -1229,7 +1228,7 @@ uint16_t EV0CmdReadData(uint8_t *Buffer, uint16_t ByteCount) {
     FileNum = Buffer[1];
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, FileNum);
     if (fileIndex >= DESFIRE_MAX_FILES) {
-        Status = STATUS_PARAMETER_ERROR;
+        Status = STATUS_FILE_NOT_FOUND;
         DEBUG_PRINT_P(PSTR("FileIndexError"));
         return ExitWithStatus(Buffer, Status, DESFIRE_STATUS_RESPONSE_SIZE);
     }
