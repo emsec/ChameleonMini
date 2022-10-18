@@ -71,7 +71,7 @@ desfire-gallagher: EXTRA_CONFIG_SETTINGS:=-DDESFIRE_CUSTOM_MAX_APPS=3
 				-DDESFIRE_CUSTOM_MAX_KEYS=3 \
 				-DDESFIRE_CRYPTO1_SAVE_SPACE \
 				-finline-small-functions
-desfire-gallagher: TARGET_CUSTOM_BUILD_NAME:=DESFire
+desfire-gallagher: TARGET_CUSTOM_BUILD_NAME:=DESFire_Gallagher
 desfire-gallagher: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
 desfire-gallagher: custom-build
 
