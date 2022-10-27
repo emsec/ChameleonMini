@@ -61,20 +61,6 @@ desfire: TARGET_CUSTOM_BUILD_NAME:=DESFire
 desfire: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
 desfire: custom-build
 
-desfire-gallagher: FLASH_DATA_SIZE_CONST:=0F000 # Eight settings (save some space): 4 * 0x2000
-desfire-gallagher: FLASH_DATA_SIZE:=0x$(FLASH_DATA_SIZE_CONST)
-desfire-gallagher: FLASH_DATA_SIZE_UPPER_CONST:=20000
-desfire-gallagher: FLASH_DATA_ADDR:=0x$(shell echo $$(( 0x$(FLASH_DATA_SIZE_UPPER_CONST) - 0x$(FLASH_DATA_SIZE_CONST) )) | xargs -0 printf %X)
-desfire-gallagher: SUPPORTED_TAGS_BUILD:=-DCONFIG_MF_DESFIRE_SUPPORT
-desfire-gallagher: EXTRA_CONFIG_SETTINGS:=-DDESFIRE_CUSTOM_MAX_APPS=3
-                -DDESFIRE_CUSTOM_MAX_FILES=4  \
-				-DDESFIRE_CUSTOM_MAX_KEYS=3 \
-				-DDESFIRE_CRYPTO1_SAVE_SPACE \
-				-finline-small-functions
-desfire-gallagher: TARGET_CUSTOM_BUILD_NAME:=DESFire_Gallagher
-desfire-gallagher: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
-desfire-gallagher: custom-build
-
 desfire-dev: FLASH_DATA_SIZE_CONST:=08000 # Four settings (save some space): 4 * 0x2000
 desfire-dev: FLASH_DATA_SIZE:=0x$(FLASH_DATA_SIZE_CONST)
 desfire-dev: FLASH_DATA_SIZE_UPPER_CONST:=20000
