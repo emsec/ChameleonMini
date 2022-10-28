@@ -208,8 +208,8 @@ void SetAppProperty(DesfireCardLayout propId, BYTE AppSlot, SIZET Value) {
 
 bool KeyIdValid(uint8_t AppSlot, uint8_t KeyId) {
     if (KeyId >= DESFIRE_MAX_KEYS || KeyId >= ReadMaxKeyCount(AppSlot)) {
-        const char *debugMsg = PSTR("INVKEY-KeyId(%02x)-RdMax(%02x)");
-        DEBUG_PRINT_P(debugMsg, KeyId, ReadMaxKeyCount(AppSlot));
+        const char *debugMsg = PSTR("INVKEY-KeyId(%02x)-RdMax(%02x),App(%02x)");
+        DEBUG_PRINT_P(debugMsg, KeyId, ReadMaxKeyCount(AppSlot), AppSlot);
         return false;
     }
     return true;
@@ -304,10 +304,12 @@ void ReadAppKey(uint8_t AppSlot, uint8_t KeyId, uint8_t *Key, SIZET KeySize) {
     } else if (KeySize > CRYPTO_MAX_KEY_SIZE) {
         return;
     }
+
     SIZET keyStorageArrayBlockId = ReadKeyStorageAddress(AppSlot);
-    SIZET keyStorageArray[DESFIRE_MAX_KEYS];
-    ReadBlockBytes(keyStorageArray, keyStorageArrayBlockId, 2 * DESFIRE_MAX_KEYS);
-    ReadBlockBytes(Key, keyStorageArray[KeyId], KeySize);
+
+    SIZET keyBlockID;
+    ReadBlockBytes(&keyBlockID, keyStorageArrayBlockId + (sizeof(SIZET) * KeyId), sizeof(SIZET));
+    ReadBlockBytes(Key, keyBlockID, KeySize);
 }
 
 void WriteAppKey(uint8_t AppSlot, uint8_t KeyId, const uint8_t *Key, SIZET KeySize) {
@@ -316,10 +318,12 @@ void WriteAppKey(uint8_t AppSlot, uint8_t KeyId, const uint8_t *Key, SIZET KeySi
     } else if (KeySize > CRYPTO_MAX_KEY_SIZE) {
         return;
     }
+
     SIZET keyStorageArrayBlockId = ReadKeyStorageAddress(AppSlot);
-    SIZET keyStorageArray[DESFIRE_MAX_KEYS];
-    ReadBlockBytes(keyStorageArray, keyStorageArrayBlockId, 2 * DESFIRE_MAX_KEYS);
-    WriteBlockBytes(Key, keyStorageArray[KeyId], KeySize);
+
+    SIZET keyBlockID;
+    ReadBlockBytes(&keyBlockID, keyStorageArrayBlockId + (sizeof(SIZET) * KeyId), sizeof(SIZET));
+    WriteBlockBytes(Key, keyBlockID, KeySize);
 }
 
 /*
@@ -662,11 +666,14 @@ uint16_t CreateApp(const DESFireAidType Aid, uint8_t KeyCount, uint8_t KeySettin
     } else {
         SIZET keyAddresses[DESFIRE_MAX_KEYS];
         memset(keyAddresses, 0x00, sizeof(SIZET) * DESFIRE_MAX_KEYS);
-        // Allocate the application Master Key:
-        keyAddresses[0] = AllocateBlocks(APP_CACHE_MAX_KEY_BLOCK_SIZE);
-        if (keyAddresses[0] == 0) {
-            return STATUS_OUT_OF_EEPROM_ERROR;
+        // Allocate space for all keys:
+        for (uint8_t i = 0; i < KeyCount; ++i) {
+            keyAddresses[i] = AllocateBlocks(APP_CACHE_MAX_KEY_BLOCK_SIZE);
+            if (keyAddresses[i] == 0) {
+                return STATUS_OUT_OF_EEPROM_ERROR;
+            }
         }
+
         BYTE cryptoBlankKeyData[CRYPTO_MAX_KEY_SIZE];
         memset(cryptoBlankKeyData, 0x00, CRYPTO_MAX_KEY_SIZE);
         WriteBlockBytes(cryptoBlankKeyData, keyAddresses[0], CRYPTO_MAX_KEY_SIZE);

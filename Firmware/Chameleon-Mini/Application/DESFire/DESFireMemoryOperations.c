@@ -64,9 +64,11 @@ uint16_t AllocateBlocksMain(uint16_t BlockCount) {
     if (Block + BlockCount < Block || Block + BlockCount >= StorageSizeToBytes(Picc.StorageSize) || Block + BlockCount >= MEMORY_SIZE_PER_SETTING / BLOCKWISE_IO_MULTIPLIER) {
         return 0;
     }
+
     Picc.FirstFreeBlock = Block + BlockCount;
     DESFIRE_FIRST_FREE_BLOCK_ID = Picc.FirstFreeBlock;
     SynchronizePICCInfo();
+
     return Block;
 }
 

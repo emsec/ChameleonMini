@@ -58,7 +58,7 @@ This notice must be retained at the top of all source files where indicated.
 #endif
 
 #ifdef MEMORY_LIMITED_TESTING
-#define DESFIRE_MAX_KEYS                       (2)
+#define DESFIRE_MAX_KEYS                       (3)
 #else
 #ifdef DESFIRE_CUSTOM_MAX_KEYS
 #define DESFIRE_MAX_KEYS                       (DESFIRE_CUSTOM_MAX_KEYS)

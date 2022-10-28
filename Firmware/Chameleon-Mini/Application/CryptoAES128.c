@@ -36,6 +36,9 @@
 
 #include "CryptoAES128.h"
 
+#include "MifareDESFire.h"
+#include "DESFire/DESFireLogging.h"
+
 #define NOP()	__asm__ __volatile__("nop")
 
 /* AES interrupt callback function pointer. */
@@ -454,22 +457,39 @@ void CryptoAESEncrypt_CBCReceive(uint16_t Count, uint8_t *PlainText, uint8_t *Ci
     CryptoAES_CBCRecv(Count, PlainText, CipherText, IV, Key, CryptoSpec);
 }
 
-uint16_t appendBufferCRC32C(uint8_t *bufferData, uint16_t bufferSize) {
-    uint32_t workingCRC = INIT_CRC32C_VALUE;
-    for (int i = 0; i < bufferSize; i++) {
-        workingCRC = workingCRC ^ *(bufferData++);
-        for (int j = 0; j < 8; j++) {
-            if (workingCRC & 1) {
-                workingCRC = (workingCRC >> 1) ^ LE_CRC32C_POLYNOMIAL;
-            } else {
-                workingCRC = workingCRC >> 1;
-            }
-        }
+//Taken from the Proxmark DESFire lib
+static void desfire_crc32_byte(uint32_t *crc, const uint8_t value) {
+    /* x32 + x26 + x23 + x22 + x16 + x12 + x11 + x10 + x8 + x7 + x5 + x4 + x2 + x + 1 */
+    const uint32_t poly = 0xEDB88320;
+
+    *crc ^= value;
+    for (int current_bit = 7; current_bit >= 0; current_bit--) {
+        int bit_out = (*crc) & 0x00000001;
+        *crc >>= 1;
+        if (bit_out)
+            *crc ^= poly;
     }
+}
+
+//Taken from the Proxmark DESFire lib
+void desfire_crc32(const uint8_t *data, const uint16_t len, uint8_t *crc) {
+    uint32_t desfire_crc = 0xFFFFFFFF;
+    for (uint16_t i = 0; i < len; i++) {
+        desfire_crc32_byte(&desfire_crc, data[i]);
+    }
+
+    *((uint32_t *)(crc)) = (desfire_crc);
+}
+
+uint16_t appendBufferCRC32C(uint8_t *bufferData, uint16_t bufferSize) {
+    uint8_t crc[4];
+    desfire_crc32(bufferData, bufferSize, crc);
+
     // Append the CRC32C bytes in little endian byte order to the end of the buffer:
-    bufferData[bufferSize] = (uint8_t)(workingCRC & 0x000000FF);
-    bufferData[bufferSize + 1] = (uint8_t)((workingCRC & 0x0000FF00) >> 8);
-    bufferData[bufferSize + 2] = (uint8_t)((workingCRC & 0x00FF0000) >> 16);
-    bufferData[bufferSize + 4] = (uint8_t)((workingCRC & 0xFF000000) >> 24);
+    bufferData[bufferSize] = crc[0];
+    bufferData[bufferSize + 1] = crc[1];
+    bufferData[bufferSize + 2] = crc[2];
+    bufferData[bufferSize + 3] = crc[3];
+
     return bufferSize + 4;
 }

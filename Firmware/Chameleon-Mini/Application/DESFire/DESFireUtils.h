@@ -35,7 +35,7 @@ This notice must be retained at the top of all source files where indicated.
 #define ASBITS(bc)   ((bc) * BITS_PER_BYTE)
 
 #define GET_LE16(p)     (*((uint16_t*)&(p)[0]))
-#define GET_LE24(p)     (*((__uint24*)&(p)[0]))
+#define GET_LE24(p)     (*((__uint24*)&(p)[0])) // Careful! Don't use this if the first byte is LSB!!
 #define GET_LE32(p)     (*((uint32_t*)&(p)[0]))
 
 #define UnsignedTypeToUINT(typeValue) \

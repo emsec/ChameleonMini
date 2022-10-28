@@ -308,6 +308,8 @@ uint16_t ReadDataFileIterator(uint8_t *Buffer) {
 
 uint8_t WriteDataFileInternal(uint8_t *Buffer, uint16_t ByteCount) {
     uint8_t Status;
+
+    //decipher?
     Status = WriteDataFileTransfer(Buffer, ByteCount);
     switch (Status) {
         case STATUS_OPERATION_OK:
@@ -337,7 +339,7 @@ uint8_t CreateFileCommonValidation(uint8_t FileNum) {
         return STATUS_AUTHENTICATION_ERROR;
     }
     uint8_t selectedKeyPerms = ReadKeySettings(SelectedApp.Slot, AuthenticatedWithKey);
-    if ((selectedKeyPerms & DESFIRE_FREE_CREATE_DELETE) == 0x00) {
+    if ((selectedKeyPerms & DESFIRE_FREE_CREATE_DELETE) == 0x00 && !AuthenticatedWithPICCMasterKey) {
         return STATUS_PERMISSION_DENIED;
     }
     return STATUS_OPERATION_OK;
@@ -350,6 +352,12 @@ uint8_t ValidateAuthentication(uint16_t AccessRights, uint16_t CheckMask) {
         GetReadWritePermissions(CheckMask & AccessRights),
         GetChangePermissions(CheckMask & AccessRights)
     };
+
+    if (DesfireDebuggingOn) {
+        const char *debugMsg = PSTR("Perm-R(%02x),W(%02x),RW(%02x),CHG(%02x)");
+        DEBUG_PRINT_P(debugMsg, SplitPerms[0], SplitPerms[1], SplitPerms[2], SplitPerms[3]);
+    }
+
     bool PermsRelevant[] = {
         CheckMask & VALIDATE_ACCESS_READ,
         CheckMask & VALIDATE_ACCESS_WRITE,

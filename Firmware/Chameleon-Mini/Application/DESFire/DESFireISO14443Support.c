@@ -354,6 +354,9 @@ uint16_t ISO144433APiccProcess(uint8_t *Buffer, uint16_t BitCount) {
         StateRetryCount = 0;
     } else if (ISO14443ACmdIsWUPA(Cmd)) {
         DesfireLogEntry(LOG_INFO_APP_CMD_WUPA, NULL, 0);
+        //Resetting the selected app seems to be required but not docummented
+        const DESFireAidType Aid = {0,0,0};
+        SelectApp(Aid);
         ISO144433ASwitchState(ISO14443_3A_STATE_IDLE);
         StateRetryCount = 0;
     } else if (ISO144433AIsHalt(Buffer, BitCount)) {

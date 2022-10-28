@@ -115,15 +115,15 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT:
             break;
         case DESFIRE_COMMS_PLAINTEXT_MAC:
-            memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
+            //memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_DES:
-            memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
+            //memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_AES128:
-            memset(SessionIV, 0, sizeof(SessionIVByteSize));
+            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
         default:
             return STATUS_PARAMETER_ERROR;
@@ -134,19 +134,19 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
 uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
     switch (CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT:
-            memset(SessionIV, 0, sizeof(SessionIVByteSize));
+            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = 0;
             break;
         case DESFIRE_COMMS_PLAINTEXT_MAC:
-            memset(SessionIV, 0, sizeof(SessionIVByteSize));
+            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_DES:
-            memset(SessionIV, 0, sizeof(SessionIVByteSize));
+            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_AES128:
-            memset(SessionIV, 0, sizeof(SessionIVByteSize));
+            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
             break;
         default:
@@ -338,6 +338,7 @@ void FactoryFormatPiccEV1(uint8_t StorageSize) {
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV1;
     Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV1;
     /* Reset the free block pointer */
+    InitBlockSizes();
     Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
     /* Continue with user data initialization */
     SynchronizePICCInfo();

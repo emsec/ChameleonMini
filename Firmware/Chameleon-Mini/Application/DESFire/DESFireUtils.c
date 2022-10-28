@@ -148,6 +148,9 @@ bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount) {
 
 uint16_t DesfirePreprocessAPDUWrapper(uint8_t CommMode, uint8_t *Buffer, uint16_t BufferSize, bool TruncateChecksumBytes) {
     uint16_t ChecksumBytes = 0;
+    const char *debugMsg = PSTR("Commode(%02x)");
+    DEBUG_PRINT_P(debugMsg, CommMode);
+
     switch (CommMode) {
         case DESFIRE_COMMS_PLAINTEXT_MAC: {
             if (DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_DES || DesfireCommandState.CryptoMethodType == CRYPTO_TYPE_2KTDEA) {

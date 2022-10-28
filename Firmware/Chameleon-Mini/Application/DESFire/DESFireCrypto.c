@@ -37,6 +37,7 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireISO14443Support.h"
 #include "DESFireStatusCodes.h"
 #include "DESFireLogging.h"
+#include "System.h"
 
 CryptoKeyBufferType SessionKey = { 0 };
 CryptoIVBufferType SessionIV = { 0 };
@@ -56,9 +57,11 @@ void InvalidateAuthState(BYTE keepPICCAuthData) {
     if (!keepPICCAuthData) {
         AuthenticatedWithPICCMasterKey = false;
         memset(&SessionKey[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
-        memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
-        SessionIVByteSize = 0;
     }
+
+    memset(&SessionIV[0], 0x00, CRYPTO_MAX_BLOCK_SIZE);
+    SessionIVByteSize = 0;
+
     Authenticated = false;
     AuthenticatedWithKey = DESFIRE_NOT_AUTHENTICATED;
     Iso7816FileSelected = false;

@@ -121,14 +121,93 @@ void MifareDesfireAppReset(void) {
 
 void MifareDesfireAppTick(void) {
     if (!CheckStateRetryCount(false)) {
-        ResetISOState();
-        MifareDesfireReset();
+        //ResetISOState();
+        //MifareDesfireReset();
     }
 }
 
 void MifareDesfireAppTask(void) {
     /* EMPTY -- Do nothing. */
 }
+
+//Checks if this is an EV1 frame which's content needs decryption.
+//TODO: Other modes than AES
+uint16_t CheckNeedForDecryptionAndDecrypt(uint8_t *Buffer, uint16_t ByteCount) {
+    if (ByteCount == 0) {
+        return 0;
+    }
+
+    if (Buffer[0] == CMD_CHANGE_KEY_SETTINGS) {
+        //TODO
+        return ByteCount;
+    }
+
+    if (Buffer[0] == CMD_CHANGE_KEY) {
+        if (((ByteCount - 2) % 16) != 0 ) {
+            return ByteCount;
+        }
+
+        //TODO: 0x0A and 0x1A autrhenticate commands
+
+        uint8_t tmpIV[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        CryptoAESDecryptBuffer(ByteCount - 2, Buffer + ByteCount, Buffer + 2, tmpIV, SessionKey);
+        memmove(Buffer + 2, Buffer + ByteCount, ByteCount - 2);
+
+        //TODO:
+        //check decryption success
+
+        //UnXOR
+        //TODO: Check that the application id matches too? EV1 datasheet, page 43, unclear
+        if ((AuthenticatedWithKey != Buffer[1]) && (ReadKeySettings(SelectedApp.Slot, Buffer[1]) == 0x0E)) {
+            //Strip padding
+            // cmd + keyNo + data + vers + crc + crc
+            ByteCount = 1 + 1 + 16 + 1 + 4 + 4;
+
+            uint8_t tmpKeyBuff[16];
+            ReadAppKey(SelectedApp.Slot, Buffer[1], tmpKeyBuff, 16);
+            for (int i = 2; i < 18; ++i) {
+                Buffer[i] = Buffer[i] ^ tmpKeyBuff[i];
+            }
+            //TODO:
+            //Check first checksum
+            //Check second checksum
+            //Strip checksums
+            return 18;
+        } else {
+            //Strip padding
+            //cmd + keyNo + data + vers + crc
+            ByteCount = 1 + 1 + 16 + 1 + 4;
+
+            //Check checksum
+            uint8_t recvCRC[4];
+            recvCRC[0] = Buffer[19];
+            recvCRC[1] = Buffer[20];
+            recvCRC[2] = Buffer[21];
+            recvCRC[3] = Buffer[22];
+            appendBufferCRC32C(Buffer, 19);
+            if (recvCRC[0] != Buffer[19] || recvCRC[1] != Buffer[20] || recvCRC[2] != Buffer[21] || recvCRC[3] != Buffer[22]) {
+                DEBUG_PRINT_P(PSTR("CRC does not match"));
+                return 0;
+            } else {
+                return 18; //Caution! Stripping KeyVers!
+            }
+        }
+    }
+
+    if (Buffer[0] == CMD_SET_CONFIGURATION) {
+        //TODO
+        return ByteCount;
+    }
+
+    if (Buffer[0] == CMD_CHANGE_FILE_SETTINGS) {
+        //TODO
+        return ByteCount;
+    }
+
+    return ByteCount;
+}
+
+
 
 uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
 
@@ -137,6 +216,9 @@ uint16_t MifareDesfireProcessCommand(uint8_t *Buffer, uint16_t ByteCount) {
     } else if (Buffer[0] != STATUS_ADDITIONAL_FRAME) {
         DesfireState = DESFIRE_IDLE;
     }
+
+    ByteCount = CheckNeedForDecryptionAndDecrypt(Buffer, ByteCount);
+
     DesfireLogEntry(LOG_INFO_DESFIRE_INCOMING_DATA, (void *) Buffer, ByteCount);
 
     uint16_t ReturnBytes = 0;
@@ -256,9 +338,16 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     } else {
         ISO14443ALastIncomingDataFrameBits = ISO14443AStoreLastDataFrameAndReturn(Buffer, BitCount);
     }
+
     if (ByteCount >= 8 && DesfireCLA(Buffer[1]) && Buffer[2] == STATUS_ADDITIONAL_FRAME &&
-            Buffer[3] == 0x00 && Buffer[4] == 0x00 && Buffer[5] == ByteCount - 8 &&
+            Buffer[3] == 0x00 && Buffer[4] == 0x00 && (Buffer[5] == ByteCount - 8 || Buffer[5] == ByteCount - 9) &&
             DesfireStateExpectingAdditionalFrame(DesfireState)) {
+
+        bool nine = false;
+        if (Buffer[5] == ByteCount - 9) {
+            nine = true;
+        }
+
         /* [PM3-V1] : Handle the native-wrapped version of the additional frame data: */
         uint16_t checkSumPostVerifyBytes = DesfirePreprocessAPDUAndTruncate(ActiveCommMode, Buffer, ByteCount);
         if (checkSumPostVerifyBytes == 0) {
@@ -274,8 +363,16 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         if (ProcessedByteCount == 0) {
             return ISO14443A_APP_NO_RESPONSE;
         }
-        /* Re-wrap into padded APDU form */
+
+        uint8_t StatusByte = Buffer[0];
         Buffer[0] = PrologueCounterByte;
+        if (nine) {
+            Buffer[ProcessedByteCount] = 0x91;
+            Buffer[ProcessedByteCount + 1] = StatusByte;
+            ++ProcessedByteCount;
+        }
+
+        /* Re-wrap into padded APDU form */
         uint16_t ProcessedByteCountWithCRCA = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount + 1);
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ASBITS(ProcessedByteCountWithCRCA));
     } else if (ByteCount >= 3 && Buffer[2] == STATUS_ADDITIONAL_FRAME && DesfireStateExpectingAdditionalFrame(DesfireState)) {
@@ -331,7 +428,7 @@ uint16_t MifareDesfireAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         }
         ProcessedByteCount = DesfirePostprocessAPDU(ActiveCommMode, Buffer, ProcessedByteCount);
         return ISO14443AStoreLastDataFrameAndReturn(Buffer, ASBITS(ProcessedByteCount));
-    } else if ((ByteCount >= 8 && DesfireCLA(Buffer[1]) &&
+    } else if ((ByteCount >= 8 && Buffer[1] == DESFIRE_NATIVE_CLA &&
                 Buffer[3] == 0x00 && Buffer[4] == 0x00 && Buffer[5] == ByteCount - 8) ||
                (ByteCount >= 9 && DesfireCLA(Buffer[1]) &&
                 Buffer[3] == 0x00 && Buffer[4] == 0x00 && Buffer[5] == ByteCount - 9)) {
