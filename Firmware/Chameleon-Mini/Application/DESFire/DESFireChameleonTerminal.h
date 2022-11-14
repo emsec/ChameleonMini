@@ -47,6 +47,9 @@ CommandStatusIdType CommandDESFireSetCommMode(char *OutMessage, const char *InPa
 #define DFCOMMAND_SET_ENCMODE                 "DF_ENCMODE"
 CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutMessage, const char *InParams);
 
+#define DFCOMMAND_SETUP_GALLAGHER                 "DF_SETGALL"
+CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *InParams);
+
 #endif /* DESFire Support */
 
 #endif /* __DESFIRE_CHAMELEON_TERMINAL_H__ */

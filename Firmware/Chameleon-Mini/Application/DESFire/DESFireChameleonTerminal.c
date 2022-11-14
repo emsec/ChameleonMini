@@ -34,6 +34,9 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFirePICCControl.h"
 #include "DESFireMemoryOperations.h"
 #include "DESFireLogging.h"
+#include "DESFireGallagher.h"
+
+#include <inttypes.h>
 
 bool IsDESFireConfiguration(void) {
     return GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE ||
@@ -151,6 +154,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
     MemoryStoreDesfireHeaderBytes();
     return COMMAND_INFO_OK_ID;
 }
+
 #endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */
 
 CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InParams) {
@@ -224,4 +228,29 @@ CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *
     return COMMAND_INFO_OK;
 }
 
+CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *InParams) {
+
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    uint32_t cardId;
+    uint16_t facilityId;
+    uint8_t issueLevel;
+    uint8_t regionCode;
+
+    if (sscanf_P(InParams, PSTR("%"SCNd32",%"SCNd16",%"SCNd8",%"SCNd8), cardId, facilityId, issueLevel, regionCode) != 4) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    bool ret = CreateGallagherApp(cardId, facilityId, issueLevel, regionCode);
+
+    if (!ret) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    return COMMAND_INFO_OK;
+}
+
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */
+

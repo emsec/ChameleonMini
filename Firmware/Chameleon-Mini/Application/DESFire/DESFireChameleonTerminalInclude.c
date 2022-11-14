@@ -46,7 +46,15 @@ This notice must be retained at the top of all source files where indicated.
     .ExecParamFunc  = NO_FUNCTION,
     .SetFunc        = CommandDESFireSetEncryptionMode,
     .GetFunc        = NO_FUNCTION
+}, {
+    .Command        = DFCOMMAND_SETUP_GALLAGHER,
+    .ExecFunc       = NO_FUNCTION,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = CommandDESFireSetupGallagher,
+    .GetFunc        = NO_FUNCTION
 },
+
+
 
 #endif
 
