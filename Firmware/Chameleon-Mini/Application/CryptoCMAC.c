@@ -199,8 +199,12 @@ bool DesfireCMACGenerateSubkeys(uint8_t cryptoType, const uint8_t *keyData, uint
     return true;
 }
 
+bool DesfireCryptoCMAC(uint8_t cryptoType, const uint8_t *keyData, uint8_t *bufferDataIn, uint16_t bufferSize, uint8_t *IV, uint8_t *cmac){
+    return DesfireCryptoCMACEx(cryptoType, keyData, bufferDataIn, bufferSize, IV, cmac, 0);
+}
+
 //Taken from https://github.com/RfidResearchGroup/proxmark3/blob/master/client/src/mifare/desfirecrypto.c
-bool DesfireCryptoCMAC(uint8_t cryptoType, const uint8_t *keyData, uint8_t *bufferDataIn, uint16_t bufferSize, uint8_t *IV, uint8_t *cmac) {
+bool DesfireCryptoCMACEx(uint8_t cryptoType, const uint8_t *keyData, uint8_t *bufferDataIn, uint16_t bufferSize, uint8_t *IV, uint8_t *cmac, uint16_t minlen) {
     uint8_t kbs;
     uint8_t len = bufferSize;
     uint8_t * bufferData = bufferDataIn + bufferSize;
@@ -223,9 +227,9 @@ bool DesfireCryptoCMAC(uint8_t cryptoType, const uint8_t *keyData, uint8_t *buff
 
     DesfireCMACGenerateSubkeys(cryptoType, keyData, sk1, sk2);
 
-    if ((!len) || (len % kbs)) {
+    if ((!len) || (len % kbs) || (len < minlen)) {
         bufferData[len++] = 0x80;
-        while (len % kbs) {
+        while (len % kbs || len < minlen) {
             bufferData[len++] = 0x00;
         }
         bin_xor(bufferData + len - kbs, sk2, kbs);

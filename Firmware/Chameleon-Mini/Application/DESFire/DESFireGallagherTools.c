@@ -41,7 +41,7 @@ bool MifareKdfAn10922(uint8_t *key, uint8_t CryptoType,
             return false;
     }
 
-    uint8_t buffer[CRYPTO_MAX_BLOCK_SIZE * 3] = {0};
+    uint8_t buffer[96] = {0};
 
     if (CryptoType == CRYPTO_TYPE_AES128) {
         buffer[0] = 0x01;
@@ -49,7 +49,7 @@ bool MifareKdfAn10922(uint8_t *key, uint8_t CryptoType,
 
         uint8_t IV[CRYPTO_AES_BLOCK_SIZE];
         memset(IV, 0, CRYPTO_AES_BLOCK_SIZE);
-        DesfireCryptoCMAC(CryptoType, key, buffer, len + 1, IV, diversified_key);
+        DesfireCryptoCMACEx(CryptoType, key, buffer, len + 1, IV, diversified_key, 2*kbs);
 
         return true;
     } else if (CryptoType == CRYPTO_TYPE_2KTDEA) {
