@@ -6,6 +6,10 @@
 #define CHAMELEON_MINI_DESFIREGALLAGHER_H
 
 #include "DESFireCrypto.h"
+#include "DESFireApplicationDirectory.h"
+#include "Configuration.h"
+#include "DESFirePICCControl.h"
+#include "DESFireStatusCodes.h"
 
 //Warning - running this function resets the AUTH state!
 bool CreateGallagherApp(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode);

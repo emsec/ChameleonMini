@@ -229,17 +229,20 @@ CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *
 }
 
 CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *InParams) {
+    DEBUG_PRINT_P(PSTR("Running DF_SETGALL"));
+    //for (uint8_t i = 0; i < 15; ++i)
+    //    OutMessage[i] = InParams[i];
 
     if (!IsDESFireConfiguration()) {
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
 
-    uint32_t cardId;
-    uint16_t facilityId;
-    uint8_t issueLevel;
-    uint8_t regionCode;
+    uint32_t cardId = 0xFFFFFFFF;
+    uint16_t facilityId = 0xFFFF;
+    uint8_t issueLevel = 0xFF;
+    uint8_t regionCode = 0xFF;
 
-    if (sscanf_P(InParams, PSTR("%"SCNd32",%"SCNd16",%"SCNd8",%"SCNd8), cardId, facilityId, issueLevel, regionCode) != 4) {
+    if (sscanf_P(InParams, PSTR("C%"SCNu32"F%"SCNu16"I%"SCNu8"R%"SCNu8), &cardId, &facilityId, &issueLevel, &regionCode) != 4) {
         return COMMAND_ERR_INVALID_PARAM_ID;
     }
 

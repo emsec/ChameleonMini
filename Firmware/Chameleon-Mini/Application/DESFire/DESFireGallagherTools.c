@@ -17,6 +17,8 @@
 
 #include <string.h>
 #include "DESFireGallagherTools.h"
+#include "DESFireLogging.h"
+#include "DESFireUtils.h"
 
 // This function is almot like cmac(...). but with some key differences.
 bool MifareKdfAn10922(uint8_t *key, uint8_t CryptoType,
@@ -90,8 +92,8 @@ bool MifareKdfAn10922(uint8_t *key, uint8_t CryptoType,
     return false;
 }
 
-int mfdes_kdf_input_gallagher(uint8_t *uid, uint8_t uidLen, uint8_t keyNo,
-                              uint32_t aid, uint8_t *kdfInputOut, uint8_t *kdfInputLen) {
+uint8_t mfdes_kdf_input_gallagher(uint8_t *uid, uint8_t uidLen, uint8_t keyNo,
+                                  DESFireAidType aid, uint8_t *kdfInputOut, uint8_t *kdfInputLen) {
     if (uid == NULL || (uidLen != 4 && uidLen != 7) || keyNo > 2 || kdfInputOut == NULL || kdfInputLen == NULL) {
         return 1;
     }
@@ -99,7 +101,7 @@ int mfdes_kdf_input_gallagher(uint8_t *uid, uint8_t uidLen, uint8_t keyNo,
     int len = 0;
     // If the keyNo == 1 or the aid is 000000, then omit the UID.
     // On the other hand, if the aid is 1f81f4 (config card) always include the UID.
-    if ((keyNo != 1 && aid != 0x000000) || (aid == 0x1f81f4)) {
+    if ((keyNo != 1 && aid != 0x000000) || (aid[0] == 0x1f && aid[1] == 0x81 && aid[2] == 0xf4)) {
         if (*kdfInputLen < (4 + uidLen)) {
             return 2;
         }
@@ -112,9 +114,9 @@ int mfdes_kdf_input_gallagher(uint8_t *uid, uint8_t uidLen, uint8_t keyNo,
 
     kdfInputOut[len++] = keyNo;
 
-    kdfInputOut[len++] = aid & 0xff;
-    kdfInputOut[len++] = (aid >> 8) & 0xff;
-    kdfInputOut[len++] = (aid >> 16) & 0xff;
+    kdfInputOut[len++] = aid[0];
+    kdfInputOut[len++] = aid[1];
+    kdfInputOut[len++] = aid[2];
 
     *kdfInputLen = len;
 
@@ -122,13 +124,21 @@ int mfdes_kdf_input_gallagher(uint8_t *uid, uint8_t uidLen, uint8_t keyNo,
 }
 
 bool hfgal_diversify_key(uint8_t *site_key, uint8_t *uid, uint8_t uid_len,
-                        uint8_t key_num, uint32_t aid, uint8_t *key_output) {
+                        uint8_t key_num, DESFireAidType aid, uint8_t *key_output) {
     // Generate diversification input
     uint8_t kdf_input_len = 11;
     uint32_t res = mfdes_kdf_input_gallagher(uid, uid_len, key_num, aid, key_output, &kdf_input_len);
     if (res) {
         return false;
     }
+
+    DesfireLogEntry(LOG_APP_NONCE_B, (void *) uid, 7);
+    DesfireLogEntry(LOG_APP_NONCE_B, (void *) &uid_len, 1);
+    DesfireLogEntry(LOG_APP_NONCE_B, (void *) &key_num, 1);
+    DesfireLogEntry(LOG_APP_NONCE_B, (void *) &aid, 4);
+
+    DEBUG_PRINT_P(PSTR("KDF input:"));
+    DesfireLogEntry(LOG_APP_NONCE_B, (void *) key_output, kdf_input_len);
 
     uint8_t key[CRYPTO_AES_KEY_SIZE];
     if (site_key == NULL) {
