@@ -38,6 +38,8 @@ This notice must be retained at the top of all source files where indicated.
 
 #include <inttypes.h>
 
+extern DESFireAidType selectedGallagherAID;
+
 bool IsDESFireConfiguration(void) {
     return GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE ||
            GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE_2KEV1 ||
@@ -246,13 +248,128 @@ CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *I
         return COMMAND_ERR_INVALID_PARAM_ID;
     }
 
-    bool ret = CreateGallagherApp(cardId, facilityId, issueLevel, regionCode);
+    bool ret = CreateGallagher(cardId, facilityId, issueLevel, regionCode);
 
     if (!ret) {
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
 
     return COMMAND_INFO_OK;
+}
+
+CommandStatusIdType CommandDESFireCreateGallagherApp(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    if (selectedGallagherAID[0] == 0xFF && selectedGallagherAID[1] == 0xFF && selectedGallagherAID[2] == 0xFF) {
+        snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("SET AID FIRST"));
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    DESFireAidType AID;
+    uint32_t cardId = 0xFFFFFFFF;
+    uint16_t facilityId = 0xFFFF;
+    uint8_t issueLevel = 0xFF;
+    uint8_t regionCode = 0xFF;
+
+    if (sscanf_P(InParams, PSTR("C%"SCNu32"F%"SCNu16"I%"SCNu8"R%"SCNu8),
+                 &cardId, &facilityId, &issueLevel, &regionCode
+                 ) != 4) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    bool ret = CreateGallagherAppWithAID(cardId, facilityId, issueLevel, regionCode, selectedGallagherAID);
+
+    if (!ret) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    return COMMAND_INFO_OK;
+}
+
+CommandStatusIdType CommandDESFireUpdateGallagherApp(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    if (selectedGallagherAID[0] == 0xFF && selectedGallagherAID[1] == 0xFF && selectedGallagherAID[2] == 0xFF) {
+        snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("SET AID FIRST"));
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    DESFireAidType AID;
+    uint32_t cardId = 0xFFFFFFFF;
+    uint16_t facilityId = 0xFFFF;
+    uint8_t issueLevel = 0xFF;
+    uint8_t regionCode = 0xFF;
+
+    if (sscanf_P(InParams, PSTR("C%"SCNu32"F%"SCNu16"I%"SCNu8"R%"SCNu8),
+                 &cardId, &facilityId, &issueLevel, &regionCode
+                 ) != 4) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    bool ret = UpdateGallagherFile(cardId, facilityId, issueLevel, regionCode, selectedGallagherAID);
+
+    if (!ret) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    return COMMAND_INFO_OK;
+}
+
+CommandStatusIdType CommandDESFireUpdateGallagherCardId(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    if (selectedGallagherAID[0] == 0xFF && selectedGallagherAID[1] == 0xFF && selectedGallagherAID[2] == 0xFF) {
+        snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("SET AID FIRST"));
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    uint32_t cardId;
+
+    if (sscanf_P(InParams, PSTR("%"SCNu32), &cardId) != 1) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    bool ret = UpdateGallagherAppCardID(cardId);
+
+    if (!ret) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    return COMMAND_INFO_OK;
+}
+
+CommandStatusIdType CommandDESFireSelectGallagherApp(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    DESFireAidType AID;
+
+    if (sscanf_P(InParams, PSTR("%2"SCNx8"%2"SCNx8"%2"SCNx8),
+                 &AID[0], &AID[1], &AID[2]) != 3) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    SelectGallagherAID(AID);
+
+    return COMMAND_INFO_OK;
+}
+
+CommandStatusIdType CommandDESFireSetGallagherSiteKey(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    //Use the SetGallagherSiteKey and ResetGallagherSiteKey fucntions
+
+    snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("NOT IMPLEMENTED"));
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */

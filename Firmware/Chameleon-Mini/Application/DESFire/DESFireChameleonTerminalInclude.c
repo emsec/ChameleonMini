@@ -52,6 +52,36 @@ This notice must be retained at the top of all source files where indicated.
     .ExecParamFunc  = NO_FUNCTION,
     .SetFunc        = CommandDESFireSetupGallagher,
     .GetFunc        = NO_FUNCTION
+}, {
+    .Command        = DFCOMMAND_CREATE_GALLAGHER_APP,
+    .ExecFunc       = NO_FUNCTION,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = CommandDESFireCreateGallagherApp,
+    .GetFunc        = NO_FUNCTION
+}, {
+    .Command        = DFCOMMAND_UPDATE_GALLAGHER_APP,
+    .ExecFunc       = NO_FUNCTION,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = CommandDESFireUpdateGallagherApp,
+    .GetFunc        = NO_FUNCTION
+}, {
+    .Command        = DFCOMMAND_UPDATE_GALLAGHER_CARD_ID,
+    .ExecFunc       = NO_FUNCTION,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = CommandDESFireUpdateGallagherCardId,
+    .GetFunc        = NO_FUNCTION
+}, {
+    .Command        = DFCOMMAND_SELECT_GALLAGHER_APP,
+    .ExecFunc       = NO_FUNCTION,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = CommandDESFireSelectGallagherApp,
+    .GetFunc        = NO_FUNCTION
+}, {
+    .Command        = DFCOMMAND_SET_GALLAGHER_SITE_KEY,
+    .ExecFunc       = NO_FUNCTION,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = CommandDESFireSetGallagherSiteKey,
+    .GetFunc        = NO_FUNCTION
 },
 
 

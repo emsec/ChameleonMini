@@ -12,10 +12,15 @@
 #include "DESFireStatusCodes.h"
 
 //Warning - running this function resets the AUTH state!
-bool CreateGallagherApp(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode);
+bool CreateGallagher(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode);
 
 //Warning - running this function resets the AUTH state!
-bool CreateGallagherAppWithAID(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode, uint8_t* AID);
+bool CreateGallagherWithAID(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode, uint8_t* AID);
+
+bool CreateGallagherAppWithAID(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode, DESFireAidType AID);
+bool UpdateGallagherFile(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode, DESFireAidType AID);
+bool UpdateGallagherAppCardID(uint32_t cardId);
+void SelectGallagherAID(DESFireAidType AID);
 
 void SetGallagherSiteKey(uint8_t* key);
 void ResetGallagherSiteKey();
