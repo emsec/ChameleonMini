@@ -1,3 +1,6 @@
+// This file contains adapted Gallagher functions from https://github.com/RfidResearchGroup/proxmark3
+// All credit goes to this repo
+
 //-----------------------------------------------------------------------------
 // Copyright (C) Proxmark3 contributors. See AUTHORS.md @ https://github.com/RfidResearchGroup/proxmark3 for details.
 //
@@ -12,8 +15,6 @@
 // GNU General Public License for more details.
 //
 // See LICENSE.txt @ https://github.com/RfidResearchGroup/proxmark3 for the text of the license.
-
-//This file contains adapted Gallagher functions from https://github.com/RfidResearchGroup/proxmark3 All credit goes to this repo
 
 #include <string.h>
 #include "DESFireGallagherTools.h"

@@ -1,6 +1,20 @@
+// This file contains adapted Gallagher functions from https://github.com/RfidResearchGroup/proxmark3
+// All credit goes to this repo
+
+//-----------------------------------------------------------------------------
+// Copyright (C) Proxmark3 contributors. See AUTHORS.md @ https://github.com/RfidResearchGroup/proxmark3 for details.
 //
-// Created by Tom on 13.11.2022.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// See LICENSE.txt @ https://github.com/RfidResearchGroup/proxmark3 for the text of the license.
 
 #ifndef CHAMELEON_MINI_DESFIREGALLAGHERTOOLS_H
 #define CHAMELEON_MINI_DESFIREGALLAGHERTOOLS_H

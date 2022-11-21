@@ -1,6 +1,23 @@
-//
-// Created by Tom on 27.10.2022.
-//
+/*
+This file from this firmware source
+is free software written by Tomas Preucil (github.com/tomaspre):
+You can redistribute it and/or modify
+it under the terms of this license.
+
+This software is intended for demonstration and testing purposes on your own hardware only.
+When setting up a Gallagher system, always use a non-default site key!
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+This notice must be retained at the top of all source files where indicated.
+*/
+
+/*
+ * DESFireGallagher.c
+ * Tomas Preucil (github.com/tomaspre)
+ */
 
 #include <string.h>
 #include "DESFireGallagher.h"
@@ -28,16 +45,16 @@ uint8_t GallagherSiteKey[16] = {
 };
 
 //Warning - running this function resets the AUTH state!
-bool CreateGallagher(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode) {
+bool CreateGallagherCard(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode) {
 
     //TODO: Find a suitable AID
     DESFireAidType AID = {0xF4, 0x81, 0x20};
 
-    return CreateGallagherAppWithAID(cardId, facilityId, issueLevel, regionCode, AID);
+    return CreateGallagherCardWithAID(cardId, facilityId, issueLevel, regionCode, AID);
 }
 
 //Warning - running this function resets the AUTH state!
-bool CreateGallagherWithAID(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode, DESFireAidType AID) {
+bool CreateGallagherCardWithAID(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode, DESFireAidType AID) {
     DEBUG_PRINT_P(PSTR("Creating Gallagher App"));
     DEBUG_PRINT_P(PSTR("CardId:(%u)"), cardId);
     DEBUG_PRINT_P(PSTR("F:(%u)IL:(%u)RC:(%u)"), facilityId, issueLevel, regionCode);

@@ -22,6 +22,9 @@ This notice must be retained at the top of all source files where indicated.
 /*
  * DESFireChameleonTerminal.h
  * Maxie D. Schmidt (github.com/maxieds)
+ *
+ * Part of this file was added by Tomas Preucil (github.com/tomaspre)
+ * This part is indicated in the code below
  */
 
 #ifndef __DESFIRE_CHAMELEON_TERMINAL_H__
@@ -47,6 +50,7 @@ CommandStatusIdType CommandDESFireSetCommMode(char *OutMessage, const char *InPa
 #define DFCOMMAND_SET_ENCMODE                 "DF_ENCMODE"
 CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutMessage, const char *InParams);
 
+//The rest of the file was added by tomaspre
 #define DFCOMMAND_SETUP_GALLAGHER                      "DF_SETUP_GALL"
 CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *InParams);
 

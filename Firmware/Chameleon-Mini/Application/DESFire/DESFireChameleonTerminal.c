@@ -22,6 +22,9 @@ This notice must be retained at the top of all source files where indicated.
 /*
  * DESFireChameleonTerminal.c
  * Maxie D. Schmidt (github.com/maxieds)
+ *
+ * Part of this file was added by Tomas Preucil (github.com/tomaspre)
+ * This part is indicated in the code below
  */
 
 #if defined(CONFIG_MF_DESFIRE_SUPPORT) && !defined(DISABLE_DESFIRE_TERMINAL_COMMANDS)
@@ -230,6 +233,7 @@ CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *
     return COMMAND_INFO_OK;
 }
 
+//The rest of the file was added by tomaspre
 CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *InParams) {
     DEBUG_PRINT_P(PSTR("Running DF_SETGALL"));
     //for (uint8_t i = 0; i < 15; ++i)
@@ -248,13 +252,13 @@ CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *I
         return COMMAND_ERR_INVALID_PARAM_ID;
     }
 
-    bool ret = CreateGallagher(cardId, facilityId, issueLevel, regionCode);
+    bool ret = CreateGallagherCard(cardId, facilityId, issueLevel, regionCode);
 
     if (!ret) {
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
 
-    return COMMAND_INFO_OK;
+    return COMMAND_INFO_OK_ID;
 }
 
 CommandStatusIdType CommandDESFireCreateGallagherApp(char *OutMessage, const char *InParams) {
@@ -285,7 +289,7 @@ CommandStatusIdType CommandDESFireCreateGallagherApp(char *OutMessage, const cha
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
 
-    return COMMAND_INFO_OK;
+    return COMMAND_INFO_OK_ID;
 }
 
 CommandStatusIdType CommandDESFireUpdateGallagherApp(char *OutMessage, const char *InParams) {
@@ -316,7 +320,7 @@ CommandStatusIdType CommandDESFireUpdateGallagherApp(char *OutMessage, const cha
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
 
-    return COMMAND_INFO_OK;
+    return COMMAND_INFO_OK_ID;
 }
 
 CommandStatusIdType CommandDESFireUpdateGallagherCardId(char *OutMessage, const char *InParams) {
@@ -341,7 +345,7 @@ CommandStatusIdType CommandDESFireUpdateGallagherCardId(char *OutMessage, const 
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
 
-    return COMMAND_INFO_OK;
+    return COMMAND_INFO_OK_ID;
 }
 
 CommandStatusIdType CommandDESFireSelectGallagherApp(char *OutMessage, const char *InParams) {
@@ -358,7 +362,7 @@ CommandStatusIdType CommandDESFireSelectGallagherApp(char *OutMessage, const cha
 
     SelectGallagherAID(AID);
 
-    return COMMAND_INFO_OK;
+    return COMMAND_INFO_OK_ID;
 }
 
 CommandStatusIdType CommandDESFireSetGallagherSiteKey(char *OutMessage, const char *InParams) {

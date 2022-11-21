@@ -22,6 +22,9 @@ This notice must be retained at the top of all source files where indicated.
 /*
  * DESFireChameleonTerminalInclude.c
  * Maxie D. Schmidt (github.com/maxieds)
+ *
+ * Part of this file was added by Tomas Preucil (github.com/tomaspre)
+ * This part is indicated in the code below
  */
 
 #ifdef CONFIG_MF_DESFIRE_SUPPORT
@@ -46,7 +49,7 @@ This notice must be retained at the top of all source files where indicated.
     .ExecParamFunc  = NO_FUNCTION,
     .SetFunc        = CommandDESFireSetEncryptionMode,
     .GetFunc        = NO_FUNCTION
-}, {
+}, {//The rest of the file was added by tomaspre
     .Command        = DFCOMMAND_SETUP_GALLAGHER,
     .ExecFunc       = NO_FUNCTION,
     .ExecParamFunc  = NO_FUNCTION,
