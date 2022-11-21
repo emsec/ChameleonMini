@@ -133,14 +133,6 @@ bool hfgal_diversify_key(uint8_t *site_key, uint8_t *uid, uint8_t uid_len,
         return false;
     }
 
-    DesfireLogEntry(LOG_APP_NONCE_B, (void *) uid, 7);
-    DesfireLogEntry(LOG_APP_NONCE_B, (void *) &uid_len, 1);
-    DesfireLogEntry(LOG_APP_NONCE_B, (void *) &key_num, 1);
-    DesfireLogEntry(LOG_APP_NONCE_B, (void *) &aid, 4);
-
-    DEBUG_PRINT_P(PSTR("KDF input:"));
-    DesfireLogEntry(LOG_APP_NONCE_B, (void *) key_output, kdf_input_len);
-
     uint8_t key[CRYPTO_AES_KEY_SIZE];
     if (site_key == NULL) {
         return false;

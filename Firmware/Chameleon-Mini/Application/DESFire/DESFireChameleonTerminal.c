@@ -235,10 +235,6 @@ CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *
 
 //The rest of the file was added by tomaspre
 CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *InParams) {
-    DEBUG_PRINT_P(PSTR("Running DF_SETGALL"));
-    //for (uint8_t i = 0; i < 15; ++i)
-    //    OutMessage[i] = InParams[i];
-
     if (!IsDESFireConfiguration()) {
         return COMMAND_ERR_INVALID_USAGE_ID;
     }

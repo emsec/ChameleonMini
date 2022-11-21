@@ -55,25 +55,16 @@ bool CreateGallagherCard(uint32_t cardId, uint16_t facilityId, uint8_t issueLeve
 
 //Warning - running this function resets the AUTH state!
 bool CreateGallagherCardWithAID(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode, DESFireAidType AID) {
-    DEBUG_PRINT_P(PSTR("Creating Gallagher App"));
-    DEBUG_PRINT_P(PSTR("CardId:(%u)"), cardId);
-    DEBUG_PRINT_P(PSTR("F:(%u)IL:(%u)RC:(%u)"), facilityId, issueLevel, regionCode);
-    DEBUG_PRINT_P(PSTR("AID: %02x %02x %02x"), AID[0], AID[1], AID[2]);
-
     uint8_t Status = 0;
     ConfigurationUidType UID_GALL;
     GetPiccUid(UID_GALL);
     InvalidateAuthState(false);
-    DEBUG_PRINT_P(PSTR("UID: %02x %02x %02x %02x %02x %02x %02x"), UID_GALL[0], UID_GALL[1], UID_GALL[2], UID_GALL[3],
-                  UID_GALL[4], UID_GALL[5], UID_GALL[6], UID_GALL[7]);
 
-    DEBUG_PRINT_P(PSTR("Resetting auth state"));
     //TODO: Is this needed?
     Authenticated = true;
     AuthenticatedWithKey = 0;
     AuthenticatedWithPICCMasterKey = true;
 
-    DEBUG_PRINT_P(PSTR("Creating CAD app"));
     //Create card app directory app
     DESFireAidType CADAid;
     CADAid[0] = 0xF4;
@@ -88,17 +79,13 @@ bool CreateGallagherCardWithAID(uint32_t cardId, uint16_t facilityId, uint8_t is
         return false;
     }
 
-    DEBUG_PRINT_P(PSTR("Diversifying CAD key"));
     //Difersify key for app directory app
     uint8_t CADKeyZero[CRYPTO_AES_KEY_SIZE];
     hfgal_diversify_key(GallagherSiteKey, UID_GALL, 7, 0, CADAid, CADKeyZero);
-    DEBUG_PRINT_P(PSTR("Key:"));
-    DesfireLogEntry(LOG_APP_AUTH_KEY, (void *) CADKeyZero, 16);
 
     //Select the app direcory app
     SelectApp(CADAid);
 
-    DEBUG_PRINT_P(PSTR("Vhanging CAD app key"));
     //Channge key
     uint8_t nextKeyVersion = ReadKeyVersion(SelectedApp.Slot, 0) + 1;
     WriteAppKey(SelectedApp.Slot, 0, CADKeyZero, CRYPTO_AES_KEY_SIZE);
@@ -108,7 +95,6 @@ bool CreateGallagherCardWithAID(uint32_t cardId, uint16_t facilityId, uint8_t is
     //Select the app direcory app
     SelectApp(CADAid);
 
-    DEBUG_PRINT_P(PSTR("Creating file in CAD app"));
     //Create file in CAD
     Status = CreateStandardFile(0x00, 0x00, 0xE000, CAD_BLOCK_LEN);
 
@@ -127,7 +113,6 @@ bool CreateGallagherCardWithAID(uint32_t cardId, uint16_t facilityId, uint8_t is
     CADBlock[5] = AID[0];
     memset(CADBlock+6, 0, CAD_BLOCK_LEN-6);
 
-    DEBUG_PRINT_P(PSTR("Updating file in CAD app"));
     //Update file in CAD
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, 0);
     uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
@@ -161,7 +146,6 @@ void ResetGallagherSiteKey() {
 }
 
 bool CreateGallagherAppWithAID(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode, DESFireAidType AID) {
-    DEBUG_PRINT_P(PSTR("Creating Gallagher app"));
     //Create Gall app
     uint8_t KeyCount = 3;
     uint8_t KeySettings = 0x0B;
@@ -172,31 +156,24 @@ bool CreateGallagherAppWithAID(uint32_t cardId, uint16_t facilityId, uint8_t iss
 
     SelectApp(AID);
 
-    DEBUG_PRINT_P(PSTR("Diversifying key 2"));
     //Diversify and change key 2
     uint8_t GallAppKeyTwo[CRYPTO_AES_KEY_SIZE];
     hfgal_diversify_key(GallagherSiteKey, UID_GALL, 7, 2, AID, GallAppKeyTwo);
-    DEBUG_PRINT_P(PSTR("Key:"));
-    DesfireLogEntry(LOG_APP_AUTH_KEY, (void *) GallAppKeyTwo, 16);
 
     uint8_t nextKeyVersion = ReadKeyVersion(SelectedApp.Slot, 2) + 1;
     WriteAppKey(SelectedApp.Slot, 2, GallAppKeyTwo, CRYPTO_AES_KEY_SIZE);
     WriteKeyVersion(SelectedApp.Slot, 0, nextKeyVersion);
     WriteKeyCryptoType(SelectedApp.Slot, 0, CRYPTO_TYPE_AES128);
 
-    DEBUG_PRINT_P(PSTR("Diversifying key 0"));
     //Diversify and change key 0
     uint8_t GallAppKeyZero[CRYPTO_AES_KEY_SIZE];
     hfgal_diversify_key(GallagherSiteKey, UID_GALL, 7, 0, AID, GallAppKeyZero);
-    DEBUG_PRINT_P(PSTR("Key:"));
-    DesfireLogEntry(LOG_APP_AUTH_KEY, (void *) GallAppKeyZero, 16);
 
     nextKeyVersion = ReadKeyVersion(SelectedApp.Slot, 0) + 1;
     WriteAppKey(SelectedApp.Slot, 0, GallAppKeyZero, CRYPTO_AES_KEY_SIZE);
     WriteKeyVersion(SelectedApp.Slot, 0, nextKeyVersion);
     WriteKeyCryptoType(SelectedApp.Slot, 0, CRYPTO_TYPE_AES128);
 
-    DEBUG_PRINT_P(PSTR("Creating file in Gall app"));
     //Create file
     Status = CreateStandardFile(0x00, 0x03, 0x2000, GALL_BLOCK_LEN);
 
@@ -223,7 +200,6 @@ bool UpdateGallagherFile(uint32_t cardId, uint16_t facilityId, uint8_t issueLeve
         GallBlock[i + 8] = GallBlock[i] ^ 0xFF;
     }
 
-    DEBUG_PRINT_P(PSTR("Updating file in Gall app"));
     //Update file with Gall access data
     uint8_t fileIndex = LookupFileNumberIndex(SelectedApp.Slot, 0);
     uint8_t fileType = ReadFileType(SelectedApp.Slot, fileIndex);
