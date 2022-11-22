@@ -162,8 +162,8 @@ bool CreateGallagherAppWithAID(uint32_t cardId, uint16_t facilityId, uint8_t iss
 
     uint8_t nextKeyVersion = ReadKeyVersion(SelectedApp.Slot, 2) + 1;
     WriteAppKey(SelectedApp.Slot, 2, GallAppKeyTwo, CRYPTO_AES_KEY_SIZE);
-    WriteKeyVersion(SelectedApp.Slot, 0, nextKeyVersion);
-    WriteKeyCryptoType(SelectedApp.Slot, 0, CRYPTO_TYPE_AES128);
+    WriteKeyVersion(SelectedApp.Slot, 2, nextKeyVersion);
+    WriteKeyCryptoType(SelectedApp.Slot, 2, CRYPTO_TYPE_AES128);
 
     //Diversify and change key 0
     uint8_t GallAppKeyZero[CRYPTO_AES_KEY_SIZE];
