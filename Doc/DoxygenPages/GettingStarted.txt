@@ -38,7 +38,7 @@
  *
  * ## Upgrade Procedure for Windows Users ##
  * For upgrading the firmware under Windows please
- * -# download https://sourceforge.net/projects/dfu-programmer/files/dfu-programmer/0.7.2/dfu-programmer-win-0.7.2.zip/download and extract to an arbitrary directory. Make sure to use the DFU programmer Version 0.7.2!
+ * -# download https://github.com/emsec/ChameleonMini/raw/master/Doc/DoxygenPages/dfu-programmer-win-0.7.2.zip and extract to an arbitrary directory. Make sure to use the DFU programmer Version 0.7.2!
  * -# Go to the extraction directory and then open the folder `dfu-prog-usb-1.2.2`. Install the `atmel_usb_dfu.inf` driver (right click -> install).
  * -# Copy `dfu-programmer.exe` from the extraction directory to the directory where you have saved the hex and eep files.
  * -# Save the [ChameleonFirmwareUpgrade.bat](https://cdn.statically.io/gh/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/ChameleonFirmwareUpgrade.bat) in the same directory as the hex and eep files.
