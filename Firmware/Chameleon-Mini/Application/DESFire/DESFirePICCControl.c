@@ -175,6 +175,7 @@ void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
         MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         DesfireATQAReset = true;
+        SelectedApp.Slot = (uint8_t) -1;
         SelectPiccApp();
     }
 }
@@ -195,6 +196,7 @@ void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
         MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         DesfireATQAReset = true;
+        SelectedApp.Slot = (uint8_t) -1;
         SelectPiccApp();
     }
 }
@@ -215,6 +217,7 @@ void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC) {
         MemoryRestoreDesfireHeaderBytes(false);
         ReadBlockBytes(&AppDir, DESFIRE_APP_DIR_BLOCK_ID, sizeof(DESFireAppDirType));
         DesfireATQAReset = true;
+        SelectedApp.Slot = (uint8_t) -1;
         SelectPiccApp();
     }
 
