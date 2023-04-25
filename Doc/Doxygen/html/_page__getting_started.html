@@ -85,7 +85,7 @@ $(function() {
 <p>When running <a href="https://brew.sh">Homebrew</a> you can install avrdude with <code>brew install avrdude</code>. After this, change to the directory where you have saved the hex and eep files and run <code>sudo avrdude -c flip2 -p ATXMega128A4U -B 60 -P usb -U application:w:Chameleon-Mini.hex:i -U eeprom:w:Chameleon-Mini.eep:i</code>.</p>
 <h2>Upgrade Procedure for Windows Users</h2>
 <p>For upgrading the firmware under Windows please</p><ol type="1">
-<li>download <a href="https://sourceforge.net/projects/dfu-programmer/files/dfu-programmer/0.7.2/dfu-programmer-win-0.7.2.zip/download">https://sourceforge.net/projects/dfu-programmer/files/dfu-programmer/0.7.2/dfu-programmer-win-0.7.2.zip/download</a> and extract to an arbitrary directory. Make sure to use the DFU programmer Version 0.7.2!</li>
+<li>download <a href="https://github.com/emsec/ChameleonMini/raw/master/Doc/DoxygenPages/dfu-programmer-win-0.7.2.zip">https://github.com/emsec/ChameleonMini/raw/master/Doc/DoxygenPages/dfu-programmer-win-0.7.2.zip</a> and extract to an arbitrary directory. Make sure to use the DFU programmer Version 0.7.2!</li>
 <li>Go to the extraction directory and then open the folder <code>dfu-prog-usb-1.2.2</code>. Install the <code>atmel_usb_dfu.inf</code> driver (right click -&gt; install).</li>
 <li>Copy <code>dfu-programmer.exe</code> from the extraction directory to the directory where you have saved the hex and eep files.</li>
 <li>Save the <a href="https://cdn.statically.io/gh/emsec/ChameleonMini/master/Firmware/Chameleon-Mini/ChameleonFirmwareUpgrade.bat">ChameleonFirmwareUpgrade.bat</a> in the same directory as the hex and eep files.</li>
