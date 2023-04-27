@@ -44,7 +44,7 @@ jobs:
         draft: false
         prerelease: true
     - name: Upload Pre-release Artifacts
-      uses: linuxgemini/github-upload-release-artifacts-action@master
+      uses: tomaspre/github-upload-release-artifacts-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
