@@ -22,7 +22,7 @@ See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Code
 Questions
 ---------
 If you have any questions, please visit the [Issues page](https://github.com/emsec/ChameleonMini/issues) and ask your questions there so everyone benefits from the answer.
-
+ 
 **Please note that we cannot give any support if you have issues with the RevE-rebooted hardware or any GUI. Please use this issues page only for problems with the RevG hardware as distributed by Kasper & Oswald and for problems with the firmware from this page.** 
 
 External Contributions
