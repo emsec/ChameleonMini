@@ -22,6 +22,9 @@ This notice must be retained at the top of all source files where indicated.
 /*
  * DESFireChameleonTerminal.h
  * Maxie D. Schmidt (github.com/maxieds)
+ *
+ * Part of this file was added by Tomas Preucil (github.com/tomaspre)
+ * This part is indicated in the code below
  */
 
 #ifndef __DESFIRE_CHAMELEON_TERMINAL_H__
@@ -46,6 +49,25 @@ CommandStatusIdType CommandDESFireSetCommMode(char *OutMessage, const char *InPa
 
 #define DFCOMMAND_SET_ENCMODE                 "DF_ENCMODE"
 CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutMessage, const char *InParams);
+
+//The rest of the file was added by tomaspre
+#define DFCOMMAND_SETUP_GALLAGHER                      "DF_SETUP_GALL"
+CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *InParams);
+
+#define DFCOMMAND_CREATE_GALLAGHER_APP                 "DF_CRE_GALLAPP"
+CommandStatusIdType CommandDESFireCreateGallagherApp(char *OutMessage, const char *InParams);
+
+#define DFCOMMAND_UPDATE_GALLAGHER_APP                 "DF_UP_GALLAPP"
+CommandStatusIdType CommandDESFireUpdateGallagherApp(char *OutMessage, const char *InParams);
+
+#define DFCOMMAND_UPDATE_GALLAGHER_CARD_ID             "DF_UP_GALL_CID"
+CommandStatusIdType CommandDESFireUpdateGallagherCardId(char *OutMessage, const char *InParams);
+
+#define DFCOMMAND_SELECT_GALLAGHER_APP                 "DF_SEL_GALLAPP"
+CommandStatusIdType CommandDESFireSelectGallagherApp(char *OutMessage, const char *InParams);
+
+#define DFCOMMAND_SET_GALLAGHER_SITE_KEY               "DF_SET_GALLKEY"
+CommandStatusIdType CommandDESFireSetGallagherSiteKey(char *OutMessage, const char *InParams);
 
 #endif /* DESFire Support */
 

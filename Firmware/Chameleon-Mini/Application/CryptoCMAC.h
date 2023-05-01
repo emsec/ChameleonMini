@@ -43,5 +43,6 @@ uint16_t appendBufferMAC(const uint8_t *keyData, uint8_t *bufferData, uint16_t b
 bool checkBufferCMAC(uint8_t *bufferData, uint16_t bufferSize, uint16_t checksumSize);
 
 bool DesfireCryptoCMAC(uint8_t cryptoType, const uint8_t *keyData, uint8_t *bufferDataIn, uint16_t bufferSize, uint8_t *IV, uint8_t *cmac);
+bool DesfireCryptoCMACEx(uint8_t cryptoType, const uint8_t *keyData, uint8_t *bufferDataIn, uint16_t bufferSize, uint8_t *IV, uint8_t *cmac, uint16_t minlen);
 
 #endif

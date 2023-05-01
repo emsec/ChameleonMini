@@ -22,6 +22,9 @@ This notice must be retained at the top of all source files where indicated.
 /*
  * DESFireChameleonTerminal.c
  * Maxie D. Schmidt (github.com/maxieds)
+ *
+ * Part of this file was added by Tomas Preucil (github.com/tomaspre)
+ * This part is indicated in the code below
  */
 
 #if defined(CONFIG_MF_DESFIRE_SUPPORT) && !defined(DISABLE_DESFIRE_TERMINAL_COMMANDS)
@@ -34,6 +37,11 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFirePICCControl.h"
 #include "DESFireMemoryOperations.h"
 #include "DESFireLogging.h"
+#include "DESFireGallagher.h"
+
+#include <inttypes.h>
+
+extern DESFireAidType selectedGallagherAID;
 
 bool IsDESFireConfiguration(void) {
     return GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE ||
@@ -151,6 +159,7 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
     MemoryStoreDesfireHeaderBytes();
     return COMMAND_INFO_OK_ID;
 }
+
 #endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */
 
 CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InParams) {
@@ -224,4 +233,144 @@ CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *
     return COMMAND_INFO_OK;
 }
 
+//The rest of the file was added by tomaspre
+CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    uint32_t cardId = 0xFFFFFFFF;
+    uint16_t facilityId = 0xFFFF;
+    uint8_t issueLevel = 0xFF;
+    uint8_t regionCode = 0xFF;
+
+    if (sscanf_P(InParams, PSTR("C%"SCNu32"F%"SCNu16"I%"SCNu8"R%"SCNu8), &cardId, &facilityId, &issueLevel, &regionCode) != 4) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    bool ret = CreateGallagherCard(cardId, facilityId, issueLevel, regionCode);
+
+    if (!ret) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    return COMMAND_INFO_OK_ID;
+}
+
+CommandStatusIdType CommandDESFireCreateGallagherApp(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    if (selectedGallagherAID[0] == 0xFF && selectedGallagherAID[1] == 0xFF && selectedGallagherAID[2] == 0xFF) {
+        snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("SET AID FIRST"));
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    DESFireAidType AID;
+    uint32_t cardId = 0xFFFFFFFF;
+    uint16_t facilityId = 0xFFFF;
+    uint8_t issueLevel = 0xFF;
+    uint8_t regionCode = 0xFF;
+
+    if (sscanf_P(InParams, PSTR("C%"SCNu32"F%"SCNu16"I%"SCNu8"R%"SCNu8),
+                 &cardId, &facilityId, &issueLevel, &regionCode
+                 ) != 4) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    bool ret = CreateGallagherAppWithAID(cardId, facilityId, issueLevel, regionCode, selectedGallagherAID);
+
+    if (!ret) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    return COMMAND_INFO_OK_ID;
+}
+
+CommandStatusIdType CommandDESFireUpdateGallagherApp(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    if (selectedGallagherAID[0] == 0xFF && selectedGallagherAID[1] == 0xFF && selectedGallagherAID[2] == 0xFF) {
+        snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("SET AID FIRST"));
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    DESFireAidType AID;
+    uint32_t cardId = 0xFFFFFFFF;
+    uint16_t facilityId = 0xFFFF;
+    uint8_t issueLevel = 0xFF;
+    uint8_t regionCode = 0xFF;
+
+    if (sscanf_P(InParams, PSTR("C%"SCNu32"F%"SCNu16"I%"SCNu8"R%"SCNu8),
+                 &cardId, &facilityId, &issueLevel, &regionCode
+                 ) != 4) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    bool ret = UpdateGallagherFile(cardId, facilityId, issueLevel, regionCode, selectedGallagherAID);
+
+    if (!ret) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    return COMMAND_INFO_OK_ID;
+}
+
+CommandStatusIdType CommandDESFireUpdateGallagherCardId(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    if (selectedGallagherAID[0] == 0xFF && selectedGallagherAID[1] == 0xFF && selectedGallagherAID[2] == 0xFF) {
+        snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("SET AID FIRST"));
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    uint32_t cardId;
+
+    if (sscanf_P(InParams, PSTR("%"SCNu32), &cardId) != 1) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    bool ret = UpdateGallagherAppCardID(cardId);
+
+    if (!ret) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    return COMMAND_INFO_OK_ID;
+}
+
+CommandStatusIdType CommandDESFireSelectGallagherApp(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    DESFireAidType AID;
+
+    if (sscanf_P(InParams, PSTR("%2"SCNx8"%2"SCNx8"%2"SCNx8),
+                 &AID[0], &AID[1], &AID[2]) != 3) {
+        return COMMAND_ERR_INVALID_PARAM_ID;
+    }
+
+    SelectGallagherAID(AID);
+
+    return COMMAND_INFO_OK_ID;
+}
+
+CommandStatusIdType CommandDESFireSetGallagherSiteKey(char *OutMessage, const char *InParams) {
+    if (!IsDESFireConfiguration()) {
+        return COMMAND_ERR_INVALID_USAGE_ID;
+    }
+
+    //Use the SetGallagherSiteKey and ResetGallagherSiteKey fucntions
+
+    snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("NOT IMPLEMENTED"));
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */
+
