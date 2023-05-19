@@ -234,6 +234,8 @@ SRC	    +=  Application/DESFire/../MifareDESFire.c \
                 Application/DESFire/DESFireChameleonTerminal.c \
                 Application/DESFire/DESFireCrypto.c \
                 Application/DESFire/DESFireFile.c \
+                Application/DESFire/DESFireGallagher.c \
+                Application/DESFire/DESFireGallagherTools.c \
                 Application/DESFire/DESFireISO14443Support.c \
                 Application/DESFire/DESFireISO7816Support.c \
                 Application/DESFire/DESFireInstructions.c \
