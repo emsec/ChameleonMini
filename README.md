@@ -16,22 +16,7 @@ To upgrade the firmware of your ChameleonMini, please visit the [Getting Started
 
 Supported Cards and Codecs
 --------------------------
-See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Codecs).
-
-Notes for MIFARE DESFire emulation
---------------------------
-There is some limited DESFire support. Please see the DESFire specific readme [here](https://github.com/emsec/ChameleonMini/blob/master/Doc/DESFireSupportReadme.md). As of 1st of May 2023 the following has been tested:
-* UID emulation and change
-* Authentication using all available ciphers
-* App creation, key creation/change when the app uses AES
-* AES encrypted file operations (max file len 32 bytes)
-* CMAC calculation and IV updates for most operations (AES only!)
-
-If some functionality is not listed above, it does not mean that it will not work. It just wasn't tested. We focused on AES support first, other alorithms may be available later. Most of the DESFire code was submited in a PR (see the Readme). Any EV2/EV3 specific functionality is NOT available.
-
-Experimental support for Gallagher
---------------------------
-There's some support for pentesting Gallagher systems that use AES encrypted cards (and AES only!). Please see the Gallagher specific Readme [here](https://github.com/emsec/ChameleonMini/blob/master/Doc/DESFireGallagherReadme.md). This is available as of 1st of May 2023 and may be (re)moved at any time as space on the device is sacre.
+See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Codecs). The linked wiki page also includes notes on DESFire emulation and certain cases of application specific emulation (Gallagher).
 
 Questions
 ---------
