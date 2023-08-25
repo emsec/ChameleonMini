@@ -20,7 +20,7 @@ The UID for the tag can be set using separate Chameleon terminal commands as
 usual for all other configurations.
 We can modify the remaining tag header information emulated by the tag as follows:
 ```bash
-DF_SETHDR=ATS xxxxxxxxxx
+DF_SETHDR=ATS NNxxxx[...]
 DF_SETHDR=ATQA xxxx
 DF_SETHDR=ManuID xx
 DF_SETHDR=HwType xx
@@ -34,6 +34,7 @@ DF_SETHDR=SwVers mmMM
 DF_SETHDR=BatchNo xxxxxxxxxx
 DF_SETHDR=ProdDate WWYY
 ```
+Warning! The ATS bytes have the following structure `NNxxxx[...]` where NN is the lenght of the entire ATS including the lenght byte. The ATS (inc. the len byte) can be from 3 to 20 bytes long. Default is `067577810280`.
 
 ##### Examples:
 
