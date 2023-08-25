@@ -34,7 +34,7 @@ DF_SETHDR=SwVers mmMM
 DF_SETHDR=BatchNo xxxxxxxxxx
 DF_SETHDR=ProdDate WWYY
 ```
-Warning! The ATS bytes have the following structure `NNxxxx[...]` where NN is the lenght of the entire ATS including the lenght byte. The ATS (inc. the len byte) can be from 3 to 20 bytes long. Default is `067577810280`.
+Warning! The ATS bytes have the following structure `NNxxxx[...]` where NN is the length of the entire ATS, including the length byte. The ATS (inc. the len byte) can be from 3 to 20 bytes long. The default is `067577810280`.
 
 ##### Examples:
 
