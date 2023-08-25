@@ -293,6 +293,8 @@ void FormatPicc(void) {
     Picc.ATSBytes[2] = DESFIRE_EV0_ATS_TA_BYTE;
     Picc.ATSBytes[3] = DESFIRE_EV0_ATS_TB_BYTE;
     Picc.ATSBytes[4] = DESFIRE_EV0_ATS_TC_BYTE;
+    Picc.ATSBytes[5] = 0x80;
+    Picc.ATSSize = DESFIRE_DEFAULT_ATS_SIZE;
     /* Set the first free slot to 1 -- slot 0 is the PICC app */
     AppDir.FirstFreeSlot = 0;
     /* Flush the new local struct data out to the FRAM: */

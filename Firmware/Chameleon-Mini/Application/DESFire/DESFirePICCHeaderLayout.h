@@ -62,6 +62,7 @@ extern bool DesfireATQAReset;
 #define DESFIRE_EV0_ATS_TA_BYTE         0x00 /* TA: Only the lowest bit rate is supported (normal is 0x77) */
 #define DESFIRE_EV0_ATS_TB_BYTE         0x81 /* TB: taken from the DESFire spec */
 #define DESFIRE_EV0_ATS_TC_BYTE         0x02 /* TC: taken from the DESFire spec */
+#define DESFIRE_DEFAULT_ATS_SIZE        0x06
 
 /* Defines for GetVersion */
 #define ID_PHILIPS_NXP                  0x04
@@ -135,7 +136,8 @@ typedef struct DESFIRE_FIRMWARE_PACKING DESFIRE_FIRMWARE_ALIGNAT {
     uint8_t ProductionWeek;
     uint8_t ProductionYear;
     uint8_t ATQA[2];
-    uint8_t ATSBytes[5];
+    uint8_t ATSBytes[20];
+    uint8_t ATSSize;
     /* Dynamic data: changes during the PICC's lifetime */
     uint16_t FirstFreeBlock;
     uint8_t TransactionStarted;

@@ -429,8 +429,9 @@ CommandStatusIdType CommandExecParamSend(char *OutMessage, const char *InParams)
 #ifndef CONFIG_ISO14443A_READER_SUPPORT
     return COMMAND_ERR_INVALID_USAGE_ID;
 #else
-    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER){
         return COMMAND_ERR_INVALID_USAGE_ID;
+    }
 
     ApplicationReset();
     Reader14443CurrentCommand = Reader14443_Send;
@@ -471,8 +472,9 @@ CommandStatusIdType CommandExecParamSendRaw(char *OutMessage, const char *InPara
 #ifndef CONFIG_ISO14443A_READER_SUPPORT
     return COMMAND_ERR_INVALID_USAGE_ID;
 #else
-    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER){
         return COMMAND_ERR_INVALID_USAGE_ID;
+    }
 
     ApplicationReset();
     Reader14443CurrentCommand = Reader14443_Send_Raw;
@@ -516,8 +518,9 @@ CommandStatusIdType CommandExecDumpMFU(char *OutMessage) {
 #ifndef CONFIG_ISO14443A_READER_SUPPORT
     return COMMAND_ERR_INVALID_USAGE_ID;
 #else
-    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER){
         return COMMAND_ERR_INVALID_USAGE_ID;
+    }
     ApplicationReset();
 
     Reader14443CurrentCommand = Reader14443_Read_MF_Ultralight;
@@ -547,8 +550,9 @@ CommandStatusIdType CommandExecGetUid(char *OutMessage) { // this function is fo
 #ifndef CONFIG_ISO14443A_READER_SUPPORT
     return COMMAND_ERR_INVALID_USAGE_ID;
 #else
-    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER){
         return COMMAND_ERR_INVALID_USAGE_ID;
+    }
     ApplicationReset();
 
     Reader14443CurrentCommand = Reader14443_Get_UID;
@@ -563,8 +567,9 @@ CommandStatusIdType CommandExecIdentifyCard(char *OutMessage) {
 #ifndef CONFIG_ISO14443A_READER_SUPPORT
     return COMMAND_ERR_INVALID_USAGE_ID;
 #else
-    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER)
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO14443A_READER){
         return COMMAND_ERR_INVALID_USAGE_ID;
+    }
     ApplicationReset();
 
     Reader14443CurrentCommand = Reader14443_Identify;
@@ -698,8 +703,9 @@ CommandStatusIdType CommandExecClone(char *OutMessage) {
 CommandStatusIdType CommandGetAutoThreshold(char *OutParam) {
 
     /* Only Execute the command if the current configuration is CONFIG_ISO15693_SNIFF */
-    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF)
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF){
         return COMMAND_ERR_INVALID_USAGE_ID;
+    }
 
     /* Get Autothreshold mode */
     if (SniffISO15693GetAutoThreshold())
@@ -716,8 +722,9 @@ CommandStatusIdType CommandGetAutoThreshold(char *OutParam) {
 CommandStatusIdType CommandSetAutoThreshold(char *OutMessage, const char *InParam) {
 
     /* Only Execute the command if the current configuration is CONFIG_ISO15693_SNIFF */
-    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF)
+    if (GlobalSettings.ActiveSettingPtr->Configuration != CONFIG_ISO15693_SNIFF){
         return COMMAND_ERR_INVALID_USAGE_ID;
+    }
 
     if (COMMAND_IS_SUGGEST_STRING(InParam)) {
         snprintf(OutMessage, TERMINAL_BUFFER_SIZE, "%c (enable), %c (disable)", COMMAND_CHAR_TRUE, COMMAND_CHAR_FALSE);

@@ -56,23 +56,24 @@ CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutParam, const char *
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
     char hdrPropSpecStr[24];
-    char propSpecBytesStr[16];
-    BYTE propSpecBytes[16];
+    char propSpecBytesStr[44];
+    BYTE propSpecBytes[44];
     SIZET dataByteCount = 0x00;
     BYTE StatusError = 0x00;
-    if (!sscanf_P(InParams, PSTR("%24s %12s"), hdrPropSpecStr, propSpecBytesStr)) {
+    if (!sscanf_P(InParams, PSTR("%24s %40s"), hdrPropSpecStr, propSpecBytesStr)) {
         return COMMAND_ERR_INVALID_PARAM_ID;
     }
-    hdrPropSpecStr[23] = propSpecBytesStr[15] = '\0';
-    dataByteCount = HexStringToBuffer(propSpecBytes, 16, propSpecBytesStr);
+    hdrPropSpecStr[23] = propSpecBytesStr[43] = '\0';
+    dataByteCount = HexStringToBuffer(propSpecBytes, 44, propSpecBytesStr);
     if (!strcasecmp_P(hdrPropSpecStr, PSTR("ATS"))) {
-        if (dataByteCount != 5) {
+        if (dataByteCount != propSpecBytes[0] || 
+            dataByteCount < 3 || dataByteCount > 20) {
             StatusError = 1;
         } else {
             memcpy(&Picc.ATSBytes[0], propSpecBytes, dataByteCount);
+            Picc.ATSSize = dataByteCount;
         }
-    }
-    if (!strcasecmp_P(hdrPropSpecStr, PSTR("ATQA"))) {
+    } else if (!strcasecmp_P(hdrPropSpecStr, PSTR("ATQA"))) {
         if (dataByteCount != 2) {
             StatusError = 1;
         } else {

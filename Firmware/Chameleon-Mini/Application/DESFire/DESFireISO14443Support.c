@@ -147,10 +147,10 @@ uint16_t ISO144434ProcessBlock(uint8_t *Buffer, uint16_t ByteCount, uint16_t Bit
              * NOTE: Some PCD implementations do a memcmp() over ATS bytes, which is completely wrong.
              */
             Iso144434CardID = Buffer[1] & 0x0F;
-            Buffer[0] = 0x06;
-            memcpy(&Buffer[1], &Picc.ATSBytes[1], 4);
-            Buffer[5] = 0x80;                              /* T1: dummy value for historical bytes */
-            ByteCount = 6;
+            //Buffer[0] = 0x06;
+            memcpy(&Buffer[0], &Picc.ATSBytes[0], Picc.ATSSize);
+            //Buffer[5] = 0x80;                              /* T1: dummy value for historical bytes */
+            ByteCount = Picc.ATSSize;
             ISO144434SwitchState(ISO14443_4_STATE_ACTIVE);
             return GetAndSetBufferCRCA(Buffer, ByteCount); /* PM3 'hf mfdes list' expects CRCA bytes on the RATS data */
         }
