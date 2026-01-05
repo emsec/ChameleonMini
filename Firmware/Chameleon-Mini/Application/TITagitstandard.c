@@ -7,6 +7,8 @@
  *      Modified by ceres-c & MrMoDDoM to finish things up
  */
 
+#ifdef CONFIG_TITAGITSTANDARD_SUPPORT
+
 #include "ISO15693-A.h"
 #include "TITagitstandard.h"
 
@@ -225,3 +227,5 @@ void TITagitstandardFlipUid(ConfigurationUidType Uid) {
         *tail-- = tmp;
     }
 }
+
+#endif /* CONFIG_TITAGITSTANDARD_SUPPORT */

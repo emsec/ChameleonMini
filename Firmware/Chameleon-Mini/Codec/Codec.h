@@ -79,6 +79,7 @@
 #include "../Settings.h"
 
 #include "ISO14443-2A.h"
+#include "ISO14443-2F.h"
 #include "Reader14443-2A.h"
 #include "SniffISO14443-2A.h"
 #include "ISO15693.h"
@@ -91,6 +92,11 @@
 #define ISO14443A_FRAME_DELAY_PREV1     1236
 #define ISO14443A_FRAME_DELAY_PREV0     1172
 #define ISO14443A_RX_PENDING_TIMEOUT	4 // ms
+
+/* Timing definitions for ISO14443F */
+#define ISO14443F_SUBCARRIER_DIVIDER    64
+#define ISO14443F_BIT_RATE_CYCLES       271
+
 
 #define CODEC_BUFFER_SIZE           256
 
@@ -124,11 +130,15 @@ extern enum RCTraffic {TRAFFIC_READER, TRAFFIC_CARD} SniffTrafficSource;
 /* Shared ISR pointers and handlers */
 extern void (* volatile isr_func_TCD0_CCC_vect)(void);
 void isr_Reader14443_2A_TCD0_CCC_vect(void);
+extern void (* volatile isr_func_CODEC_TIMER_SAMPLING_OVF_vect)(void);
+void isr_SNIFF_ISO15693_CODEC_TIMER_SAMPLING_OVF_VECT(void);
+void isr_ISO14443_2F_CODEC_TIMER_SAMPLING_OVF_VECT(void);
 void isr_ISO15693_CODEC_TIMER_SAMPLING_CCC_VECT(void);
 extern void (* volatile isr_func_CODEC_DEMOD_IN_INT0_VECT)(void);
 void isr_ISO14443_2A_TCD0_CCC_vect(void);
 void isr_ISO15693_CODEC_DEMOD_IN_INT0_VECT(void);
 extern void (* volatile isr_func_CODEC_TIMER_LOADMOD_OVF_VECT)(void);
+void isr_ISO14443_2F_CODEC_TIMER_LOADMOD_OVF_VECT(void);
 void isr_ISO14443_2A_CODEC_TIMER_LOADMOD_OVF_VECT(void);
 void isr_SNIFF_ISO15693_CODEC_TIMER_LOADMOD_OVF_VECT(void);
 extern void (* volatile isr_func_CODEC_TIMER_LOADMOD_CCA_VECT)(void);

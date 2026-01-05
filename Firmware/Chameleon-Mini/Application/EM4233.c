@@ -12,6 +12,8 @@
  *          (Only EM4233_Read_Single and EM4233_Read_Multiple have been checked up to now)
  */
 
+#ifdef CONFIG_EM4233_SUPPORT
+
 #include "../Random.h"
 #include "ISO15693-A.h"
 #include "EM4233.h"
@@ -680,3 +682,5 @@ void EM4233SetUid(ConfigurationUidType NewUid) {
     memcpy(Uid, NewUid, ActiveConfiguration.UidSize);
     MemoryWriteBlock(NewUid, EM4233_MEM_UID_ADDRESS, ActiveConfiguration.UidSize);
 }
+
+#endif /* CONFIG_EM4233_SUPPORT */

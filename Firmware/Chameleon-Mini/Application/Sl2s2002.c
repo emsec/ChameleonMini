@@ -9,6 +9,7 @@
  *      should be performed (see TITagitstandard.c) - ceres-c
  */
 
+#ifdef CONFIG_SL2S2002_SUPPORT
 
 #include "Sl2s2002.h"
 #include "../Codec/ISO15693.h"
@@ -161,4 +162,4 @@ void Sl2s2002SetUid(ConfigurationUidType Uid) {
 }
 
 
-
+#endif /* CONFIG_SL2S2002_SUPPORT */

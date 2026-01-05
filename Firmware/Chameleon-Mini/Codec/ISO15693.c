@@ -25,6 +25,8 @@
  *      The ISR will now be invoked every 32 carrier pulses (see ISO15693-2:2006, section 8.2), even when waiting for data.
  */
 
+#if defined (CONFIG_ISO15693_SNIFF_SUPPORT) || defined (CONFIG_SL2S2002_SUPPORT) || defined (CONFIG_TITAGITSTANDARD_SUPPORT) || defined (CONFIG_TITAGITPLUS_SUPPORT) || defined (CONFIG_EM4233_SUPPORT) || defined (CONFIG_VICINITY_SUPPORT)
+
 #include "ISO15693.h"
 #include "../System.h"
 #include "../Application/Application.h"
@@ -684,3 +686,5 @@ void ISO15693CodecTask(void) {
         StartISO15693Demod();
     }
 }
+
+#endif /* defined (CONFIG_ISO15693_SNIFF_SUPPORT) || defined (CONFIG_SL2S2002_SUPPORT) || defined (CONFIG_TITAGITSTANDARD_SUPPORT) || defined (CONFIG_TITAGITPLUS_SUPPORT) || defined (CONFIG_EM4233_SUPPORT) || defined (CONFIG_VICINITY_SUPPORT) */

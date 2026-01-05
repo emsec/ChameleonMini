@@ -5,6 +5,8 @@
 // modified from ISO14443-2A.c and Reader14443-2A.c
 //
 
+#ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
+
 #include "SniffISO14443-2A.h"
 
 #include "Reader14443-2A.h"
@@ -527,3 +529,5 @@ void Sniff14443ACodecTask(void) {
 
 
 }
+
+#endif /* CONFIG_ISO14443A_SNIFF_SUPPORT */

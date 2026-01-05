@@ -30,6 +30,7 @@ enum RCTraffic SniffTrafficSource;
 void (* volatile isr_func_TCD0_CCC_vect)(void) = NULL;
 void (* volatile isr_func_CODEC_DEMOD_IN_INT0_VECT)(void) = NULL;
 void (* volatile isr_func_ACA_AC0_vect)(void);
+void (* volatile isr_func_CODEC_TIMER_SAMPLING_OVF_vect)(void) = NULL;
 void (* volatile isr_func_CODEC_TIMER_LOADMOD_OVF_VECT)(void) = NULL;
 void (* volatile isr_func_CODEC_TIMER_LOADMOD_CCA_VECT)(void) = NULL;
 void (* volatile isr_func_CODEC_TIMER_LOADMOD_CCB_VECT)(void) = NULL;

@@ -14,6 +14,7 @@ SETTINGS        ?=
 ## :          custom build targets found in the BuildScripts/* directory
 CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_1K_SUPPORT
+#CONFIG_SETTINGS  += -DCONFIG_LEGIC_PRIME_SUPPORT
 CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
 CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_SUPPORT
 CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
@@ -35,6 +36,7 @@ CONFIG_SETTINGS += -DCONFIG_NTAG215_SUPPORT
 #CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
 #CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_MF_ULTRALIGHT
 #CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_ISO14443A_READER
+#CONFIG_SETTINGS    += -DDEFAULT_CONFIGURATION=CONFIG_LEGIC_PRIME
 CONFIG_SETTINGS     += -DDEFAULT_CONFIGURATION=CONFIG_NONE
 
 ## : Support magic mode on mifare classic configuration
@@ -206,6 +208,7 @@ SRC         +=  Terminal/Terminal.c \
 		Terminal/CommandLine.c
 SRC         +=  Codec/Codec.c \
 		Codec/ISO14443-2A.c \
+		Codec/ISO14443-2F.c \
 		Codec/Reader14443-2A.c \
 		Codec/SniffISO14443-2A.c \
 		Codec/Reader14443-ISR.S \
@@ -213,6 +216,7 @@ SRC         +=  Codec/Codec.c \
 		Codec/SniffISO15693.c
 SRC         +=  Application/MifareUltralight.c \
 		Application/MifareClassic.c \
+		Application/LegicPrime.c \
 		Application/ISO14443-3A.c \
 		Application/Crypto1.c \
 		Application/Reader14443A.c \

@@ -51,7 +51,7 @@ typedef uint8_t Crypto3KTDEAKeyType[CRYPTO_3KTDEA_KEY_SIZE];
 
 /* Prototype the CBC function pointer in case anyone needs it */
 typedef void (*CryptoTDEACBCFuncType)(uint16_t Count, const void *Plaintext, void *Ciphertext, void *IV, const uint8_t *Keys);
-typedef void (*CryptoTDEAFuncType)(const void *PlainText, void *Ciphertext, const uint8_t *Keys);
+typedef void (*CryptoTDEAFuncType)(void *PlainText, void *Ciphertext, const uint8_t *Keys);
 
 void CryptoEncryptDES(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 void CryptoDecryptDES(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
@@ -64,8 +64,8 @@ int DecryptDESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, co
  * \param Ciphertext    Destination buffer to contain ciphertext
  * \param Keys          Key block pointer (CRYPTO_2KTDEA_KEY_SIZE)
  */
-void CryptoEncrypt2KTDEA(const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
-void CryptoDecrypt2KTDEA(const void *Plaintext, void *Ciphertext, const uint8_t *Keys);
+void CryptoEncrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
+void CryptoDecrypt2KTDEA(void *Plaintext, void *Ciphertext, const uint8_t *Keys);
 int Encrypt2K3DESBuffer(uint16_t Count, const void *Plaintext, void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 int Decrypt2K3DESBuffer(uint16_t Count, void *Plaintext, const void *Ciphertext, const uint8_t *IV, const uint8_t *Keys);
 

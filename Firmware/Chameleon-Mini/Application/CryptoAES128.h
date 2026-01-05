@@ -149,7 +149,7 @@ int CryptoAESEncryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Cipherte
 int CryptoAESDecryptBuffer(uint16_t Count, uint8_t *Plaintext, uint8_t *Ciphertext,
                            uint8_t *IV, const uint8_t *Key);
 
-typedef uint8_t (*CryptoAESFuncType)(uint8_t *, uint8_t *, uint8_t *);
+typedef void (*CryptoAESFuncType)(uint8_t *Plaintext, uint8_t *Ciphertext, const uint8_t *Key);
 typedef struct {
     CryptoAESFuncType  cryptFunc;
     uint16_t           blockSize;

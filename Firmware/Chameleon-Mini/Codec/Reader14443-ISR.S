@@ -1,3 +1,5 @@
+#if defined(CONFIG_ISO14443A_READER_SUPPORT) || defined(CONFIG_ISO14443A_SNIFF_SUPPORT)
+
 #include <avr/io.h>
 
 #define Zero            R0
@@ -109,3 +111,5 @@ pop BitCountL
 pop Tmp
 pop Zero
 reti                                                        ; 2
+
+#endif /* defined(CONFIG_ISO14443A_READER_SUPPORT) || defined(CONFIG_ISO14443A_SNIFF_SUPPORT) */

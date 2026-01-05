@@ -9,6 +9,7 @@
  *      should be performed (see TITagitstandard.c) - ceres-c
  */
 
+#ifdef CONFIG_VICINITY_SUPPORT
 
 #include "Vicinity.h"
 #include "../Codec/ISO15693.h"
@@ -112,4 +113,4 @@ void VicinitySetUid(ConfigurationUidType Uid) {
 }
 
 
-
+#endif /* CONFIG_VICINITY_SUPPORT */

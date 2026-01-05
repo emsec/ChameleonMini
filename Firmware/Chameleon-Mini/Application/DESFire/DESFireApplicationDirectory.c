@@ -281,7 +281,7 @@ BYTE ReadKeyCryptoType(uint8_t AppSlot, uint8_t KeyId) {
 
 void WriteKeyCryptoType(uint8_t AppSlot, uint8_t KeyId, BYTE Value) {
     if (AppSlot >= DESFIRE_MAX_SLOTS || !KeyIdValid(AppSlot, KeyId)) {
-        return 0x00;
+        return;
     }
     SIZET keyTypesBlockId = GetAppProperty(DESFIRE_APP_KEY_TYPES_ARRAY_BLOCK_ID, AppSlot);
     BYTE keyTypesArray[DESFIRE_MAX_KEYS];
@@ -368,7 +368,7 @@ BYTE LookupFileNumberByIndex(uint8_t AppSlot, BYTE FileIndex) {
 
 BYTE LookupNextFreeFileSlot(uint8_t AppSlot) {
     if (AppSlot >= DESFIRE_MAX_SLOTS) {
-        return;
+        return DESFIRE_MAX_FILES;
     }
     SIZET fileNumbersHashmapBlockId = GetAppProperty(DESFIRE_APP_FILE_NUMBER_ARRAY_MAP_BLOCK_ID, AppSlot);
     BYTE fileNumbersHashmap[DESFIRE_MAX_FILES];

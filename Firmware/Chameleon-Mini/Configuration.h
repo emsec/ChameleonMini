@@ -22,6 +22,9 @@ typedef enum  {
     /* This HAS to be the first element */
     CONFIG_NONE = 0,
 
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+    CONFIG_LEGIC_PRIME,
+#endif
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
     CONFIG_MF_ULTRALIGHT,
     CONFIG_MF_ULTRALIGHT_C,
@@ -84,6 +87,7 @@ typedef enum  {
 #define TAG_FAMILY_NONE      0
 #define TAG_FAMILY_ISO14443A 1
 #define TAG_FAMILY_ISO14443B 2
+#define TAG_FAMILY_ISO14443F 3
 #define TAG_FAMILY_ISO15693  5
 
 

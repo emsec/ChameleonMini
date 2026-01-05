@@ -175,19 +175,19 @@ CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InPara
     if (!strcasecmp_P(valueStr, PSTR("Plaintext"))) {
         DesfireCommMode = DESFIRE_COMMS_PLAINTEXT;
         DesfireCommandState.ActiveCommMode = DesfireCommMode;
-        return COMMAND_INFO_OK;
+        return COMMAND_INFO_OK_ID;
     } else if (!strcasecmp_P(valueStr, PSTR("Plaintext:MAC"))) {
         DesfireCommMode = DESFIRE_COMMS_PLAINTEXT_MAC;
         DesfireCommandState.ActiveCommMode = DesfireCommMode;
-        return COMMAND_INFO_OK;
+        return COMMAND_INFO_OK_ID;
     } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:3K3DES"))) {
         DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_DES;
         DesfireCommandState.ActiveCommMode = DesfireCommMode;
-        return COMMAND_INFO_OK;
+        return COMMAND_INFO_OK_ID;
     } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:AES128"))) {
         DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_AES128;
         DesfireCommandState.ActiveCommMode = DesfireCommMode;
-        return COMMAND_INFO_OK;
+        return COMMAND_INFO_OK_ID;
     }
     return COMMAND_ERR_INVALID_USAGE_ID;
 }
@@ -205,7 +205,7 @@ CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *
     bool setAESCryptoMode = true, setDESCryptoMode = true;
     bool ecbModeEnabled = true;
     if (modeStartPos == NULL) {
-        modeStartPos = &valueStr;
+        modeStartPos = &valueStr[0];
     } else {
         uint8_t prefixLength = (uint8_t)(modeStartPos - valueStr);
         if (prefixLength == 0) {
@@ -231,7 +231,7 @@ CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *
     if (setAESCryptoMode) {
         __CryptoAESOpMode = ecbModeEnabled ? CRYPTO_AES_ECB_MODE : CRYPTO_AES_CBC_MODE;
     }
-    return COMMAND_INFO_OK;
+    return COMMAND_INFO_OK_ID;
 }
 
 //The rest of the file was added by tomaspre

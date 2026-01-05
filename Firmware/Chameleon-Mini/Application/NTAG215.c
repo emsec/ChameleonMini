@@ -9,6 +9,8 @@
  *  Thanks to skuser for the MifareUltralight code used as a starting point
  */
 
+#ifdef CONFIG_NTAG215_SUPPORT
+
 #include "ISO14443-3A.h"
 #include "../Codec/ISO14443-2A.h"
 #include "../Memory.h"
@@ -428,3 +430,5 @@ void NTAG215SetUid(ConfigurationUidType Uid) {
     MemoryWriteBlock(&Uid[UID_CL1_SIZE], UID_CL2_ADDRESS, UID_CL2_SIZE);
     MemoryWriteBlock(&BCC2, UID_BCC2_ADDRESS, ISO14443A_CL_BCC_SIZE);
 }
+
+#endif /* CONFIG_NTAG215_SUPPORT */

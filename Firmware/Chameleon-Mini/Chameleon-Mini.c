@@ -7,12 +7,12 @@ int main(void) {
     PinInit();
     MemoryInit();
     CodecInitCommon();
-    ConfigurationInit();
     TerminalInit();
     RandomInit();
     ButtonInit();
     AntennaLevelInit();
     LogInit();
+    ConfigurationInit();
     SystemInterruptInit();
 
     while (1) {
