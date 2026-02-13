@@ -19,14 +19,14 @@ This notice must be retained at the top of all source files where indicated.
  * Tomas Preucil (github.com/tomaspre)
  */
 
+#ifdef ENABLE_DESFIRE_GALLAGHER
+
 #include <string.h>
+#include "DESFireCrypto.h"
 #include "DESFireGallagher.h"
 #include "DESFireGallagherTools.h"
 #include "DESFireLogging.h"
 #include "DESFireUtils.h"
-//SelectedApp
-//Authenticated, wthkey, wthmasterkey
-//CRYPTO_AES_KEY_SIZE
 
 #define CAD_BLOCK_LEN 0x24
 #define GALL_BLOCK_LEN 0x10
@@ -38,19 +38,29 @@ uint8_t lastRegionCode = 0xFF;
 DESFireAidType selectedGallagherAID = {0xFF, 0xFF, 0xFF};
 
 
-//Defaults to the default gallagher site key
-uint8_t GallagherSiteKey[16] = {
-        0x31, 0x12, 0xB7, 0x38, 0xD8, 0x86, 0x2C, 0xCD,
-        0x34, 0x30, 0x2E, 0xB2, 0x99, 0xAA, 0xB4, 0x56,
-};
+// Defaults to the default gallagher site key
+// Saving some precious space by putting these values into the AES crypto key buffer:
+//uint8_t *GallagherSiteKey = {
+//        0x31, 0x12, 0xB7, 0x38, 0xD8, 0x86, 0x2C, 0xCD,
+//        0x34, 0x30, 0x2E, 0xB2, 0x99, 0xAA, 0xB4, 0x56,
+//};
+uint8_t *GallagherSiteKey = &SessionKey[0];
 
 //Warning - running this function resets the AUTH state!
 bool CreateGallagherCard(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode) {
 
-    //TODO: Find a suitable AID
-    DESFireAidType AID = {0xF4, 0x81, 0x20};
+    ResetGallagherSiteKey(GallagherSiteKey);
+    
+    // TODO: Why is this default different from the initial values in selectedGallagherAID ???
+    // TODO: Find a suitable AID
+    // Saving some precious space by putting these values into selectedGallagherAID:
+    //static DESFireAidType AID = {0xF4, 0x81, 0x20};
+    selectedGallagherAID[0] = 0xF4;
+    selectedGallagherAID[1] = 0x81;
+    selectedGallagherAID[2] = 0x20;
+    
+    return CreateGallagherCardWithAID(cardId, facilityId, issueLevel, regionCode, selectedGallagherAID);
 
-    return CreateGallagherCardWithAID(cardId, facilityId, issueLevel, regionCode, AID);
 }
 
 //Warning - running this function resets the AUTH state!
@@ -138,11 +148,27 @@ void SetGallagherSiteKey(uint8_t* key) {
 }
 
 void ResetGallagherSiteKey() {
-    uint8_t key[16] = {
-            0x31, 0x12, 0xB7, 0x38, 0xD8, 0x86, 0x2C, 0xCD,
-            0x34, 0x30, 0x2E, 0xB2, 0x99, 0xAA, 0xB4, 0x56,
-    };
-    SetGallagherSiteKey(key);
+    GallagherSiteKey[0] = 0x31;
+    GallagherSiteKey[1] = 0x12;
+    GallagherSiteKey[2] = 0xB7;
+    GallagherSiteKey[3] = 0x38;
+    GallagherSiteKey[4] = 0xD8;
+    GallagherSiteKey[5] = 0x86;
+    GallagherSiteKey[6] = 0x2C;
+    GallagherSiteKey[7] = 0xCD;
+    GallagherSiteKey[8] = 0x34;
+    GallagherSiteKey[9] = 0x30;
+    GallagherSiteKey[10] = 0x2E;
+    GallagherSiteKey[11] = 0xB2;
+    GallagherSiteKey[12] = 0x99;
+    GallagherSiteKey[13] = 0xAA;
+    GallagherSiteKey[14] = 0xB4;
+    GallagherSiteKey[15] = 0x56;
+    //static uint8_t key[16] = {
+    //        0x31, 0x12, 0xB7, 0x38, 0xD8, 0x86, 0x2C, 0xCD,
+    //        0x34, 0x30, 0x2E, 0xB2, 0x99, 0xAA, 0xB4, 0x56,
+    //};
+    //SetGallagherSiteKey(key);
 }
 
 bool CreateGallagherAppWithAID(uint32_t cardId, uint16_t facilityId, uint8_t issueLevel, uint8_t regionCode, DESFireAidType AID) {
@@ -237,3 +263,5 @@ void SelectGallagherAID(DESFireAidType AID) {
     selectedGallagherAID[1] = AID[1];
     selectedGallagherAID[2] = AID[2];
 }
+
+#endif

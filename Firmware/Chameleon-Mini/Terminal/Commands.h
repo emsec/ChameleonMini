@@ -15,24 +15,26 @@
 #define COMMAND_INFO_OK_WITH_TEXT       "OK WITH TEXT"
 #define COMMAND_INFO_XMODEM_WAIT_ID     110
 #define COMMAND_INFO_XMODEM_WAIT        "WAITING FOR XMODEM"
-#define COMMAND_INFO_FALSE_ID			120
-#define COMMAND_INFO_FALSE			"FALSE"
-#define COMMAND_INFO_TRUE_ID			121
-#define COMMAND_INFO_TRUE			"TRUE"
+#define COMMAND_INFO_FALSE_ID			      120
+#define COMMAND_INFO_FALSE			        "FALSE"
+#define COMMAND_INFO_TRUE_ID			      121
+#define COMMAND_INFO_TRUE			          "TRUE"
 #define COMMAND_ERR_UNKNOWN_CMD_ID      200
 #define COMMAND_ERR_UNKNOWN_CMD         "UNKNOWN COMMAND"
 #define COMMAND_ERR_INVALID_USAGE_ID    201
 #define COMMAND_ERR_INVALID_USAGE       "INVALID COMMAND USAGE"
 #define COMMAND_ERR_INVALID_PARAM_ID    202
 #define COMMAND_ERR_INVALID_PARAM       "INVALID PARAMETER"
-#define COMMAND_ERR_TIMEOUT_ID		203
-#define COMMAND_ERR_TIMEOUT			"TIMEOUT"
-#define TIMEOUT_COMMAND				255 // this is just for the CommandLine module to know that this is a timeout command
+#define COMMAND_ERR_TIMEOUT_ID		      203
+#define COMMAND_ERR_TIMEOUT			        "TIMEOUT"
+
+// this is just for the CommandLine module to know that this is a timeout command:
+#define TIMEOUT_COMMAND				          255
 
 
 #define COMMAND_CHAR_TRUE           '1'
 #define COMMAND_CHAR_FALSE          '0'
-#define COMMAND_CHAR_SUGGEST		 '?' /* <CMD>=? for help */
+#define COMMAND_CHAR_SUGGEST		    '?' /* <CMD>=? for help */
 
 #define COMMAND_UID_BUFSIZE         32
 
@@ -103,7 +105,6 @@ CommandStatusIdType CommandSetLButton(char *OutMessage, const char *InParam);
 #define COMMAND_LBUTTON_LONG  "LBUTTON_LONG"
 CommandStatusIdType CommandGetLButtonLong(char *OutParam);
 CommandStatusIdType CommandSetLButtonLong(char *OutMessage, const char *InParam);
-
 
 #define COMMAND_LEDGREEN      "LEDGREEN"
 CommandStatusIdType CommandGetLedGreen(char *OutParam);

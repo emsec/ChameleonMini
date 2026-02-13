@@ -20,8 +20,15 @@
 
 #include <avr/eeprom.h>
 
-#define SETTINGS_COUNT		(MEMORY_SIZE / MEMORY_SIZE_PER_SETTING)
-#define SETTINGS_FIRST		1
+/* NOTE: Free up extra space needed by DESFire configurations: */
+#ifdef ENABLE_DESFIRE_GALLAGHER
+    #define SETTINGS_COUNT    MAX(1, (MEMORY_SIZE / MEMORY_SIZE_PER_SETTING) - 6)
+#elif defined(CONFIG_MF_DESFIRE_SUPPORT)
+    #define SETTINGS_COUNT    MAX(1, (MEMORY_SIZE / MEMORY_SIZE_PER_SETTING) - 4)
+#else
+    #define SETTINGS_COUNT		(MEMORY_SIZE / MEMORY_SIZE_PER_SETTING)
+#endif
+#define SETTINGS_FIRST	(1)
 #define SETTINGS_LAST		(SETTINGS_FIRST + SETTINGS_COUNT - 1)
 
 /** Defines one setting.

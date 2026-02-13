@@ -76,6 +76,19 @@ desfire-dev: TARGET_CUSTOM_BUILD_NAME:=DESFire_DEV
 desfire-dev: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
 desfire-dev: custom-build
 
+desfire-custom-tag: FLASH_DATA_SIZE_CONST:=0F000 # Eight settings (save some space): 4 * 0x2000
+desfire-custom-tag: FLASH_DATA_SIZE:=0x$(FLASH_DATA_SIZE_CONST)
+desfire-custom-tag: FLASH_DATA_SIZE_UPPER_CONST:=20000
+desfire-custom-tag: FLASH_DATA_ADDR:=0x$(shell echo $$(( 0x$(FLASH_DATA_SIZE_UPPER_CONST) - 0x$(FLASH_DATA_SIZE_CONST) )) | xargs -0 printf %X)
+desfire-custom-tag: SUPPORTED_TAGS_BUILD:=-DCONFIG_MF_DESFIRE_SUPPORT
+desfire-custom-tag: EXTRA_CONFIG_SETTINGS:=-DMEMORY_LIMITED_TESTING=1   \
+				-DDESFIRE_CRYPTO1_SAVE_SPACE \
+				-finline-small-functions \
+				$(shell /bin/bash DESFireGetCustomBuildMakeFlagsFromFile.sh ../DESFireCustomConfig/desfire-custom-config.cfg)
+desfire-custom-tag: TARGET_CUSTOM_BUILD_NAME:=DESFire_CUSTOM
+desfire-custom-tag: CONFIG_SETTINGS:=$(SUPPORTED_TAGS_BUILD) -DDEFAULT_CONFIGURATION=CONFIG_NONE $(EXTRA_CONFIG_SETTINGS)
+desfire-custom-tag: custom-build
+
 iso-modes: SUPPORTED_TAGS_BUILD:=			   \
 			 -DCONFIG_ISO14443A_SNIFF_SUPPORT  \
 			 -DCONFIG_ISO14443A_READER_SUPPORT \

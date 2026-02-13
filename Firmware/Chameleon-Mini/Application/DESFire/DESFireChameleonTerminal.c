@@ -31,8 +31,10 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "../../Terminal/Terminal.h"
 #include "../../Terminal/Commands.h"
+#include "../../Random.h"
 #include "../../Settings.h"
 #include "DESFireChameleonTerminal.h"
+#include "DESFireCrypto.h"
 #include "DESFireFirmwareSettings.h"
 #include "DESFirePICCControl.h"
 #include "DESFireMemoryOperations.h"
@@ -40,8 +42,6 @@ This notice must be retained at the top of all source files where indicated.
 #include "DESFireGallagher.h"
 
 #include <inttypes.h>
-
-extern DESFireAidType selectedGallagherAID;
 
 bool IsDESFireConfiguration(void) {
     return GlobalSettings.ActiveSettingPtr->Configuration == CONFIG_MF_DESFIRE ||
@@ -188,6 +188,14 @@ CommandStatusIdType CommandDESFireSetCommMode(char *OutParam, const char *InPara
         DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_AES128;
         DesfireCommandState.ActiveCommMode = DesfireCommMode;
         return COMMAND_INFO_OK;
+    } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:AES192"))) {
+        DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_AES192;
+        DesfireCommandState.ActiveCommMode = DesfireCommMode;
+        return COMMAND_INFO_OK;
+    } else if (!strcasecmp_P(valueStr, PSTR("Enciphered:AES256"))) {
+        DesfireCommMode = DESFIRE_COMMS_CIPHERTEXT_AES256;
+        DesfireCommandState.ActiveCommMode = DesfireCommMode;
+        return COMMAND_INFO_OK;
     }
     return COMMAND_ERR_INVALID_USAGE_ID;
 }
@@ -220,21 +228,40 @@ CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutParam, const char *
     }
     if (!strcasecmp_P(modeStartPos, PSTR("ECB"))) {
         ecbModeEnabled = true;
+        DesfireEncMode = CRYPTO_AES_ECB_MODE;
     } else if (!strcasecmp_P(modeStartPos, PSTR("CBC"))) {
         ecbModeEnabled = false;
+        DesfireEncMode = CRYPTO_AES_CBC_MODE;
     } else {
         return COMMAND_ERR_INVALID_USAGE_ID;
     }
     if (setDESCryptoMode) {
-        __CryptoDESOpMode = ecbModeEnabled ? CRYPTO_DES_ECB_MODE : CRYPTO_DES_CBC_MODE;
+        __CryptoDESOpMode = ecbModeEnabled ? CRYPTO_DES_ECB_MODE : 
+                                             CRYPTO_DES_CBC_MODE;
     }
     if (setAESCryptoMode) {
-        __CryptoAESOpMode = ecbModeEnabled ? CRYPTO_AES_ECB_MODE : CRYPTO_AES_CBC_MODE;
+        __CryptoAESOpMode = ecbModeEnabled ? CRYPTO_AES_ECB_MODE : 
+                                             CRYPTO_AES_CBC_MODE;
     }
-    return COMMAND_INFO_OK;
+    return COMMAND_INFO_OK_ID;
 }
 
+CommandStatusIdType CommandDESFireKeyscrubKill(char *OutMessage) {
+    int numRounds = DEFAULT_DESFIRE_KEYSCRUB_KILL_ROUNDS;
+    for (int r = 0; r < numRounds; r++) {
+        RandomGetBuffer(&SessionKey[0], CRYPTO_MAX_KEY_SIZE);
+        RandomGetBuffer(&SessionIV[0], CRYPTO_MAX_BLOCK_SIZE);
+    }
+    Authenticated = false;
+    AuthenticatedWithKey = -1;
+    return COMMAND_INFO_OK_ID;
+}
+
+#ifdef ENABLE_DESFIRE_GALLAGHER
+
 //The rest of the file was added by tomaspre
+extern DESFireAidType selectedGallagherAID;
+
 CommandStatusIdType CommandDESFireSetupGallagher(char *OutMessage, const char *InParams) {
     if (!IsDESFireConfiguration()) {
         return COMMAND_ERR_INVALID_USAGE_ID;
@@ -372,6 +399,8 @@ CommandStatusIdType CommandDESFireSetGallagherSiteKey(char *OutMessage, const ch
     snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, PSTR("NOT IMPLEMENTED"));
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
+
+#endif
 
 #endif /* CONFIG_MF_DESFIRE_SUPPORT */
 

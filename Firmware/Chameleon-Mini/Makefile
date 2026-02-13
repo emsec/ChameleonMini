@@ -12,11 +12,11 @@ SETTINGS        ?=
 ## :          on the Chameleon integrated AVR and lead to stability
 ## :          problems. Proceed carefully, or use one of the
 ## :          custom build targets found in the BuildScripts/* directory
-CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT
+#CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_MINI_4B_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_MF_CLASSIC_1K_SUPPORT
-CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
+#CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
 CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_SUPPORT
-CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
+#CONFIG_SETTINGS += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_MF_ULTRALIGHT_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_ISO14443A_SNIFF_SUPPORT
 CONFIG_SETTINGS  += -DCONFIG_ISO14443A_READER_SUPPORT
@@ -25,7 +25,7 @@ CONFIG_SETTINGS += -DCONFIG_NTAG215_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_SL2S2002_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_TITAGITSTANDARD_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_TITAGITPLUS_SUPPORT
-#CONFIG_SETTINGS += -DCONFIG_ISO15693_SNIFF_SUPPORT
+CONFIG_SETTINGS += -DCONFIG_ISO15693_SNIFF_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_EM4233_SUPPORT
 #CONFIG_SETTINGS += -DCONFIG_MF_DESFIRE_SUPPORT
 
@@ -92,9 +92,36 @@ SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 #SETTINGS  += -DENABLE_CRYPTO_3DES_TESTS
 #SETTINGS  += -DENABLE_CRYPTO_AES_TESTS
 
+## Enable software support for AES-192 and AES-256 encryption modes:
+SETTINGS += -DENABLE_DESFIRE_AES_EXTENDED
+
+## Enable DESFire Gallagher app emulation (takes up extra buffer space)
+## WARNING: Enabling this flag results in a compilation error (too large a binary section)
+#SETTINGS += -DENABLE_DESFIRE_GALLAGHER -UENABLE_DESFIRE_AES_EXTENDED
+
+## Set a default DESFire PICC master key loaded when the config is initialized:
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_MASTER_KEY='"My key string..."' 
+
+## Manually set default DESFire PICC / tag spec settings: 
+## See also the documentation for: ``make desfire-custom-tag``
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_UID="(uint8_t *) { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_ATS="(uint8_t *) { 0x06, 0x75, 0x77, 0x81, 0x02, 0x80 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_ATQA="(uint8_t *) { 0x44, 0x03 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_MANUID="(uint8_t *) { 0x01 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_HWTYPE="(uint8_t *) { 0x01 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_HWSUBTYPE="(uint8_t *) { 0x00 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_HWPROTOTYPE="(uint8_t *) { 0x00 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_HWVERS="(uint8_t *) { 0x00, 0x00 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_SWTYPE="(uint8_t *) { 0x01 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_SWSUBTYPE="(uint8_t *) { 0x00 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_SWPROTOTYPE="(uint8_t *) { 0x00 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_SWVERS="(uint8_t *) { 0x00, 0x00 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_BATCHNO="(uint8_t *) { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }"
+#SETTINGS += -DDESFIRE_DEFAULT_PICC_PRODDATE="(uint8_t *) { 0x00, 0x26 }"
+
 ## : Enable a command to run any tests added by developers, e.g., the
 ## : crypto scheme tests that can be enabled above:
-#SETTINGS  += -DENABLE_RUNTESTS_TERMINAL_COMMAND
+#SETTINGS += -DENABLE_RUNTESTS_TERMINAL_COMMAND
 
 ## : Whether or not to allow users Chameleon terminal access to change the DESFire configuration's
 ## : sensitive settings like manufacturer, serial number, etc.
@@ -220,6 +247,7 @@ SRC         +=  Application/MifareUltralight.c \
 		Application/CryptoTDEA-HWAccelerated.S \
 		Application/CryptoTDEA.c \
 		Application/CryptoAES128.c \
+		Application/CryptoAESExtended.c \
 		Application/CryptoCMAC.c
 SRC         +=  Application/NTAG215.c
 SRC         +=  Application/Vicinity.c \
@@ -361,18 +389,18 @@ dfu-prog: $(TARGET).hex $(TARGET).eep check_size
 	dfu-programmer $(MCU) reset
 
 check_size: BASH:=$(if $(shell which bash), $(shell which bash), /bin/bash)
-check_size: BASH_SCRIPT_EXEC_LINES:='                                                                            \
-	set -e;                                                                                                  \
-	if [[ ! -f $(TARGET).elf ]]; then                                                                        \
-		exit 0;                                                                                          \
-	fi;                                                                                                      \
-	PROGMEM_SIZE=$$(avr-size $(TARGET).elf | grep $(CHECK_SIZE_GREP_ARGS) | sed -n 4p);                      \
-	MAX_PRGMEM_SIZE=$$(printf "%d\n" $(FLASH_DATA_ADDR));                                                    \
-	if [[ $$PROGMEM_SIZE -gt $$MAX_PRGMEM_SIZE ]]; then                                                      \
-	     $(ECHO) \"make: *** $(TARGET).elf Application Section size $$PROGMEM_SIZE \"                        \
-		$(ECHO) \"excedes maximum allowed $$MAX_PRGMEM_SIZE. Please disable some features in Makefile\"; \
-		exit 1;                                                                                          \
-	fi;                                                                                                      \
+check_size: BASH_SCRIPT_EXEC_LINES:='                                                                        \
+	set -e;                                                                                                    \
+	if [[ ! -f $(TARGET).elf ]]; then                                                                          \
+		exit 0;                                                                                                  \
+	fi;                                                                                                        \
+	PROGMEM_SIZE=$$(avr-size $(TARGET).elf | grep $(CHECK_SIZE_GREP_ARGS) | sed -n 4p);                        \
+	MAX_PRGMEM_SIZE=$$(printf "%d\n" $(FLASH_DATA_ADDR));                                                      \
+	if [[ $$PROGMEM_SIZE -gt $$MAX_PRGMEM_SIZE ]]; then                                                        \
+	  $(ECHO) \"make: *** $(TARGET).elf Application Section size $$PROGMEM_SIZE \"                             \
+		$(ECHO) \"excedes maximum allowed $$MAX_PRGMEM_SIZE. Please disable some features in Makefile\"          \
+		exit 1;                                                                                                  \
+	fi;                                                                                                        \
 	'
 check_size:
 	@$(BASH) -c $(BASH_SCRIPT_EXEC_LINES) || $(SHELL) -c $(BASH_SCRIPT_EXEC_LINES)

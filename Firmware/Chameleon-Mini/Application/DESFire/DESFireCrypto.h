@@ -29,6 +29,9 @@ This notice must be retained at the top of all source files where indicated.
 
 #include "../../Common.h"
 #include "../CryptoAES128.h"
+#include "../CryptoAESExtended.h"
+#include "../CryptoTDEA.h"
+#include "../CryptoCMAC.h"
 
 #include "DESFireFirmwareSettings.h"
 
@@ -44,6 +47,8 @@ This notice must be retained at the top of all source files where indicated.
 #define DESFIRE_COMMS_PLAINTEXT_MAC        (0x01)
 #define DESFIRE_COMMS_CIPHERTEXT_DES       (0x03)
 #define DESFIRE_COMMS_CIPHERTEXT_AES128    (0x04)
+#define DESFIRE_COMMS_CIPHERTEXT_AES192    (0x05)
+#define DESFIRE_COMMS_CIPHERTEXT_AES256    (0x06)
 #define DESFIRE_DEFAULT_COMMS_STANDARD     (DESFIRE_COMMS_PLAINTEXT)
 
 extern BYTE DesfireCommMode;
@@ -53,6 +58,14 @@ extern BYTE DesfireCommMode;
 #define CRYPTO_TYPE_2KTDEA      (0x0A)
 #define CRYPTO_TYPE_3K3DES      (0x1A)
 #define CRYPTO_TYPE_AES128      (0x4A)
+#define CRYPTO_TYPE_AES192      (0x8A)
+#define CRYPTO_TYPE_AES256      (0xDA)
+
+#ifdef ENABLE_DESFIRE_AES_EXTENDED
+    #define DESFIRE_AES_EXTENDED       (1)
+#else 
+    #define DESFIRE_AES_EXTENDED       (0)
+#endif
 
 #define CryptoTypeDES(ct)    \
     ((ct == CRYPTO_TYPE_DES) || (ct == CRYPTO_TYPE_ANY))
@@ -61,13 +74,20 @@ extern BYTE DesfireCommMode;
 #define CryptoType3KTDEA(ct) \
     ((ct == CRYPTO_TYPE_3K3DES) || (ct == CRYPTO_TYPE_ANY))
 #define CryptoTypeAES(ct)    \
-    ((ct == CRYPTO_TYPE_AES128) || (ct == CRYPTO_TYPE_ANY))
+    ((ct == CRYPTO_TYPE_AES128) || \
+     (ct == CRYPTO_TYPE_AES192) || \
+     (ct == CRYPTO_TYPE_AES256) || \
+     (ct == CRYPTO_TYPE_ANY))
 
 /* Key sizes, block sizes (in bytes): */
-#define CRYPTO_MAX_KEY_SIZE                  (24)
+#ifdef ENABLE_DESFIRE_AES_EXTENDED
+    #define CRYPTO_MAX_KEY_SIZE              (32)
+#else
+    #define CRYPTO_MAX_KEY_SIZE              (24)
+#endif
 #define CRYPTO_MAX_BLOCK_SIZE                (16)
 #define DESFIRE_AES_IV_SIZE                  (CRYPTO_AES_BLOCK_SIZE)
-#define CRYPTO_CHALLENGE_RESPONSE_BYTES      (16)
+#define CRYPTO_CHALLENGE_RESPONSE_BYTES      (CRYPTO_MAX_BLOCK_SIZE)
 
 typedef BYTE CryptoKeyBufferType[CRYPTO_MAX_KEY_SIZE];
 typedef BYTE CryptoIVBufferType[CRYPTO_MAX_BLOCK_SIZE];
@@ -81,6 +101,7 @@ extern uint8_t AuthenticatedWithKey;
 extern bool    AuthenticatedWithPICCMasterKey;
 extern uint8_t CryptoAuthMethod;
 extern uint8_t ActiveCommMode;
+extern uint8_t DesfireEncMode;
 
 /* Need to invalidate the authentication state after:
  * 1) Selecting a new application;
@@ -105,7 +126,9 @@ typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
     DESFIRE_AUTH_LEGACY,
     DESFIRE_AUTH_ISO_2KTDEA,
     DESFIRE_AUTH_ISO_3KTDEA,
-    DESFIRE_AUTH_AES,
+    DESFIRE_AUTH_AES128,
+    DESFIRE_AUTH_AES192,
+    DESFIRE_AUTH_AES256
 } DesfireAuthType;
 
 BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
@@ -116,8 +139,6 @@ BYTE GetCryptoKeyTypeFromAuthenticateMethod(BYTE authCmdMethod);
 /*********************************************************
  * AES (128) crypto routines:
  *********************************************************/
-
-#include "../CryptoAES128.h"
 
 extern CryptoAESConfig_t AESCryptoContext;
 
@@ -133,9 +154,6 @@ typedef uint8_t (*CryptoTransferReceiveFunc)(uint8_t *, uint8_t);
 /*********************************************************
  * TripleDES crypto routines:
  *********************************************************/
-
-#include "../CryptoTDEA.h"
-#include "../CryptoCMAC.h"
 
 #define DESFIRE_2KTDEA_NONCE_SIZE            (CRYPTO_DES_BLOCK_SIZE)
 #define DESFIRE_DES_IV_SIZE                  (CRYPTO_DES_BLOCK_SIZE)

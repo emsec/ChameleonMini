@@ -3,20 +3,29 @@
 
 #CC=gcc-10   # for MacOS
 CC=gcc
-CFLAGS_BASE= -ILocalInclude -ISource \
-		-g -O0 -Wall -pedantic -Wextra -std=c99 -Du_int8_t=uint8_t -Du_int16_t=uint16_t \
-		`pkg-config libnfc --cflags` -I/usr/local/opt/openssl/include                   \
+CFLAGS_BASE= -ILocalInclude -ISource        \
+		-g -O0 -Wall -pedantic -Wextra -std=c99 \
+		-Du_int8_t=uint8_t -Du_int16_t=uint16_t \
+		`pkg-config libnfc --cflags`            \
+		-I/usr/local/opt/openssl/include        \
 		-DHOST_BUILD -DCRYPTO_AES_DEFAULT=1
 #LD=gcc-10   # for MacOS
 LD=gcc
-LDFLAGS_BASE= $(CFLAGS) -lc `pkg-config libnfc --libs` \
-		 -L/usr/local/opt/openssl/lib -L/usr/lib64 -lssl -lcrypto
+LDFLAGS_BASE= $(CFLAGS) -lc $(shell greadlink -f ~/libnfc/.libs/libnfc.6.dylib) \
+     `pkg-config libnfc --libs`                         \
+		 -L/usr/local/opt/openssl/lib -lssl -lcrypto
 
 ifeq ("$(shell uname -s)", "Darwin")
-    CC=/usr/local/opt/llvm/bin/clang-13
-    CFLAGS=$(CFLAGS_BASE) -I/usr/local/opt/llvm/include
-    LD=/usr/local/opt/llvm/bin/clang-13
-    LDFLAGS=$(LDFLAGS_BASE) -L/usr/local/opt/llvm/lib
+    # MacOS LLVM installed with brew:
+    #CC=/usr/local/opt/llvm/bin/clang-13
+    #CFLAGS=$(CFLAGS_BASE) -I/usr/local/opt/llvm/include
+    #LD=/usr/local/opt/llvm/bin/clang-13
+    #LDFLAGS=$(LDFLAGS_BASE) -L/usr/local/opt/llvm/lib
+    # Older MacOS LLVM installed with MacPorts:
+    CC=/opt/local/bin/clang-mp-13
+    CFLAGS=$(CFLAGS_BASE) -I/opt/local/include
+    LD=/opt/local/bin/clang-mp-13
+    LDFLAGS=$(LDFLAGS_BASE) -L/opt/local/lib
 else
     CFLAGS=$(CFLAGS_BASE)
     LDFLAGS=$(LDFLAGS_BASE)
@@ -30,14 +39,14 @@ OBJEXT=o
 LIBNFC_SUPPORTED_DRIVERS= -DDRIVER_PN53X_USB_ENABLED                   \
 					 -DDRIVER_PCSC_ENABLED         \
 					 -DDRIVER_ACR122_PCSC_ENABLED  \
-					 -DDRIVER_ACR122_USB_ENABLED   \
 					 -DDRIVER_ACR122S_ENABLED      \
 					 -DDRIVER_ARYGON_ENABLED       \
 					 -DDRIVER_PN532_UART_ENABLED   \
 					 -DDRIVER_PN532_SPI_ENABLED    \
 					 -DDRIVER_PN532_I2C_ENABLED    \
-					 -DDRIVER_PN71XX_ENABLED
-LIBNFC_CUSTOM_CONFIG= -DLIBNFC_LOGLEVEL=NFC_LOG_PRIORITY_DEBUG                                    \
+					 -DDRIVER_PN71XX_ENABLED       \
+					 -DDRIVER_ACR122_USB_ENABLED
+LIBNFC_CUSTOM_CONFIG= -DLIBNFC_LOGLEVEL=3                                    \
 				  -ULOG_CATEGORY -DLOG_CATEGORY=\"DESFireTesting.libnfc.general\" \
 				  -ULOG_GROUP -DLOG_GROUP=NFC_LOG_GROUP_GENERAL
 CFLAGS+= $(LIBNFC_SUPPORTED_DRIVERS) $(LIBNFC_CUSTOM_CONFIG)
@@ -53,6 +62,9 @@ UTILS_SOURCE=LocalInclude/Config.h           \
 FILE_BASENAMES=NFCAntiCollisionMod                              \
 			   TestAuthenticateLegacy               \
 			   TestAuthenticateISO                  \
+			   TestAuthenticateAES128               \
+			   TestAuthenticateAES192               \
+			   TestAuthenticateAES256               \
 			   TestGeneralCommands                  \
 			   TestGeneralCommands2                 \
 			   TestKeyManagementCommands            \

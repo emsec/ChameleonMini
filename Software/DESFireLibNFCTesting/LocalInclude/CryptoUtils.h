@@ -8,6 +8,7 @@
 
 #include <openssl/rand.h>
 #include <openssl/des.h>
+#include <openssl/aes.h>
 
 #include "LibNFCUtils.h"
 
@@ -22,24 +23,28 @@
 #define DESFIRE_CRYPTO_AUTHTYPE_AES128          (1)
 #define DESFIRE_CRYPTO_AUTHTYPE_ISODES          (2)
 #define DESFIRE_CRYPTO_AUTHTYPE_LEGACY          (3)
+#define DESFIRE_CRYPTO_AUTHTYPE_AES192          (4)
+#define DESFIRE_CRYPTO_AUTHTYPE_AES256          (5)
 
 #define CRYPTO_DES_BLOCK_SIZE                   (8)
 #define CRYPTO_3KTDEA_BLOCK_SIZE                (CRYPTO_DES_BLOCK_SIZE)
-#define AES128_BLOCK_SIZE                       (16)
-#define CRYPTO_MAX_BLOCK_SIZE                   (AES128_BLOCK_SIZE)
+#define CRYPTO_AES_BLOCK_SIZE                   (16)
+#define CRYPTO_MAX_BLOCK_SIZE                   (CRYPTO_AES_BLOCK_SIZE)
 
 #define CRYPTO_DES_KEY_SIZE                     (CRYPTO_DES_BLOCK_SIZE)
 #define CRYPTO_3KTDEA_KEY_SIZE                  (3 * CRYPTO_DES_KEY_SIZE)
-#define CRYPTO_AES128_KEY_SIZE                  (AES128_BLOCK_SIZE)
+#define CRYPTO_AES128_KEY_SIZE                  (16)
+#define CRYPTO_AES192_KEY_SIZE                  (24)
+#define CRYPTO_AES256_KEY_SIZE                  (32)
 
-typedef uint8_t CryptoAESBlock_t[AES128_BLOCK_SIZE];
+typedef uint8_t CryptoAESBlock_t[CRYPTO_AES_BLOCK_SIZE];
 static uint8_t SessionIV[CRYPTO_MAX_BLOCK_SIZE];
 
 /* Key sizes, block sizes (in bytes): */
 #define CRYPTO_MAX_KEY_SIZE                     (3 * CRYPTO_DES_KEY_SIZE)
 #define CRYPTO_MAX_BLOCK_SIZE                   (2 * CRYPTO_DES_KEY_SIZE)
 
-#define CRYPTO_CHALLENGE_RESPONSE_SIZE          (AES128_BLOCK_SIZE)
+#define CRYPTO_CHALLENGE_RESPONSE_SIZE          (CRYPTO_AES_BLOCK_SIZE)
 #define CRYPTO_CHALLENGE_RESPONSE_SIZE_LEGACY   (CRYPTO_DES_BLOCK_SIZE)
 
 static const uint8_t ZERO_KEY[] = {
@@ -63,6 +68,7 @@ typedef struct {
     size_t   keySize;
     uint8_t  *ivData;
     size_t   ivSize;
+    uint8_t  cryptoMode;
 } CryptoData_t;
 
 #define CryptoMemoryXOR(inputBuf, destBuf, bufSize) ({ \
@@ -192,7 +198,6 @@ static inline size_t Decrypt3DES(const uint8_t *encSrcBuf, size_t bufSize,
     return bufSize;
 }
 
-
 static inline size_t EncryptDES(const uint8_t *plainSrcBuf, size_t bufSize,
                                 uint8_t *encDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
     DES_key_schedule keySched;
@@ -247,6 +252,76 @@ static inline size_t DecryptDES(const uint8_t *encSrcBuf, size_t bufSize,
     }
     if (IVIn != NULL) {
         memcpy(IVIn, IV, CRYPTO_DES_BLOCK_SIZE);
+    }
+    return bufSize;
+}
+
+static inline int CryptoGetAESKeySize(int aesCryptoType) {
+    switch (aesCryptoType) {
+        case DESFIRE_CRYPTO_AUTHTYPE_AES128:
+            return CRYPTO_AES128_KEY_SIZE;
+        case DESFIRE_CRYPTO_AUTHTYPE_AES192:
+            return CRYPTO_AES192_KEY_SIZE;
+        case DESFIRE_CRYPTO_AUTHTYPE_AES256:
+            return CRYPTO_AES256_KEY_SIZE;
+        default:
+            break;
+    }
+    return 0;
+}
+
+static inline size_t EncryptAES(const uint8_t *plainSrcBuf, size_t bufSize,
+                                uint8_t *encDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
+    AES_KEY encKey;
+    AES_set_encrypt_key(cdata.keyData, 8 * cdata.keySize, &encKey);
+    uint8_t IV[CRYPTO_AES_BLOCK_SIZE];
+    if (IVIn == NULL) {
+        memset(IV, 0x00, CRYPTO_AES_BLOCK_SIZE);
+    } else {
+        memcpy(IV, IVIn, CRYPTO_AES_BLOCK_SIZE);
+    }
+    if (__CryptoDESOpMode == CRYPTO_AES_CBC_MODE) {
+        AES_cbc_encrypt(plainSrcBuf, encDestBuf, bufSize, &encKey, &IV, AES_ENCRYPT);
+    } else {
+        uint8_t inputBlock[CRYPTO_AES_BLOCK_SIZE];
+        uint16_t numBlocks = bufSize / CRYPTO_AES_BLOCK_SIZE;
+        for (int blk = 0; blk < numBlocks; blk++) {
+            memcpy(inputBlock, &plainSrcBuf[blk * CRYPTO_AES_BLOCK_SIZE], CRYPTO_AES_BLOCK_SIZE);
+            CryptoMemoryXOR(IV, inputBlock, CRYPTO_AES_BLOCK_SIZE);
+            AES_ecb_encrypt(inputBlock, &encDestBuf[blk * CRYPTO_AES_BLOCK_SIZE], &encKey, AES_ENCRYPT);
+            memcpy(IV, &encDestBuf[blk * CRYPTO_AES_BLOCK_SIZE], CRYPTO_AES_BLOCK_SIZE);
+        }
+    }
+    if (IVIn != NULL) {
+        memcpy(IVIn, IV, CRYPTO_AES_BLOCK_SIZE);
+    }
+    return bufSize;
+}
+
+static inline size_t DecryptAES(const uint8_t *encSrcBuf, size_t bufSize,
+                                uint8_t *plainDestBuf, const uint8_t *IVIn, CryptoData_t cdata) {
+    AES_KEY encKey;
+    AES_set_decrypt_key(cdata.keyData, 8 * cdata.keySize, &encKey);
+    uint8_t IV[CRYPTO_AES_BLOCK_SIZE];
+    if (IVIn == NULL) {
+        memset(IV, 0x00, CRYPTO_AES_BLOCK_SIZE);
+    } else {
+        memcpy(IV, IVIn, CRYPTO_AES_BLOCK_SIZE);
+    }
+    if (__CryptoDESOpMode == CRYPTO_AES_CBC_MODE) {
+        AES_cbc_encrypt(encSrcBuf, plainDestBuf, bufSize, &encKey, &IV, AES_DECRYPT);
+    } else {
+        uint8_t inputBlock[CRYPTO_AES_BLOCK_SIZE];
+        uint16_t numBlocks = bufSize / CRYPTO_AES_BLOCK_SIZE;
+        for (int blk = 0; blk < numBlocks; blk++) {
+            AES_ecb_encrypt(&encSrcBuf[blk * CRYPTO_AES_BLOCK_SIZE],
+                            &plainDestBuf[blk * CRYPTO_AES_BLOCK_SIZE], &encKey, AES_DECRYPT);
+            CryptoMemoryXOR(IV, &plainDestBuf[blk * CRYPTO_AES_BLOCK_SIZE], CRYPTO_AES_BLOCK_SIZE);
+            memcpy(IV, &encSrcBuf[blk * CRYPTO_AES_BLOCK_SIZE], CRYPTO_AES_BLOCK_SIZE);
+        }
+    }
+    if (IVIn != NULL) {
+        memcpy(IVIn, IV, CRYPTO_AES_BLOCK_SIZE);
     }
     return bufSize;
 }

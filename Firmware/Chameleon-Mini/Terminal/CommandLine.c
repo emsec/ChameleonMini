@@ -343,6 +343,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
         .GetFunc        = CommandGetAutoThreshold
     },
 #endif
+
 #ifdef ENABLE_RUNTESTS_TERMINAL_COMMAND
 #include "../Tests/ChameleonTerminalInclude.c"
 #endif

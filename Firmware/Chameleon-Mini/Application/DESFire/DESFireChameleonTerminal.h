@@ -40,15 +40,21 @@ This notice must be retained at the top of all source files where indicated.
 bool IsDESFireConfiguration(void);
 
 #ifndef DISABLE_PERMISSIVE_DESFIRE_SETTINGS
-#define DFCOMMAND_SET_HEADER                  "DF_SETHDR"
+#define DFCOMMAND_SET_HEADER                           "DF_SETHDR"
 CommandStatusIdType CommandDESFireSetHeaderProperty(char *OutMessage, const char *InParams);
 #endif /* DISABLE_PERMISSIVE_DESFIRE_SETTINGS */
 
-#define DFCOMMAND_COMM_MODE                   "DF_COMM_MODE"
+#define DFCOMMAND_COMM_MODE                            "DF_COMM_MODE"
 CommandStatusIdType CommandDESFireSetCommMode(char *OutMessage, const char *InParams);
 
-#define DFCOMMAND_SET_ENCMODE                 "DF_ENCMODE"
+#define DFCOMMAND_SET_ENCMODE                          "DF_ENCMODE"
 CommandStatusIdType CommandDESFireSetEncryptionMode(char *OutMessage, const char *InParams);
+
+#define DEFAULT_DESFIRE_KEYSCRUB_KILL_ROUNDS           (1)
+#define DFCOMMAND_KEYSCRUB_KILL                        "DF_KEYSCRUB"
+CommandStatusIdType CommandDESFireKeyscrubKill(char *OutMessage);
+
+#ifdef ENABLE_DESFIRE_GALLAGHER
 
 //The rest of the file was added by tomaspre
 #define DFCOMMAND_SETUP_GALLAGHER                      "DF_SETUP_GALL"
@@ -68,6 +74,8 @@ CommandStatusIdType CommandDESFireSelectGallagherApp(char *OutMessage, const cha
 
 #define DFCOMMAND_SET_GALLAGHER_SITE_KEY               "DF_SET_GALLKEY"
 CommandStatusIdType CommandDESFireSetGallagherSiteKey(char *OutMessage, const char *InParams);
+
+#endif
 
 #endif /* DESFire Support */
 

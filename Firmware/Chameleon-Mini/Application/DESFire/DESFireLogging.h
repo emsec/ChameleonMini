@@ -47,11 +47,11 @@ void DesfireLogISOStateChange(int state, int logCode);
     uint8_t logLength = 0;                                               \
     do {                                                                 \
         snprintf_P((char *) __InternalStringBuffer, STRING_BUFFER_SIZE,  \
-		         (const char *) fmtStr, ##__VA_ARGS__);                \
-	   logLength = StringLength((char *) __InternalStringBuffer,        \
-		                       STRING_BUFFER_SIZE);                    \
-	   DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT,               \
-			         (char *) __InternalStringBuffer, logLength);     \
+		         (const char *) fmtStr, ##__VA_ARGS__);                      \
+	   logLength = StringLength((char *) __InternalStringBuffer,           \
+		                       STRING_BUFFER_SIZE);                          \
+	   DesfireLogEntry(LOG_INFO_DESFIRE_DEBUGGING_OUTPUT,                  \
+			         (char *) __InternalStringBuffer, logLength);              \
     } while(0);                                                          \
     })
 #else
@@ -61,10 +61,10 @@ void DesfireLogISOStateChange(int state, int logCode);
 #define GetSourceFileLoggingData()                               ({ \
         char *strBuffer;                                            \
         do {                                                        \
-	    snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,     \
+	    snprintf_P(__InternalStringBuffer, STRING_BUFFER_SIZE,        \
                    PSTR("@@ LINE #%d in \"%s\" @@"),                \
-			    __LINE__, __FILE__);                             \
-	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';     \
+			    __LINE__, __FILE__);                                      \
+	    __InternalStringBuffer[STRING_BUFFER_SIZE - 1] = '\0';        \
         } while(0);                                                 \
         strBuffer = __InternalStringBuffer;                         \
         strBuffer;                                                  \

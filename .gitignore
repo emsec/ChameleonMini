@@ -1,0 +1,6 @@
+*.swp
+*.code
+*.temp
+*.o
+*.a
+*.exe

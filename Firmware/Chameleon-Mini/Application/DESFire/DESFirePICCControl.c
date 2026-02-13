@@ -115,15 +115,12 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT:
             break;
         case DESFIRE_COMMS_PLAINTEXT_MAC:
-            //memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_DES:
-            //memset(SessionIV, PICC_EMPTY_BYTE, sizeof(SessionIV));
             SessionIVByteSize = CRYPTO_3KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_AES128:
-            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
         default:
             return STATUS_PARAMETER_ERROR;
@@ -134,19 +131,15 @@ uint8_t ReadDataFilterSetup(uint8_t CommSettings) {
 uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
     switch (CommSettings) {
         case DESFIRE_COMMS_PLAINTEXT:
-            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = 0;
             break;
         case DESFIRE_COMMS_PLAINTEXT_MAC:
-            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_2KTDEA_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_DES:
-            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
             break;
         case DESFIRE_COMMS_CIPHERTEXT_AES128:
-            //memset(SessionIV, 0, sizeof(SessionIVByteSize));
             SessionIVByteSize = CRYPTO_AES_KEY_SIZE;
             break;
         default:
@@ -160,9 +153,9 @@ uint8_t WriteDataFilterSetup(uint8_t CommSettings) {
  */
 
 void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
-#ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
+    #ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
     RunCryptoUnitTests();
-#endif
+    #endif
     /* Init backend */
     InitBlockSizes();
     CardCapacityBlocks = StorageSize;
@@ -181,9 +174,9 @@ void InitialisePiccBackendEV0(uint8_t StorageSize, bool formatPICC) {
 }
 
 void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
-#ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
+    #ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
     RunCryptoUnitTests();
-#endif
+    #endif
     /* Init backend */
     InitBlockSizes();
     CardCapacityBlocks = StorageSize;
@@ -202,9 +195,9 @@ void InitialisePiccBackendEV1(uint8_t StorageSize, bool formatPICC) {
 }
 
 void InitialisePiccBackendEV2(uint8_t StorageSize, bool formatPICC) {
-#ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
+    #ifdef DESFIRE_RUN_CRYPTO_TESTING_PROCEDURE
     RunCryptoUnitTests();
-#endif
+    #endif
     /* Init backend */
     InitBlockSizes();
     CardCapacityBlocks = StorageSize;
@@ -257,50 +250,155 @@ uint8_t GetPiccKeySettings(void) {
 }
 
 void FormatPicc(void) {
-    /* Wipe application directory */
+    
+    /* Wipe application directory: */
     memset(&AppDir, 0x00, sizeof(DESFireAppDirType));
     memset(&SelectedApp, 0x00, sizeof(SelectedAppCacheType));
-    /* Set a random new UID */
+    
+    /* Set a random new UID or the build-time default: */
     BYTE uidData[DESFIRE_UID_SIZE];
+    #ifdef ENABLE_DESFIRE_DEFAULT_PICC_UID
+    if (sizeof(DESFIRE_DEFAULT_PICC_UID) == BYTELEN_DESFIRE_DEFAULT_PICC_UID) {
+        memcpy(&uidData[1], DESFIRE_DEFAULT_PICC_UID, BYTELEN_DESFIRE_DEFAULT_PICC_UID);
+    } else {
+        DEBUG_PRINT_P(PSTR("Makefile error: Default UID bytes = %d != %d"), 
+                      DESFIRE_DEFAULT_PICC_UID, BYTELEN_DESFIRE_DEFAULT_PICC_UID);
+        RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
+    }
+    #else 
     RandomGetBuffer(uidData, DESFIRE_UID_SIZE);
+    #endif
     memcpy(&Picc.Uid[0], uidData, DESFIRE_UID_SIZE);
+    
     /* Conform to NXP Application Note AN10927 about the first
-     * byte of a randomly generated UID (refer to section 2.1.1).
+     * byte of a randomly generated UID (refer to section 2.1.1):
      */
     Picc.Uid[0] = ISO14443A_UID0_RANDOM;
     uint16_t ATQAValue = DESFIRE_ATQA_RANDOM_UID;
+    #ifdef ENABLE_DESFIRE_DEFAULT_PICC_ATQA
+    if (sizeof(DESFIRE_DEFAULT_PICC_ATQA) == BYTELEN_DESFIRE_DEFAULT_PICC_ATQA) {
+        ATQAValue = (DESFIRE_DEFAULT_PICC_ATQA[0] << 8) | DESFIRE_DEFAULT_PICC_ATQA[1];
+    } else {
+        DEBUG_PRINT_P(PSTR("Makefile error: Default ATQA bytes = %d != %d"), 
+                      DESFIRE_DEFAULT_PICC_ATQA, BYTELEN_DESFIRE_DEFAULT_PICC_ATQA);
+    }
+    #endif
     Picc.ATQA[0] = (uint8_t)((ATQAValue >> 8) & 0x00FF);
     Picc.ATQA[1] = (uint8_t)(ATQAValue & 0x00FF);
     DesfireATQAReset = false;
-    /* Randomize the initial batch number data: */
+    
+    /* Randomize the initial batch number data (or set to build-time default): */
     BYTE batchNumberData[5];
+    #ifdef ENABLE_DESFIRE_DEFAULT_PICC_BATCHNO
+    if (sizeof(DESFIRE_DEFAULT_PICC_BATCHNO) == BYTELEN_DESFIRE_DEFAULT_PICC_BATCHNO) {
+        memcpy(batchNumberData, DESFIRE_DEFAULT_PICC_BATCHNO, 
+               BYTELEN_DESFIRE_DEFAULT_PICC_BATCHNO);
+    } else {
+        DEBUG_PRINT_P(PSTR("Makefile error: Default BatchNo bytes = %d != %d"), 
+                      DESFIRE_DEFAULT_PICC_BATCHNO, BYTELEN_DESFIRE_DEFAULT_PICC_BATCHNO);
+        RandomGetBuffer(batchNumberData, 5);
+    }
+    #else 
     RandomGetBuffer(batchNumberData, 5);
+    #endif
     memcpy(&Picc.BatchNumber[0], batchNumberData, 5);
+    
     /* Default production date -- until the user changes them: */
+    #ifdef ENABLE_DESFIRE_DEFAULT_PICC_PRODDATE
+    if (sizeof(DESFIRE_DEFAULT_PICC_PRODDATE) == BYTELEN_DESFIRE_DEFAULT_PICC_PRODDATE) {
+        Picc.ProductionWeek = DESFIRE_DEFAULT_PICC_PRODDATE[0];
+        Picc.ProductionYear = DESFIRE_DEFAULT_PICC_PRODDATE[1];
+
+    } else {
+        DEBUG_PRINT_P(PSTR("Makefile error: Default ProdDate bytes = %d != %d"), 
+                      DESFIRE_DEFAULT_PICC_PRODDATE, BYTELEN_DESFIRE_DEFAULT_PICC_PRODDATE);
+        Picc.ProductionWeek = 0x01;
+        Picc.ProductionYear = 0x05;
+    }
+    #else
     Picc.ProductionWeek = 0x01;
     Picc.ProductionYear = 0x05;
+    #endif
+
     /* Assign the default manufacturer ID: */
+    #ifdef DESFIRE_DEFAULT_PICC_MANUID
+    Picc.ManufacturerID = DESFIRE_DEFAULT_PICC_MANUID[0];
+    #else
     Picc.ManufacturerID = DESFIRE_MANUFACTURER_ID;
+    #endif
+    #ifdef DESFIRE_DEFAULT_PICC_HWTYPE
+    Picc.HwType = DESFIRE_DEFAULT_PICC_HWTYPE[0];
+    #else
     Picc.HwType = DESFIRE_TYPE;
+    #endif
+    #ifdef DESFIRE_DEFAULT_PICC_HWSUBTYPE
+    Picc.HwSubtype = DESFIRE_DEFAULT_PICC_HWSUBTYPE[0];
+    #else
     Picc.HwSubtype = DESFIRE_SUBTYPE;
+    #endif
+    #ifdef DESFIRE_DEFAULT_PICC_HWPROTOTYPE
+    Picc.HwProtocolType = DESFIRE_DEFAULT_PICC_HWPROTOTYPE[0];
+    #else
     Picc.HwProtocolType = DESFIRE_HW_PROTOCOL_TYPE;
+    #endif
+    #ifdef ENABLE_DESFIRE_DEFAULT_PICC_HWVERS
+    Picc.HwVersionMinor = DESFIRE_DEFAULT_PICC_HWVERS[0];
+    Picc.HwVersionMajor = DESFIRE_DEFAULT_PICC_HWVERS[1];
+    #endif
+    #ifdef DESFIRE_DEFAULT_PICC_SWTYPE
+    Picc.SwType = DESFIRE_DEFAULT_PICC_SWTYPE[0];
+    #else
     Picc.SwType = DESFIRE_TYPE;
+    #endif
+    #ifdef DESFIRE_DEFAULT_PICC_SWSUBTYPE
+    Picc.SwSubtype = DESFIRE_DEFAULT_PICC_SWSUBTYPE[0];
+    #else
     Picc.SwSubtype = DESFIRE_SUBTYPE;
+    #endif
+    #ifdef DESFIRE_DEFAULT_PICC_SWPROTOTYPE
+    Picc.SwProtocolType = DESFIRE_DEFAULT_PICC_SWPROTOTYPE[0];
+    #else
     Picc.SwProtocolType = DESFIRE_SW_PROTOCOL_TYPE;
+    #endif
+    #ifdef ENABLE_DESFIRE_DEFAULT_PICC_SWVERS
+    Picc.SwVersionMinor = DESFIRE_DEFAULT_PICC_SWVERS[0];
+    Picc.SwVersionMajor = DESFIRE_DEFAULT_PICC_SWVERS[1];
+    #endif
+
     /* Set the ATS bytes to defaults: */
+    #ifdef ENABLE_DESFIRE_DEFAULT_PICC_ATS
+    if (sizeof(DESFIRE_DEFAULT_PICC_ATS) == BYTELEN_DESFIRE_DEFAULT_PICC_ATS) {
+        memcpy(&Picc.ATSBytes[0], DESFIRE_DEFAULT_PICC_ATS, 
+               BYTELEN_DESFIRE_DEFAULT_PICC_ATS);
+    } else {
+        DEBUG_PRINT_P(PSTR("Makefile error: Default ATS bytes = %d != %d"), 
+                      DESFIRE_DEFAULT_PICC_ATS, BYTELEN_DESFIRE_DEFAULT_PICC_ATS);
+        Picc.ATSBytes[0] = DESFIRE_EV0_ATS_TL_BYTE;
+        Picc.ATSBytes[1] = DESFIRE_EV0_ATS_T0_BYTE;
+        Picc.ATSBytes[2] = DESFIRE_EV0_ATS_TA_BYTE;
+        Picc.ATSBytes[3] = DESFIRE_EV0_ATS_TB_BYTE;
+        Picc.ATSBytes[4] = DESFIRE_EV0_ATS_TC_BYTE;
+        Picc.ATSBytes[5] = 0x80;
+    }
+    #else
     Picc.ATSBytes[0] = DESFIRE_EV0_ATS_TL_BYTE;
     Picc.ATSBytes[1] = DESFIRE_EV0_ATS_T0_BYTE;
     Picc.ATSBytes[2] = DESFIRE_EV0_ATS_TA_BYTE;
     Picc.ATSBytes[3] = DESFIRE_EV0_ATS_TB_BYTE;
     Picc.ATSBytes[4] = DESFIRE_EV0_ATS_TC_BYTE;
     Picc.ATSBytes[5] = 0x80;
+    #endif
     Picc.ATSSize = DESFIRE_DEFAULT_ATS_SIZE;
-    /* Set the first free slot to 1 -- slot 0 is the PICC app */
+    
+    /* Set the first free slot to 1 -- slot 0 is the PICC app: */
     AppDir.FirstFreeSlot = 0;
+    
     /* Flush the new local struct data out to the FRAM: */
     SynchronizeAppDir();
-    /* Initialize the root app data */
+    
+    /* Initialize the root app data: */
     CreatePiccApp();
+
 }
 
 void CreatePiccApp(void) {
@@ -312,58 +410,123 @@ void CreatePiccApp(void) {
     }
     SelectPiccApp();
     memset(&Key, 0x00, sizeof(CryptoKeyBufferType));
+    #ifdef DESFIRE_DEFAULT_PICC_MASTER_KEY
+    int keyLength = MIN(strlen(DESFIRE_DEFAULT_PICC_MASTER_KEY), 
+                        sizeof(CryptoKeyBufferType));
+    if (keyLength > 0) {
+        memcpy(&Key, (uint8_t *) DESFIRE_DEFAULT_PICC_MASTER_KEY, keyLength);
+        WriteAppKey(0x00, 0x00, Key, keyLength);
+    } else {
+        WriteAppKey(0x00, 0x00, Key, sizeof(CryptoKeyBufferType));
+    }
+    #else
     WriteAppKey(0x00, 0x00, Key, sizeof(CryptoKeyBufferType));
+    #endif
     SynchronizeAppDir();
     SynchronizePICCInfo();
 }
 
 void FactoryFormatPiccEV0(void) {
-    /* Wipe PICC data */
+    
+    /* Wipe PICC data: */
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
-    /* Initialize params to look like EV0 */
+    
+    /* Initialize params to look like EV0 (if not overridden by build-time defines): 
+     * NOTE: We are not checking the byte lengths of default, 
+     * build-time-defined arrays.
+     */
     Picc.StorageSize = CardCapacityBlocks;
+    #ifdef DESFIRE_DEFAULT_PICC_HWVERS
+    Picc.HwVersionMajor = DESFIRE_DEFAULT_PICC_HWVERS[1];
+    Picc.HwVersionMinor = DESFIRE_DEFAULT_PICC_HWVERS[0];
+    #else
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV0;
     Picc.HwVersionMinor = DESFIRE_HW_MINOR_EV0;
+    #endif
+    #ifdef DESFIRE_DEFAULT_PICC_SWVERS
+    Picc.SwVersionMajor = DESFIRE_DEFAULT_PICC_SWVERS[1];
+    Picc.SwVersionMinor = DESFIRE_DEFAULT_PICC_SWVERS[0];
+    #else 
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV0;
     Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV0;
-    /* Reset the free block pointer */
+    #endif
+
+    /* Reset the free block pointer: */
     Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
-    /* Continue with user data initialization */
+    
+    /* Continue with user data initialization: */
     SynchronizePICCInfo();
     FormatPicc();
+
 }
 
 void FactoryFormatPiccEV1(uint8_t StorageSize) {
-    /* Wipe PICC data */
+    
+    /* Wipe PICC data: */
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
-    /* Initialize params to look like EV1 */
+    
+    /* Initialize params to look like EV1 (if not overridden by build-time defines): 
+     * NOTE: We are not checking the byte lengths of default, 
+     *       build-time-defined arrays.
+     */
     Picc.StorageSize = StorageSize;
+    #ifdef DESFIRE_DEFAULT_PICC_HWVERS
+    Picc.HwVersionMajor = DESFIRE_DEFAULT_PICC_HWVERS[1];
+    Picc.HwVersionMinor = DESFIRE_DEFAULT_PICC_HWVERS[0];
+    #else
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV1;
     Picc.HwVersionMinor = DESFIRE_HW_MINOR_EV1;
+    #endif
+    #ifdef DESFIRE_DEFAULT_PICC_SWVERS
+    Picc.SwVersionMajor = DESFIRE_DEFAULT_PICC_SWVERS[1];
+    Picc.SwVersionMinor = DESFIRE_DEFAULT_PICC_SWVERS[0];
+    #else 
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV1;
     Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV1;
-    /* Reset the free block pointer */
+    #endif
+    
+    /* Reset the free block pointer: */
     InitBlockSizes();
     Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
-    /* Continue with user data initialization */
+    
+    /* Continue with user data initialization: */
     SynchronizePICCInfo();
     FormatPicc();
+
 }
 
 void FactoryFormatPiccEV2(uint8_t StorageSize) {
-    /* Wipe PICC data */
+    
+    /* Wipe PICC data: */
     memset(&Picc, PICC_FORMAT_BYTE, sizeof(Picc));
-    /* Initialize params to look like EV1 */
+    
+    /* Initialize params to look like EV2 (if not overridden by build-time defines): 
+     * NOTE: We are not checking the byte lengths of default, 
+     *       build-time-defined arrays.
+     */
     Picc.StorageSize = StorageSize;
+    #ifdef DESFIRE_DEFAULT_PICC_HWVERS
+    Picc.HwVersionMajor = DESFIRE_DEFAULT_PICC_HWVERS[1];
+    Picc.HwVersionMinor = DESFIRE_DEFAULT_PICC_HWVERS[0];
+    #else
     Picc.HwVersionMajor = DESFIRE_HW_MAJOR_EV2;
     Picc.HwVersionMinor = DESFIRE_HW_MINOR_EV2;
+    #endif
+    #ifdef DESFIRE_DEFAULT_PICC_SWVERS
+    Picc.SwVersionMajor = DESFIRE_DEFAULT_PICC_SWVERS[1];
+    Picc.SwVersionMinor = DESFIRE_DEFAULT_PICC_SWVERS[0];
+    #else 
     Picc.SwVersionMajor = DESFIRE_SW_MAJOR_EV2;
     Picc.SwVersionMinor = DESFIRE_SW_MINOR_EV2;
-    /* Reset the free block pointer */
+    #endif
+    
+    /* Reset the free block pointer: */
     Picc.FirstFreeBlock = DESFIRE_FIRST_FREE_BLOCK_ID;
-    /* Continue with user data initialization */
+    
+    /* Continue with user data initialization: */
     FormatPicc();
     SynchronizePICCInfo();
+
 }
 
 void GetPiccUid(ConfigurationUidType Uid) {

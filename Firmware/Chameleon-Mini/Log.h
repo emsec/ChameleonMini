@@ -3,14 +3,18 @@
 /** @file */
 #include "Common.h"
 
-#ifdef MEMORY_LIMITED_TESTING
-#define LOG_SIZE                  1284
+#if defined(ENABLE_DESFIRE_GALLAGHER)
+#define LOG_SIZE            4
+#elif defined(ENABLE_DESFIRE_AES_EXTENDED)
+#define LOG_SIZE            64
+#elif defined(MEMORY_LIMITED_TESTING)
+#define LOG_SIZE            1284
 #else
 #define LOG_SIZE	          2048
 #endif
 #define FRAM_LOG_ADDR_ADDR	0x4000 // start of the second half of FRAM
 #define FRAM_LOG_START_ADDR	0x4002 // directly after the address
-#define FRAM_LOG_SIZE		0x3FFE // the whole second half (minus the 2 Bytes of Address)
+#define FRAM_LOG_SIZE		    0x3FFE // the whole second half (minus the 2 Bytes of Address)
 
 extern uint8_t LogMem[LOG_SIZE];
 extern uint8_t *LogMemPtr;
@@ -19,10 +23,10 @@ extern uint16_t LogMemLeft;
 /** Enum for log entry type. \note Every entry type has a specific integer value, which can be found in the source code. */
 typedef enum {
     /* Generic */
-    LOG_INFO_GENERIC			           = 0x10, ///< Unspecific log entry.
+    LOG_INFO_GENERIC			             = 0x10, ///< Unspecific log entry.
     LOG_INFO_CONFIG_SET			           = 0x11, ///< Configuration change.
     LOG_INFO_SETTING_SET		           = 0x12, ///< Setting change.
-    LOG_INFO_UID_SET			           = 0x13, ///< UID change.
+    LOG_INFO_UID_SET			             = 0x13, ///< UID change.
     LOG_INFO_RESET_APP			           = 0x20, ///< Application reset.
 
     /* Codec */

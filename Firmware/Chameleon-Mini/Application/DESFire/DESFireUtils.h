@@ -68,7 +68,7 @@ bool DesfireCheckParityBits(uint8_t *Buffer, uint16_t BitCount);
 
 /* Add utility wrapper functions to perform pre and postprocessing on
  * the raw input APDU commands sent by the PCD depending on which
- * CommMode (PLAINTEXT|PLAINTEXT-MAC|ENCIPHERED-CMAC-3DES|ECIPHERED-CMAC-AES128)
+ * CommMode (PLAINTEXT|PLAINTEXT-MAC|ENCIPHERED-CMAC-3DES|ECIPHERED-CMAC-AES128/192/256)
  * setting is active.
  *
  * The implementation is adapted from the Java sources at

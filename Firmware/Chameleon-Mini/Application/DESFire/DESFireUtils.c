@@ -188,6 +188,22 @@ uint16_t DesfirePreprocessAPDUWrapper(uint8_t CommMode, uint8_t *Buffer, uint16_
                 return 0;
             }
             return (TruncateChecksumBytes ? MAX(0, BufferSize - ChecksumBytes) : BufferSize);
+
+        }
+        case DESFIRE_COMMS_CIPHERTEXT_AES192:
+        case DESFIRE_COMMS_CIPHERTEXT_AES256: {
+            if (!DESFIRE_AES_EXTENDED) {
+                return 0;
+            }
+            #ifdef ENABLE_DESFIRE_AES_EXTENDED
+            AESDecryptBuffer(&AES_ctx, Buffer, BufferSize);
+            #endif
+            memmove(&Buffer[0], &Buffer[BufferSize], BufferSize);
+            ChecksumBytes = CRYPTO_AES_BLOCK_SIZE;
+            if (BufferSize <= ChecksumBytes || !checkBufferCMAC(Buffer, BufferSize, ChecksumBytes)) {
+                return 0;
+            }
+            return (TruncateChecksumBytes ? MAX(0, BufferSize - ChecksumBytes) : BufferSize);
         }
         case DESFIRE_COMMS_PLAINTEXT: {
             ChecksumBytes = 2;

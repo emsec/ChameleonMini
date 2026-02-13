@@ -58,14 +58,14 @@ DF_SETHDR=ATQA 2838
 /* Other HW product types for DESFire tags: See page 7 of
  * https://www.nxp.com/docs/en/application-note/AN12343.pdf
  */
-// typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
-//     NATIVEIC_PHYS_CARD                 = 0x01,
-//     LIGHT_NATIVEIC_PHYS_CARD           = 0x08,
-//     MICROCONTROLLER_PHYS_CARDI         = 0x81,
-//     MICROCONTROLLER_PHYS_CARDII        = 0x83,
-//     JAVACARD_SECURE_ELEMENT_PHYS_CARD  = 0x91,
-//     HCE_MIFARE_2GO                     = 0xa1,
-// } DESFireHWProductCodes;
+typedef enum DESFIRE_FIRMWARE_ENUM_PACKING {
+    NATIVEIC_PHYS_CARD                 = 0x01,
+    LIGHT_NATIVEIC_PHYS_CARD           = 0x08,
+    MICROCONTROLLER_PHYS_CARDI         = 0x81,
+    MICROCONTROLLER_PHYS_CARDII        = 0x83,
+    JAVACARD_SECURE_ELEMENT_PHYS_CARD  = 0x91,
+    HCE_MIFARE_2GO                     = 0xa1,
+} DESFireHWProductCodes;
 ```
 An up-to-date listing of bytes that indicate the tag manufacturer ID is 
 found in the [Proxmark3 client source](https://github.com/RfidResearchGroup/proxmark3/blob/65b9a9fb769541f5d3e255ccf2c17d1cb77ac126/client/src/cmdhf14a.c#L48):
@@ -210,13 +210,18 @@ fingerprint the DESFire tag subtype in the
         return NTAG413DNA;
     return DESFIRE_UNKNOWN;
 ```
-Table 2 in section 2.1 of [NXP AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf) (page 5) lists
-standard Mifare tag identifications for several tags. This byte is represented by setting 
-``Picc.HwType`` using the Chameleon terminal command ``DF_SETHDR=HwType xx``. The default setting for the 
-Chameleon DESFire tags is ``0x01`` (*MIFARE DESFire*). The table in the application note is reproduced 
-below for reference. The NXP documentation says: "*The upper nibble [X] defines if the
-device is a native MIFARE IC (``0x0``), an implementation (``0x8``), an applet on a Java Card
-(``0x9``) or MIFARE 2GO (``0xA``).*"
+Table 2 in section 2.1 of 
+[NXP AN10833](https://www.nxp.com/docs/en/application-note/AN10833.pdf) (page 5) 
+listsstandard Mifare tag identifications for several tags. 
+This byte is represented by setting 
+``Picc.HwType`` using the Chameleon terminal command 
+``DF_SETHDR=HwType xx``. The default setting for the 
+Chameleon DESFire tags is ``0x01`` (*MIFARE DESFire*). 
+The table in the application note is reproduced 
+below for reference. The NXP documentation says: 
+"*The upper nibble [X] defines if the
+device is a native MIFARE IC (``0x0``), an implementation (``0x8``), 
+an applet on a Java Card (``0x9``) or MIFARE 2GO (``0xA``).*"
 
 | Second Byte of GetVersion Response (``Picc.HwType``) | NXP Type Tag |
 | :---: | :-- |
@@ -229,20 +234,51 @@ device is a native MIFARE IC (``0x0``), an implementation (``0x8``), an applet o
 | ``0xX7`` | *NTAG I2C* |
 | ``0xX8`` | *MIFARE DESFire Light* |
 
+##### Building custom DESFire tag emulation support
+
+The PICC header parameters defined / set through the ``DF_SETHDR`` commands above 
+can be specified as defaults in the DESFire firmware builds. 
+The files in the directory ``Firmware/Chameleon-Mini/DESFireCustomConfig/*.cfg``
+specify a few custom tag PICC configurations. To build the Chameleon Mini 
+firmware with one of these defaults, run the following commands:
+```bash
+$ cd ChameleonMini/Firmware/Chameleon-Mini
+$ cp DESFireCustomConfig/<my-tag-config-name>.cfg DESFireCustomConfig/desfire-custom-config.cfg
+$ make clean && make desfire-custom-tag
+```
+Then flash the Chameleon Mini RevG device with the firmware binaries 
+using ``avrdude`` (or equivalent) 
+[as usual (described here)](https://raw.githubusercontent.com/emsec/ChameleonMini/refs/heads/master/Doc/Doxygen/html/Page_GettingStarted.html).
+
+Other information about PICC settings and specifications for NFC tags are available at the 
+following links:
+* [Interoperability Specification for ICCs and Personal Computer Systems (pdf)](https://pcscworkgroup.com/Download/Specifications/pcsc3_v2.01.09_sup.pdf)
+* [Complete list of Application Identifiers (AID)](https://www.eftlab.com/knowledge-base/complete-list-of-application-identifiers-aid)
+* [Complete list of ATRs](https://www.eftlab.com/knowledge-base/complete-list-of-atrs)
+
 #### DF_COMM_MODE -- Manually sets the communication mode of the current session
 
-The supported (work in progress) DESFire communication modes include: 
-PLAINTEXT, PLAINTEXT-MAC, ENCIPHERED-CMAC-3DES, and ENCIPHERED-CMAC-AES128. 
+The supported communication modes include: 
+``PLAINTEXT``, ``PLAINTEXT-MAC``, ``ENCIPHERED-CMAC-3DES``, and 
+``ENCIPHERED-CMAC-AES128`` (built-in hardware AES support). 
+If the DESFire build is configured with 
+``SETTINGS += -DENABLE_DESFIRE_AES_EXTENDED``, and 
+[Gallagher support](https://github.com/emsec/ChameleonMini/blob/master/Doc/DESFireGallagherReadme.md)
+is disabled, then we also have the software-based communication modes: 
+``ENCIPHERED-CMAC-AES192`` and ``ENCIPHERED-CMAC-AES-256``. 
 It should be clear from the prior commands issued in the session which ``CommMode`` 
 congiguration we are supposed to be working within. This command let's the user 
 reset it intentionally at will for testing and debugging purposes. 
 
-The syntax is as follows:
+The syntax for setting the communication mode using the Chameleon 
+terminal command line is as follows:
 ```bash
 DF_COMM_MODE=Plaintext
 DF_COMM_MODE=Plaintext:MAC
 DF_COMM_MODE=Enciphered:3K3DES
 DF_COMM_MODE=Enciphered:AES128
+DF_COMM_MODE=Enciphered:AES192
+DF_COMM_MODE=Enciphered:AES256
 ```
 Use of this experimental command may cause unexpected results, vulnerabilities exposing 
 your keys and sensitive (a priori) protected data to hackers and sniffers, and is 
@@ -253,7 +289,7 @@ to the defaults.
 
 #### DF_COMM_MODE -- Manually sets the communication mode of the current session
 
-This commanf sets the encryption mode for cryptographic operations. 
+This command sets the encryption mode for cryptographic operations. 
 The two supported modes are ECB and CBC. 
 The default mode for AES and DES (all types) of encryption is ECB mode. 
 This is the supported mode for DESFire tags using the latest Proxmark3 software. 
@@ -267,6 +303,25 @@ DF_ENCMODE=CBC
 DF_ENCMODE=DES:CBC
 DF_ENCMODE=AES:CBC
 ```
+Note that the standard AES encryption mode ``CTR`` is *NOT* supported. 
+
+#### DF_KEYSCRUB -- Overwrite the encryption keys with random bytes to "scrub"
+
+The syntax is as follows:
+```bash
+# Overwrites the key and IV buffers with random bytes x1 times. 
+# Call the command multiple times to get the desired number of overwrites:
+DF_KEYSCRUB
+```
+
+#### DESFire Gallagher application commands
+
+Support for Gallagher application emulation is enabled in 
+``Firmware/Chameleon-Mini/Makefile`` by uncommenting the following 
+feature: ``SETTINGS += -DENABLE_DESFIRE_GALLAGHER -UENABLE_DESFIRE_AES_EXTENDED``. 
+Documentation for the Chameleon terminal commands written by 
+*@tomaspre* to configure Gallagher support is 
+[found here](https://github.com/emsec/ChameleonMini/blob/master/Doc/DESFireGallagherReadme.md).
 
 ## Supported functionality
 
@@ -539,7 +594,8 @@ for development of this project:
   project as a Ph.D. candidate over the Summer and Fall of 2020. 
 * More work to improve and add compatibility with the PM3 devices over the Spring of 2022 was supported by
   Georgia Tech to work as a RA through the university COVID-19 relief funding.
-* The [KAOS manufacturers](https://shop.kasper.it) for providing support in the form of discounted Chameleon RevG
+* The [KAOS manufacturers](https://shop.kasper.it) for providing support in the 
+  form of free and discounted Chameleon RevG
   devices to support my active development on the project.
 
 ### Sources of external code and open information about the DESFire specs

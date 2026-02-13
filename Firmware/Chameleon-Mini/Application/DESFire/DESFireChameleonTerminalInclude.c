@@ -49,7 +49,15 @@ This notice must be retained at the top of all source files where indicated.
     .ExecParamFunc  = NO_FUNCTION,
     .SetFunc        = CommandDESFireSetEncryptionMode,
     .GetFunc        = NO_FUNCTION
-}, {//The rest of the file was added by tomaspre
+}, {
+    .Command        = DFCOMMAND_KEYSCRUB_KILL,
+    .ExecFunc       = CommandDESFireKeyscrubKill,
+    .ExecParamFunc  = NO_FUNCTION,
+    .SetFunc        = NO_FUNCTION,
+    .GetFunc        = NO_FUNCTION
+}, 
+#ifdef ENABLE_DESFIRE_GALLAGHER
+{//The rest of the file was added by tomaspre
     .Command        = DFCOMMAND_SETUP_GALLAGHER,
     .ExecFunc       = NO_FUNCTION,
     .ExecParamFunc  = NO_FUNCTION,
@@ -86,8 +94,7 @@ This notice must be retained at the top of all source files where indicated.
     .SetFunc        = CommandDESFireSetGallagherSiteKey,
     .GetFunc        = NO_FUNCTION
 },
-
-
+#endif 
 
 #endif
 
